@@ -39,8 +39,8 @@
 
 ## Known issues / ⏳ blocked-on-credentials
 - **R2 decided OUT for V1** (DEC-038 Q1) — map ships as a static asset; no R2 bucket, no card. (`code 10042` moot.)
-- **GitHub repo (DEC-038 Q13) ⏳ blocked:** GitHub CLI `gh` not installed/authed. Build proceeds on local `git`;
-  needs `gh` install+auth or a repo URL + token/SSH to push the backup remote.
+- **GitHub repo (DEC-038 Q13) ✅ done:** remote `origin` = `git@github.com:juliocorcini/festival-copilot.git`
+  (SSH auth works for `juliocorcini`); `master` pushed + tracking. Push per phase from now on.
 - Shipped map SVG currently inlines the relief raster (~19MB) — slimmed in P0 G0.2.
 - System default node is v18; **must `nvm use 22`** before any wrangler/build command (`.node-version` = 22 is set).
 
