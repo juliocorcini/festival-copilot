@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#27 Amber Glass — Batch 5: Identity, account & settings</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--danger:#E0563B;--ok:#16A34A}
+*{box-sizing:border-box}*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+body{font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;background:radial-gradient(90% 60% at 50% 0%,#1a140a,#08070a 60%)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;flex-shrink:0;
+  background:radial-gradient(ellipse 120% 55% at 50% 10%,rgba(245,166,35,.10),transparent 50%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.scr{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.body{flex:1;overflow:auto}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),rgba(20,17,12,.5);
+  border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.ava{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0}
+.statusbar{padding:16px 28px 4px;display:flex;justify-content:space-between;font-size:12px;font-weight:600;flex-shrink:0}
+.statusbar .r{color:var(--muted);display:flex;align-items:center;gap:4px}
+.btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.btn-ghost{background:var(--glass);border:1px solid var(--border);color:var(--ink);font-weight:700}
+.btn-white{background:#fff;color:#1a1a1a;font-weight:700}
+.btn-danger{background:rgba(224,86,59,.14);border:1px solid rgba(224,86,59,.4);color:#f08a73;font-weight:800}
+.field{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:13px 15px;color:var(--ink);font-size:14px;font-weight:600;outline:none}
+.field::placeholder{color:var(--muted)}
+.label{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.seg{display:flex;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:14px;padding:3px}
+.seg div{flex:1;text-align:center;padding:9px;border-radius:11px;font-size:13px;font-weight:700;color:var(--muted)}
+.seg div.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.pill{font-size:10px;font-weight:800;padding:4px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:3px}
+.row{display:flex;align-items:center;gap:14px;padding:15px 16px}
+.cap-badge{font-size:11px;font-weight:800;padding:4px 12px;border-radius:99px;background:var(--accent);color:#0F0D09}
+.cap-desc{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.4;padding:0 10px}
+.caption{width:390px;text-align:center;margin-top:14px}
+.cell{display:flex;flex-direction:column;align-items:center}
+.gicon{width:20px;height:20px;background:conic-gradient(from -45deg,#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0 100%);-webkit-mask:radial-gradient(circle 9px at 50% 50%,transparent 6px,#000 6.5px);border-radius:50%}
+.divider{height:1px;background:var(--border);margin:0 16px}
+</style>
+</head>
+<body class="min-h-screen py-12 px-6">
+<div class="max-w-[1500px] mx-auto">
+  <div class="text-center mb-1 text-[12px] tracking-[.28em] text-white/40 font-semibold">FESTPILOT · UI · DESIGN PASS</div>
+  <h1 class="poster text-4xl md:text-5xl font-bold text-center">Batch 5 — Identity, account & settings</h1>
+  <p class="text-center text-white/55 mt-3 max-w-3xl mx-auto text-sm">
+    <b style="color:#F5A623">Anonymous-first</b>: jump in as a guest, save your account anytime (<b style="color:#F5A623">Google or email-link</b>
+    — no passwords, <b style="color:#F5A623">no Apple/iOS</b>, DEC-039). Profile = name + avatar (upload or initials), asked at first
+    squad join, editable here. Language defaults to <b style="color:#F5A623">English</b>, switchable per-user. Reached via the header avatar.
+  </p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 justify-center mt-12">
+
+    <!-- ============ 1 · SIGN IN ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>20:02</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body px-7 pt-6 flex flex-col items-center text-center">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style="background:linear-gradient(135deg,var(--accent),var(--accent2))"><span class="ms text-[34px]" style="color:var(--bg)">festival</span></div>
+        <h1 class="poster text-[34px] font-bold leading-none">FestPilot</h1>
+        <p class="text-[13px] text-[var(--muted)] mt-3 max-w-[260px]">Plan the sets, find your people, never miss the drop.</p>
+      </div>
+      <div class="px-7 pb-7 space-y-3">
+        <button class="btn btn-white"><span class="gicon"></span>Continue with Google</button>
+        <button class="btn btn-ghost"><span class="ms text-[19px]">mail</span>Continue with email</button>
+        <div class="flex items-center gap-3 py-1"><div class="flex-1 h-px bg-white/10"></div><span class="text-[11px] text-[var(--muted)]">or</span><div class="flex-1 h-px bg-white/10"></div></div>
+        <button class="btn" style="background:transparent;color:var(--accent)"><span class="ms text-[19px]">bolt</span>Jump in as guest</button>
+        <p class="text-[11px] text-[var(--muted)] text-center leading-snug pt-1">Guest works right away — save your account later to sync squads & plans across devices.<br><span class="text-white/30">By continuing you agree to the <u>Terms</u> & <u>Privacy</u>.</span></p>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">1 · Sign in</span><div class="cap-desc">Google · email-link · guest. No Apple (DEC-039). Guest-first with a clear "save later" promise.</div></div>
+    </div>
+
+    <!-- ============ 2 · EMAIL LINK SENT ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>20:03</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button></div>
+      <div class="body px-7 pt-10 flex flex-col items-center text-center">
+        <div class="w-20 h-20 rounded-full flex items-center justify-center mb-6" style="background:radial-gradient(circle,rgba(245,166,35,.25),rgba(245,166,35,.05));border:1px solid rgba(245,166,35,.4)"><span class="ms text-[40px]" style="color:var(--accent)">mark_email_unread</span></div>
+        <h1 class="poster text-[28px] font-bold leading-tight">Check your email</h1>
+        <p class="text-[13px] text-[var(--muted)] mt-3">We sent a magic sign-in link to<br><b class="text-[var(--ink)]">julio@gmail.com</b></p>
+        <p class="text-[12px] text-[var(--muted)] mt-5 max-w-[270px]">Tap the link on this device to sign in — no password needed. It expires in 15 minutes.</p>
+      </div>
+      <div class="px-7 pb-7 space-y-3">
+        <button class="btn btn-primary"><span class="ms text-[18px]">open_in_new</span>Open email app</button>
+        <button class="btn btn-ghost">Resend link <span class="text-[var(--muted)] font-semibold">(0:48)</span></button>
+        <button class="btn" style="background:transparent;color:var(--muted)">Use a different email</button>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">2 · Magic link</span><div class="cap-desc">Passwordless email-link flow: sent → open mail → resend cooldown → change email.</div></div>
+    </div>
+
+    <!-- ============ 3 · EDIT PROFILE ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>20:05</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center justify-between flex-shrink-0"><div class="flex items-center gap-3"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div class="poster text-[19px] font-bold leading-none">Your profile</div></div></div>
+      <div class="body px-6 pt-4 flex flex-col items-center">
+        <div class="relative mb-3">
+          <div class="ava w-28 h-28 text-[40px]" style="background:linear-gradient(135deg,#F5A623,#FFD060);color:#0F0D09">JU</div>
+          <button class="absolute bottom-0 right-0 w-10 h-10 rounded-full flex items-center justify-center border-4 border-[var(--bg)]" style="background:var(--accent)"><span class="ms text-[20px]" style="color:var(--bg)">photo_camera</span></button>
+        </div>
+        <div class="flex gap-2 mb-7">
+          <button class="pill glass" style="color:var(--ink);padding:8px 14px"><span class="ms text-[15px]">upload</span>Upload photo</button>
+          <button class="pill" style="background:rgba(245,166,35,.16);color:var(--accent);padding:8px 14px"><span class="ms text-[15px]">format_color_text</span>Use initials</button>
+        </div>
+        <div class="w-full"><div class="label mb-2">Display name</div><input class="field" value="Julio"/></div>
+        <p class="text-[12px] text-[var(--muted)] mt-3 text-center">This is how your squad sees you on the map & lists.</p>
+      </div>
+      <div class="px-6 pb-7 pt-2"><button class="btn btn-primary">Save profile</button></div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">3 · Edit profile</span><div class="cap-desc">Avatar = upload OR initials (no preset gallery). Name. Asked at first join, editable here (DEC-039).</div></div>
+    </div>
+
+    <!-- ============ 4 · ACCOUNT (guest → save) ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>20:06</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div class="poster text-[19px] font-bold leading-none">Account</div></div>
+      <div class="body px-6 pt-3">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="ava w-16 h-16 text-[22px]" style="background:linear-gradient(135deg,#F5A623,#FFD060);color:#0F0D09">JU</div>
+          <div><div class="font-bold text-[18px]">Julio</div><div class="pill mt-1" style="background:rgba(255,255,255,.08);color:var(--muted)"><span class="ms text-[12px]">person</span>Guest · this device</div></div>
+        </div>
+        <!-- upgrade card -->
+        <div class="rounded-2xl p-4 mb-5" style="background:linear-gradient(135deg,rgba(245,166,35,.16),rgba(255,208,96,.03));border:1px solid rgba(245,166,35,.4)">
+          <div class="flex items-center gap-2 mb-1"><span class="ms text-[20px]" style="color:var(--accent)">cloud_done</span><span class="font-bold text-[14px]">Save your account</span></div>
+          <div class="text-[12px] text-[var(--muted)] leading-snug mb-3">Don't lose your squads & plans if you change phones. Takes 10 seconds.</div>
+          <div class="space-y-2">
+            <button class="btn btn-white" style="padding:12px"><span class="gicon"></span>Save with Google</button>
+            <button class="btn btn-ghost" style="padding:12px"><span class="ms text-[18px]">mail</span>Save with email</button>
+          </div>
+        </div>
+        <div class="glass overflow-hidden">
+          <div class="row"><span class="ms text-[var(--muted)]">badge</span><div class="flex-1"><div class="text-[13px] font-bold">Display name</div></div><span class="text-[13px] text-[var(--muted)]">Julio</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="ms text-[var(--muted)]">logout</span><div class="flex-1 text-[13px] font-bold">Sign out</div><span class="ms text-[var(--muted)]">chevron_right</span></div>
+        </div>
+        <button class="btn btn-danger mt-4"><span class="ms text-[18px]">delete_forever</span>Delete account & data</button>
+        <p class="text-[11px] text-[var(--muted)] text-center mt-3">Deleting removes your profile, squads, plans & location history.</p>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">4 · Account</span><div class="cap-desc">Guest status + prominent "save account" (Google/email). Sign out · delete account & data (GDPR-friendly).</div></div>
+    </div>
+
+    <!-- ============ 5 · SETTINGS HUB ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>20:07</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div class="poster text-[19px] font-bold leading-none">Settings</div></div>
+      <div class="body px-6 pt-3 space-y-4">
+        <div class="glass overflow-hidden">
+          <div class="row"><div class="ava w-10 h-10 text-[12px]" style="background:linear-gradient(135deg,#F5A623,#FFD060);color:#0F0D09">JU</div><div class="flex-1"><div class="text-[14px] font-bold">Julio</div><div class="text-[11px] text-[var(--muted)]">Guest · tap to save account</div></div><span class="ms text-[var(--muted)]">chevron_right</span></div>
+        </div>
+        <div class="glass overflow-hidden">
+          <div class="row"><span class="ms text-[var(--accent)]">notifications</span><div class="flex-1 text-[14px] font-bold">Notifications</div><span class="text-[12px] text-[var(--muted)]">On</span><span class="ms text-[var(--muted)]">chevron_right</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="ms text-[var(--accent)]">share_location</span><div class="flex-1 text-[14px] font-bold">Location & privacy</div><span class="ms text-[var(--muted)]">chevron_right</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="ms text-[var(--accent)]">translate</span><div class="flex-1 text-[14px] font-bold">Language</div><span class="text-[12px] text-[var(--muted)]">English</span><span class="ms text-[var(--muted)]">chevron_right</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="ms text-[var(--accent)]">contrast</span><div class="flex-1 text-[14px] font-bold">Appearance</div><span class="text-[12px] text-[var(--muted)]">Auto</span><span class="ms text-[var(--muted)]">chevron_right</span></div>
+        </div>
+        <div class="glass overflow-hidden">
+          <div class="row"><span class="ms text-[var(--muted)]">shield</span><div class="flex-1 text-[14px] font-bold">Privacy Policy</div><span class="ms text-[var(--muted)]">open_in_new</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="ms text-[var(--muted)]">description</span><div class="flex-1 text-[14px] font-bold">Terms</div><span class="ms text-[var(--muted)]">open_in_new</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="ms text-[var(--muted)]">support</span><div class="flex-1 text-[14px] font-bold">Help & support</div><span class="ms text-[var(--muted)]">chevron_right</span></div>
+        </div>
+        <p class="text-[11px] text-[var(--muted)] text-center">FestPilot · v1.0.0 (beta)</p>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">5 · Settings hub</span><div class="cap-desc">Account · Notifications · Location&privacy (→ B3) · Language · Appearance · legal/support · version.</div></div>
+    </div>
+
+    <!-- ============ 6 · LANGUAGE & APPEARANCE ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>20:08</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div class="poster text-[19px] font-bold leading-none">Language & appearance</div></div>
+      <div class="body px-6 pt-4">
+        <div class="label mb-2">Language</div>
+        <div class="glass overflow-hidden mb-2">
+          <div class="row" style="border-left:3px solid var(--accent)"><span class="text-[18px]">🇬🇧</span><div class="flex-1"><div class="text-[14px] font-bold">English</div><div class="text-[11px] text-[var(--muted)]">Default</div></div><span class="ms text-[var(--accent)]">radio_button_checked</span></div>
+          <div class="divider"></div>
+          <div class="row"><span class="text-[18px]">🇧🇷</span><div class="flex-1"><div class="text-[14px] font-bold">Português</div></div><span class="ms text-[var(--muted)]">radio_button_unchecked</span></div>
+        </div>
+        <p class="text-[11px] text-[var(--muted)] mb-6">Per-user — your choice, not forced by location.</p>
+
+        <div class="label mb-2">Appearance</div>
+        <div class="seg mb-3"><div class="on">Auto</div><div>Day</div><div>Night</div></div>
+        <div class="glass p-3.5 flex items-start gap-2.5"><span class="ms text-[18px] mt-0.5" style="color:var(--accent)">wb_twilight</span><div class="text-[12px] text-[var(--muted)] leading-snug"><b class="text-[var(--ink)]">Auto</b> follows the festival day/night — the map switches its light/dark art for you. Override anytime.</div></div>
+
+        <div class="mt-5 rounded-2xl overflow-hidden border border-[var(--border)]">
+          <div class="grid grid-cols-2">
+            <div class="p-4 text-center" style="background:linear-gradient(135deg,#1a140a,#0d0b07)"><div class="text-[10px] text-[var(--muted)] mb-2">NIGHT</div><div class="ava w-9 h-9 mx-auto text-[11px]" style="background:linear-gradient(135deg,#F5A623,#FFD060);color:#0F0D09">A</div></div>
+            <div class="p-4 text-center" style="background:linear-gradient(135deg,#efe6d6,#d8ccb6)"><div class="text-[10px] text-[#7a6e58] mb-2">DAY</div><div class="ava w-9 h-9 mx-auto text-[11px]" style="background:#0F0D09;color:#F5A623">A</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 pb-7 pt-3"><button class="btn btn-primary">Done</button></div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">6 · Language & theme</span><div class="cap-desc">EN default / PT (per-user). Appearance Auto/Day/Night drives the map's light/dark art.</div></div>
+    </div>
+
+  </div>
+  <p class="text-center text-white/30 text-[11px] mt-16">FestPilot · Design pass · Batch 5 of 8 (Identity, account & settings) · 2026-06-23 · wireframes/directions/27</p>
+</div>
+</body>
+</html>
