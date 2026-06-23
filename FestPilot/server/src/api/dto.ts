@@ -49,3 +49,32 @@ export interface LineupDto {
   stages: StageDto[];
   performances: PerformanceDto[];
 }
+
+// Map (DEC-030/034/040). `transform` is the engine-exported affine doc, passed through
+// to the client verbatim (it mirrors web/src/map/transform.ts MapTransform).
+export interface AffineDoc {
+  a: number; b: number; c: number; d: number; e: number; f: number;
+}
+export interface MapStageGeo {
+  name: string;
+  lng: number;
+  lat: number;
+  matched: boolean;
+}
+export interface MapTransformDoc {
+  festival: string;
+  venue: string;
+  canvas: { width: number; height: number };
+  bbox: { west: number; east: number; south: number; north: number };
+  affine: AffineDoc;
+  stages: MapStageGeo[];
+  source: string;
+}
+export interface FestivalMapDto {
+  festivalId: string;
+  assetSlug: string;
+  baseNightUrl: string;
+  baseDayUrl: string;
+  revision: number;
+  transform: MapTransformDoc;
+}

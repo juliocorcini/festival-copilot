@@ -3,7 +3,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env } from "../env";
-import { getLineup, listFestivals, listStages } from "./repo";
+import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
 
 export const api = new Hono<{ Bindings: Env }>();
 
@@ -30,4 +30,13 @@ api.get("/festivals/:id/stages", async (c) => {
   const id = c.req.param("id");
   const stages = await listStages(c.env.DB, id);
   return c.json({ stages });
+});
+
+// Map asset + affine transform (DEC-030/034/040). The base is a static WebP; this returns
+// where it lives + the transform so the client drops the live overlay through the affine.
+api.get("/festivals/:id/map", async (c) => {
+  const id = c.req.param("id");
+  const map = await getFestivalMap(c.env.DB, id);
+  if (!map) return c.json({ error: "map not found" }, 404);
+  return c.json(map);
 });

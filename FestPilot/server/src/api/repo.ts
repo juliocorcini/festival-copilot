@@ -1,7 +1,15 @@
 // Read-side data access for the public lineup API. Pure D1 queries -> DTOs.
 // No client ever calls the festival site; everything is served from our D1.
 
-import type { FestivalDto, LineupDto, PerformanceDto, StageDto, WeekendDto } from "./dto";
+import type {
+  FestivalDto,
+  FestivalMapDto,
+  LineupDto,
+  MapTransformDoc,
+  PerformanceDto,
+  StageDto,
+  WeekendDto,
+} from "./dto";
 
 export interface LineupQuery {
   weekend?: string; // weekend name, e.g. "W1"
@@ -147,4 +155,80 @@ export async function getLineup(
   }
 
   return { festival, weekends, stages, performances };
+}
+
+// ---------------------------------------------------------------------------
+// Map (DEC-030/034/040): a static WebP base + the affine transform, recorded per
+// festival. URLs are built from stored keys so the same shape serves R2 later.
+// ---------------------------------------------------------------------------
+
+export interface FestivalMapInput {
+  assetSlug: string;
+  baseNightKey: string;
+  baseDayKey: string;
+  transform: MapTransformDoc;
+  revision?: number;
+}
+
+/** Build a client URL from a stored asset key. Static keys resolve under the web origin. */
+function assetUrl(key: string): string {
+  if (/^https?:\/\//.test(key)) return key;
+  return key.startsWith("/") ? key : `/${key}`;
+}
+
+export async function getFestivalMap(db: D1Database, festivalId: string): Promise<FestivalMapDto | null> {
+  const row = await db
+    .prepare(
+      `SELECT festival_id, asset_slug, base_night_key, base_day_key, transform_json, revision
+         FROM festival_map WHERE festival_id = ?`
+    )
+    .bind(festivalId)
+    .first<{
+      festival_id: string;
+      asset_slug: string;
+      base_night_key: string;
+      base_day_key: string;
+      transform_json: string;
+      revision: number;
+    }>();
+  if (!row) return null;
+  return {
+    festivalId: row.festival_id,
+    assetSlug: row.asset_slug,
+    baseNightUrl: assetUrl(row.base_night_key),
+    baseDayUrl: assetUrl(row.base_day_key),
+    revision: row.revision,
+    transform: JSON.parse(row.transform_json) as MapTransformDoc,
+  };
+}
+
+export async function upsertFestivalMap(
+  db: D1Database,
+  festivalId: string,
+  input: FestivalMapInput,
+  nowIso: string
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO festival_map
+         (festival_id, asset_slug, base_night_key, base_day_key, transform_json, revision, updated_at_utc)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(festival_id) DO UPDATE SET
+         asset_slug     = excluded.asset_slug,
+         base_night_key = excluded.base_night_key,
+         base_day_key   = excluded.base_day_key,
+         transform_json = excluded.transform_json,
+         revision       = excluded.revision,
+         updated_at_utc = excluded.updated_at_utc`
+    )
+    .bind(
+      festivalId,
+      input.assetSlug,
+      input.baseNightKey,
+      input.baseDayKey,
+      JSON.stringify(input.transform),
+      input.revision ?? 1,
+      nowIso
+    )
+    .run();
 }
