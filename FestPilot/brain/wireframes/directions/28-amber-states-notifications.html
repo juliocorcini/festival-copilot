@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#28 Amber Glass — Batch 6: Gaps, notifications & system states</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--danger:#E0563B;--ok:#16A34A;
+  --s-main:#FF5A36;--s-core:#16A34A;--s-free:#0EA5E9;--s-cage:#F59E0B;--s-elix:#7C3AED;--s-rose:#EC4899}
+*{box-sizing:border-box}*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+body{font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;background:radial-gradient(90% 60% at 50% 0%,#1a140a,#08070a 60%)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;flex-shrink:0;
+  background:radial-gradient(ellipse 120% 55% at 50% 10%,rgba(245,166,35,.10),transparent 50%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.scr{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.body{flex:1;overflow:auto}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),rgba(20,17,12,.5);
+  border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.ava{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0}
+.statusbar{padding:16px 28px 4px;display:flex;justify-content:space-between;font-size:12px;font-weight:600;flex-shrink:0}
+.statusbar .r{color:var(--muted);display:flex;align-items:center;gap:4px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 26px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+.btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.btn-ghost{background:var(--glass);border:1px solid var(--border);color:var(--ink);font-weight:700}
+.label{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.pill{font-size:10px;font-weight:800;padding:4px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:3px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
+.toggle{width:46px;height:27px;border-radius:99px;background:rgba(255,255,255,.12);position:relative;flex-shrink:0}
+.toggle.on{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.toggle i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff}
+.toggle.on i{left:22px}
+.cap-badge{font-size:11px;font-weight:800;padding:4px 12px;border-radius:99px;background:var(--accent);color:#0F0D09}
+.cap-desc{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.4;padding:0 10px}
+.caption{width:390px;text-align:center;margin-top:14px}
+.cell{display:flex;flex-direction:column;align-items:center}
+.divider{height:1px;background:var(--border)}
+.shimmer{background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.1),rgba(255,255,255,.04));background-size:200% 100%;animation:sh 1.4s infinite;border-radius:8px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.push{background:rgba(30,28,24,.7);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(20px);padding:12px 14px}
+.lock{background:linear-gradient(180deg,#1a1206,#0a0a10 70%);position:relative}
+.lock::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 70% 15%,rgba(245,166,35,.18),transparent 45%)}
+</style>
+</head>
+<body class="min-h-screen py-12 px-6">
+<div class="max-w-[1500px] mx-auto">
+  <div class="text-center mb-1 text-[12px] tracking-[.28em] text-white/40 font-semibold">FESTPILOT · UI · DESIGN PASS</div>
+  <h1 class="poster text-4xl md:text-5xl font-bold text-center">Batch 6 — Gaps, alerts & system states</h1>
+  <p class="text-center text-white/55 mt-3 max-w-3xl mx-auto text-sm">
+    The glue that makes V1 feel finished: <b style="color:#F5A623">personal-gap</b> fillers (incl. first-class
+    <b style="color:#F5A623">breaks</b>, Q-L), a light <b style="color:#F5A623">notification inbox</b> + granular prefs
+    with <b style="color:#F5A623">OS push primary</b> (Q-G), the "leave now" alert moment, and honest
+    <b style="color:#F5A623">offline / loading / empty / error</b> states.
+  </p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 justify-center mt-12">
+
+    <!-- ============ 1 · PERSONAL GAP ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>22:55</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-7 pt-3 pb-2 flex-shrink-0"><div class="label">YOUR PLAN · SATURDAY</div><h1 class="poster text-[26px] font-bold leading-none mt-1">Mind the gap</h1></div>
+      <div class="body px-5 pt-2">
+        <div class="rounded-2xl p-4 mb-4" style="background:linear-gradient(135deg,rgba(245,166,35,.16),rgba(255,208,96,.03));border:1px solid rgba(245,166,35,.4)">
+          <div class="flex items-center gap-2"><span class="ms text-[20px]" style="color:var(--accent)">hourglass_empty</span><div class="text-[14px] font-bold">45 min free · 23:00–23:45</div></div>
+          <div class="text-[12px] text-[var(--muted)] mt-1">Nothing locked. Want to fill it?</div>
+        </div>
+        <div class="label mb-2 px-1">Suggested for you</div>
+        <div class="space-y-2.5">
+          <div class="glass p-3.5 flex items-center gap-3" style="border-color:rgba(245,166,35,.35)">
+            <span class="ms text-[22px]" style="color:#EC4899">favorite</span>
+            <div class="flex-1 min-w-0"><div class="font-bold text-[14px]">Amelie Lens</div><div class="text-[11px] text-[var(--muted)]">CAGE · you ❤ · 4 min walk</div></div>
+            <button class="pill" style="background:var(--accent);color:var(--bg)">Lock</button>
+          </div>
+          <div class="glass p-3.5 flex items-center gap-3">
+            <span class="ms text-[22px]" style="color:var(--s-main)">local_fire_department</span>
+            <div class="flex-1 min-w-0"><div class="font-bold text-[14px]">Popular now: Argy</div><div class="text-[11px] text-[var(--muted)]">CORE · 3 friends going</div></div>
+            <button class="pill glass" style="color:var(--ink)">View</button>
+          </div>
+          <div class="glass p-3.5 flex items-center gap-3">
+            <span class="ms text-[22px]" style="color:var(--accent)">restaurant</span>
+            <div class="flex-1 min-w-0"><div class="font-bold text-[14px]">Take a break</div><div class="text-[11px] text-[var(--muted)]">Food · toilet · drinks — add to plan</div></div>
+            <button class="pill glass" style="color:var(--ink)">Add</button>
+          </div>
+        </div>
+        <button class="w-full text-center text-[13px] text-[var(--muted)] font-semibold py-4">Leave it open →</button>
+      </div>
+      <div class="nav">
+        <div class="navitem"><span class="ms">bolt</span>Now</div>
+        <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+        <div class="navitem active"><span class="ms">event_available</span>My Plan</div>
+        <div class="navitem"><span class="ms">map</span>Map</div>
+        <div class="navitem"><span class="ms">group</span>Squad</div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">1 · Personal gap</span><div class="cap-desc">Fills empty plan slots: a ❤ favorite nearby, a popular pick, or a first-class break (Q-L).</div></div>
+    </div>
+
+    <!-- ============ 2 · NOTIFICATION INBOX ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>22:44</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center justify-between flex-shrink-0"><div class="flex items-center gap-3"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div class="poster text-[20px] font-bold leading-none">Notifications</div></div><button class="text-[12px] font-bold" style="color:var(--accent)">Mark all read</button></div>
+      <div class="body px-5 pt-2">
+        <div class="label mb-2 px-1">Now</div>
+        <div class="space-y-2">
+          <div class="glass p-3.5 flex gap-3" style="border-color:rgba(245,166,35,.4)">
+            <span class="ms text-[22px] mt-0.5" style="color:var(--accent)">alarm</span>
+            <div class="flex-1"><div class="text-[13px] font-bold">Charlotte de Witte in 15 min</div><div class="text-[11px] text-[var(--muted)]">MAINSTAGE · leave in 6 min (550m)</div></div>
+            <span class="dot mt-1" style="background:var(--accent)"></span>
+          </div>
+          <div class="glass p-3.5 flex gap-3" style="border-color:rgba(224,86,59,.35)">
+            <span class="ms text-[22px] mt-0.5" style="color:#f08a73">warning</span>
+            <div class="flex-1"><div class="text-[13px] font-bold">Clash at 22:00</div><div class="text-[11px] text-[var(--muted)]">Charlotte vs Adriatique — pick one</div></div>
+            <span class="dot mt-1" style="background:var(--accent)"></span>
+          </div>
+        </div>
+        <div class="label mb-2 mt-5 px-1">Earlier</div>
+        <div class="space-y-2">
+          <div class="glass p-3.5 flex gap-3">
+            <div class="ava w-9 h-9 text-[11px]" style="background:#FF5A36">AN</div>
+            <div class="flex-1"><div class="text-[13px] font-bold">Ana pinged you</div><div class="text-[11px] text-[var(--muted)]">"where are you?" · from MAINSTAGE · 8m</div></div>
+          </div>
+          <div class="glass p-3.5 flex gap-3">
+            <span class="ms text-[22px] mt-0.5" style="color:var(--accent)">flag</span>
+            <div class="flex-1"><div class="text-[13px] font-bold">Mara set a meeting point</div><div class="text-[11px] text-[var(--muted)]">Cactus Bar · now · 12m</div></div>
+          </div>
+          <div class="glass p-3.5 flex gap-3">
+            <span class="ms text-[22px] mt-0.5" style="color:var(--s-core)">groups</span>
+            <div class="flex-1"><div class="text-[13px] font-bold">Squad pick changed</div><div class="text-[11px] text-[var(--muted)]">23:30 now ARTBAT · CORE · 20m</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="navitem"><span class="ms">bolt</span>Now</div>
+        <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+        <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+        <div class="navitem"><span class="ms">map</span>Map</div>
+        <div class="navitem"><span class="ms">group</span>Squad</div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">2 · Inbox</span><div class="cap-desc">Light in-app inbox (Q-G): reminders, clashes, pings, meeting points, squad changes. Unread dots.</div></div>
+    </div>
+
+    <!-- ============ 3 · NOTIFICATION SETTINGS ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>22:45</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div class="poster text-[19px] font-bold leading-none">Notifications</div></div>
+      <div class="body px-6 pt-3 space-y-3">
+        <div class="glass p-4 flex items-center gap-3"><span class="ms text-[22px]" style="color:var(--accent)">alarm</span><div class="flex-1"><div class="font-bold text-[14px]">Set reminders</div><div class="text-[11px] text-[var(--muted)]">Before acts you've locked</div></div><div class="toggle on"><i></i></div></div>
+        <div class="glass p-3.5 flex items-center gap-3" style="margin-top:-4px"><span class="ms text-[20px] text-[var(--muted)] ml-1">schedule</span><div class="flex-1 text-[13px] font-semibold">Remind me</div><div class="flex items-center gap-2"><span class="ms text-[var(--muted)] text-[18px]">remove</span><span class="font-bold text-[14px]">15 min</span><span class="ms text-[var(--muted)] text-[18px]">add</span></div></div>
+        <div class="glass p-4 flex items-center gap-3"><span class="ms text-[22px]" style="color:var(--accent)">directions_walk</span><div class="flex-1"><div class="font-bold text-[14px]">"Leave now" walk alerts</div><div class="text-[11px] text-[var(--muted)]">Factors in travel time</div></div><div class="toggle on"><i></i></div></div>
+        <div class="glass p-4 flex items-center gap-3"><span class="ms text-[22px]" style="color:#f08a73">warning</span><div class="flex-1"><div class="font-bold text-[14px]">Clash alerts</div></div><div class="toggle on"><i></i></div></div>
+        <div class="glass p-4 flex items-center gap-3"><span class="ms text-[22px]">waving_hand</span><div class="flex-1"><div class="font-bold text-[14px]">Friend pings</div></div><div class="toggle on"><i></i></div></div>
+        <div class="glass p-4 flex items-center gap-3"><span class="ms text-[22px]">groups</span><div class="flex-1"><div class="font-bold text-[14px]">Squad & meeting points</div></div><div class="toggle on"><i></i></div></div>
+        <div class="rounded-2xl p-3.5 flex items-start gap-2.5" style="background:rgba(255,255,255,.03);border:1px solid var(--border)"><span class="ms text-[18px] mt-0.5 text-[var(--muted)]">info</span><div class="text-[12px] text-[var(--muted)] leading-snug">Push needs system permission. Without it, you still get the in-app inbox.</div></div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">3 · Alert prefs</span><div class="cap-desc">Granular: set reminders + lead time, walk alerts, clashes, pings, squad. Push optional, inbox always.</div></div>
+    </div>
+
+    <!-- ============ 4 · PUSH (lock screen) ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr lock">
+      <div class="statusbar"><span style="color:#fff">22:39</span><span class="r" style="color:rgba(255,255,255,.6)"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body px-5 pt-6 relative z-10">
+        <div class="text-center mb-8"><div class="text-[64px] font-bold leading-none" style="font-family:'Albert Sans'">22:39</div><div class="text-[14px] text-white/60 font-semibold mt-1">Saturday, July 25</div></div>
+        <div class="space-y-2.5">
+          <div class="push flex gap-3">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#F5A623,#FFD060)"><span class="ms text-[18px]" style="color:#0F0D09">festival</span></div>
+            <div class="flex-1"><div class="flex justify-between"><div class="text-[12px] font-bold">FestPilot</div><div class="text-[11px] text-white/45">now</div></div><div class="text-[13px] font-bold mt-0.5">🏃 Leave now for Charlotte de Witte</div><div class="text-[12px] text-white/65">MAINSTAGE in 15 min · 6 min walk</div></div>
+          </div>
+          <div class="push flex gap-3">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#F5A623,#FFD060)"><span class="ms text-[18px]" style="color:#0F0D09">festival</span></div>
+            <div class="flex-1"><div class="flex justify-between"><div class="text-[12px] font-bold">FestPilot</div><div class="text-[11px] text-white/45">2m</div></div><div class="text-[13px] font-bold mt-0.5">Ana pinged you 👋</div><div class="text-[12px] text-white/65">"where are you?" — from MAINSTAGE</div></div>
+          </div>
+          <div class="push flex gap-3 opacity-80">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#F5A623,#FFD060)"><span class="ms text-[18px]" style="color:#0F0D09">festival</span></div>
+            <div class="flex-1"><div class="flex justify-between"><div class="text-[12px] font-bold">FestPilot</div><div class="text-[11px] text-white/45">12m</div></div><div class="text-[13px] font-bold mt-0.5">📍 Meeting point: Cactus Bar</div><div class="text-[12px] text-white/65">Mara wants to regroup now</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="pb-7 text-center relative z-10"><div class="w-32 h-1 rounded-full bg-white/30 mx-auto"></div></div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">4 · Push</span><div class="cap-desc">OS push is primary (Q-G): the "leave now" moment, a ping, a meeting point — mirrored in-app.</div></div>
+    </div>
+
+    <!-- ============ 5 · OFFLINE / SYNC ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>23:50</span><span class="r"><span class="ms text-[16px]" style="color:#f08a73">signal_cellular_connected_no_internet_4_bar</span><span class="ms text-[16px]">battery_2_bar</span></span></div>
+      <div class="px-5 pt-2 flex-shrink-0">
+        <div class="rounded-2xl p-3 flex items-center gap-2.5" style="background:rgba(224,86,59,.12);border:1px solid rgba(224,86,59,.35)"><span class="ms text-[20px]" style="color:#f08a73">cloud_off</span><div class="flex-1"><div class="text-[13px] font-bold">You're offline</div><div class="text-[11px] text-[var(--muted)]">Showing your saved plan · synced 4 min ago</div></div></div>
+      </div>
+      <div class="px-7 pt-4 pb-1 flex-shrink-0"><div class="label">YOUR PLAN · STILL WORKS</div><h1 class="poster text-[24px] font-bold leading-none mt-1">Now & Next</h1></div>
+      <div class="body px-5 pt-2 space-y-2.5">
+        <div class="glass p-3.5 flex items-center gap-3"><div class="text-center w-11"><div class="poster text-[15px] font-bold leading-none">23:30</div></div><div class="flex-1"><div class="flex items-center gap-2"><span class="dot" style="background:var(--s-core)"></span><span class="font-bold text-[14px]">ARTBAT</span></div><div class="text-[11px] text-[var(--muted)] mt-0.5">CORE · cached</div></div><span class="ms text-[var(--muted)]">bookmark</span></div>
+        <div class="glass p-3.5 flex items-center gap-3"><div class="text-center w-11"><div class="poster text-[15px] font-bold leading-none">01:00</div></div><div class="flex-1"><div class="flex items-center gap-2"><span class="dot" style="background:var(--s-free)"></span><span class="font-bold text-[14px]">Adriatique</span></div><div class="text-[11px] text-[var(--muted)] mt-0.5">FREEDOM · cached</div></div><span class="ms text-[var(--muted)]">bookmark</span></div>
+        <div class="rounded-2xl p-3.5 flex items-start gap-2.5 mt-2" style="background:rgba(255,255,255,.03);border:1px solid var(--border)"><span class="ms text-[18px] mt-0.5" style="color:var(--accent)">sync</span><div class="text-[12px] text-[var(--muted)] leading-snug">Friend locations & live changes pause offline. Edits you make now <b class="text-[var(--ink)]">sync automatically</b> when you reconnect.</div></div>
+      </div>
+      <div class="nav">
+        <div class="navitem active"><span class="ms">bolt</span>Now</div>
+        <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+        <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+        <div class="navitem"><span class="ms">map</span>Map</div>
+        <div class="navitem"><span class="ms">group</span>Squad</div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">5 · Offline</span><div class="cap-desc">Offline-first: cached plan stays usable; live presence pauses; edits queue & auto-sync on reconnect.</div></div>
+    </div>
+
+    <!-- ============ 6 · EMPTY / LOADING / ERROR ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>09:12</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body px-6 pt-4">
+        <!-- EMPTY -->
+        <div class="label mb-2">Empty</div>
+        <div class="glass p-6 flex flex-col items-center text-center mb-5">
+          <span class="ms text-[40px] mb-2" style="color:var(--accent)">event_busy</span>
+          <div class="font-bold text-[15px]">No plan yet</div>
+          <div class="text-[12px] text-[var(--muted)] mt-1 mb-3">Favorite acts and lock your must-sees to build your timeline.</div>
+          <button class="pill" style="background:var(--accent);color:var(--bg);padding:8px 16px">Browse lineup</button>
+        </div>
+        <!-- LOADING -->
+        <div class="label mb-2">Loading</div>
+        <div class="space-y-2 mb-5">
+          <div class="glass p-3.5 flex items-center gap-3"><div class="shimmer w-11 h-8"></div><div class="flex-1 space-y-1.5"><div class="shimmer h-3 w-2/3"></div><div class="shimmer h-2.5 w-1/3"></div></div></div>
+          <div class="glass p-3.5 flex items-center gap-3"><div class="shimmer w-11 h-8"></div><div class="flex-1 space-y-1.5"><div class="shimmer h-3 w-1/2"></div><div class="shimmer h-2.5 w-2/5"></div></div></div>
+        </div>
+        <!-- ERROR -->
+        <div class="label mb-2">Error</div>
+        <div class="glass p-6 flex flex-col items-center text-center" style="border-color:rgba(224,86,59,.3)">
+          <span class="ms text-[40px] mb-2" style="color:#f08a73">cloud_alert</span>
+          <div class="font-bold text-[15px]">Couldn't load the lineup</div>
+          <div class="text-[12px] text-[var(--muted)] mt-1 mb-3">Check your connection and try again.</div>
+          <button class="pill glass" style="color:var(--ink);padding:8px 16px"><span class="ms text-[15px]">refresh</span>Retry</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">6 · System states</span><div class="cap-desc">The reference set: empty (with a way out), loading skeletons, and error + retry.</div></div>
+    </div>
+
+  </div>
+  <p class="text-center text-white/30 text-[11px] mt-16">FestPilot · Design pass · Batch 6 of 8 (Gaps, notifications & system states) · 2026-06-23 · wireframes/directions/28</p>
+</div>
+</body>
+</html>
