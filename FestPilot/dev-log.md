@@ -11,7 +11,7 @@
   missing/partial** → `brain/documents/2026-06-23-screen-inventory-and-open-questions.md`. The orchestrator was
   written before this and must be **upgraded to be screen-complete** after the design pass. New order:
   **design missing screens (Amber Glass) → update brain UI docs → upgrade orchestrator → THEN build.**
-- Active Phase / Gate: **DESIGN PASS — Batches 1 (Squad formation) + 2 (group timetable) + 3 (Presence & consent) DELIVERED; awaiting Julio's review.** §4 answered → DEC-039.
+- Active Phase / Gate: **DESIGN PASS — Batches 1–4 DELIVERED (Squad formation · group timetable · Presence & consent · Meeting points & safety); awaiting Julio's review.** §4 answered → DEC-039.
 - (Was: P0 G0.1 bring-up — intake answered, decisions locked DEC-038; deferred until design-ready.)
 - Last green test run: 2026-06-23 — server **25 pass / 0 fail** (web has no tests yet)
 - typecheck / build: clean (server + web)
@@ -60,7 +60,9 @@
   split view · needs-input) → apply Julio's edits.
 - **Batch 3** delivered (`25-amber-presence-consent.html`, 6 screens: pre-prompt · OS dialog · sharing mode
   (stage/precise-60min/ghost) · where's-the-squad · precise-active control · privacy settings).
-- Then **Batch 4 — meeting points & safety** · B5 identity/settings ·
+- **Batch 4** delivered (`26-amber-meeting-safety.html`, 6 screens: pick spot · details · active detail w/ ETAs ·
+  lifecycle (here/on-the-way/expired/cancelled) · "I'm lost" menu · safety-active broadcast + nearest help).
+- Then **Batch 5 — identity/account/settings/profile** ·
   B6 personal gaps+notifications · B7 map POI+stage-routing · B8 admin.
 - After all batches + brain UI update: **upgrade the orchestrator to be screen-complete**, then resume P0 G0.1
   (slim SVG → D1 create+migrate → deploy Worker+Pages `festpilot.pages.dev` → live lineup API + map).
