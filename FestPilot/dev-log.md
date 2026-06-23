@@ -11,7 +11,7 @@
   missing/partial** → `brain/documents/2026-06-23-screen-inventory-and-open-questions.md`. The orchestrator was
   written before this and must be **upgraded to be screen-complete** after the design pass. New order:
   **design missing screens (Amber Glass) → update brain UI docs → upgrade orchestrator → THEN build.**
-- Active Phase / Gate: **DESIGN PASS — Batches 1–6 DELIVERED (Squad formation · group timetable · Presence & consent · Meeting points & safety · Identity/account/settings · Gaps/notifications/system-states); awaiting Julio's review.** §4 answered → DEC-039.
+- Active Phase / Gate: **DESIGN PASS — Batches 1–7 DELIVERED (Squad formation · group timetable · Presence & consent · Meeting points & safety · Identity/account/settings · Gaps/notifications/system-states · Map POI & routing); B8 (Admin) is the last. Awaiting Julio's review.** §4 answered → DEC-039.
 - (Was: P0 G0.1 bring-up — intake answered, decisions locked DEC-038; deferred until design-ready.)
 - Last green test run: 2026-06-23 — server **25 pass / 0 fail** (web has no tests yet)
 - typecheck / build: clean (server + web)
@@ -68,7 +68,9 @@
 - **Batch 6** delivered (`28-amber-states-notifications.html`, 6 screens: personal gap (+ first-class breaks, Q-L) ·
   notification inbox (Q-G) · alert prefs (reminders+lead time, walk alerts, clashes, pings, squad) · OS push lock-screen ·
   offline/sync · empty/loading/error states).
-- Then **Batch 7 — map POI layer + stage-to-stage routing** ·
+- **Batch 7** delivered (`29-amber-map-poi-routing.html`, 6 screens: map+POI layer (filter chips) · nearest essentials ·
+  POI detail · stage-to-stage routing ("leave by" nudge) · walking nav · layers/legend — DEC-039 Q-J).
+- Then **Batch 8 — Admin** (last batch) ·
   B6 personal gaps+notifications · B7 map POI+stage-routing · B8 admin.
 - After all batches + brain UI update: **upgrade the orchestrator to be screen-complete**, then resume P0 G0.1
   (slim SVG → D1 create+migrate → deploy Worker+Pages `festpilot.pages.dev` → live lineup API + map).

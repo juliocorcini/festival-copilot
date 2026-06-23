@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#29 Amber Glass — Batch 7: Map POI & stage routing</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--danger:#E0563B;--ok:#16A34A;--help:#2DB6A6;
+  --s-main:#FF5A36;--s-core:#16A34A;--s-free:#0EA5E9;--s-cage:#F59E0B;--s-elix:#7C3AED;
+  --p-wc:#5cc3f5;--p-water:#2DB6A6;--p-food:#F5A623;--p-med:#E0563B;--p-bar:#EC4899;--p-atm:#94a3b8}
+*{box-sizing:border-box}*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+body{font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;background:radial-gradient(90% 60% at 50% 0%,#1a140a,#08070a 60%)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;flex-shrink:0;
+  background:radial-gradient(ellipse 120% 55% at 50% 10%,rgba(245,166,35,.10),transparent 50%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.scr{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.body{flex:1;overflow:hidden;position:relative}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),rgba(20,17,12,.55);
+  border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.ava{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0}
+.statusbar{padding:16px 28px 4px;display:flex;justify-content:space-between;font-size:12px;font-weight:600;flex-shrink:0;position:relative;z-index:5}
+.statusbar .r{color:var(--muted);display:flex;align-items:center;gap:4px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 26px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+.btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.btn-ghost{background:var(--glass);border:1px solid var(--border);color:var(--ink);font-weight:700}
+.chip{font-size:12px;font-weight:700;padding:7px 12px;border-radius:99px;background:rgba(20,17,12,.7);border:1px solid var(--border);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;backdrop-filter:blur(10px)}
+.chip.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg);border-color:transparent}
+.pill{font-size:10px;font-weight:800;padding:4px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:3px}
+.toggle{width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,.12);position:relative;flex-shrink:0}
+.toggle.on{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.toggle i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.toggle.on i{left:21px}
+.cap-badge{font-size:11px;font-weight:800;padding:4px 12px;border-radius:99px;background:var(--accent);color:#0F0D09}
+.cap-desc{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.4;padding:0 10px}
+.caption{width:390px;text-align:center;margin-top:14px}
+.cell{display:flex;flex-direction:column;align-items:center}
+.sheet{position:absolute;left:0;right:0;bottom:0;border-radius:28px 28px 0 0;background:linear-gradient(160deg,rgba(36,30,20,.97),rgba(18,15,10,.99));border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 20px 24px;z-index:6}
+.grip{width:40px;height:4px;border-radius:99px;background:rgba(255,255,255,.2);margin:6px auto 12px}
+.maptile{position:absolute;inset:0;background:
+  radial-gradient(circle at 25% 30%,rgba(22,163,74,.12),transparent 26%),
+  radial-gradient(circle at 75% 70%,rgba(14,165,233,.1),transparent 30%),
+  linear-gradient(135deg,#13231a,#0c130f)}
+.maptile::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:40px 40px}
+.mpin{position:absolute;width:30px;height:30px;border-radius:50%;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;transform:translate(-50%,-50%);z-index:2}
+.poi{position:absolute;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:translate(-50%,-100%) rotate(45deg);display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(0,0,0,.3)}
+.poi .ms{transform:rotate(-45deg);font-size:13px;color:#0a0a0a}
+.stagelbl{position:absolute;transform:translate(-50%,-50%);font-family:"Oswald";font-weight:700;font-size:10px;letter-spacing:.05em;color:rgba(255,255,255,.85);background:rgba(0,0,0,.35);padding:2px 6px;border-radius:6px;white-space:nowrap}
+</style>
+</head>
+<body class="min-h-screen py-12 px-6">
+<div class="max-w-[1500px] mx-auto">
+  <div class="text-center mb-1 text-[12px] tracking-[.28em] text-white/40 font-semibold">FESTPILOT · UI · DESIGN PASS</div>
+  <h1 class="poster text-4xl md:text-5xl font-bold text-center">Batch 7 — Map POI & stage routing</h1>
+  <p class="text-center text-white/55 mt-3 max-w-3xl mx-auto text-sm">
+    The map grows up (DEC-039 Q-J): a filterable <b style="color:#F5A623">POI layer</b> (toilets · water · food · medical · bars),
+    a one-tap <b style="color:#F5A623">"nearest essentials"</b>, POI detail, and <b style="color:#F5A623">stage-to-stage routing</b>
+    with walk time + a "leave by" nudge, live walking guidance, and a layers/legend panel. Built on the same georeferenced
+    SVG (affine overlay) as #19.
+  </p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 justify-center mt-12">
+
+    <!-- ============ 1 · MAP + POI LAYER ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>16:30</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body">
+        <div class="maptile">
+          <div class="stagelbl" style="left:30%;top:26%">MAINSTAGE</div>
+          <div class="stagelbl" style="left:72%;top:40%">CAGE</div>
+          <div class="stagelbl" style="left:58%;top:74%">FREEDOM</div>
+          <!-- POIs -->
+          <div class="poi" style="left:44%;top:44%;background:var(--p-wc)"><span class="ms">wc</span></div>
+          <div class="poi" style="left:60%;top:52%;background:var(--p-water)"><span class="ms">water_drop</span></div>
+          <div class="poi" style="left:38%;top:62%;background:var(--p-food)"><span class="ms">restaurant</span></div>
+          <div class="poi" style="left:66%;top:30%;background:var(--p-med)"><span class="ms">medical_services</span></div>
+          <div class="poi" style="left:52%;top:36%;background:var(--p-bar)"><span class="ms">local_bar</span></div>
+          <!-- friends -->
+          <div class="mpin" style="left:32%;top:30%;background:var(--s-main)">AN</div>
+          <div class="mpin" style="left:50%;top:58%;background:var(--accent);color:#0F0D09">JU</div>
+        </div>
+        <!-- search + filters -->
+        <div class="absolute top-2 left-0 right-0 px-4 z-[4]">
+          <div class="glass flex items-center gap-2 px-3 py-2.5 mb-2"><span class="ms text-[20px] text-[var(--muted)]">search</span><span class="text-[13px] text-[var(--muted)] flex-1">Search stages, friends, places</span></div>
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            <span class="chip on">All</span>
+            <span class="chip"><span class="ms text-[14px]" style="color:var(--p-wc)">wc</span>Toilets</span>
+            <span class="chip"><span class="ms text-[14px]" style="color:var(--p-water)">water_drop</span>Water</span>
+            <span class="chip"><span class="ms text-[14px]" style="color:var(--p-food)">restaurant</span>Food</span>
+            <span class="chip"><span class="ms text-[14px]" style="color:var(--p-med)">medical_services</span>Medical</span>
+          </div>
+        </div>
+        <!-- FABs -->
+        <div class="absolute right-4 bottom-24 flex flex-col gap-2.5 z-[4]">
+          <button class="w-11 h-11 rounded-full glass flex items-center justify-center"><span class="ms text-[20px]">layers</span></button>
+          <button class="w-11 h-11 rounded-full glass flex items-center justify-center"><span class="ms text-[20px]" style="color:var(--accent)">my_location</span></button>
+        </div>
+        <!-- nearest peek -->
+        <div class="absolute left-4 right-4 bottom-4 z-[4]"><button class="glass w-full flex items-center gap-2.5 px-4 py-3"><span class="ms text-[20px]" style="color:var(--p-water)">explore</span><span class="text-[13px] font-bold flex-1 text-left">Find nearest essentials</span><span class="ms text-[var(--muted)]">expand_less</span></button></div>
+      </div>
+      <div class="nav">
+        <div class="navitem"><span class="ms">bolt</span>Now</div>
+        <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+        <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+        <div class="navitem active"><span class="ms">map</span>Map</div>
+        <div class="navitem"><span class="ms">group</span>Squad</div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">1 · Map + POI</span><div class="cap-desc">Stages + friends + POI pins, category filter chips, layers FAB, and "nearest essentials" peek.</div></div>
+    </div>
+
+    <!-- ============ 2 · NEAREST ESSENTIALS ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>16:31</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body">
+        <div class="maptile" style="filter:brightness(.6)">
+          <div class="mpin" style="left:50%;top:36%;background:var(--accent);color:#0F0D09">JU</div>
+          <div class="poi" style="left:44%;top:30%;background:var(--p-wc)"><span class="ms">wc</span></div>
+          <div class="poi" style="left:60%;top:42%;background:var(--p-water)"><span class="ms">water_drop</span></div>
+        </div>
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="text-[15px] font-bold mb-3">Nearest to you</div>
+          <div class="space-y-2">
+            <div class="glass p-3 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(92,195,245,.16)"><span class="ms text-[19px]" style="color:var(--p-wc)">wc</span></div><div class="flex-1"><div class="text-[13px] font-bold">Toilets · Block C</div><div class="text-[11px] text-[var(--muted)]">40m · 1 min · usually quiet</div></div><button class="pill" style="background:var(--accent);color:var(--bg)">Go</button></div>
+            <div class="glass p-3 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(45,182,166,.16)"><span class="ms text-[19px]" style="color:var(--p-water)">water_drop</span></div><div class="flex-1"><div class="text-[13px] font-bold">Free water point 2</div><div class="text-[11px] text-[var(--muted)]">75m · 2 min</div></div><button class="pill glass" style="color:var(--ink)">Go</button></div>
+            <div class="glass p-3 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(224,86,59,.16)"><span class="ms text-[19px]" style="color:var(--p-med)">medical_services</span></div><div class="flex-1"><div class="text-[13px] font-bold">Medical Post B</div><div class="text-[11px] text-[var(--muted)]">140m · 2 min · by FREEDOM</div></div><button class="pill glass" style="color:var(--ink)">Go</button></div>
+            <div class="glass p-3 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(148,163,184,.16)"><span class="ms text-[19px]" style="color:var(--p-atm)">local_atm</span></div><div class="flex-1"><div class="text-[13px] font-bold">ATM / Cashless top-up</div><div class="text-[11px] text-[var(--muted)]">210m · 3 min</div></div><button class="pill glass" style="color:var(--ink)">Go</button></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">2 · Nearest essentials</span><div class="cap-desc">The "I need it now" panel: nearest toilet / water / medical / ATM with distance, walk time, crowd.</div></div>
+    </div>
+
+    <!-- ============ 3 · POI DETAIL ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>16:32</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body">
+        <div class="maptile" style="filter:brightness(.65)">
+          <div class="poi" style="left:50%;top:34%;background:var(--p-wc);width:38px;height:38px;box-shadow:0 0 0 8px rgba(92,195,245,.22)"><span class="ms" style="font-size:20px">wc</span></div>
+          <div class="mpin" style="left:42%;top:58%;background:var(--accent);color:#0F0D09">JU</div>
+          <svg class="absolute inset-0 w-full h-full"><path d="M42% 58% Q 46% 44% 50% 36%" stroke="var(--accent)" stroke-width="3" fill="none" stroke-dasharray="6 6"/></svg>
+        </div>
+        <div class="absolute top-3 left-4 z-[4]"><button class="w-9 h-9 rounded-full glass flex items-center justify-center"><span class="ms text-[20px]">arrow_back</span></button></div>
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:rgba(92,195,245,.16)"><span class="ms text-[26px]" style="color:var(--p-wc)">wc</span></div>
+            <div class="flex-1"><div class="poster text-[19px] font-bold leading-none">Toilets · Block C</div><div class="text-[12px] text-[var(--muted)] mt-1">40m · 1 min walk · between MAINSTAGE & CAGE</div></div>
+          </div>
+          <div class="flex gap-2 mb-4">
+            <div class="glass flex-1 p-2.5 text-center"><div class="text-[11px] text-[var(--muted)]">Crowd</div><div class="text-[13px] font-bold" style="color:var(--ok)">Quiet</div></div>
+            <div class="glass flex-1 p-2.5 text-center"><div class="text-[11px] text-[var(--muted)]">Type</div><div class="text-[13px] font-bold">+ accessible</div></div>
+            <div class="glass flex-1 p-2.5 text-center"><div class="text-[11px] text-[var(--muted)]">Distance</div><div class="text-[13px] font-bold">40m</div></div>
+          </div>
+          <button class="btn btn-primary mb-2.5"><span class="ms text-[18px]">navigation</span>Navigate here</button>
+          <div class="flex gap-2.5">
+            <button class="btn btn-ghost flex-1"><span class="ms text-[17px]">flag</span>Meeting point</button>
+            <button class="btn btn-ghost flex-1"><span class="ms text-[17px]">ios_share</span>Share</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">3 · POI detail</span><div class="cap-desc">Selected place: distance/walk, crowd & accessibility, then Navigate · make it a meeting point · share.</div></div>
+    </div>
+
+    <!-- ============ 4 · STAGE-TO-STAGE ROUTING ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>22:48</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-4 pt-2 pb-2 flex-shrink-0 z-[5]">
+        <div class="glass p-3 space-y-2">
+          <div class="flex items-center gap-2.5"><span class="ms text-[18px]" style="color:var(--accent)">trip_origin</span><div class="flex-1 text-[13px] font-bold">MAINSTAGE</div><span class="text-[11px] text-[var(--muted)]">you're here</span></div>
+          <div class="h-px bg-white/10 ml-7"></div>
+          <div class="flex items-center gap-2.5"><span class="ms text-[18px]" style="color:var(--s-cage)">place</span><div class="flex-1 text-[13px] font-bold">CAGE</div><span class="ms text-[var(--muted)] text-[18px]">swap_vert</span></div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="maptile">
+          <div class="stagelbl" style="left:28%;top:74%">MAINSTAGE</div>
+          <div class="stagelbl" style="left:74%;top:24%">CAGE</div>
+          <svg class="absolute inset-0 w-full h-full"><polyline points="28%,72%  40%,60%  46%,46%  62%,38%  74%,28%" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div class="mpin" style="left:28%;top:72%;background:var(--s-main)">●</div>
+          <div class="mpin" style="left:74%;top:28%;background:var(--s-cage)">●</div>
+          <div class="poi" style="left:46%;top:46%;background:var(--p-water)"><span class="ms">water_drop</span></div>
+        </div>
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="flex items-center justify-between mb-2">
+            <div><div class="poster text-[24px] font-bold leading-none">7 min</div><div class="text-[12px] text-[var(--muted)] mt-1">600m · mostly open path</div></div>
+            <div class="text-right"><div class="pill" style="background:rgba(245,166,35,.16);color:var(--accent)"><span class="ms text-[12px]">schedule</span>Leave by 22:53</div><div class="text-[11px] text-[var(--muted)] mt-1.5">Amelie Lens starts 23:00</div></div>
+          </div>
+          <div class="glass p-2.5 flex items-center gap-2 mb-3 text-[12px]"><span class="ms text-[16px]" style="color:var(--p-water)">water_drop</span>Water point on the way · <span class="text-[var(--muted)]">+1 min detour</span></div>
+          <button class="btn btn-primary"><span class="ms text-[18px]">directions_walk</span>Start walking</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">4 · Stage routing</span><div class="cap-desc">From→To stages, route + walk time, a "leave by" nudge tied to set start, POIs on the way.</div></div>
+    </div>
+
+    <!-- ============ 5 · WALKING NAV ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>22:54</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body">
+        <div class="maptile">
+          <svg class="absolute inset-0 w-full h-full"><polyline points="46%,80% 52%,60% 50%,44% 62%,34%" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div class="mpin" style="left:46%;top:80%;background:var(--accent);color:#0F0D09;width:34px;height:34px;box-shadow:0 0 0 7px rgba(245,166,35,.2)"><span class="ms text-[18px]">navigation</span></div>
+          <div class="stagelbl" style="left:62%;top:30%">CAGE</div>
+          <div class="mpin" style="left:54%;top:58%;background:var(--s-main)">AN</div>
+        </div>
+        <!-- top guidance -->
+        <div class="absolute top-3 left-4 right-4 z-[4]">
+          <div class="glass p-4 flex items-center gap-3">
+            <span class="ms text-[34px]" style="color:var(--accent)">turn_slight_right</span>
+            <div class="flex-1"><div class="poster text-[20px] font-bold leading-none">Head to CAGE</div><div class="text-[12px] text-[var(--muted)] mt-1">6 min · 480m left · pass the Ferris wheel</div></div>
+          </div>
+          <div class="glass mt-2 p-2.5 flex items-center gap-2 text-[12px]"><div class="ava w-6 h-6 text-[9px]" style="background:#FF5A36">AN</div><span class="font-semibold">Ana is also heading to CAGE</span><span class="text-[var(--muted)] ml-auto">~2 min ahead</span></div>
+        </div>
+        <div class="absolute left-4 right-4 bottom-4 z-[4]"><button class="btn btn-ghost" style="background:rgba(224,86,59,.16);border-color:rgba(224,86,59,.4);color:#f08a73"><span class="ms text-[18px]">close</span>End</button></div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">5 · Walking nav</span><div class="cap-desc">Lightweight in-progress guidance: next move, distance left, a landmark cue, friends on the same route.</div></div>
+    </div>
+
+    <!-- ============ 6 · LAYERS & LEGEND ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>16:35</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="body">
+        <div class="maptile" style="filter:brightness(.55)"></div>
+        <div class="sheet" style="max-height:88%;overflow:auto">
+          <div class="grip"></div>
+          <div class="text-[15px] font-bold mb-3">Map layers</div>
+          <div class="space-y-2 mb-4">
+            <div class="glass p-3 flex items-center gap-3"><span class="ms text-[20px]" style="color:var(--accent)">group</span><div class="flex-1 text-[13px] font-bold">Friends</div><div class="toggle on"><i></i></div></div>
+            <div class="glass p-3 flex items-center gap-3"><span class="ms text-[20px]" style="color:var(--accent)">festival</span><div class="flex-1 text-[13px] font-bold">Stages</div><div class="toggle on"><i></i></div></div>
+            <div class="glass p-3 flex items-center gap-3"><span class="ms text-[20px]" style="color:var(--accent)">flag</span><div class="flex-1 text-[13px] font-bold">Meeting points</div><div class="toggle on"><i></i></div></div>
+            <div class="glass p-3 flex items-center gap-3"><span class="ms text-[20px]" style="color:var(--accent)">route</span><div class="flex-1 text-[13px] font-bold">Your route</div><div class="toggle on"><i></i></div></div>
+          </div>
+          <div class="text-[15px] font-bold mb-3">Points of interest</div>
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <div class="glass p-2.5 flex items-center gap-2"><span class="ms text-[17px]" style="color:var(--p-wc)">wc</span><span class="text-[12px] font-bold flex-1">Toilets</span><div class="toggle on" style="transform:scale(.8)"><i></i></div></div>
+            <div class="glass p-2.5 flex items-center gap-2"><span class="ms text-[17px]" style="color:var(--p-water)">water_drop</span><span class="text-[12px] font-bold flex-1">Water</span><div class="toggle on" style="transform:scale(.8)"><i></i></div></div>
+            <div class="glass p-2.5 flex items-center gap-2"><span class="ms text-[17px]" style="color:var(--p-food)">restaurant</span><span class="text-[12px] font-bold flex-1">Food</span><div class="toggle on" style="transform:scale(.8)"><i></i></div></div>
+            <div class="glass p-2.5 flex items-center gap-2"><span class="ms text-[17px]" style="color:var(--p-med)">medical_services</span><span class="text-[12px] font-bold flex-1">Medical</span><div class="toggle on" style="transform:scale(.8)"><i></i></div></div>
+            <div class="glass p-2.5 flex items-center gap-2"><span class="ms text-[17px]" style="color:var(--p-bar)">local_bar</span><span class="text-[12px] font-bold flex-1">Bars</span><div class="toggle" style="transform:scale(.8)"><i></i></div></div>
+            <div class="glass p-2.5 flex items-center gap-2"><span class="ms text-[17px]" style="color:var(--p-atm)">local_atm</span><span class="text-[12px] font-bold flex-1">ATMs</span><div class="toggle" style="transform:scale(.8)"><i></i></div></div>
+          </div>
+          <div class="text-[15px] font-bold mb-2">Map style</div>
+          <div class="seg" style="display:flex;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:14px;padding:3px"><div style="flex:1;text-align:center;padding:8px;border-radius:11px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)">Auto</div><div style="flex:1;text-align:center;padding:8px;font-size:13px;font-weight:700;color:var(--muted)">Day</div><div style="flex:1;text-align:center;padding:8px;font-size:13px;font-weight:700;color:var(--muted)">Night</div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">6 · Layers</span><div class="cap-desc">Toggle friends / stages / meeting points / route + each POI category, and the day/night map style.</div></div>
+    </div>
+
+  </div>
+  <p class="text-center text-white/30 text-[11px] mt-16">FestPilot · Design pass · Batch 7 of 8 (Map POI & stage routing) · 2026-06-23 · wireframes/directions/29</p>
+</div>
+</body>
+</html>
