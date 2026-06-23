@@ -11,7 +11,7 @@
   missing/partial** → `brain/documents/2026-06-23-screen-inventory-and-open-questions.md`. The orchestrator was
   written before this and must be **upgraded to be screen-complete** after the design pass. New order:
   **design missing screens (Amber Glass) → update brain UI docs → upgrade orchestrator → THEN build.**
-- Active Phase / Gate: **DESIGN PASS — Batch 1 (Squad formation) DELIVERED; awaiting Julio's review.** §4 answered → DEC-039.
+- Active Phase / Gate: **DESIGN PASS — Batch 1 (Squad formation) + Batch 2 (Squad plan / group timetable) DELIVERED; awaiting Julio's review.** §4 answered → DEC-039.
 - (Was: P0 G0.1 bring-up — intake answered, decisions locked DEC-038; deferred until design-ready.)
 - Last green test run: 2026-06-23 — server **25 pass / 0 fail** (web has no tests yet)
 - typecheck / build: clean (server + web)
@@ -55,9 +55,10 @@
 - System default node is v18; **must `nvm use 22`** before any wrangler/build command (`.node-version` = 22 is set).
 
 ## Next
-- **Review Batch 1** (`brain/wireframes/directions/23-amber-groups-flow.html`, 8 screens) → apply Julio's edits.
-- Then **Batch 2 — Group timetable** (auto-plan per set, tally, owner override, per-block follow/own, favorites-fallback,
-  "group→X you're locked Y [Join]/[Keep]", split viz). Then B3 presence/consent · B4 meeting/safety · B5 identity/settings ·
+- **Review Batch 1** (`brain/wireframes/directions/23-amber-groups-flow.html`, 8 screens) + **Batch 2**
+  (`24-amber-group-timetable.html`, 6 screens: plan overview · block detail · locked-conflict+fallback · owner override ·
+  split view · needs-input) → apply Julio's edits.
+- Then **Batch 3 — presence/consent** · B4 meeting/safety · B5 identity/settings ·
   B6 personal gaps+notifications · B7 map POI+stage-routing · B8 admin.
 - After all batches + brain UI update: **upgrade the orchestrator to be screen-complete**, then resume P0 G0.1
   (slim SVG → D1 create+migrate → deploy Worker+Pages `festpilot.pages.dev` → live lineup API + map).

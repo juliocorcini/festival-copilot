@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#24 Amber Glass — Batch 2: Group shared timetable</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--danger:#E0563B;
+  --s-main:#FF5A36;--s-core:#16A34A;--s-free:#0EA5E9;--s-cage:#F59E0B;--s-elix:#7C3AED;--s-rose:#EC4899}
+*{box-sizing:border-box}*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+body{font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;background:radial-gradient(90% 60% at 50% 0%,#1a140a,#08070a 60%)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;flex-shrink:0;
+  background:radial-gradient(ellipse 120% 55% at 50% 10%,rgba(245,166,35,.10),transparent 50%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.scr{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.body{flex:1;overflow:auto}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),rgba(20,17,12,.5);
+  border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.ava{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0}
+.statusbar{padding:16px 28px 4px;display:flex;justify-content:space-between;font-size:12px;font-weight:600;flex-shrink:0}
+.statusbar .r{color:var(--muted);display:flex;align-items:center;gap:4px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 26px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+.btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.btn-ghost{background:var(--glass);border:1px solid var(--border);color:var(--ink);font-weight:700}
+.field{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:13px 15px;color:var(--ink);font-size:14px;font-weight:600;outline:none}
+.field::placeholder{color:var(--muted)}
+.label{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.seg{display:flex;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:14px;padding:3px}
+.seg div{flex:1;text-align:center;padding:8px;border-radius:11px;font-size:13px;font-weight:700;color:var(--muted)}
+.seg div.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.pill{font-size:10px;font-weight:800;padding:4px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:3px}
+.pill-follow{background:rgba(245,166,35,.16);color:var(--accent)}
+.pill-own{background:rgba(14,165,233,.16);color:#5cc3f5}
+.pill-warn{background:rgba(224,86,59,.16);color:#f08a73}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
+.tally{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;display:flex}
+.caption{width:390px;text-align:center;margin-top:14px}
+.cap-badge{font-size:11px;font-weight:800;padding:4px 12px;border-radius:99px;background:var(--accent);color:#0F0D09}
+.cap-desc{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.4;padding:0 10px}
+.cell{display:flex;flex-direction:column;align-items:center}
+.nowline{display:flex;align-items:center;gap:8px;margin:2px 0}
+.nowline .l{flex:1;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.nowline span{font-size:10px;font-weight:800;color:var(--accent);letter-spacing:.12em}
+</style>
+</head>
+<body class="min-h-screen py-12 px-6">
+<div class="max-w-[1400px] mx-auto">
+  <div class="text-center mb-1 text-[12px] tracking-[.28em] text-white/40 font-semibold">FESTPILOT · UI · DESIGN PASS</div>
+  <h1 class="poster text-4xl md:text-5xl font-bold text-center">Batch 2 — Squad plan (group timetable)</h1>
+  <p class="text-center text-white/55 mt-3 max-w-3xl mx-auto text-sm">
+    Pillar 3a's core. Auto-built per set from everyone's <b style="color:#F5A623">locked picks</b> (plurality);
+    each member <b style="color:#F5A623">follows or does their own</b> per block; the owner can
+    <b style="color:#F5A623">override</b>; a locked must-see is <b style="color:#F5A623">never silently changed</b>
+    (Join/Keep + favorites-fallback); splitting is <b style="color:#F5A623">shown, never fought</b>. No voting (DEC-013/019/039).
+  </p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 justify-center mt-12">
+
+    <!-- ============ 1 · SQUAD PLAN OVERVIEW ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>21:48</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-7 pt-3 pb-2 flex items-center justify-between flex-shrink-0">
+        <div><div class="label">FAM JUNTOS · 7 PEOPLE</div><h1 class="poster text-[26px] font-bold leading-none mt-1">Squad plan</h1></div>
+        <button class="w-9 h-9 rounded-full glass flex items-center justify-center"><span class="ms text-[var(--accent)] text-[20px]">auto_awesome</span></button>
+      </div>
+      <div class="px-5 pb-2 flex-shrink-0">
+        <div class="seg"><div>Fri</div><div class="on">Sat</div><div>Sun</div></div>
+        <div class="text-[11px] text-[var(--muted)] mt-2 px-1">Auto-built from everyone's locked picks · tap a block to adjust</div>
+      </div>
+      <div class="body px-5 space-y-2.5 pt-1">
+        <!-- block: following -->
+        <div class="glass p-3.5 flex items-center gap-3">
+          <div class="text-center w-11 flex-shrink-0"><div class="poster text-[15px] font-bold leading-none">21:00</div></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2"><span class="dot" style="background:var(--s-cage)"></span><span class="font-bold text-[14px] truncate">Sara Landry</span></div>
+            <div class="text-[11px] text-[var(--muted)] mt-0.5">CAGE · 5 of 7 going</div>
+          </div>
+          <span class="pill pill-follow"><span class="ms text-[12px]">check</span>Following</span>
+        </div>
+        <!-- block: conflict (you locked elsewhere) -->
+        <div class="glass p-3.5 flex items-center gap-3" style="border-color:rgba(224,86,59,.35)">
+          <div class="text-center w-11 flex-shrink-0"><div class="poster text-[15px] font-bold leading-none">22:00</div></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2"><span class="dot" style="background:var(--s-main)"></span><span class="font-bold text-[14px] truncate">Charlotte de Witte</span></div>
+            <div class="text-[11px] text-[var(--muted)] mt-0.5">MAINSTAGE · 4 going · 2 split</div>
+          </div>
+          <span class="pill pill-warn"><span class="ms text-[12px]">lock</span>You: Adriatique</span>
+        </div>
+        <div class="nowline"><span>NOW · 23:10</span><div class="l"></div></div>
+        <!-- block: following -->
+        <div class="glass p-3.5 flex items-center gap-3">
+          <div class="text-center w-11 flex-shrink-0"><div class="poster text-[15px] font-bold leading-none">23:30</div></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2"><span class="dot" style="background:var(--s-core)"></span><span class="font-bold text-[14px] truncate">ARTBAT</span></div>
+            <div class="text-[11px] text-[var(--muted)] mt-0.5">CORE · 6 of 7 going</div>
+          </div>
+          <span class="pill pill-follow"><span class="ms text-[12px]">check</span>Following</span>
+        </div>
+        <!-- block: your own -->
+        <div class="glass p-3.5 flex items-center gap-3">
+          <div class="text-center w-11 flex-shrink-0"><div class="poster text-[15px] font-bold leading-none">01:00</div></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2"><span class="dot" style="background:var(--s-free)"></span><span class="font-bold text-[14px] truncate">Adriatique</span></div>
+            <div class="text-[11px] text-[var(--muted)] mt-0.5">FREEDOM · 3 going · 3 split</div>
+          </div>
+          <span class="pill pill-own">Your own</span>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="navitem"><span class="ms">bolt</span>Now</div>
+        <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+        <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+        <div class="navitem"><span class="ms">map</span>Map</div>
+        <div class="navitem active"><span class="ms">group</span>Squad</div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">1 · Squad plan</span><div class="cap-desc">Per-set blocks; group pick + tally; your status (Following / Your own / locked-conflict). NOW line.</div></div>
+    </div>
+
+    <!-- ============ 2 · BLOCK DETAIL ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>21:49</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div><div class="label">Saturday</div><div class="poster text-[18px] font-bold leading-none">22:00 – 23:00</div></div></div>
+      <div class="body px-6 pt-2">
+        <div class="glass p-4">
+          <div class="label mb-2">Squad is going to</div>
+          <div class="flex items-center gap-3">
+            <span class="dot w-3.5 h-3.5" style="background:var(--s-main)"></span>
+            <div class="flex-1"><div class="poster text-[20px] font-bold leading-none">Charlotte de Witte</div><div class="text-[12px] text-[var(--muted)] mt-1">MAINSTAGE · plurality 4 of 7</div></div>
+          </div>
+          <div class="flex -space-x-2 mt-3">
+            <div class="ava w-8 h-8 text-[10px] border-2 border-[var(--bg)]" style="background:#FF5A36">AN</div>
+            <div class="ava w-8 h-8 text-[10px] border-2 border-[var(--bg)]" style="background:#7C3AED">TH</div>
+            <div class="ava w-8 h-8 text-[10px] border-2 border-[var(--bg)]" style="background:#16A34A">MA</div>
+            <div class="ava w-8 h-8 text-[10px] border-2 border-[var(--bg)]" style="background:#0EA5E9">LU</div>
+          </div>
+        </div>
+        <div class="label mt-5 mb-2">The split</div>
+        <div class="space-y-2">
+          <div class="glass p-3 flex items-center gap-2.5"><span class="dot" style="background:var(--s-core)"></span><span class="text-[13px] font-bold flex-1">ARTBAT · CORE</span><div class="flex -space-x-2"><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#EC4899">BR</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#F59E0B">VI</div></div></div>
+          <div class="glass p-3 flex items-center gap-2.5" style="border-color:rgba(245,166,35,.4)"><span class="dot" style="background:var(--s-free)"></span><span class="text-[13px] font-bold flex-1">Adriatique · FREEDOM <span class="text-[var(--accent)] font-semibold">· you</span></span><div class="ava w-7 h-7 text-[9px]" style="background:#F5A623;color:#0F0D09">JU</div></div>
+        </div>
+        <div class="glass mt-5 p-3.5 flex items-start gap-2.5" style="border-color:rgba(224,86,59,.3)">
+          <span class="ms text-[18px] mt-0.5" style="color:#f08a73">lock</span>
+          <div class="text-[12px] text-[var(--muted)] leading-snug">You're <b class="text-[var(--ink)]">locked on Adriatique</b> here. We won't change your plan — your call.</div>
+        </div>
+      </div>
+      <div class="px-6 pb-6 pt-2 space-y-2.5">
+        <button class="btn btn-primary"><span class="ms text-[18px]">groups</span>Join squad → Charlotte</button>
+        <div class="flex gap-2.5">
+          <button class="btn btn-ghost flex-1">Keep my lock</button>
+          <button class="btn btn-ghost flex-1"><span class="ms text-[17px]">edit</span>Override</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">2 · Block detail</span><div class="cap-desc">Who's going where (the split). Follow / keep / (owner) override. Locked = never auto-changed.</div></div>
+    </div>
+
+    <!-- ============ 3 · LOCKED CONFLICT + FALLBACK ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>21:50</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">close</button><div class="label">Heads up · Sat 22:00</div></div>
+      <div class="body px-6 pt-2">
+        <h1 class="poster text-[26px] font-bold leading-tight">The squad's going<br>somewhere else</h1>
+        <p class="text-[12px] text-[var(--muted)] mt-2 mb-4">Your locked must-see doesn't match the group this block. Your call — nothing changes on its own.</p>
+        <!-- group pick -->
+        <div class="glass p-4 mb-2.5">
+          <div class="label mb-1.5" style="color:var(--accent)">Squad pick · 4 of 7</div>
+          <div class="flex items-center gap-3"><span class="dot w-3.5 h-3.5" style="background:var(--s-main)"></span><div class="flex-1"><div class="poster text-[18px] font-bold leading-none">Charlotte de Witte</div><div class="text-[11px] text-[var(--muted)] mt-1">MAINSTAGE</div></div>
+            <div class="flex -space-x-2"><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#FF5A36">AN</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#7C3AED">TH</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#16A34A">+2</div></div>
+          </div>
+        </div>
+        <!-- your lock -->
+        <div class="glass p-4">
+          <div class="label mb-1.5">You locked · must-see</div>
+          <div class="flex items-center gap-3"><span class="dot w-3.5 h-3.5" style="background:var(--s-free)"></span><div class="flex-1"><div class="poster text-[18px] font-bold leading-none">Adriatique</div><div class="text-[11px] text-[var(--muted)] mt-1">FREEDOM</div></div><span class="ms text-[var(--accent)]">lock</span></div>
+        </div>
+        <!-- fallback -->
+        <div class="rounded-2xl p-4 mt-4" style="background:linear-gradient(135deg,rgba(245,166,35,.14),rgba(255,208,96,.03));border:1px solid rgba(245,166,35,.4)">
+          <div class="flex items-center gap-2 mb-1.5"><span class="ms text-[17px]" style="color:var(--accent)">favorite</span><span class="text-[12px] font-bold" style="color:var(--accent)">You also ❤ one near the squad</span></div>
+          <div class="flex items-center gap-3"><span class="dot" style="background:var(--s-core)"></span><div class="flex-1"><div class="font-bold text-[14px]">ARTBAT · CORE</div><div class="text-[11px] text-[var(--muted)]">2 friends there · closer to the group</div></div><button class="pill" style="background:var(--accent);color:var(--bg)">Go ARTBAT</button></div>
+        </div>
+      </div>
+      <div class="px-6 pb-6 pt-2 space-y-2.5">
+        <button class="btn btn-primary">Join the squad (Charlotte)</button>
+        <button class="btn btn-ghost">Keep Adriatique</button>
+        <p class="text-[11px] text-center text-[var(--muted)]">We never change a locked pick automatically.</p>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">3 · Locked conflict</span><div class="cap-desc">DEC-013 rule: "group→X, you locked Y · [Join]/[Keep]" + the favorites-fallback offer.</div></div>
+    </div>
+
+    <!-- ============ 4 · OWNER OVERRIDE ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>21:51</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center justify-between flex-shrink-0"><div class="flex items-center gap-3"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div><div class="label">Set squad pick · Sat 22:00</div></div></div><span class="pill" style="background:rgba(245,166,35,.16);color:var(--accent)">Owner</span></div>
+      <div class="body px-6 pt-2">
+        <div class="flex items-center gap-2 mb-3"><span class="ms text-[18px] text-[var(--muted)]">search</span><input class="field" placeholder="Search acts around 22:00"/></div>
+        <div class="space-y-2">
+          <div class="glass p-3 flex items-center gap-3" style="border-color:var(--accent)">
+            <span class="dot w-3 h-3" style="background:var(--s-main)"></span>
+            <div class="flex-1"><div class="font-bold text-[14px]">Charlotte de Witte</div><div class="text-[11px] text-[var(--muted)]">MAINSTAGE · auto pick · 4 picked</div></div>
+            <span class="ms" style="color:var(--accent)">radio_button_checked</span>
+          </div>
+          <div class="glass p-3 flex items-center gap-3">
+            <span class="dot w-3 h-3" style="background:var(--s-core)"></span>
+            <div class="flex-1"><div class="font-bold text-[14px]">ARTBAT</div><div class="text-[11px] text-[var(--muted)]">CORE · 2 picked</div></div>
+            <span class="ms text-[var(--muted)]">radio_button_unchecked</span>
+          </div>
+          <div class="glass p-3 flex items-center gap-3">
+            <span class="dot w-3 h-3" style="background:var(--s-free)"></span>
+            <div class="flex-1"><div class="font-bold text-[14px]">Adriatique</div><div class="text-[11px] text-[var(--muted)]">FREEDOM · 1 picked</div></div>
+            <span class="ms text-[var(--muted)]">radio_button_unchecked</span>
+          </div>
+          <div class="glass p-3 flex items-center gap-3">
+            <span class="dot w-3 h-3" style="background:var(--s-cage)"></span>
+            <div class="flex-1"><div class="font-bold text-[14px]">I Hate Models</div><div class="text-[11px] text-[var(--muted)]">CAGE · 0 picked</div></div>
+            <span class="ms text-[var(--muted)]">radio_button_unchecked</span>
+          </div>
+        </div>
+        <div class="glass mt-5 p-3.5 flex items-start gap-2.5"><span class="ms text-[18px] mt-0.5" style="color:var(--accent)">info</span><div class="text-[12px] text-[var(--muted)] leading-snug">Overrides the auto pick for everyone. Members can still tap <b class="text-[var(--ink)]">do my own</b>. You can revert to auto.</div></div>
+      </div>
+      <div class="px-6 pb-6 pt-2"><button class="btn btn-primary"><span class="ms text-[18px]">push_pin</span>Set as squad pick</button></div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">4 · Owner override</span><div class="cap-desc">Owner sets any act for a block (method=owner); auto pick marked; revertible.</div></div>
+    </div>
+
+    <!-- ============ 5 · SPLIT VIEW ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>22:01</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-6 pt-2 pb-2 flex items-center gap-3 flex-shrink-0"><button class="ms text-[var(--muted)] text-[22px]">arrow_back</button><div><div class="label">Saturday · 22:00</div></div></div>
+      <div class="body px-6 pt-2">
+        <h1 class="poster text-[26px] font-bold leading-tight">The squad splits<br>here 🪩</h1>
+        <p class="text-[12px] text-[var(--muted)] mt-2 mb-4">Totally normal — everyone sees who's where, and you can regroup after.</p>
+        <div class="space-y-3">
+          <div class="glass overflow-hidden">
+            <div class="h-1.5" style="background:var(--s-main)"></div>
+            <div class="p-3.5"><div class="flex items-center justify-between"><div class="font-bold text-[14px]">MAINSTAGE</div><span class="text-[12px] font-bold" style="color:var(--s-main)">4</span></div>
+              <div class="text-[11px] text-[var(--muted)] mb-2">Charlotte de Witte</div>
+              <div class="flex -space-x-2"><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#FF5A36">AN</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#7C3AED">TH</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#16A34A">MA</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#0EA5E9">LU</div></div>
+            </div>
+          </div>
+          <div class="glass overflow-hidden">
+            <div class="h-1.5" style="background:var(--s-core)"></div>
+            <div class="p-3.5"><div class="flex items-center justify-between"><div class="font-bold text-[14px]">CORE</div><span class="text-[12px] font-bold" style="color:var(--s-core)">2</span></div>
+              <div class="text-[11px] text-[var(--muted)] mb-2">ARTBAT</div>
+              <div class="flex -space-x-2"><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#EC4899">BR</div><div class="ava w-7 h-7 text-[9px] border-2 border-[var(--bg)]" style="background:#F59E0B">VI</div></div>
+            </div>
+          </div>
+          <div class="glass overflow-hidden" style="border-color:rgba(245,166,35,.4)">
+            <div class="h-1.5" style="background:var(--s-free)"></div>
+            <div class="p-3.5"><div class="flex items-center justify-between"><div class="font-bold text-[14px]">FREEDOM <span style="color:var(--accent)">· you</span></div><span class="text-[12px] font-bold" style="color:var(--s-free)">1</span></div>
+              <div class="text-[11px] text-[var(--muted)] mb-2">Adriatique</div>
+              <div class="ava w-7 h-7 text-[9px]" style="background:#F5A623;color:#0F0D09">JU</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 pb-6 pt-2"><button class="btn btn-ghost"><span class="ms text-[18px]">pin_drop</span>Set a meet-up after</button></div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">5 · Split view</span><div class="cap-desc">Splitting framed as normal; who's at each stage; CTA to a post-set meeting point (B4).</div></div>
+    </div>
+
+    <!-- ============ 6 · NEEDS INPUT / NUDGE ============ -->
+    <div class="cell">
+    <div class="phone"><div class="scr">
+      <div class="statusbar"><span>18:20</span><span class="r"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+      <div class="px-7 pt-3 pb-2 flex items-center justify-between flex-shrink-0">
+        <div><div class="label">FAM JUNTOS · 7 PEOPLE</div><h1 class="poster text-[26px] font-bold leading-none mt-1">Squad plan</h1></div>
+        <button class="w-9 h-9 rounded-full glass flex items-center justify-center"><span class="ms text-[var(--accent)] text-[20px]">auto_awesome</span></button>
+      </div>
+      <div class="body px-5 pt-1">
+        <div class="rounded-2xl p-4 mb-3" style="background:linear-gradient(135deg,rgba(245,166,35,.14),rgba(255,208,96,.03));border:1px solid rgba(245,166,35,.4)">
+          <div class="flex items-center justify-between mb-2"><div class="text-[13px] font-bold">3 of 7 shared a plan</div><span class="text-[11px] text-[var(--muted)]">43%</span></div>
+          <div class="tally mb-3"><div style="width:43%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div>
+          <div class="text-[12px] text-[var(--muted)] leading-snug">The squad plan sharpens as more friends lock in. Nudge the rest:</div>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="pill glass" style="color:var(--ink)">Mara <span class="ms text-[12px]" style="color:var(--accent)">notifications</span></button>
+            <button class="pill glass" style="color:var(--ink)">Bruno <span class="ms text-[12px]" style="color:var(--accent)">notifications</span></button>
+            <button class="pill glass" style="color:var(--ink)">Rafa <span class="ms text-[12px]" style="color:var(--accent)">notifications</span></button>
+            <button class="pill" style="background:var(--accent);color:var(--bg)">Nudge all</button>
+          </div>
+        </div>
+        <div class="text-[11px] text-[var(--muted)] px-1 mb-2">Preliminary plan · Saturday</div>
+        <div class="space-y-2.5 opacity-90">
+          <div class="glass p-3.5 flex items-center gap-3"><div class="text-center w-11"><div class="poster text-[15px] font-bold leading-none">21:00</div></div><div class="flex-1"><div class="flex items-center gap-2"><span class="dot" style="background:var(--s-cage)"></span><span class="font-bold text-[14px]">Sara Landry</span></div><div class="text-[11px] text-[var(--muted)] mt-0.5">CAGE · 3 going</div></div><span class="pill pill-follow">Following</span></div>
+          <div class="glass p-3.5 flex items-center gap-3"><div class="text-center w-11"><div class="poster text-[15px] font-bold leading-none">23:30</div></div><div class="flex-1"><div class="flex items-center gap-2"><span class="dot" style="background:var(--s-core)"></span><span class="font-bold text-[14px]">ARTBAT</span></div><div class="text-[11px] text-[var(--muted)] mt-0.5">CORE · 3 going</div></div><span class="pill pill-follow">Following</span></div>
+          <div class="glass p-3.5 flex items-center gap-3 opacity-55"><div class="text-center w-11"><div class="poster text-[15px] font-bold leading-none">01:00</div></div><div class="flex-1"><div class="flex items-center gap-2"><span class="dot bg-white/30"></span><span class="font-bold text-[14px]">Not enough picks yet</span></div><div class="text-[11px] text-[var(--muted)] mt-0.5">waiting on the squad</div></div></div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="navitem"><span class="ms">bolt</span>Now</div>
+        <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+        <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+        <div class="navitem"><span class="ms">map</span>Map</div>
+        <div class="navitem active"><span class="ms">group</span>Squad</div>
+      </div>
+    </div></div>
+    <div class="caption"><span class="cap-badge">6 · Needs input</span><div class="cap-desc">Early state: auto-plan needs locked plans — nudge members; partial plan shown honestly.</div></div>
+    </div>
+
+  </div>
+  <p class="text-center text-white/30 text-[11px] mt-16">FestPilot · Design pass · Batch 2 of 8 (Group timetable) · 2026-06-23 · wireframes/directions/24</p>
+</div>
+</body>
+</html>
