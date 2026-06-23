@@ -5,19 +5,18 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- ✅ **BUILD-READY (2026-06-23).** The design-completeness gap is closed: **all 59 V1 screens designed & locked**
-  (8-batch Amber-Glass pass, prototypes `23`–`30`), brain UI docs updated, and the orchestrator is now
-  **screen-complete** (every §13 gate lists its exact screens) with all **DEC-039 fixes** applied (Android-only;
-  no Apple/iOS). New canonical refs: `2026-06-23-screen-catalog.md` (all screens → UC/DEC → gate) +
-  `2026-06-23-design-system.md` (tokens/components). The old screen-inventory audit is marked **RESOLVED**.
-- Active Phase / Gate: **P0 G0.1 — bring-up** (next to execute). Order from here: P0 (slim SVG → D1 → deploy
-  Worker+Pages → live lineup API + map) → P1 shell → P2 … per the screen-complete §13.
-- (Design pass + brain/orchestrator update DONE; intake answered, decisions locked DEC-038/039.)
-- Last green test run: 2026-06-23 — server **25 pass / 0 fail** (web has no tests yet)
-- typecheck / build: clean (server + web)
-- Live: D1 **not created** · Worker **not deployed** · Pages **not connected** · R2 **NOT used in V1** (DEC-038 Q1 → static-asset map)
-- Credentials: Cloudflare token **saved + verified active** (D1/Pages/Workers scopes confirmed via list calls). Firebase: deferred (DEC-038 Q3).
-- Confidence: n/a (build not started)
+- 🔨 **BUILD STARTED (2026-06-23).** Executing the orchestrator autonomously from P0. Design pass + brain are done
+  (all 59 screens locked, prototypes `23`–`30`; refs `2026-06-23-screen-catalog.md` + `-design-system.md`).
+- Active Phase / Gate: **P0 G0.2 — slim the map** (G0.1 toolchain baseline ✅). Order: P0 (raster map → D1 → deploy
+  Worker+Pages → live lineup API) → P1 shell → P2 … per the screen-complete §13.
+- **DEC-040 (this session):** V1 map ships as a **pre-rendered raster base** (WebP) + live vector overlay; the
+  ~20 MB inline-relief SVG is dropped from shipped assets (the `<img>`-loaded SVG can't fetch external relief; raster
+  is small, identical, needs no network). R2 stays out (DEC-038). This satisfies orchestrator P0.2/P0.3 intent.
+- Last green test run: 2026-06-23 — server **25 pass / 0 fail** on Node 22 (web tests land in P1/P2)
+- typecheck: clean (server + web). build: server dry-run OK; web build pending raster swap.
+- Live: D1 **not created** · Worker **not deployed** · Pages **not connected** · R2 **NOT used in V1** (DEC-038 Q1)
+- Credentials: Cloudflare token **saved + verified** (D1/Pages/Workers). Firebase: deferred (DEC-038 Q3).
+- Confidence: 80% (clean baseline, all context loaded).
 
 ## Completed (most recent first)
 - [x] Authored the master orchestrator `brain/documents/2026-06-23-v1-implementation-orchestrator.md`.
