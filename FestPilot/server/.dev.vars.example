@@ -1,0 +1,23 @@
+# FestPilot — local secrets / deploy credentials TEMPLATE.
+# Copy this file to `.dev.vars` (same folder) and fill the values. `.dev.vars` is gitignored.
+# All of this is FREE tier — no paid plan needed for V1 (DEC-037).
+
+# --- Cloudflare deploy (REQUIRED for live deploy; unblocks Phases 0-3) ---
+# Create the token at https://dash.cloudflare.com/profile/api-tokens
+#   -> "Create Token" -> template "Edit Cloudflare Workers" -> then ADD: D1 (Edit) and Cloudflare Pages (Edit).
+#   -> Account Resources: Include = your account. Copy the token once (shown only once).
+# Account ID: Cloudflare dash -> Workers & Pages -> right sidebar "Account ID" (or run `npx wrangler whoami`).
+# The deploy step sources this file and exports these so `wrangler` authenticates non-interactively.
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_ACCOUNT_ID=
+
+# --- Admin guard (the build GENERATES this; you don't need to set it) ---
+# A strong random string guarding POST /admin/* . Left blank => the build creates one + `wrangler secret put`.
+ADMIN_TOKEN=
+
+# --- Firebase (REQUIRED from Phase 4 for auth; Phase 3 for push) — Spark (free) plan ---
+# Worker only needs the PROJECT ID to verify ID tokens (it fetches Google's public certs; no service account).
+FIREBASE_PROJECT_ID=
+# For server-side FCM send (push). Paste the path to the service account JSON, or set it as a Worker secret:
+#   wrangler secret put FIREBASE_SERVICE_ACCOUNT
+FIREBASE_SERVICE_ACCOUNT=
