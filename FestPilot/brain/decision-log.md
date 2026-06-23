@@ -373,3 +373,22 @@
   - **Q15 Legal/contact — generate `PRIVACY.md` + `TERMS.md`**; support email **juliojcmedeiros@gmail.com**.
 - **Process rule added this session**: every operator hand-off turn ends with an `AskQuestion` — workspace rule `.cursor/rules/always-end-with-askquestion.mdc` (alwaysApply) + orchestrator §1 rule 2 clarified (don't pause mid-build; end hand-off turns with an AskQuestion).
 - **Detail**: `brain/operator-intake.md` (filled).
+
+### DEC-039 — Design-completion answers (screen pass) + Android-only native
+- **Date**: 2026-06-23 (Julio answered §4 of `documents/2026-06-23-screen-inventory-and-open-questions.md`)
+- **Status**: APPROVED
+- **Decisions** (by question):
+  - **Q-A** Group-plan blocks = **per performance/set boundaries** (not fixed 30/60-min).
+  - **Q-B** Group-plan interaction = **auto-plan visible to all + per-block follow/do-my-own + owner override; no member voting** in V1.
+  - **Q-C** **No dedicated Favorites screen** — reuse the **Lineup (grid)** with an "only favorites" filter (+ Timetable "only my favs"). Removes that screen from the build.
+  - **Q-D** Lock in = sequential flow **+ an "All clashes" overview** screen; **split editor is a sheet**.
+  - **Q-E** Auth = **anonymous + Google + email-link**. **No Apple, no iOS** — the future native build is **Android-only** (Capacitor→Android). ⇒ **Apple Sign-In is dropped** (supersedes the Apple/iOS blocker noted in DEC-035); orchestrator Phase 7 becomes Android-only.
+  - **Q-F** Profile = ask **display name + avatar at first group join** (editable in Settings); avatar = **upload or initials** (no preset gallery).
+  - **Q-G** **Light in-app notification inbox** in V1 + contextual banners; OS push primary.
+  - **Q-H** **Safety/"I'm lost"** = persistent action in **Squad**, also surfaced on **Map**.
+  - **Q-I** Admin V1 = **map/stage verify + lineup dashboard**; travel-time matrix + POI as simple editors; alias only if needed.
+  - **Q-J** Map V1 includes the **POI layer** (nearest toilet/water/medical) **and stage-to-stage routing**.
+  - **Q-K** Language = **default English**, switchable in **Settings** (i18n; per-user, not auto-forced).
+  - **Q-L** **Breaks** (food/toilet/drinks) are first-class **My Plan** items (already in `21`).
+- **Process**: now executing the **design pass** (Amber Glass prototypes) in batches B1→B8, then upgrade the orchestrator to be screen-complete, then build (per the screen-inventory doc §5).
+- **Detail**: `documents/2026-06-23-screen-inventory-and-open-questions.md` (§4 answered).
