@@ -351,3 +351,25 @@
 - **Rationale**: Julio doesn't want to pay; the entire V1 architecture (DEC-004/024/035) fits within Cloudflare + Firebase free tiers, so no spend is needed until real festival-scale traffic.
 - **Alternatives**: Workers Paid $5/mo for DO (rejected for V1 — unnecessary now that DO is free); polling-over-D1 realtime (rejected — DO+WS is free and better); a non-Cloudflare free realtime vendor like Firebase RTDB/Supabase (rejected — adds a vendor; DO already covers it at $0).
 - **Detail**: orchestrator §19 (provisioning) + §5/§13; supersedes the "needs Workers Paid" note implied by DEC-035's WS-via-DO choice (the *transport* is unchanged; only the cost premise is corrected).
+
+### DEC-038 — Operator intake answers (V1 build inputs locked)
+- **Date**: 2026-06-23 (Julio filled `brain/operator-intake.md`; said "terminei")
+- **Status**: APPROVED
+- **Decisions** (by intake question):
+  - **Q1 R2 — NO R2 for V1.** Ship the De Schorre map as a **static asset** (card-free); wire R2 later for multi-festival. (R2 not enabled on the account — `code 10042`; avoids card-on-file.)
+  - **Q2 Lineup — ingest BOTH weekends** from the official Tomorrowland timetable, **following the documented capture process in `brain/research/2026-06-23-festival-lineup-data-source.md`** (fetch the page's data routes with the required codes). Julio: *"você tem no brain todo um processo… não invente."* → do **NOT** improvise a scraper; cross-check vs Clashfinder only as validation.
+  - **Q3 Firebase — deferred.** Build runs on **anonymous/device-local identity**; **push deferred** (in-app alerts only) for V1. Add Firebase web config + FCM later (orchestrator §19.3 / intake Part 5).
+  - **Q4 Stores — installable PWA only** for V1; paid native store publishing (Apple $99/yr, Google $25) deferred.
+  - **Q5 Name/brand — executor decides** ("FestPilot"); **consult the council** `brain/documents/2026-06-23-discovery-councils-and-decisions.md` when a brand/UX judgment is needed. Tagline TBD by build.
+  - **Q6 Domain — `festpilot.pages.dev`** (web) + `*.workers.dev` (API). No custom domain.
+  - **Q7 Icons — generate placeholder** PWA icon set (192/512/maskable/favicon/apple-touch) + theme from the UI palette.
+  - **Q8 Service names — defaults** (Worker/Pages/D1 `festpilot`; `festpilot-assets` reserved for later R2).
+  - **Q9 Squad cap — 50** members per squad (raised from default 20).
+  - **Q10 Privacy/location — per brain** (`product-spec.md` / `documents/v1-use-cases.md`): coarse stage labels default, precise GPS opt-in; follow the brain's expiry/consent spec (DEC-015).
+  - **Q11 Invites — link does NOT expire while the event is ongoing** (invite code + shareable link valid until the festival ends; overrides the 24h default).
+  - **Q12 Analytics — Cloudflare Web Analytics** (free, privacy-friendly, no third-party trackers).
+  - **Q13 Git remote — create a PRIVATE GitHub repo + push** for backup. ⚠️ **Blocked:** GitHub CLI `gh` is **not installed/authed** on this machine; needs install+auth or a repo URL + token/SSH. Local `git` on `master` continues meanwhile (not a build blocker).
+  - **Q14 Autonomy — confirmed.** Build/test/commit/deploy without pausing; **stop only on cost or a missing credential**, noting it in `dev-log.md` (no one-by-one questions).
+  - **Q15 Legal/contact — generate `PRIVACY.md` + `TERMS.md`**; support email **juliojcmedeiros@gmail.com**.
+- **Process rule added this session**: every operator hand-off turn ends with an `AskQuestion` — workspace rule `.cursor/rules/always-end-with-askquestion.mdc` (alwaysApply) + orchestrator §1 rule 2 clarified (don't pause mid-build; end hand-off turns with an AskQuestion).
+- **Detail**: `brain/operator-intake.md` (filled).

@@ -44,6 +44,9 @@ You are the **executor**, not a coordinator. You implement, test, deploy, and co
    in that message, "use a subagent / run in parallel".)
 2. **DO NOT ask the user for confirmation to proceed.** The scope is fully specified here and in the brain.
    The user is not available to give OK. Decide with the documented defaults and keep going.
+   *(Hand-off exception — workspace rule `always-end-with-askquestion.mdc`:* never pause **mid-build** to ask,
+   but when you **do** yield control — gate reached, context out, done, or a **cost/credential blocker** —
+   the **final message ends with an `AskQuestion`** offering next steps: continue / review / handle blocker / stop.)
 3. **DO NOT stop because "this is a lot of work" or "the chat is long."** Continue until the §15 Stop Criteria
    are all TRUE, or until context genuinely runs out (then finish the current gate cleanly, commit+deploy,
    write the dev-log handoff, and PARE LIMPO).
