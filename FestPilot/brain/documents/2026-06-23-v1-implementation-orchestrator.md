@@ -662,18 +662,67 @@ smoke passes; deployed (or ⏳ live with local proof); committed; dev-log update
 
 ---
 
-## 19. Operator one-time prerequisites (the only human steps)
+## 19. Operator provisioning checklist (the ONLY things the human must supply)
 
-These need the user's accounts; they are **not** mid-build questions — do them once, then the build is autonomous.
-If absent when a live step arrives, the executor uses the local equivalent and marks it ⏳ (§5).
+Almost everything is built/tested with **zero credentials** (OSM/Overpass, Flanders WMS hillshade, AWS terrain
+tiles are all open; the map engine, lineup logic, plan/clash engine, group logic, and all unit/integration tests
+run offline). Credentials are needed **only** for (a) live Cloudflare deploy, (b) auth, (c) push. If a credential
+is missing when a live step arrives, the executor runs the **local equivalent** (`--local` D1, `wrangler dev`,
+mock auth/push) and marks the live step ⏳ — it never blocks the build.
 
-1. `wrangler login` (Cloudflare auth) on the machine running deploys.
-2. Cloudflare: an account with **Workers + D1 + R2 + Durable Objects + Pages** enabled; create the **Pages**
-   project `festpilot` (root `FestPilot`, build `npm run build`, output `web/dist`, production branch `master`).
-3. Firebase: create the project; enable **Auth** (Anonymous, Google, Email) + **FCM**; drop the web config into
-   `web/.env` (`VITE_FIREBASE_*`) and the verification config into the Worker secrets.
-4. `wrangler secret put ADMIN_TOKEN` (+ Firebase/FCM secrets as phases require).
-5. (iOS native, Phase 7) Apple Developer account for **Sign in with Apple** + push certs.
+### 19.1 Needs NO credentials (do nothing) ✅
+OSM/Overpass geometry · Flanders DHMV-II hillshade (WMS) · AWS Open Terrain Tiles · the `generateMap` Node job
+(runs locally) · the entire test suite · all in-app logic against `--local` D1 and `wrangler dev`.
+
+### 19.2 Cloudflare (required for live deploy)
+- **Account + plan:** a Cloudflare account. **Durable Objects require the Workers *Paid* plan (~$5/mo)** — DO
+  powers groups/presence/meeting realtime (DEC-035). On the **Free** plan, Phases 0–3 (lineup API, map, My Plan)
+  deploy fine; Phases 4–6 either need the $5 plan **or** fall back to **short-polling over D1** (works, less live,
+  more reads). **Decision needed:** pay for DO, or ship the polling fallback for V1.
+- **What to hand the build (one of):**
+  - **(preferred, non-interactive)** a scoped **API token** + the **account id**, dropped into
+    `FestPilot/server/.dev.vars` (gitignored) as `CLOUDFLARE_API_TOKEN=...` and `CLOUDFLARE_ACCOUNT_ID=...`.
+    Token scopes: *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit*, *Cloudflare Pages: Edit*,
+    *Workers KV Storage: Edit*, *Account Settings: Read*. (DO deploy is covered by Workers Scripts.)
+  - **(or interactive)** run `wrangler login` yourself on the deploy machine.
+- The build then creates everything else itself: `wrangler d1 create festpilot` (paste the `database_id` into
+  `wrangler.toml`), `wrangler r2 bucket create festpilot-assets`, `wrangler deploy`, and Pages.
+- **Frontend hosting — pick one (decision):** **(A)** direct upload `wrangler pages deploy web/dist
+  --project-name=festpilot` (no GitHub needed; simplest for autonomy) — or **(B)** connect a **GitHub repo** to
+  Pages for auto-build on push to `master` (needs the repo pushed to GitHub; also enables CI). Recommend (A) now,
+  add (B) when you want CI + push-to-deploy.
+- **Custom domain (optional, V1):** if you want `app.festpilot.…`, add the domain to Cloudflare; otherwise we ship
+  on `festpilot.pages.dev` + `festpilot.<account>.workers.dev`.
+
+### 19.3 Firebase (required for auth from Phase 4; for push from Phase 3)
+- Create a Firebase project; in **Authentication** enable **Anonymous**, **Google**, **Email** (Phase 4 gate).
+- **Web app config** (NOT secret — client-side): `apiKey, authDomain, projectId, appId, messagingSenderId` →
+  `FestPilot/web/.env` as `VITE_FIREBASE_API_KEY=…` etc. (gitignored).
+- **Worker verifying ID tokens** needs **only the project id** (`FIREBASE_PROJECT_ID`) — it fetches Google's
+  public certs over JWKS; **no service account needed for verification**.
+- **FCM push (Phase 3+):**
+  - **Web push:** generate a **Web Push certificate (VAPID key pair)** in FCM settings → public key in
+    `web/.env` (`VITE_FCM_VAPID_KEY`), used to mint device tokens.
+  - **Server send:** a **service account JSON** (FCM HTTP v1) → stored as a **Worker secret**
+    (`wrangler secret put FIREBASE_SERVICE_ACCOUNT`), used to send notifications. This is the one true secret.
+- **Apple Sign-In:** only before a native **iOS** build (Phase 7) — needs an **Apple Developer** account + key.
+
+### 19.4 Secrets the build sets itself / generates
+- `ADMIN_TOKEN` — the executor generates a strong random value and runs `wrangler secret put ADMIN_TOKEN`
+  (also mirrored into `.dev.vars` for local). You don't need to supply it.
+- All `wrangler secret put …` for the Firebase/FCM values above, once you've dropped them in the gitignored files.
+
+### 19.5 How to hand secrets over (safely)
+**Do not paste secrets into chat.** Put them in the gitignored files and tell the build they're there:
+- `FestPilot/server/.dev.vars` → `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `FIREBASE_PROJECT_ID`,
+  `FIREBASE_SERVICE_ACCOUNT` (path or JSON).
+- `FestPilot/web/.env` → `VITE_FIREBASE_*`, `VITE_FCM_VAPID_KEY`, `VITE_API_URL`.
+Both are already covered by `.gitignore`. The non-secret Firebase **web** config can be shared in chat if easier.
+
+### 19.6 Minimal vs full bring-up
+- **Minimal live demo (no Firebase, no DO):** Cloudflare token only → deploy Worker + D1 + R2 + Pages →
+  live lineup API + live map + My Plan as a PWA. Groups/presence run on mock/local until 19.2/19.3 are supplied.
+- **Full V1 live:** Cloudflare token **+ Workers Paid (DO)** + Firebase project + FCM service account + VAPID.
 
 ---
 
