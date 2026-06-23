@@ -171,7 +171,7 @@ velocity-standard, test-routing). **Git initialized on `master` 2026-06-23** (ba
 |--------|-------------------|-------|
 | API + cron + realtime | **Cloudflare Workers** | one Worker `festpilot`; entry `server/src/index.ts` |
 | Relational store | **D1** `festpilot`, binding `DB` | schema in `migrations/`; created in Phase 0 |
-| Per-group realtime | **Durable Objects** | `GroupRoom` DO (Phase 4 plan + board + presence fan-out via WS) |
+| Per-group realtime | **Durable Objects** (Free plan, **SQLite-backed**) | `GroupRoom` DO (Phase 4 plan + board + presence fan-out via WS); `new_sqlite_classes` in wrangler. $0 (DEC-037) |
 | Map assets + photos | **R2** bucket `festpilot-assets` | map SVG/relief (Phase 0), meeting-point photos (Phase 6) |
 | Source hashes / cache | **KV** `LINEUP_CACHE` | optional; change-detection snapshots |
 | Web hosting | **Cloudflare Pages** project `festpilot` | builds `web/`; production branch **`master`** |
@@ -511,6 +511,8 @@ map plan §11; `spikes/map-import`.
   Anonymous favorites/plan **carry over** on link.
 - **Gate 4.2 — Groups + invites (UC-16/17):** `POST /api/groups`, `POST /api/groups/:id/join` (link + QR token),
   membership; share my plan with the group. **`GroupRoom` Durable Object** per group (plan + board fan-out).
+  **Use the SQLite storage backend** — declare it with `new_sqlite_classes` in a new wrangler migration (the only
+  DO backend on the Free plan; free per DEC-037). Add the DO binding to `wrangler.toml`.
 - **Gate 4.3 — Shared timetable (UC-18/19/20, DEC-013/019):** auto-build by **plurality of locked picks**;
   tie/no-majority → most-favorited → owner picks; **member fallback** (your best favorite at that block when your
   lock ≠ winner); **owner override** per slot; **never silently override a locked must-see**; basic split viz.
@@ -674,25 +676,24 @@ mock auth/push) and marks the live step ⏳ — it never blocks the build.
 OSM/Overpass geometry · Flanders DHMV-II hillshade (WMS) · AWS Open Terrain Tiles · the `generateMap` Node job
 (runs locally) · the entire test suite · all in-app logic against `--local` D1 and `wrangler dev`.
 
-### 19.2 Cloudflare (required for live deploy)
-- **Account + plan:** a Cloudflare account. **Durable Objects require the Workers *Paid* plan (~$5/mo)** — DO
-  powers groups/presence/meeting realtime (DEC-035). On the **Free** plan, Phases 0–3 (lineup API, map, My Plan)
-  deploy fine; Phases 4–6 either need the $5 plan **or** fall back to **short-polling over D1** (works, less live,
-  more reads). **Decision needed:** pay for DO, or ship the polling fallback for V1.
-- **What to hand the build (one of):**
-  - **(preferred, non-interactive)** a scoped **API token** + the **account id**, dropped into
-    `FestPilot/server/.dev.vars` (gitignored) as `CLOUDFLARE_API_TOKEN=...` and `CLOUDFLARE_ACCOUNT_ID=...`.
-    Token scopes: *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit*, *Cloudflare Pages: Edit*,
-    *Workers KV Storage: Edit*, *Account Settings: Read*. (DO deploy is covered by Workers Scripts.)
-  - **(or interactive)** run `wrangler login` yourself on the deploy machine.
+### 19.2 Cloudflare (required for live deploy) — V1 is FREE (DEC-037)
+- **Account + plan:** a Cloudflare account on the **Workers Free plan — no payment**. Verified 2026-06-23:
+  **Durable Objects are on the Free plan** with the **SQLite storage backend** (the only backend on Free, and the
+  one we use), so DEC-035's WebSocket presence/groups/meeting realtime runs at **$0**. The only hard ceiling is
+  **100,000 Worker/DO requests/day** (incl. WebSocket messages, HTTP, alarms) + 5M row reads/day + 100k writes/day
+  + 5 GB. Ample for V1 + friends-scale testing; a public Tomorrowland-scale launch would later need Workers Paid
+  ($5/mo + usage) — a future cost, not now. (Polling-over-D1 was the fallback; unnecessary since DO is free.)
+- **What to hand the build (LOCKED — DEC-037, "token_me"):** a scoped **API token** + the **account id**, dropped
+  into `FestPilot/server/.dev.vars` (gitignored) as `CLOUDFLARE_API_TOKEN=...` and `CLOUDFLARE_ACCOUNT_ID=...`.
+  Token scopes: *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit*, *Cloudflare Pages: Edit*,
+  *Workers KV Storage: Edit*, *Account Settings: Read*. (DO deploy is covered by Workers Scripts.) The executor
+  deploys from the dev machine with these env vars; no `wrangler login` needed.
 - The build then creates everything else itself: `wrangler d1 create festpilot` (paste the `database_id` into
-  `wrangler.toml`), `wrangler r2 bucket create festpilot-assets`, `wrangler deploy`, and Pages.
-- **Frontend hosting — pick one (decision):** **(A)** direct upload `wrangler pages deploy web/dist
-  --project-name=festpilot` (no GitHub needed; simplest for autonomy) — or **(B)** connect a **GitHub repo** to
-  Pages for auto-build on push to `master` (needs the repo pushed to GitHub; also enables CI). Recommend (A) now,
-  add (B) when you want CI + push-to-deploy.
-- **Custom domain (optional, V1):** if you want `app.festpilot.…`, add the domain to Cloudflare; otherwise we ship
-  on `festpilot.pages.dev` + `festpilot.<account>.workers.dev`.
+  `wrangler.toml`), `wrangler r2 bucket create festpilot-assets`, `wrangler deploy`.
+- **Frontend hosting (LOCKED — DEC-037, "direct"):** direct upload `wrangler pages deploy web/dist
+  --project-name=festpilot --branch=master` (no GitHub). (GitHub repo + push-to-deploy + CI is a later add.)
+- **Custom domain (optional, V1):** if wanted, add the domain to Cloudflare; otherwise ship on
+  `festpilot.pages.dev` + `festpilot.<account>.workers.dev`.
 
 ### 19.3 Firebase (required for auth from Phase 4; for push from Phase 3)
 - Create a Firebase project; in **Authentication** enable **Anonymous**, **Google**, **Email** (Phase 4 gate).
@@ -719,10 +720,11 @@ OSM/Overpass geometry · Flanders DHMV-II hillshade (WMS) · AWS Open Terrain Ti
 - `FestPilot/web/.env` → `VITE_FIREBASE_*`, `VITE_FCM_VAPID_KEY`, `VITE_API_URL`.
 Both are already covered by `.gitignore`. The non-secret Firebase **web** config can be shared in chat if easier.
 
-### 19.6 Minimal vs full bring-up
-- **Minimal live demo (no Firebase, no DO):** Cloudflare token only → deploy Worker + D1 + R2 + Pages →
-  live lineup API + live map + My Plan as a PWA. Groups/presence run on mock/local until 19.2/19.3 are supplied.
-- **Full V1 live:** Cloudflare token **+ Workers Paid (DO)** + Firebase project + FCM service account + VAPID.
+### 19.6 Minimal vs full bring-up (all on free tiers — DEC-037)
+- **Minimal live demo (no Firebase):** Cloudflare token only → deploy Worker + D1 + R2 + Pages →
+  live lineup API + live map + My Plan as a PWA. Groups/presence run on mock/local until 19.3 is supplied.
+- **Full V1 live (still $0):** Cloudflare token + Firebase **Spark (free)** project + FCM service account + VAPID.
+  Durable Objects are on the Cloudflare **Free** plan (SQLite backend) — no paid plan for V1.
 
 ---
 
