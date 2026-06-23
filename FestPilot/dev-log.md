@@ -5,7 +5,14 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- Active Phase / Gate: **P0 G0.1** (bring-up & map-to-production — ready to start; intake answered, decisions locked DEC-038)
+- ⚠️ **BUILD PAUSED — design-completeness gap (Julio, 2026-06-23).** The app is **not build-ready**: whole UI
+  surfaces were never designed (groups formation, the **group shared-timetable**, presence/consent, meeting-point
+  creation, safety, identity/settings, notifications, system states, admin). Audit: **9 screens designed vs ~25
+  missing/partial** → `brain/documents/2026-06-23-screen-inventory-and-open-questions.md`. The orchestrator was
+  written before this and must be **upgraded to be screen-complete** after the design pass. New order:
+  **design missing screens (Amber Glass) → update brain UI docs → upgrade orchestrator → THEN build.**
+- Active Phase / Gate: **DESIGN PASS (pre-P0)** — awaiting answers to §4 open questions + batch order.
+- (Was: P0 G0.1 bring-up — intake answered, decisions locked DEC-038; deferred until design-ready.)
 - Last green test run: 2026-06-23 — server **25 pass / 0 fail** (web has no tests yet)
 - typecheck / build: clean (server + web)
 - Live: D1 **not created** · Worker **not deployed** · Pages **not connected** · R2 **NOT used in V1** (DEC-038 Q1 → static-asset map)
@@ -45,6 +52,7 @@
 - System default node is v18; **must `nvm use 22`** before any wrangler/build command (`.node-version` = 22 is set).
 
 ## Next
-- Start **P0 G0.1**: git baseline already done → slim SVG (G0.2: externalize relief, no R2 → bundle as static asset) →
-  D1 create + migrate + deploy Worker + Pages (`festpilot.pages.dev`) → live lineup API + map. Then P1 lineup ingest
-  per `research/2026-06-23-festival-lineup-data-source.md`.
+- **DESIGN PASS** (not build): answer §4 of the screen-inventory doc (or accept defaults), then prototype the missing
+  screens as Amber Glass HTML in batches B1→B8 (B1 = groups formation; B2 = group timetable). Review per batch.
+- After design + brain UI update: **upgrade the orchestrator to be screen-complete**, then resume P0 G0.1
+  (slim SVG → D1 create+migrate → deploy Worker+Pages `festpilot.pages.dev` → live lineup API + map).
