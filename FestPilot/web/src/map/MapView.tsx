@@ -40,7 +40,8 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   if (error) return <div className="map-msg">Could not load the map: {error}</div>;
   if (!t) return <div className="map-msg">Loading map…</div>;
 
-  const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.svg`;
+  // Slim pre-rendered raster base (DEC-040); the live overlay below is a separate vector layer.
+  const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.webp`;
 
   return (
     <div className="map">

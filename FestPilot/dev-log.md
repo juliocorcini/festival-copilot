@@ -7,8 +7,10 @@
 ## Current State
 - 🔨 **BUILD STARTED (2026-06-23).** Executing the orchestrator autonomously from P0. Design pass + brain are done
   (all 59 screens locked, prototypes `23`–`30`; refs `2026-06-23-screen-catalog.md` + `-design-system.md`).
-- Active Phase / Gate: **P0 G0.2 — slim the map** (G0.1 toolchain baseline ✅). Order: P0 (raster map → D1 → deploy
-  Worker+Pages → live lineup API) → P1 shell → P2 … per the screen-complete §13.
+- Active Phase / Gate: **P0 G0.3 — map data API** (G0.1 baseline ✅, G0.2 slim map ✅). Order: P0 (raster map →
+  D1 → deploy Worker+Pages → live lineup API) → P1 shell → P2 … per the screen-complete §13.
+- **G0.2 ✅**: map base now **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). Verified the render is pixel-faithful
+  (relief, canopy, lake, stage medallions, frame, compass all intact). Web Vitest stack stood up; 3 asset tests green.
 - **DEC-040 (this session):** V1 map ships as a **pre-rendered raster base** (WebP) + live vector overlay; the
   ~20 MB inline-relief SVG is dropped from shipped assets (the `<img>`-loaded SVG can't fetch external relief; raster
   is small, identical, needs no network). R2 stays out (DEC-038). This satisfies orchestrator P0.2/P0.3 intent.
@@ -19,6 +21,9 @@
 - Confidence: 80% (clean baseline, all context loaded).
 
 ## Completed (most recent first)
+- [x] **P0 G0.2** — slim the map (DEC-040): `rasterize-base.ts` (resvg+sharp) → WebP base; dropped the 20 MB SVGs;
+  MapView reads `.webp`; web Vitest+Testing-Library+jsdom stack added; 3 asset tests. typecheck+build green.
+- [x] **P0 G0.1** — toolchain baseline: Node 22 confirmed, server 25 tests green, brain synced (DEC-040). commit 053a35c.
 - [x] Authored the master orchestrator `brain/documents/2026-06-23-v1-implementation-orchestrator.md`.
 - [x] Initialized git on `master` (baseline commit pending in P0 G0.1).
 - [x] Phase 1 backend — Worker ingestion + full V1 D1 schema (28 tables) + read API + cron. 25 tests green.
