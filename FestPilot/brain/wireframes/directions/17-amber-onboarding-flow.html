@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#17 Amber Glass — Onboarding Flow (festival → week → days → favorite)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--skip:#E0563B}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+  background:radial-gradient(ellipse 120% 55% at 50% 12%,rgba(245,166,35,.10),transparent 50%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.3);display:flex;flex-direction:column}
+.glass{background:var(--glass);border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.step{display:none;flex:1;flex-direction:column}
+.step.active{display:flex}
+.opt{border-radius:18px;border:1px solid var(--border);background:rgba(255,255,255,.04);padding:16px;cursor:pointer;transition:all .15s}
+.opt:hover{background:rgba(255,255,255,.07)}
+.opt.sel{border-color:var(--accent);background:rgba(245,166,35,.12);box-shadow:0 0 0 1px var(--accent)}
+.opt.sel .check{opacity:1}
+.check{opacity:0;color:var(--accent)}
+.btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.btn-ghost{background:var(--glass);border:1px solid var(--border);color:var(--muted);font-weight:700}
+.steps-dots{display:flex;gap:6px;justify-content:center}
+.sd{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.18);transition:all .2s}
+.sd.on{width:22px;background:var(--accent)}
+/* swipe card */
+.art-card{width:100%;border-radius:26px;position:relative;overflow:hidden;aspect-ratio:4/5;
+  background:linear-gradient(160deg,#221b12,#2c2216);border:1px solid var(--border);box-shadow:0 20px 50px -15px rgba(0,0,0,.6)}
+.yes-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg);border:none;border-radius:16px;padding:14px 22px;font-size:15px;font-weight:800;flex:2}
+.nah-btn{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:14px 18px;font-size:15px;font-weight:700;color:var(--muted);flex:1}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <!-- top bar: progress + back -->
+  <div class="px-6 pt-10 pb-3 flex items-center justify-between flex-shrink-0">
+    <button id="backBtn" class="ms text-[var(--muted)] text-[22px]" style="visibility:hidden">arrow_back</button>
+    <div class="steps-dots">
+      <span class="sd on" data-s="1"></span><span class="sd" data-s="2"></span><span class="sd" data-s="3"></span><span class="sd" data-s="4"></span>
+    </div>
+    <button id="skipBtn" class="text-[12px] font-bold text-[var(--muted)]">Skip</button>
+  </div>
+
+  <!-- STEP 1: festival -->
+  <div class="step active px-6" data-step="1">
+    <div class="pt-3 pb-5">
+      <div class="text-[11px] tracking-[.2em] text-[var(--muted)] font-semibold">STEP 1 OF 4</div>
+      <h1 class="poster text-[30px] font-bold leading-tight mt-1">Which festival<br>are you going to?</h1>
+    </div>
+    <div class="flex-1 space-y-3">
+      <div class="opt sel flex items-center gap-3" data-group="festival">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-[20px]" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)"><span class="ms">festival</span></div>
+        <div class="flex-1">
+          <div class="poster text-[18px] font-bold">Tomorrowland</div>
+          <div class="text-[12px] text-[var(--muted)]">Boom, Belgium · Jul 2026</div>
+        </div>
+        <span class="ms check">check_circle</span>
+      </div>
+      <div class="opt flex items-center gap-3 opacity-50" style="cursor:not-allowed">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-[20px] bg-white/5"><span class="ms text-[var(--muted)]">more_horiz</span></div>
+        <div class="flex-1">
+          <div class="font-bold text-[15px]">More festivals</div>
+          <div class="text-[12px] text-[var(--muted)]">Coming soon</div>
+        </div>
+      </div>
+    </div>
+    <div class="py-6"><button class="btn btn-primary" data-next>Continue</button></div>
+  </div>
+
+  <!-- STEP 2: week -->
+  <div class="step px-6" data-step="2">
+    <div class="pt-3 pb-5">
+      <div class="text-[11px] tracking-[.2em] text-[var(--muted)] font-semibold">STEP 2 OF 4</div>
+      <h1 class="poster text-[30px] font-bold leading-tight mt-1">Which weekend?</h1>
+      <p class="text-[13px] text-[var(--muted)] mt-2">Tomorrowland runs two weekends with <b>different lineups</b>. Pick yours so we only show artists you can actually see.</p>
+    </div>
+    <div class="flex-1 space-y-3">
+      <div class="opt sel flex items-center gap-3" data-group="week">
+        <div class="flex-1"><div class="poster text-[18px] font-bold">Weekend 1</div><div class="text-[12px] text-[var(--muted)]">Jul 17 – 19</div></div>
+        <span class="ms check">check_circle</span>
+      </div>
+      <div class="opt flex items-center gap-3" data-group="week">
+        <div class="flex-1"><div class="poster text-[18px] font-bold">Weekend 2</div><div class="text-[12px] text-[var(--muted)]">Jul 24 – 26</div></div>
+        <span class="ms check">check_circle</span>
+      </div>
+      <div class="opt flex items-center gap-3" data-group="week">
+        <div class="flex-1"><div class="poster text-[18px] font-bold">Both weekends</div><div class="text-[12px] text-[var(--muted)]">The full Tomorrowland</div></div>
+        <span class="ms check">check_circle</span>
+      </div>
+    </div>
+    <div class="py-6"><button class="btn btn-primary" data-next>Continue</button></div>
+  </div>
+
+  <!-- STEP 3: days -->
+  <div class="step px-6" data-step="3">
+    <div class="pt-3 pb-5">
+      <div class="text-[11px] tracking-[.2em] text-[var(--muted)] font-semibold">STEP 3 OF 4</div>
+      <h1 class="poster text-[30px] font-bold leading-tight mt-1">Which days?</h1>
+      <p class="text-[13px] text-[var(--muted)] mt-2">Weekend 1 · pick all the days you'll be there.</p>
+    </div>
+    <div class="flex-1 space-y-3">
+      <div class="opt sel flex items-center gap-3" data-multi="day">
+        <div class="flex-1"><div class="poster text-[18px] font-bold">Friday</div><div class="text-[12px] text-[var(--muted)]">Jul 17</div></div>
+        <span class="ms check">check_circle</span>
+      </div>
+      <div class="opt sel flex items-center gap-3" data-multi="day">
+        <div class="flex-1"><div class="poster text-[18px] font-bold">Saturday</div><div class="text-[12px] text-[var(--muted)]">Jul 18</div></div>
+        <span class="ms check">check_circle</span>
+      </div>
+      <div class="opt flex items-center gap-3" data-multi="day">
+        <div class="flex-1"><div class="poster text-[18px] font-bold">Sunday</div><div class="text-[12px] text-[var(--muted)]">Jul 19</div></div>
+        <span class="ms check">check_circle</span>
+      </div>
+    </div>
+    <div class="py-6"><button class="btn btn-primary" data-next>Start picking artists</button></div>
+  </div>
+
+  <!-- STEP 4: favorite swipe -->
+  <div class="step px-6" data-step="4">
+    <div class="pt-3 pb-2 text-center">
+      <div class="text-[12px] font-semibold text-[var(--muted)]"><span id="swipeCount">1</span> of 64 · Fri–Sat artists</div>
+      <div class="h-[4px] rounded-full bg-white/8 overflow-hidden mt-2"><div id="swipeBar" class="h-full rounded-full" style="background:linear-gradient(90deg,var(--accent),var(--accent2));width:2%"></div></div>
+    </div>
+    <div class="text-center pb-2">
+      <div class="text-[14px] font-bold" style="color:var(--accent)">Would you see this set?</div>
+      <div class="text-[11px] text-[var(--muted)] mt-0.5">Builds your favorites — clashes are solved later in Lock in</div>
+    </div>
+    <div class="flex-1 flex items-center">
+      <div class="art-card">
+        <div class="absolute inset-0 opacity-25" style="background:radial-gradient(circle at 60% 25%,rgba(245,166,35,.4),transparent 60%)"></div>
+        <div class="absolute inset-0 flex flex-col justify-between p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-[12px] font-bold text-[var(--muted)]"><span class="dot" style="background:#F59E0B"></span> CAGE</span>
+            <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/40" id="multiDayTag">plays Fri + Sat</span>
+          </div>
+          <div>
+            <div class="poster text-[40px] font-bold leading-[.92]" id="artName">Amelie<br>Lens</div>
+            <div class="flex gap-2 mt-3">
+              <span class="text-[11px] px-2.5 py-1 rounded-full bg-white/10 text-[var(--muted)] font-semibold">Techno</span>
+              <span class="text-[11px] px-2.5 py-1 rounded-full bg-white/10 text-[var(--muted)] font-semibold">Peak-time</span>
+            </div>
+            <div class="text-[12px] text-[var(--muted)] mt-2 italic">Shown once even though she plays 2 days.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="py-4 flex gap-3">
+      <button class="nah-btn" data-swipe>Nah</button>
+      <button class="yes-btn" data-swipe>I'd see this!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let step=1;
+const phone=document.querySelector('.phone');
+const dots=[...document.querySelectorAll('.sd')];
+const backBtn=document.getElementById('backBtn');
+function show(n){
+  step=n;
+  document.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',+s.dataset.step===n));
+  dots.forEach(d=>d.classList.toggle('on',+d.dataset.s<=n? (+d.dataset.s===n):false));
+  dots.forEach(d=>d.classList.toggle('on',+d.dataset.s===n));
+  backBtn.style.visibility = n>1 ? 'visible':'hidden';
+}
+// single-select groups
+document.querySelectorAll('[data-group]').forEach(o=>{
+  o.addEventListener('click',()=>{
+    document.querySelectorAll(`[data-group="${o.dataset.group}"]`).forEach(x=>x.classList.remove('sel'));
+    o.classList.add('sel');
+  });
+});
+// multi-select (days)
+document.querySelectorAll('[data-multi]').forEach(o=>{
+  o.addEventListener('click',()=>o.classList.toggle('sel'));
+});
+// next buttons
+document.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{ if(step<4) show(step+1); }));
+backBtn.addEventListener('click',()=>{ if(step>1) show(step-1); });
+// swipe step
+let sc=1;const total=64;
+document.querySelectorAll('[data-swipe]').forEach(b=>b.addEventListener('click',()=>{
+  sc=Math.min(sc+1,total);
+  document.getElementById('swipeCount').textContent=sc;
+  document.getElementById('swipeBar').style.width=Math.round(sc/total*100)+'%';
+}));
+</script>
+</body>
+</html>

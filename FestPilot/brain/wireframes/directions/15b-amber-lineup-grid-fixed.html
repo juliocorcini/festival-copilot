@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#15b Amber Glass — Lineup Grid (fixed: rows=stages)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+body{background:var(--bg);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px 28px}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:24px}.navitem.active{color:var(--accent)}
+.grid-wrap{overflow:auto;flex:1}
+.grid-inner{display:flex;flex-direction:column;min-width:700px;padding:0 12px 12px}
+.time-header{display:flex;padding-left:72px;gap:4px;position:sticky;top:0;z-index:5;padding-top:4px;padding-bottom:6px;background:var(--bg)}
+.time-cell{width:100px;flex-shrink:0;text-align:center;font-size:10px;font-weight:700;color:var(--muted)}
+.stage-row{display:flex;align-items:stretch;margin-bottom:6px}
+.stage-label{width:68px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.stage-label span{font-size:10px;font-weight:800;writing-mode:horizontal-tb;letter-spacing:.04em}
+.slots{display:flex;gap:4px;flex:1}
+.slot{border-radius:10px;padding:6px 8px;min-width:96px;position:relative;display:flex;flex-direction:column;justify-content:center}
+.slot .name{font-weight:700;font-size:11px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .meta{font-size:9px;opacity:.7;margin-top:2px}
+.fav-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.now-line{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:10;box-shadow:0 0 8px var(--accent)}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone flex flex-col">
+  <div class="px-7 pt-4 pb-1 flex justify-between text-[12px] font-semibold"><span>21:48</span><span class="text-[var(--muted)] flex items-center gap-1"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+  <div class="px-5 pt-2 pb-3 flex items-center justify-between">
+    <h1 class="poster text-[24px] font-bold">Lineup</h1>
+    <div class="flex items-center gap-2">
+      <span class="text-[11px] font-bold px-3 py-1 rounded-full" style="background:var(--accent);color:var(--bg)">Sáb 18</span>
+      <span class="text-[11px] font-semibold px-3 py-1 rounded-full" style="background:var(--glass);border:1px solid var(--border)">Dom 19</span>
+      <span class="ms text-[var(--muted)]">filter_list</span>
+    </div>
+  </div>
+
+  <!-- GRID: rows = stages, columns = time, scroll horizontal -->
+  <div class="grid-wrap relative">
+    <div class="grid-inner">
+      <!-- time header row -->
+      <div class="time-header">
+        <div class="time-cell">21:00</div>
+        <div class="time-cell">22:00</div>
+        <div class="time-cell" style="position:relative">23:00<div class="now-line" style="left:50%;top:0;bottom:-600px"></div></div>
+        <div class="time-cell">00:00</div>
+        <div class="time-cell">01:00</div>
+        <div class="time-cell">02:00</div>
+      </div>
+
+      <!-- MAINSTAGE row -->
+      <div class="stage-row">
+        <div class="stage-label"><span style="color:#FF5A36">MAIN</span></div>
+        <div class="slots">
+          <div class="slot relative" style="width:200px;background:rgba(255,90,54,.15);border:1px solid rgba(255,90,54,.3)">
+            <div class="fav-dot"></div>
+            <div class="name">Charlotte de Witte</div>
+            <div class="meta">21:00 – 23:00</div>
+          </div>
+          <div class="slot" style="width:180px;background:rgba(255,90,54,.07);border:1px solid rgba(255,90,54,.15)">
+            <div class="name" style="opacity:.6">Dimitri Vegas</div>
+            <div class="meta">23:15 – 01:00</div>
+          </div>
+          <div class="slot" style="width:120px;background:rgba(255,90,54,.05);border:1px solid rgba(255,90,54,.1)">
+            <div class="name" style="opacity:.4">Steve Aoki</div>
+            <div class="meta">01:15 – 02:30</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FREEDOM row -->
+      <div class="stage-row">
+        <div class="stage-label"><span style="color:#3B82F6">FREE</span></div>
+        <div class="slots">
+          <div class="slot" style="width:170px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
+            <div class="name" style="opacity:.6">Maceo Plex</div>
+            <div class="meta">21:00 – 22:45</div>
+          </div>
+          <div class="slot relative" style="width:200px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3)">
+            <div class="fav-dot"></div>
+            <div class="name">Adam Beyer</div>
+            <div class="meta">23:00 – 01:00</div>
+          </div>
+          <div class="slot" style="width:130px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.1)">
+            <div class="name" style="opacity:.4">Pig&Dan</div>
+            <div class="meta">01:15 – 02:30</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAGE row -->
+      <div class="stage-row">
+        <div class="stage-label"><span style="color:#F59E0B">CAGE</span></div>
+        <div class="slots">
+          <div class="slot" style="width:150px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)">
+            <div class="name" style="opacity:.6">Lilly Palmer</div>
+            <div class="meta">21:00 – 22:30</div>
+          </div>
+          <div class="slot relative" style="width:180px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3)">
+            <div class="fav-dot"></div>
+            <div class="name">Amelie Lens</div>
+            <div class="meta">23:15 – 00:30</div>
+          </div>
+          <div class="slot" style="width:160px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)">
+            <div class="name" style="opacity:.5">FJAAK</div>
+            <div class="meta">00:45 – 02:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CORE row -->
+      <div class="stage-row">
+        <div class="stage-label"><span style="color:#22C55E">CORE</span></div>
+        <div class="slots">
+          <div class="slot" style="width:160px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15)">
+            <div class="name" style="opacity:.5">Ben Böhmer</div>
+            <div class="meta">21:00 – 22:30</div>
+          </div>
+          <div class="slot" style="width:170px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15)">
+            <div class="name" style="opacity:.5">Stephan Bodzin</div>
+            <div class="meta">22:45 – 00:15</div>
+          </div>
+          <div class="slot" style="width:140px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.1)">
+            <div class="name" style="opacity:.4">Reinier Z.</div>
+            <div class="meta">00:30 – 02:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ELIXIR row -->
+      <div class="stage-row">
+        <div class="stage-label"><span style="color:#D946EF">ELIX</span></div>
+        <div class="slots">
+          <div class="slot" style="width:180px;background:rgba(217,70,239,.07);border:1px solid rgba(217,70,239,.15)">
+            <div class="name" style="opacity:.5">Adriatique</div>
+            <div class="meta">21:00 – 23:00</div>
+          </div>
+          <div class="slot relative" style="width:200px;background:rgba(217,70,239,.15);border:1px solid rgba(217,70,239,.3)">
+            <div class="fav-dot"></div>
+            <div class="name">Tale Of Us</div>
+            <div class="meta">23:15 – 01:30</div>
+          </div>
+          <div class="slot" style="width:100px;background:rgba(217,70,239,.05);border:1px solid rgba(217,70,239,.1)">
+            <div class="name" style="opacity:.4">Innellea</div>
+            <div class="meta">01:45 – 03:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATMOSPHERE row -->
+      <div class="stage-row">
+        <div class="stage-label"><span style="color:#06B6D4">ATMO</span></div>
+        <div class="slots">
+          <div class="slot" style="width:190px;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.15)">
+            <div class="name" style="opacity:.5">Boris Brejcha</div>
+            <div class="meta">21:30 – 23:15</div>
+          </div>
+          <div class="slot" style="width:170px;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.15)">
+            <div class="name" style="opacity:.5">Solomun</div>
+            <div class="meta">23:30 – 01:30</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav" style="background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem active"><span class="ms">queue_music</span>Lineup</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+</body>
+</html>

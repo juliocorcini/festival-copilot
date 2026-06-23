@@ -1,0 +1,90 @@
+{
+  "festival": "tomorrowland-deschorre",
+  "venue": "De Schorre",
+  "canvas": {
+    "width": 1000,
+    "height": 1291
+  },
+  "bbox": {
+    "west": 4.375634873640332,
+    "east": 4.389768826359668,
+    "south": 51.084986484297524,
+    "north": 51.09645101570248
+  },
+  "affine": {
+    "a": 66789.52581386181,
+    "b": 6.484727030459669e-9,
+    "c": -292218.5783453663,
+    "d": 2.7951271118887906,
+    "e": -106339.46910063826,
+    "f": 5433593.187274209
+  },
+  "residualPx": {
+    "maxPx": 0.007902202662080526,
+    "meanPx": 0.003083644574508071
+  },
+  "stages": [
+    {
+      "name": "FREEDOM BY BUD",
+      "lng": 4.3789244,
+      "lat": 51.0870526,
+      "matched": true
+    },
+    {
+      "name": "THE ROSE GARDEN",
+      "lng": 4.3800734,
+      "lat": 51.0875815,
+      "matched": true
+    },
+    {
+      "name": "MAINSTAGE",
+      "lng": 4.3864793,
+      "lat": 51.0921683,
+      "matched": true
+    },
+    {
+      "name": "CAGE",
+      "lng": 4.3826684,
+      "lat": 51.0887504,
+      "matched": true
+    },
+    {
+      "name": "THE RAVE CAVE",
+      "lng": 4.382568,
+      "lat": 51.0885148,
+      "matched": true
+    },
+    {
+      "name": "ATMOSPHERE",
+      "lng": 4.3835463,
+      "lat": 51.0899042,
+      "matched": true
+    },
+    {
+      "name": "CORE",
+      "lng": 4.3843939,
+      "lat": 51.0894224,
+      "matched": true
+    },
+    {
+      "name": "CRYSTAL GARDEN",
+      "lng": 4.3827738,
+      "lat": 51.0906994,
+      "matched": true
+    },
+    {
+      "name": "THE GREAT LIBRARY",
+      "lng": 4.3833231,
+      "lat": 51.0932142,
+      "matched": true
+    },
+    {
+      "name": "MOOSE BAR",
+      "lng": 4.3847401,
+      "lat": 51.0943849,
+      "matched": true
+    }
+  ],
+  "note": "x = a*lng + b*lat + c ; y = d*lng + e*lat + f. Apply at runtime as geoToSvg(lng,lat).",
+  "source": "OpenStreetMap contributors (ODbL)"
+}

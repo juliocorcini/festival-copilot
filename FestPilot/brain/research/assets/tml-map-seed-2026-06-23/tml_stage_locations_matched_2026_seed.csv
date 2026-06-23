@@ -1,0 +1,11 @@
+possible_2026_stage_match,name,latitude,longitude,match_confidence,category,geometry_type,id
+FREEDOM BY BUD,Freedom Stage,51.0870526,4.3789244,high,stage_matched_2026,Point,1
+THE ROSE GARDEN,Rose Garden,51.0875815,4.3800734,high,stage_matched_2026,Point,2
+MAINSTAGE,Mainstage,51.0921683,4.3864793,high,stage_matched_2026,Point,7
+CAGE,CAGE,51.0887504,4.3826684,high,stage_matched_2026,Point,8
+THE RAVE CAVE,Rave Cave,51.0885148,4.382568,high,stage_matched_2026,Point,9
+ATMOSPHERE,Atmosphere,51.0899042,4.3835463,high,stage_matched_2026,Point,12
+CORE,CORE,51.0894224,4.3843939,high,stage_matched_2026,Point,13
+CRYSTAL GARDEN,Crystal Garden,51.0906994,4.3827738,high,stage_matched_2026,Point,14
+THE GREAT LIBRARY,The Library,51.0932142,4.3833231,high,stage_matched_2026,Point,39
+MOOSE BAR,Moose Bar,51.0943849,4.3847401,high,stage_matched_2026,Point,40

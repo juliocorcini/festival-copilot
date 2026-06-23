@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#15d Amber Glass — Timetable (polished glass, sticky names, 10 stages)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+
+/* hide scrollbars everywhere */
+*::-webkit-scrollbar{display:none;width:0;height:0}
+*{scrollbar-width:none;-ms-overflow-style:none}
+
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 26px;flex-shrink:0;
+  background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+
+/* TIMETABLE */
+.tt-scroll{flex:1;overflow:auto;position:relative}
+.tt-content{position:relative;width:1800px}
+
+/* sticky time header */
+.time-row{position:sticky;top:0;z-index:30;height:30px;background:linear-gradient(180deg,var(--bg) 70%,rgba(15,13,9,0));}
+.time-row .t{position:absolute;top:9px;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap}
+.time-row .t.now{color:var(--accent)}
+
+/* stage section */
+.stage{position:relative;margin-bottom:10px}
+.stage-name{position:sticky;left:10px;z-index:20;display:inline-flex;align-items:center;gap:6px;
+  margin-bottom:5px;padding:3px 10px 3px 8px;border-radius:99px;
+  background:rgba(20,17,12,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 2px 10px -4px rgba(0,0,0,.6)}
+.stage-name .nm{font-size:10px;font-weight:800;letter-spacing:.05em}
+.stage-name .pin{width:7px;height:7px;border-radius:50%}
+.track{position:relative;width:1800px;height:74px}
+
+/* polished glass set blocks */
+.set{position:absolute;top:0;bottom:0;border-radius:13px;padding:8px 11px;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:center;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 38%,rgba(255,255,255,0) 62%),
+    linear-gradient(180deg,rgba(var(--c),.20),rgba(var(--c),.08));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -10px 24px rgba(var(--c),.05),0 8px 18px -12px rgba(0,0,0,.75);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+/* top sheen */
+.set::before{content:"";position:absolute;left:0;right:0;top:0;height:42%;border-radius:13px 13px 40% 40%;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0));pointer-events:none}
+.set .name{font-weight:700;font-size:11.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.62;position:relative}
+.set .meta{font-size:9px;color:var(--ink);opacity:.5;margin-top:2px;position:relative}
+.set.fav{
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.06) 38%,rgba(255,255,255,0) 62%),
+    linear-gradient(180deg,rgba(var(--c),.42),rgba(var(--c),.18));
+  border:1px solid rgba(var(--c),.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 16px rgba(var(--c),.22),0 8px 18px -12px rgba(0,0,0,.75)}
+.set.fav .name{opacity:1}
+.set.fav .meta{opacity:.8}
+.fav-dot{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.8);z-index:2}
+
+/* continuous now-line top→bottom */
+.now-line{position:absolute;top:30px;bottom:0;width:2px;background:var(--accent);z-index:15;
+  box-shadow:0 0 10px rgba(245,166,35,.7)}
+.now-line::before{content:"NOW";position:absolute;top:-2px;left:50%;transform:translateX(-50%);
+  font-size:8px;font-weight:800;color:#0F0D09;background:var(--accent);padding:1px 5px;border-radius:99px;white-space:nowrap}
+
+/* filtered mode */
+.tt-content.filtered .stage:not(.has-fav){display:none}
+.tt-content.filtered .set:not(.fav){display:none}
+
+.pill{font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;cursor:pointer;user-select:none}
+.pill.ghost{background:var(--glass);border:1px solid var(--border);color:var(--ink)}
+.pill.on{background:var(--accent);color:var(--bg)}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <!-- outer header -->
+  <div class="px-5 pt-10 pb-2 flex items-center justify-between flex-shrink-0">
+    <h1 class="poster text-[22px] font-bold">Timetable</h1>
+    <div class="flex items-center gap-2">
+      <span class="pill on">Sáb 18</span>
+      <span class="pill ghost">Dom 19</span>
+    </div>
+  </div>
+  <div class="px-5 pb-2 flex items-center justify-between flex-shrink-0">
+    <div class="text-[11px] text-[var(--muted)] font-semibold">10 stages · scroll ↕ ↔</div>
+    <span id="favToggle" class="pill ghost flex items-center gap-1"><span class="ms text-[15px]">favorite</span>Only my favs</span>
+  </div>
+
+  <!-- timetable -->
+  <div class="tt-scroll">
+    <div class="tt-content" id="ttContent">
+      <!-- time header -->
+      <div class="time-row">
+        <span class="t" style="left:0%">21:00</span>
+        <span class="t" style="left:8.33%">22:00</span>
+        <span class="t now" style="left:16.67%">23:00</span>
+        <span class="t" style="left:25%">00:00</span>
+        <span class="t" style="left:33.33%">01:00</span>
+        <span class="t" style="left:41.67%">02:00</span>
+        <span class="t" style="left:50%">03:00</span>
+        <span class="t" style="left:58.33%">04:00</span>
+        <span class="t" style="left:66.67%">05:00</span>
+        <span class="t" style="left:75%">06:00</span>
+        <span class="t" style="left:83.33%">07:00</span>
+        <span class="t" style="left:91.67%">08:00</span>
+        <span class="t" style="left:100%">09:00</span>
+      </div>
+
+      <!-- continuous NOW line -->
+      <div class="now-line" style="left:6.67%"></div>
+
+      <!-- STAGE 1 MAINSTAGE (has fav) -->
+      <div class="stage has-fav">
+        <div class="stage-name"><span class="pin" style="background:#FF5A36"></span><span class="nm" style="color:#FF5A36">MAINSTAGE</span></div>
+        <div class="track">
+          <div class="set fav" style="--c:255,90,54;left:0%;width:16.67%"><div class="fav-dot"></div><div class="name">Charlotte de Witte</div><div class="meta">21:00 – 23:00</div></div>
+          <div class="set" style="--c:255,90,54;left:18.75%;width:14.58%"><div class="name">Dimitri Vegas</div><div class="meta">23:15 – 01:00</div></div>
+          <div class="set" style="--c:255,90,54;left:35.42%;width:14.58%"><div class="name">Steve Aoki</div><div class="meta">01:15 – 03:00</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 2 FREEDOM (has fav) -->
+      <div class="stage has-fav">
+        <div class="stage-name"><span class="pin" style="background:#3B82F6"></span><span class="nm" style="color:#3B82F6">FREEDOM</span></div>
+        <div class="track">
+          <div class="set" style="--c:59,130,246;left:0%;width:14.58%"><div class="name">Maceo Plex</div><div class="meta">21:00 – 22:45</div></div>
+          <div class="set fav" style="--c:59,130,246;left:16.67%;width:16.67%"><div class="fav-dot"></div><div class="name">Adam Beyer</div><div class="meta">23:00 – 01:00</div></div>
+          <div class="set" style="--c:59,130,246;left:37.5%;width:12.5%"><div class="name">Pig&Dan</div><div class="meta">01:30 – 03:00</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 3 CAGE (has fav) -->
+      <div class="stage has-fav">
+        <div class="stage-name"><span class="pin" style="background:#F59E0B"></span><span class="nm" style="color:#F59E0B">CAGE</span></div>
+        <div class="track">
+          <div class="set" style="--c:245,158,11;left:0%;width:12.5%"><div class="name">Lilly Palmer</div><div class="meta">21:00 – 22:30</div></div>
+          <div class="set fav" style="--c:245,158,11;left:18.75%;width:10.42%"><div class="fav-dot"></div><div class="name">Amelie Lens</div><div class="meta">23:15 – 00:30</div></div>
+          <div class="set" style="--c:245,158,11;left:31.25%;width:10.42%"><div class="name">FJAAK</div><div class="meta">00:45 – 02:00</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 4 CORE (no fav) -->
+      <div class="stage">
+        <div class="stage-name"><span class="pin" style="background:#22C55E"></span><span class="nm" style="color:#22C55E">CORE</span></div>
+        <div class="track">
+          <div class="set" style="--c:34,197,94;left:0%;width:12.5%"><div class="name">Ben Böhmer</div><div class="meta">21:00 – 22:30</div></div>
+          <div class="set" style="--c:34,197,94;left:14.58%;width:12.5%"><div class="name">Stephan Bodzin</div><div class="meta">22:45 – 00:15</div></div>
+          <div class="set" style="--c:34,197,94;left:29.17%;width:12.5%"><div class="name">Reinier Z.</div><div class="meta">00:30 – 02:00</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 5 ELIXIR (has fav) -->
+      <div class="stage has-fav">
+        <div class="stage-name"><span class="pin" style="background:#D946EF"></span><span class="nm" style="color:#D946EF">ELIXIR</span></div>
+        <div class="track">
+          <div class="set" style="--c:217,70,239;left:0%;width:16.67%"><div class="name">Adriatique</div><div class="meta">21:00 – 23:00</div></div>
+          <div class="set fav" style="--c:217,70,239;left:18.75%;width:18.75%"><div class="fav-dot"></div><div class="name">Tale Of Us</div><div class="meta">23:15 – 01:30</div></div>
+          <div class="set" style="--c:217,70,239;left:39.58%;width:10.42%"><div class="name">Innellea</div><div class="meta">01:45 – 03:00</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 6 ATMOSPHERE (no fav) -->
+      <div class="stage">
+        <div class="stage-name"><span class="pin" style="background:#06B6D4"></span><span class="nm" style="color:#06B6D4">ATMOSPHERE</span></div>
+        <div class="track">
+          <div class="set" style="--c:6,182,212;left:4.17%;width:14.58%"><div class="name">Boris Brejcha</div><div class="meta">21:30 – 23:15</div></div>
+          <div class="set" style="--c:6,182,212;left:20.83%;width:16.67%"><div class="name">Solomun</div><div class="meta">23:30 – 01:30</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 7 THE ROSE GARDEN (has fav) -->
+      <div class="stage has-fav">
+        <div class="stage-name"><span class="pin" style="background:#EC4899"></span><span class="nm" style="color:#EC4899">ROSE GARDEN</span></div>
+        <div class="track">
+          <div class="set" style="--c:236,72,153;left:0%;width:12.5%"><div class="name">Sofi Tukker</div><div class="meta">21:00 – 22:30</div></div>
+          <div class="set fav" style="--c:236,72,153;left:14.58%;width:14.58%"><div class="fav-dot"></div><div class="name">Peggy Gou</div><div class="meta">22:45 – 00:30</div></div>
+          <div class="set" style="--c:236,72,153;left:31.25%;width:14.58%"><div class="name">Honey Dijon</div><div class="meta">00:45 – 02:30</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 8 CRYSTAL GARDEN (no fav) -->
+      <div class="stage">
+        <div class="stage-name"><span class="pin" style="background:#A78BFA"></span><span class="nm" style="color:#A78BFA">CRYSTAL GARDEN</span></div>
+        <div class="track">
+          <div class="set" style="--c:167,139,250;left:0%;width:16.67%"><div class="name">Mind Against</div><div class="meta">21:00 – 23:00</div></div>
+          <div class="set" style="--c:167,139,250;left:18.75%;width:14.58%"><div class="name">Mathame</div><div class="meta">23:15 – 01:00</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 9 RISE (has fav) -->
+      <div class="stage has-fav">
+        <div class="stage-name"><span class="pin" style="background:#EAB308"></span><span class="nm" style="color:#EAB308">RISE</span></div>
+        <div class="track">
+          <div class="set" style="--c:234,179,8;left:4.17%;width:16.67%"><div class="name">Hardwell</div><div class="meta">21:30 – 23:30</div></div>
+          <div class="set fav" style="--c:234,179,8;left:22.92%;width:14.58%"><div class="fav-dot"></div><div class="name">Martin Garrix</div><div class="meta">23:45 – 01:30</div></div>
+        </div>
+      </div>
+
+      <!-- STAGE 10 MELODIA (no fav) -->
+      <div class="stage" style="margin-bottom:16px">
+        <div class="stage-name"><span class="pin" style="background:#14B8A6"></span><span class="nm" style="color:#14B8A6">MELODIA</span></div>
+        <div class="track">
+          <div class="set" style="--c:20,184,166;left:0%;width:16.67%"><div class="name">Lane 8</div><div class="meta">21:00 – 23:00</div></div>
+          <div class="set" style="--c:20,184,166;left:18.75%;width:16.67%"><div class="name">Yotto</div><div class="meta">23:15 – 01:15</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- nav -->
+  <div class="nav">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem active"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+
+<script>
+const t=document.getElementById('favToggle'),c=document.getElementById('ttContent');
+t.addEventListener('click',()=>{const on=c.classList.toggle('filtered');t.classList.toggle('on',on);t.classList.toggle('ghost',!on);});
+</script>
+</body>
+</html>

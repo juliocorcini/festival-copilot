@@ -1,0 +1,21 @@
+{
+  "name": "festpilot",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FestPilot — festival companion app (lineup, My Plan, groups). Monorepo root.",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "dev:server": "npm run dev --workspace @festpilot/server",
+    "dev:web": "npm run dev --workspace @festpilot/web"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "festpilot-map-svg-spike",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Spike (DEC-031): pull De Schorre (Boom) geometry from OpenStreetMap (Overpass, ODbL), classify into layers, and render a stylized Amber-Glass base SVG; overlay the seeded stage points and export the GPS->SVG affine transform (DEC-030).",
+  "scripts": {
+    "start": "tsx src/run.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "osmtogeojson": "^3.0.0-beta.5"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/d3-geo": "^3.1.0",
+    "@types/node": "^26.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

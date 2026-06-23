@@ -1,0 +1,26 @@
+{
+  "name": "festpilot-map-art-spike",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Spike (DEC-033, Route A): turn the accurate OSM base (map-svg spike) into a *beautiful* illustrated Amber-Glass map — textured land, painterly water, scattered tree canopy, soft shadows, bespoke stage art, frame + legend. Reuses the proven GPS->SVG affine (DEC-030). Optional LiDAR relief from Flanders DHMV (geotiff.js).",
+  "scripts": {
+    "start": "tsx src/run.ts",
+    "admin": "tsx admin/server.ts",
+    "preview": "node preview.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/d3-geo": "^3.1.0",
+    "@types/node": "^22.0.0",
+    "@types/pngjs": "^6.0.5",
+    "tsx": "^4.22.4",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "osmtogeojson": "^3.0.0-beta.5",
+    "pngjs": "^7.0.0"
+  }
+}

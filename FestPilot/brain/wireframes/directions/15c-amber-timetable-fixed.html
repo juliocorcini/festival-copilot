@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#15c Amber Glass — Timetable (correct: rows=stages, sticky labels, time-aligned)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+body{background:var(--bg);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px 28px;flex-shrink:0}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:24px}.navitem.active{color:var(--accent)}
+
+/* TIMETABLE GRID */
+.tt-container{flex:1;overflow:auto;position:relative}
+.tt-grid{display:grid;position:relative;
+  /* 1 hour = 120px wide; 12 hours (21:00 - 09:00) */
+  grid-template-columns:68px repeat(12,120px);
+  /* 6 visible stages, each ~90px + gap */
+  grid-template-rows:28px repeat(6,84px);
+  gap:6px 0;
+  padding-bottom:12px;
+  min-width:max-content}
+
+/* Sticky stage labels */
+.stage-label{position:sticky;left:0;z-index:10;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:0 6px;font-size:10px;font-weight:800;letter-spacing:.06em;writing-mode:horizontal-tb;border-right:1px solid var(--border)}
+
+/* Time header (sticky top) */
+.time-header{position:sticky;top:0;z-index:15;background:var(--bg);display:flex;align-items:flex-end;padding-bottom:4px;
+  font-size:10px;font-weight:700;color:var(--muted);justify-content:center;border-bottom:1px solid rgba(255,255,255,.05)}
+.time-header.corner{position:sticky;left:0;z-index:20;background:var(--bg)}
+
+/* Stage row container */
+.stage-row{display:contents}
+.stage-track{position:relative;grid-column:2/-1;height:84px}
+
+/* Set block — positioned by left% and width% relative to the 12h track */
+.set-block{position:absolute;top:6px;bottom:6px;border-radius:10px;padding:6px 10px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;
+  transition:transform .1s}
+.set-block .name{font-weight:700;font-size:11px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.set-block .meta{font-size:9px;opacity:.7;margin-top:1px}
+.fav-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+
+/* Now line */
+.now-line{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:8;box-shadow:0 0 8px var(--accent)}
+.now-label{position:absolute;top:-20px;transform:translateX(-50%);font-size:9px;font-weight:800;color:var(--accent);white-space:nowrap}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <!-- header -->
+  <div class="px-5 pt-10 pb-2 flex items-center justify-between flex-shrink-0">
+    <h1 class="poster text-[22px] font-bold">Timetable</h1>
+    <div class="flex items-center gap-2">
+      <span class="text-[11px] font-bold px-3 py-1 rounded-full" style="background:var(--accent);color:var(--bg)">Sáb 18</span>
+      <span class="text-[11px] font-semibold px-3 py-1 rounded-full" style="background:var(--glass);border:1px solid var(--border)">Dom 19</span>
+    </div>
+  </div>
+
+  <!-- timetable scroll area -->
+  <div class="tt-container">
+    <div class="tt-grid">
+      <!-- TIME HEADER ROW -->
+      <div class="time-header corner"></div>
+      <div class="time-header">21:00</div>
+      <div class="time-header">22:00</div>
+      <div class="time-header" style="color:var(--accent)">23:00</div>
+      <div class="time-header">00:00</div>
+      <div class="time-header">01:00</div>
+      <div class="time-header">02:00</div>
+      <div class="time-header">03:00</div>
+      <div class="time-header">04:00</div>
+      <div class="time-header">05:00</div>
+      <div class="time-header">06:00</div>
+      <div class="time-header">07:00</div>
+      <div class="time-header">08:00</div>
+
+      <!-- ROW 1: MAINSTAGE -->
+      <div class="stage-label" style="color:#FF5A36">MAIN<br>STAGE</div>
+      <div class="stage-track" style="grid-column:2/-1">
+        <!-- Charlotte 21:00-23:00 = starts 0%, width 2/12 = 16.67% -->
+        <div class="set-block" style="left:0%;width:16.5%;background:rgba(255,90,54,.18);border:1px solid rgba(255,90,54,.35)">
+          <div class="fav-dot"></div>
+          <div class="name">Charlotte de Witte</div>
+          <div class="meta">21:00 – 23:00</div>
+        </div>
+        <!-- Dimitri 23:15-01:00 = starts ~18.75%, width 14.6% -->
+        <div class="set-block" style="left:18.75%;width:14.5%;background:rgba(255,90,54,.08);border:1px solid rgba(255,90,54,.15)">
+          <div class="name" style="opacity:.6">Dimitri Vegas</div>
+          <div class="meta">23:15 – 01:00</div>
+        </div>
+        <!-- Steve 01:15-03:00 = starts 35.4%, width 14.5% -->
+        <div class="set-block" style="left:35.4%;width:14.5%;background:rgba(255,90,54,.05);border:1px solid rgba(255,90,54,.1)">
+          <div class="name" style="opacity:.4">Steve Aoki</div>
+          <div class="meta">01:15 – 03:00</div>
+        </div>
+        <!-- NOW line at 21:48 → (48/60)/12 = 6.67% from start -->
+        <div class="now-line" style="left:6.67%"><div class="now-label">NOW</div></div>
+      </div>
+
+      <!-- ROW 2: FREEDOM -->
+      <div class="stage-label" style="color:#3B82F6">FREE<br>DOM</div>
+      <div class="stage-track" style="grid-column:2/-1">
+        <!-- Maceo 21:00-22:45 = 0%, width 14.6% -->
+        <div class="set-block" style="left:0%;width:14.5%;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15)">
+          <div class="name" style="opacity:.6">Maceo Plex</div>
+          <div class="meta">21:00 – 22:45</div>
+        </div>
+        <!-- Adam Beyer 23:00-01:00 = 16.67%, width 16.67% -->
+        <div class="set-block" style="left:16.67%;width:16.5%;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.35)">
+          <div class="fav-dot"></div>
+          <div class="name">Adam Beyer</div>
+          <div class="meta">23:00 – 01:00</div>
+        </div>
+        <!-- Pig&Dan 01:30-03:00 = 37.5%, width 12.5% -->
+        <div class="set-block" style="left:37.5%;width:12.5%;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.1)">
+          <div class="name" style="opacity:.4">Pig&Dan</div>
+          <div class="meta">01:30 – 03:00</div>
+        </div>
+        <div class="now-line" style="left:6.67%"></div>
+      </div>
+
+      <!-- ROW 3: CAGE -->
+      <div class="stage-label" style="color:#F59E0B">CAGE</div>
+      <div class="stage-track" style="grid-column:2/-1">
+        <!-- Lilly 21:00-22:30 = 0%, width 12.5% -->
+        <div class="set-block" style="left:0%;width:12.5%;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15)">
+          <div class="name" style="opacity:.6">Lilly Palmer</div>
+          <div class="meta">21:00 – 22:30</div>
+        </div>
+        <!-- Amelie 23:15-00:30 = 18.75%, width 10.4% -->
+        <div class="set-block" style="left:18.75%;width:10.4%;background:rgba(245,158,11,.18);border:1px solid rgba(245,158,11,.35)">
+          <div class="fav-dot"></div>
+          <div class="name">Amelie Lens</div>
+          <div class="meta">23:15 – 00:30</div>
+        </div>
+        <!-- FJAAK 00:45-02:00 = 31.25%, width 10.4% -->
+        <div class="set-block" style="left:31.25%;width:10.4%;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.12)">
+          <div class="name" style="opacity:.5">FJAAK</div>
+          <div class="meta">00:45 – 02:00</div>
+        </div>
+        <div class="now-line" style="left:6.67%"></div>
+      </div>
+
+      <!-- ROW 4: CORE -->
+      <div class="stage-label" style="color:#22C55E">CORE</div>
+      <div class="stage-track" style="grid-column:2/-1">
+        <div class="set-block" style="left:0%;width:12.5%;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.12)">
+          <div class="name" style="opacity:.5">Ben Böhmer</div>
+          <div class="meta">21:00 – 22:30</div>
+        </div>
+        <div class="set-block" style="left:14.5%;width:12.5%;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.12)">
+          <div class="name" style="opacity:.5">Stephan Bodzin</div>
+          <div class="meta">22:45 – 00:15</div>
+        </div>
+        <div class="set-block" style="left:29.2%;width:12.5%;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.08)">
+          <div class="name" style="opacity:.4">Reinier Z.</div>
+          <div class="meta">00:30 – 02:00</div>
+        </div>
+        <div class="now-line" style="left:6.67%"></div>
+      </div>
+
+      <!-- ROW 5: ELIXIR -->
+      <div class="stage-label" style="color:#D946EF">ELIXIR</div>
+      <div class="stage-track" style="grid-column:2/-1">
+        <div class="set-block" style="left:0%;width:16.5%;background:rgba(217,70,239,.07);border:1px solid rgba(217,70,239,.12)">
+          <div class="name" style="opacity:.5">Adriatique</div>
+          <div class="meta">21:00 – 23:00</div>
+        </div>
+        <div class="set-block" style="left:18.75%;width:18.75%;background:rgba(217,70,239,.18);border:1px solid rgba(217,70,239,.35)">
+          <div class="fav-dot"></div>
+          <div class="name">Tale Of Us</div>
+          <div class="meta">23:15 – 01:30</div>
+        </div>
+        <div class="set-block" style="left:39.6%;width:10.4%;background:rgba(217,70,239,.05);border:1px solid rgba(217,70,239,.08)">
+          <div class="name" style="opacity:.4">Innellea</div>
+          <div class="meta">01:45 – 03:00</div>
+        </div>
+        <div class="now-line" style="left:6.67%"></div>
+      </div>
+
+      <!-- ROW 6: ATMOSPHERE -->
+      <div class="stage-label" style="color:#06B6D4">ATMO</div>
+      <div class="stage-track" style="grid-column:2/-1">
+        <div class="set-block" style="left:4.17%;width:14.5%;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.12)">
+          <div class="name" style="opacity:.5">Boris Brejcha</div>
+          <div class="meta">21:30 – 23:15</div>
+        </div>
+        <div class="set-block" style="left:20.83%;width:16.67%;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.12)">
+          <div class="name" style="opacity:.5">Solomun</div>
+          <div class="meta">23:30 – 01:30</div>
+        </div>
+        <div class="now-line" style="left:6.67%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- nav -->
+  <div class="nav" style="background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem active"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+</body>
+</html>

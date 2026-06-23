@@ -1,0 +1,150 @@
+// Read-side data access for the public lineup API. Pure D1 queries -> DTOs.
+// No client ever calls the festival site; everything is served from our D1.
+
+import type { FestivalDto, LineupDto, PerformanceDto, StageDto, WeekendDto } from "./dto";
+
+export interface LineupQuery {
+  weekend?: string; // weekend name, e.g. "W1"
+  day?: string; // festival day label, e.g. "SATURDAY"
+}
+
+export async function listFestivals(db: D1Database): Promise<FestivalDto[]> {
+  const res = await db
+    .prepare(
+      `SELECT f.id, f.name, f.slug, f.timezone, COALESCE(r.revision, 0) AS revision
+         FROM festival f
+         LEFT JOIN lineup_revision r ON r.festival_id = f.id
+        ORDER BY f.created_at_utc`
+    )
+    .all<{ id: string; name: string; slug: string; timezone: string; revision: number }>();
+  return (res.results ?? []).map((f) => ({
+    id: f.id,
+    name: f.name,
+    slug: f.slug,
+    timezone: f.timezone,
+    revision: f.revision,
+  }));
+}
+
+async function getFestival(db: D1Database, festivalId: string): Promise<FestivalDto | null> {
+  const f = await db
+    .prepare(
+      `SELECT f.id, f.name, f.slug, f.timezone, COALESCE(r.revision, 0) AS revision
+         FROM festival f
+         LEFT JOIN lineup_revision r ON r.festival_id = f.id
+        WHERE f.id = ?`
+    )
+    .bind(festivalId)
+    .first<{ id: string; name: string; slug: string; timezone: string; revision: number }>();
+  if (!f) return null;
+  return { id: f.id, name: f.name, slug: f.slug, timezone: f.timezone, revision: f.revision };
+}
+
+export async function listStages(db: D1Database, festivalId: string): Promise<StageDto[]> {
+  const res = await db
+    .prepare(
+      `SELECT id, source_stage_id, name, sort_order
+         FROM stage WHERE festival_id = ? ORDER BY sort_order, name`
+    )
+    .bind(festivalId)
+    .all<{ id: string; source_stage_id: string; name: string; sort_order: number }>();
+  return (res.results ?? []).map((s) => ({
+    id: s.id,
+    sourceStageId: s.source_stage_id,
+    name: s.name,
+    sortOrder: s.sort_order,
+  }));
+}
+
+export async function getLineup(
+  db: D1Database,
+  festivalId: string,
+  query: LineupQuery = {}
+): Promise<LineupDto | null> {
+  const festival = await getFestival(db, festivalId);
+  if (!festival) return null;
+
+  const weekendsRes = await db
+    .prepare(`SELECT id, name, start_date, end_date FROM weekend WHERE festival_id = ? ORDER BY name`)
+    .bind(festivalId)
+    .all<{ id: string; name: string; start_date: string | null; end_date: string | null }>();
+  const weekends: WeekendDto[] = (weekendsRes.results ?? []).map((w) => ({
+    id: w.id,
+    name: w.name,
+    startDate: w.start_date,
+    endDate: w.end_date,
+  }));
+
+  const stages = await listStages(db, festivalId);
+
+  const perfRes = await db
+    .prepare(
+      `SELECT id, source_performance_id, name, day, date_local, weekend_id, stage_id,
+              start_at_utc, end_at_utc, is_placeholder
+         FROM performance
+        WHERE festival_id = ? AND active = 1
+        ORDER BY start_at_utc, stage_id`
+    )
+    .bind(festivalId)
+    .all<{
+      id: string;
+      source_performance_id: string;
+      name: string;
+      day: string | null;
+      date_local: string | null;
+      weekend_id: string | null;
+      stage_id: string | null;
+      start_at_utc: string | null;
+      end_at_utc: string | null;
+      is_placeholder: number;
+    }>();
+
+  const artistRes = await db
+    .prepare(
+      `SELECT pa.performance_id, a.id, a.name, a.image_url, pa.sort_order
+         FROM performance_artist pa
+         JOIN artist a ON a.id = pa.artist_id
+        WHERE pa.performance_id IN (SELECT id FROM performance WHERE festival_id = ? AND active = 1)
+        ORDER BY pa.sort_order`
+    )
+    .bind(festivalId)
+    .all<{
+      performance_id: string;
+      id: string;
+      name: string;
+      image_url: string | null;
+      sort_order: number;
+    }>();
+
+  const artistsByPerf = new Map<string, { id: string; name: string; imageUrl: string | null }[]>();
+  for (const r of artistRes.results ?? []) {
+    const list = artistsByPerf.get(r.performance_id) ?? [];
+    list.push({ id: r.id, name: r.name, imageUrl: r.image_url });
+    artistsByPerf.set(r.performance_id, list);
+  }
+
+  const weekendNameById = new Map(weekends.map((w) => [w.id, w.name]));
+
+  let performances: PerformanceDto[] = (perfRes.results ?? []).map((p) => ({
+    id: p.id,
+    sourcePerformanceId: p.source_performance_id,
+    name: p.name,
+    day: p.day,
+    dateLocal: p.date_local,
+    weekendId: p.weekend_id,
+    stageId: p.stage_id,
+    startAtUtc: p.start_at_utc,
+    endAtUtc: p.end_at_utc,
+    isPlaceholder: p.is_placeholder === 1,
+    artists: artistsByPerf.get(p.id) ?? [],
+  }));
+
+  if (query.weekend) {
+    performances = performances.filter((p) => weekendNameById.get(p.weekendId ?? "") === query.weekend);
+  }
+  if (query.day) {
+    performances = performances.filter((p) => p.day === query.day);
+  }
+
+  return { festival, weekends, stages, performances };
+}

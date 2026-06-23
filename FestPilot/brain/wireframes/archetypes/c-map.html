@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FestPilot — Arquétipo C · Mapa primeiro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#16201A; --muted:#5C6B61; --accent:#0E9F6E; }
+  body{ background:#DDE6DE; font-family:"Hanken Grotesk",system-ui,sans-serif; color:var(--ink); }
+  .display{ font-family:"Bricolage Grotesque",sans-serif; letter-spacing:-.02em; }
+  .ms{ font-family:"Material Symbols Rounded"; font-variation-settings:"FILL" 0,"wght" 400; }
+  .phone{ width:390px; height:844px; border-radius:44px; overflow:hidden; position:relative; box-shadow:0 40px 90px -20px rgba(20,40,28,.45);
+    background:
+      radial-gradient(60% 50% at 70% 22%, rgba(14,159,110,.10), transparent 60%),
+      repeating-linear-gradient(38deg, rgba(255,255,255,.5) 0 2px, transparent 2px 26px),
+      linear-gradient(160deg,#E8F0E8,#D7E5DA); }
+  .stage{ position:absolute; transform:translate(-50%,-50%); text-align:center; }
+  .bubble{ width:64px;height:64px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff; font-weight:800; box-shadow:0 8px 18px -4px rgba(0,0,0,.3); border:3px solid rgba(255,255,255,.8); }
+  .stage small{ display:block; font-size:10px; font-weight:700; margin-top:4px; color:var(--ink); text-shadow:0 1px 2px #fff; }
+  .me{ position:absolute; transform:translate(-50%,-50%); }
+  .me .pin{ width:22px;height:22px;border-radius:50%; background:#2563EB; border:3px solid #fff; box-shadow:0 0 0 6px rgba(37,99,235,.25); }
+  .ava{ width:30px;height:30px;border-radius:50%; border:2px solid #fff; box-shadow:0 4px 8px rgba(0,0,0,.25); display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:800; color:#fff; }
+  .navitem{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--muted); }
+  .navitem .ms{ font-size:24px; } .navitem.active{ color:var(--accent); }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+  <div class="phone flex flex-col">
+    <!-- floating top search -->
+    <div class="absolute top-0 left-0 right-0 z-20 px-5 pt-12">
+      <div class="bg-white rounded-2xl shadow-lg px-4 py-3 flex items-center gap-3">
+        <span class="ms text-[var(--muted)]">search</span>
+        <span class="text-[14px] text-[var(--muted)] flex-1">Buscar palco, amigo, banheiro…</span>
+        <span class="ms text-[var(--accent)]">tune</span>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <span class="text-[12px] font-bold px-3 py-1.5 rounded-full bg-[var(--accent)] text-white shadow">Amigos</span>
+        <span class="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-white shadow text-[var(--ink)]">Palcos</span>
+        <span class="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-white shadow text-[var(--ink)]">Banheiros</span>
+        <span class="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-white shadow text-[var(--ink)]">Comida</span>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="relative flex-1">
+      <div class="stage" style="left:50%; top:30%"><div class="bubble" style="background:#FF5A36">MS</div><small>MAINSTAGE</small></div>
+      <div class="stage" style="left:24%; top:46%"><div class="bubble" style="background:#2563EB; width:52px;height:52px">FR</div><small>FREEDOM</small></div>
+      <div class="stage" style="left:76%; top:50%"><div class="bubble" style="background:#F59E0B; width:52px;height:52px">CG</div><small>CAGE</small></div>
+      <div class="stage" style="left:40%; top:64%"><div class="bubble" style="background:#16A34A; width:46px;height:46px">CO</div><small>CORE</small></div>
+      <div class="stage" style="left:66%; top:70%"><div class="bubble" style="background:#D946EF; width:46px;height:46px">EL</div><small>ELIXIR</small></div>
+
+      <!-- friends -->
+      <div class="me" style="left:50%; top:38%"><div class="pin"></div></div>
+      <div class="me" style="left:55%; top:33%"><div class="ava" style="background:#FF5A36">AN</div></div>
+      <div class="me" style="left:46%; top:34%"><div class="ava" style="background:#7C3AED">TH</div></div>
+      <div class="me" style="left:74%; top:56%"><div class="ava" style="background:#0EA5E9">LU</div></div>
+    </div>
+
+    <!-- bottom sheet -->
+    <div class="relative z-20 bg-white rounded-t-[28px] shadow-[0_-12px_30px_-12px_rgba(0,0,0,.25)] px-5 pt-3 pb-4">
+      <div class="w-10 h-1.5 rounded-full bg-gray-200 mx-auto mb-3"></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-[11px] font-bold tracking-wide text-green-600">AGORA</span></div>
+        <span class="text-[12px] font-semibold text-[var(--accent)]">Você está no MAINSTAGE</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="display text-[20px] font-extrabold leading-tight">Charlotte de Witte</div>
+          <div class="text-[13px] text-[var(--muted)] font-semibold mt-0.5">MAINSTAGE · termina 23:00</div>
+        </div>
+        <button class="bg-[var(--accent)] text-white text-[13px] font-bold px-4 py-2.5 rounded-full flex items-center gap-1"><span class="ms text-[18px]">near_me</span>A seguir</button>
+      </div>
+      <div class="mt-3 text-[12px] text-[var(--muted)] flex items-center gap-1"><span class="ms text-[16px]">directions_walk</span> Amelie Lens (CAGE) começa 23:15 · 6 min a pé daqui</div>
+    </div>
+
+    <div class="px-7 pt-3 pb-7 bg-white border-t border-gray-100 flex items-center justify-between">
+      <div class="navitem"><span class="ms">bolt</span>Início</div>
+      <div class="navitem"><span class="ms">queue_music</span>Lineup</div>
+      <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+      <div class="navitem active"><span class="ms">map</span>Mapa</div>
+      <div class="navitem"><span class="ms">group</span>Grupo</div>
+    </div>
+  </div>
+</body>
+</html>

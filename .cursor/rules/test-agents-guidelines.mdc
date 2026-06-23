@@ -1,0 +1,50 @@
+---
+description: "Testing conventions and quality standards."
+alwaysApply: false
+---
+
+# Testing guidelines
+
+## Folder structure
+
+```
+src/tests/
+  unit/
+    domain/
+      budget/budget.test.ts
+      money/money.test.ts
+      ...
+  component/
+    ...
+  e2e/
+    ...
+  helpers/
+  fixtures/
+```
+
+## Test file conventions
+
+- Test files: `*.test.ts` for unit/component, `*.e2e.ts` for Playwright
+- Use `describe()` / `it()` with descriptive English names
+- Pattern: `describe("functionName")` → `it("does specific thing with specific input")`
+
+## Quality rules
+
+1. **Never alter production source files when writing tests** — only write to test directories
+2. **Test with real values** — concrete numbers, not trivial assertions
+3. **Financial functions**: verify math with input → expected → actual
+4. **Mock only boundaries** (DB, network) — domain functions are pure, test directly
+5. **Coverage targets**: >90% domain, >70% critical UI components
+
+## Failure handling
+
+When a test fails:
+1. If production code has a bug → fix the bug
+2. If test setup is wrong (bad mock, wrong import) → fix the test
+3. If unclear → investigate before changing anything
+
+## Running tests
+
+- Unit: `npm run test`
+- E2E: `npx playwright test`
+- Single file: `npx vitest run src/tests/unit/domain/budget/budget.test.ts`

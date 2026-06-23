@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#12c Amber Glass — Lock in (multi-option + add nearby artist)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+  background:radial-gradient(ellipse 100% 50% at 50% 60%,rgba(255,93,46,.05),transparent 50%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.3);display:flex;flex-direction:column}
+.glass{background:var(--glass);border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.progress-pill{height:6px;border-radius:99px;background:rgba(255,255,255,.08)}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#FF5D2E)}
+.pick{transition:transform .12s}
+.pick:active{transform:scale(.985)}
+.pick.sel{border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent),0 8px 22px -10px rgba(245,166,35,.3)}
+.add-btn{border:1.5px dashed rgba(255,255,255,.22);border-radius:16px;background:transparent;color:var(--muted);
+  padding:13px;width:100%;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* sheet */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:50;transform:translateY(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
+  background:rgba(18,15,11,.96);backdrop-filter:blur(22px);border-top:1px solid var(--border);border-radius:26px 26px 0 0;
+  max-height:78%;display:flex;flex-direction:column}
+.sheet.on{transform:translateY(0)}
+.search{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:14px;padding:11px 13px}
+.search input{background:transparent;border:none;outline:none;color:var(--ink);font-size:14px;flex:1}
+.search input::placeholder{color:var(--muted)}
+.row{display:flex;align-items:center;gap:11px;padding:11px;border-radius:14px}
+.row:hover{background:rgba(255,255,255,.04)}
+.ava{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#cbb78e;background:linear-gradient(135deg,#3a3224,#241f16);border:1px solid rgba(255,255,255,.1)}
+.addpill{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);border:1px solid rgba(245,166,35,.4);border-radius:99px;padding:5px 12px;cursor:pointer}
+.win-tag{font-size:11px;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <div class="px-6 pt-10 pb-1 flex justify-between text-[12px] font-semibold">
+    <button class="text-[var(--muted)] flex items-center gap-1"><span class="ms text-[16px]">list</span>All clashes</button>
+    <span class="text-[var(--muted)]"><span class="ms text-[18px]">close</span></span>
+  </div>
+  <div class="px-6 pt-1 pb-1">
+    <div class="flex items-center justify-between text-[11px] text-[var(--muted)] font-semibold mb-1.5"><span>LOCK IN</span><span>3 of 5 time slots</span></div>
+    <div class="progress-pill"><div class="progress-fill" style="width:60%"></div></div>
+  </div>
+
+  <div class="text-center pt-4 pb-3">
+    <div class="poster text-[13px] font-bold tracking-[.1em] text-[var(--muted)]">SÁB 18 · 23:00 – 00:30</div>
+    <div class="text-[15px] font-bold mt-2" style="color:var(--accent)">4 favorites clash — pick one</div>
+  </div>
+
+  <div class="px-5 flex-1 overflow-auto space-y-2.5 pb-3" id="optList">
+    <button class="glass pick w-full p-4 text-left flex items-center gap-3.5">
+      <div class="ava" style="color:#F59E0B">AL</div>
+      <div class="flex-1 min-w-0"><div class="poster text-[17px] font-bold">Amelie Lens</div><div class="flex items-center gap-2 mt-0.5 text-[12px] text-[var(--muted)] font-semibold"><span class="dot" style="background:#F59E0B"></span>CAGE · 23:15</div></div>
+      <span class="ms text-[22px] text-[var(--muted)] selico">radio_button_unchecked</span>
+    </button>
+    <button class="glass pick w-full p-4 text-left flex items-center gap-3.5">
+      <div class="ava" style="color:#3B82F6">AB</div>
+      <div class="flex-1 min-w-0"><div class="poster text-[17px] font-bold">Adam Beyer</div><div class="flex items-center gap-2 mt-0.5 text-[12px] text-[var(--muted)] font-semibold"><span class="dot" style="background:#3B82F6"></span>FREEDOM · 23:00</div></div>
+      <span class="ms text-[22px] text-[var(--muted)] selico">radio_button_unchecked</span>
+    </button>
+    <button class="glass pick sel w-full p-4 text-left flex items-center gap-3.5">
+      <div class="ava" style="color:#D946EF">TU</div>
+      <div class="flex-1 min-w-0"><div class="poster text-[17px] font-bold">Tale Of Us</div><div class="flex items-center gap-2 mt-0.5 text-[12px] text-[var(--muted)] font-semibold"><span class="dot" style="background:#D946EF"></span>ELIXIR · 23:15</div></div>
+      <span class="ms text-[22px] selico" style="color:var(--accent)">check_circle</span>
+    </button>
+    <button class="glass pick w-full p-4 text-left flex items-center gap-3.5">
+      <div class="ava" style="color:#22C55E">SB</div>
+      <div class="flex-1 min-w-0"><div class="poster text-[17px] font-bold">Stephan Bodzin</div><div class="flex items-center gap-2 mt-0.5 text-[12px] text-[var(--muted)] font-semibold"><span class="dot" style="background:#22C55E"></span>CORE · 22:45</div></div>
+      <span class="ms text-[22px] text-[var(--muted)] selico">radio_button_unchecked</span>
+    </button>
+
+    <button class="add-btn" id="addBtn"><span class="ms text-[18px]">add</span>Add another artist around this time</button>
+  </div>
+
+  <div class="px-5 pb-8 pt-2 flex gap-3">
+    <button class="flex-1 py-3.5 rounded-2xl font-bold text-[14px]" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)">Lock in Tale Of Us</button>
+    <button class="py-3.5 px-4 rounded-2xl font-semibold text-[13px] text-[var(--muted)]" style="background:var(--glass);border:1px solid var(--border)"><span class="ms text-[16px] align-middle">content_cut</span></button>
+  </div>
+
+  <!-- ADD SHEET -->
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet">
+    <div class="w-10 h-1.5 rounded-full bg-white/15 mx-auto mt-3 mb-2"></div>
+    <div class="px-5 pb-2">
+      <div class="flex items-center justify-between mb-1">
+        <div class="poster text-[18px] font-bold">Add an artist</div>
+        <button id="closeSheet" class="ms text-[var(--muted)]">close</button>
+      </div>
+      <div class="win-tag mb-3">Playing around <b>23:00 – 00:30</b> (22:00 – 01:30 window)</div>
+      <div class="search"><span class="ms text-[var(--muted)] text-[20px]">search</span><input placeholder="Search any artist…" /></div>
+    </div>
+    <div class="px-3 pb-6 overflow-auto">
+      <div class="px-2 pt-1 pb-1 text-[10px] font-bold tracking-[.14em] text-[var(--muted)]">NEARBY THIS TIME</div>
+      <div class="row"><div class="ava" style="color:#FF5A36">CW</div><div class="min-w-0"><div class="font-bold text-[14px]">Charlotte de Witte</div><div class="text-[11px] text-[var(--muted)]"><span class="dot" style="background:#FF5A36;width:7px;height:7px"></span> MAINSTAGE · 21:00 – 23:00</div></div><span class="addpill">Add</span></div>
+      <div class="row"><div class="ava" style="color:#EC4899">PG</div><div class="min-w-0"><div class="font-bold text-[14px]">Peggy Gou</div><div class="text-[11px] text-[var(--muted)]"><span class="dot" style="background:#EC4899;width:7px;height:7px"></span> ROSE GARDEN · 22:45 – 00:30</div></div><span class="addpill">Add</span></div>
+      <div class="row"><div class="ava" style="color:#EAB308">MG</div><div class="min-w-0"><div class="font-bold text-[14px]">Martin Garrix</div><div class="text-[11px] text-[var(--muted)]"><span class="dot" style="background:#EAB308;width:7px;height:7px"></span> RISE · 23:45 – 01:30</div></div><span class="addpill">Add</span></div>
+      <div class="row"><div class="ava" style="color:#06B6D4">SO</div><div class="min-w-0"><div class="font-bold text-[14px]">Solomun</div><div class="text-[11px] text-[var(--muted)]"><span class="dot" style="background:#06B6D4;width:7px;height:7px"></span> ATMOSPHERE · 23:30 – 01:30</div></div><span class="addpill">Add</span></div>
+      <div class="row"><div class="ava" style="color:#A78BFA">MT</div><div class="min-w-0"><div class="font-bold text-[14px]">Mathame</div><div class="text-[11px] text-[var(--muted)]"><span class="dot" style="background:#A78BFA;width:7px;height:7px"></span> CRYSTAL GARDEN · 23:15 – 01:00</div></div><span class="addpill">Add</span></div>
+      <div class="px-2 pt-3 pb-1 text-[11px] text-[var(--muted)] italic">Only acts playing near this slot are shown — so the choice still makes sense. Search to find any artist.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const scrim=document.getElementById('scrim'),sheet=document.getElementById('sheet');
+const open=()=>{scrim.classList.add('on');sheet.classList.add('on')};
+const close=()=>{scrim.classList.remove('on');sheet.classList.remove('on')};
+document.getElementById('addBtn').addEventListener('click',open);
+document.getElementById('closeSheet').addEventListener('click',close);
+scrim.addEventListener('click',close);
+// single-select picks
+document.querySelectorAll('#optList .pick').forEach(p=>{
+  p.addEventListener('click',()=>{
+    document.querySelectorAll('#optList .pick').forEach(x=>{x.classList.remove('sel');const i=x.querySelector('.selico');i.textContent='radio_button_unchecked';i.style.color='';i.classList.add('text-[var(--muted)]');});
+    p.classList.add('sel');const i=p.querySelector('.selico');i.textContent='check_circle';i.style.color='var(--accent)';i.classList.remove('text-[var(--muted)]');
+  });
+});
+// add from sheet → insert into options
+document.querySelectorAll('.addpill').forEach(a=>{
+  a.addEventListener('click',()=>{
+    const row=a.closest('.row');
+    const name=row.querySelector('.font-bold').textContent;
+    const meta=row.querySelector('.text-\\[11px\\]').innerHTML;
+    const ava=row.querySelector('.ava').outerHTML;
+    const btn=document.createElement('button');
+    btn.className='glass pick w-full p-4 text-left flex items-center gap-3.5';
+    btn.innerHTML=ava.replace('width:38px;height:38px','')+`<div class="flex-1 min-w-0"><div class="poster text-[17px] font-bold">${name}</div><div class="mt-0.5 text-[12px] text-[var(--muted)] font-semibold">${meta}</div></div><span class="ms text-[22px] text-[var(--muted)] selico">radio_button_unchecked</span>`;
+    document.getElementById('addBtn').before(btn);
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('#optList .pick').forEach(x=>{x.classList.remove('sel');const i=x.querySelector('.selico');i.textContent='radio_button_unchecked';i.style.color='';});
+      btn.classList.add('sel');const i=btn.querySelector('.selico');i.textContent='check_circle';i.style.color='var(--accent)';
+    });
+    a.textContent='Added';a.style.color='var(--muted)';a.style.borderColor='var(--border)';
+    setTimeout(close,250);
+  });
+});
+</script>
+</body>
+</html>

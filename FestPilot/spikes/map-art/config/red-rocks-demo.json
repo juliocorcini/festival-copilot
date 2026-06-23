@@ -1,0 +1,13 @@
+{
+  "festivalId": "red-rocks-demo",
+  "title": "Red Rocks",
+  "subtitle": "Global relief demo · Colorado",
+  "padMeters": 450,
+  "relief": "global",
+  "stages": [
+    { "name": "Amphitheatre", "lng": -105.2057, "lat": 39.6655, "matched": true },
+    { "name": "Trading Post", "lng": -105.2078, "lat": 39.6635, "matched": true },
+    { "name": "Upper North Lot", "lng": -105.2040, "lat": 39.6681, "matched": true },
+    { "name": "Lower South Lot", "lng": -105.2028, "lat": 39.6626, "matched": false }
+  ]
+}

@@ -1,0 +1,32 @@
+---
+alwaysApply: true
+---
+# FestPilot Project Brain
+
+FestPilot is a festival companion app. It helps festival-goers (1) pick every artist they want to see, (2) turn those favorites into a conflict-free personal timetable, and (3) stay together with friends through a shared group timetable, a stage map, walking-time awareness, live presence, and temporary meeting points. Julio is the Product Lead and developer.
+
+## Before answering about FestPilot, read the relevant files in FestPilot/brain/:
+
+- `FestPilot/brain/README.md` — Entry point with truth policy and file index
+- `FestPilot/brain/product-spec.md` — What the app is, features, rules, scope (the first source of truth)
+- `FestPilot/brain/decision-log.md` — All decisions with status (DEC-NNN)
+- `FestPilot/brain/technical-direction.md` — Stack, data source, architecture, infra
+- `FestPilot/brain/project-status.md` — Current status, pending tasks, next steps
+- `FestPilot/brain/research/` — Research outputs and raw source material (e.g. the festival data-source study)
+
+## Critical rules — NEVER contradict these:
+
+- Brain files are the SINGLE SOURCE OF TRUTH for product decisions
+- If a decision is not in decision-log.md, it has NOT been made
+- The AI must READ brain files before answering product questions
+- Code output must always be in English (variable names, comments, etc.)
+- Documents follow the language of the request
+- Lineup data is never hardcoded: resolve the source (event + uuid) from the official page, then fetch the CDN JSON (see technical-direction.md)
+
+## Council Integration
+
+When questions involve trade-offs, comparisons, or strategic choices about FestPilot, auto-invoke the council skill per auto-council.mdc.
+
+## Phase Delivery
+
+When Julio asks to generate phase packages, read `.cursor/skills/phase-delivery/SKILL.md` and follow it.

@@ -1,0 +1,37 @@
+---
+description: "Test execution and creation rules."
+alwaysApply: true
+---
+
+# Test execution
+
+When the user asks to **create**, **implement**, **run**, **execute**, or **update** tests:
+
+## Running tests
+
+Run tests directly using the Shell tool:
+- `npm run test` for unit tests (Vitest)
+- `npx playwright test` for E2E tests
+- Interpret results yourself and report
+
+## Creating tests
+
+Write test code directly:
+- Follow patterns in existing tests under `src/tests/`
+- Test domain logic with real values (not trivial assertions)
+- Mock only boundaries (DB, network) — domain functions are pure
+- Use `describe()` / `it()` with descriptive English names
+- Coverage targets: >90% domain, >70% critical UI
+
+## Quality rules
+
+- Tests verify LOGIC with concrete numbers
+- Every financial function gets a math verification test
+- Use fixtures from `FestPilot/brain/documents/test-plan-d1.md` when available
+- If a test fails: fix it immediately, don't skip
+
+## DO NOT
+
+- Do NOT delegate to subagents
+- Do NOT use the Task tool for test work
+- Do NOT skip writing tests because "it's complex"

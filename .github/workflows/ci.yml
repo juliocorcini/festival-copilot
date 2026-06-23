@@ -1,0 +1,37 @@
+name: CI
+
+# The app lives in FestPilot/ (npm-workspaces root; git root is the repo root).
+# Phase 1 ships the backend (Cloudflare Worker: lineup ingestion + read API on D1).
+# Typecheck + unit tests + a dry-run Worker bundle run on every push/PR.
+# (The Playwright E2E job returns once the web app shell lands.)
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+# Supersede in-flight runs on the same ref to save runner minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: FestPilot
+
+jobs:
+  unit:
+    name: Typecheck + unit + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Node 22: the suite uses Web Crypto (crypto.subtle) for content hashing.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: FestPilot/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build

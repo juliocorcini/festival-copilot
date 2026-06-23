@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#09 Amber Glass — My Plan</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+body{background:var(--bg);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+  background:var(--bg);box-shadow:0 50px 100px -30px rgba(245,166,35,.25)}
+.glass{background:var(--glass);border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.tl-line{position:absolute;left:28px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--accent),transparent)}
+.tl-dot{width:12px;height:12px;border-radius:50%;border:2.5px solid var(--accent);background:var(--bg);position:absolute;left:23px}
+.walk-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.06);color:var(--muted);font-weight:600}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px 28px}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:24px}.navitem.active{color:var(--accent)}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone flex flex-col">
+  <div class="px-7 pt-4 pb-1 flex justify-between text-[12px] font-semibold"><span>21:48</span><span class="text-[var(--muted)] flex items-center gap-1"><span class="ms text-[16px]">signal_cellular_alt</span><span class="ms text-[16px]">battery_4_bar</span></span></div>
+
+  <div class="px-7 pt-3 pb-2 flex items-center justify-between">
+    <div>
+      <div class="text-[11px] tracking-[.2em] text-[var(--muted)] font-semibold">MY PLAN</div>
+      <h1 class="poster text-[26px] font-bold leading-none mt-1">Saturday 18</h1>
+    </div>
+    <div class="flex gap-2">
+      <span class="text-[11px] font-bold px-3 py-1 rounded-full" style="background:var(--accent);color:var(--bg)">Sáb 18</span>
+      <span class="text-[11px] font-semibold px-3 py-1 rounded-full glass">Dom 19</span>
+    </div>
+  </div>
+
+  <!-- timeline -->
+  <div class="px-5 flex-1 overflow-hidden relative pt-4">
+    <div class="tl-line"></div>
+
+    <!-- slot 1 -->
+    <div class="relative pl-12 pb-5">
+      <div class="tl-dot" style="top:4px;background:var(--accent);border-color:var(--accent)"></div>
+      <div class="glass p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-[var(--muted)]">21:00 – 22:30</div>
+            <div class="poster text-[20px] font-bold mt-0.5">Charlotte de Witte</div>
+            <div class="flex items-center gap-2 mt-1 text-[12px] text-[var(--muted)] font-semibold"><span style="width:8px;height:8px;border-radius:50%;background:#FF5A36;display:inline-block"></span>MAINSTAGE</div>
+          </div>
+          <span class="ms text-[var(--accent)]">check_circle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- walk -->
+    <div class="relative pl-12 pb-3">
+      <div class="tl-dot" style="top:4px;border-color:var(--muted);width:8px;height:8px;left:25px"></div>
+      <div class="walk-chip"><span class="ms text-[14px]">directions_walk</span>6 min walk to CAGE</div>
+    </div>
+
+    <!-- slot 2 -->
+    <div class="relative pl-12 pb-5">
+      <div class="tl-dot" style="top:4px"></div>
+      <div class="glass p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-[var(--muted)]">23:15 – 00:30</div>
+            <div class="poster text-[20px] font-bold mt-0.5">Amelie Lens</div>
+            <div class="flex items-center gap-2 mt-1 text-[12px] text-[var(--muted)] font-semibold"><span style="width:8px;height:8px;border-radius:50%;background:#F59E0B;display:inline-block"></span>CAGE</div>
+          </div>
+          <span class="ms text-[var(--accent)]">check_circle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- break -->
+    <div class="relative pl-12 pb-3">
+      <div class="tl-dot" style="top:4px;border-color:var(--muted);width:8px;height:8px;left:25px"></div>
+      <div class="walk-chip"><span class="ms text-[14px]">restaurant</span>30 min food break</div>
+    </div>
+
+    <!-- slot 3 -->
+    <div class="relative pl-12 pb-5">
+      <div class="tl-dot" style="top:4px"></div>
+      <div class="glass p-4 opacity-70">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-[var(--muted)]">01:00 – 02:30</div>
+            <div class="poster text-[20px] font-bold mt-0.5">Adam Beyer</div>
+            <div class="flex items-center gap-2 mt-1 text-[12px] text-[var(--muted)] font-semibold"><span style="width:8px;height:8px;border-radius:50%;background:#3B82F6;display:inline-block"></span>FREEDOM</div>
+          </div>
+          <span class="ms text-[var(--muted)]">radio_button_unchecked</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- slot 4 -->
+    <div class="relative pl-12 pb-5">
+      <div class="tl-dot" style="top:4px"></div>
+      <div class="glass p-4 opacity-50">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-[var(--muted)]">02:45 – 04:00</div>
+            <div class="poster text-[20px] font-bold mt-0.5">Tale Of Us</div>
+            <div class="flex items-center gap-2 mt-1 text-[12px] text-[var(--muted)] font-semibold"><span style="width:8px;height:8px;border-radius:50%;background:#D946EF;display:inline-block"></span>ELIXIR</div>
+          </div>
+          <span class="ms text-[var(--muted)]">radio_button_unchecked</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav" style="background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem"><span class="ms">queue_music</span>Lineup</div>
+    <div class="navitem active"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+</body>
+</html>

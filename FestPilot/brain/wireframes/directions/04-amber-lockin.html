@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#04 Amber Glass — Lock in (Duel)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+body{background:var(--bg);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink)}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+  background:radial-gradient(ellipse 100% 50% at 50% 50%,rgba(245,166,35,.06),transparent 60%),var(--bg);
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.3)}
+.glass{background:var(--glass);border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.vs{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg);box-shadow:0 0 30px rgba(245,166,35,.4)}
+.progress-pill{height:6px;border-radius:99px;background:rgba(255,255,255,.08)}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone flex flex-col">
+  <div class="px-7 pt-4 pb-1 flex justify-between text-[12px] font-semibold"><span>21:48</span><span class="text-[var(--muted)]"><span class="ms text-[16px]">close</span></span></div>
+
+  <!-- progress -->
+  <div class="px-7 pt-2 pb-1">
+    <div class="flex items-center justify-between text-[11px] text-[var(--muted)] font-semibold mb-1.5"><span>LOCK IN</span><span>3 of 8 clashes</span></div>
+    <div class="progress-pill"><div class="progress-fill" style="width:37.5%"></div></div>
+  </div>
+
+  <!-- time slot -->
+  <div class="text-center pt-4 pb-2">
+    <div class="text-[12px] font-bold tracking-[.16em] text-[var(--muted)]">SÁB 18 · 23:00 – 00:30</div>
+    <div class="text-[13px] text-[var(--muted)] mt-1">Who do you want to see?</div>
+  </div>
+
+  <!-- duel -->
+  <div class="px-5 flex-1 flex flex-col items-center justify-center gap-4">
+    <!-- card A -->
+    <button class="glass w-full p-5 text-left transition-transform hover:scale-[1.02] active:scale-[0.98]">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="poster text-[24px] font-bold leading-tight">Amelie Lens</div>
+          <div class="flex items-center gap-2 mt-2 text-[13px] text-[var(--muted)] font-semibold"><span class="dot" style="background:#F59E0B"></span>CAGE</div>
+          <div class="text-[12px] text-[var(--muted)] mt-2">Techno · Peak-time energy</div>
+        </div>
+        <span class="ms text-[32px] text-[var(--accent)] opacity-60">chevron_right</span>
+      </div>
+    </button>
+
+    <!-- VS -->
+    <div class="vs">VS</div>
+
+    <!-- card B -->
+    <button class="glass w-full p-5 text-left transition-transform hover:scale-[1.02] active:scale-[0.98]">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="poster text-[24px] font-bold leading-tight">Adam Beyer</div>
+          <div class="flex items-center gap-2 mt-2 text-[13px] text-[var(--muted)] font-semibold"><span class="dot" style="background:#3B82F6"></span>FREEDOM</div>
+          <div class="text-[12px] text-[var(--muted)] mt-2">Techno · Driving & hypnotic</div>
+        </div>
+        <span class="ms text-[32px] text-[var(--accent)] opacity-60">chevron_right</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- bottom actions -->
+  <div class="px-7 pb-10 pt-3 flex items-center justify-between">
+    <button class="text-[12px] text-[var(--muted)] font-semibold flex items-center gap-1"><span class="ms text-[18px]">content_cut</span>Split set</button>
+    <button class="text-[12px] text-[var(--muted)] font-semibold flex items-center gap-1"><span class="ms text-[18px]">skip_next</span>Skip</button>
+  </div>
+</div>
+</body>
+</html>

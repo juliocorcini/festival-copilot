@@ -1,0 +1,69 @@
+{
+  "festivalId": "tomorrowland-deschorre",
+  "title": "De Schorre",
+  "subtitle": "Tomorrowland · Boom",
+  "padMeters": 230,
+  "relief": "auto",
+  "stages": [
+    {
+      "name": "FREEDOM BY BUD",
+      "lng": 4.3789244,
+      "lat": 51.0870526,
+      "matched": true
+    },
+    {
+      "name": "THE ROSE GARDEN",
+      "lng": 4.3800734,
+      "lat": 51.0875815,
+      "matched": true
+    },
+    {
+      "name": "MAINSTAGE",
+      "lng": 4.3864793,
+      "lat": 51.0921683,
+      "matched": true
+    },
+    {
+      "name": "CAGE",
+      "lng": 4.3826684,
+      "lat": 51.0887504,
+      "matched": true
+    },
+    {
+      "name": "THE RAVE CAVE",
+      "lng": 4.382568,
+      "lat": 51.0885148,
+      "matched": true
+    },
+    {
+      "name": "ATMOSPHERE",
+      "lng": 4.3835463,
+      "lat": 51.0899042,
+      "matched": true
+    },
+    {
+      "name": "CORE",
+      "lng": 4.3843939,
+      "lat": 51.0894224,
+      "matched": true
+    },
+    {
+      "name": "CRYSTAL GARDEN",
+      "lng": 4.3827738,
+      "lat": 51.0906994,
+      "matched": true
+    },
+    {
+      "name": "THE GREAT LIBRARY",
+      "lng": 4.3833231,
+      "lat": 51.0932142,
+      "matched": true
+    },
+    {
+      "name": "MOOSE BAR",
+      "lng": 4.3847401,
+      "lat": 51.0943849,
+      "matched": true
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+FESTPILOT — MATERIAL BRUTO DA DEFINIÇÃO DO PRODUTO
+Fonte: sessão de definição com Julio (2026-06-23).
+Idioma: português (registro de origem, fiel à intenção; o speech-to-text foi limpo para leitura).
+Síntese organizada em English está em product-spec.md. Isto aqui é a fonte crua.
+
+------------------------------------------------------------
+CONTEXTO / ORIGEM
+------------------------------------------------------------
+- O Trip Budget Copilot (TripPilot) é o melhor app que o Julio fez até hoje; ele gosta muito do que foi feito nele. Quer reaproveitar toda a estrutura do Cursor (regras, skills, agentes, brain) num app novo.
+- App novo: para frequentadores de festival.
+
+------------------------------------------------------------
+IDEIA CENTRAL
+------------------------------------------------------------
+O principal é montar o timetable personalizado do festival: colocar quem você quer assistir.
+Depois, uma camada de grupo, para os amigos ficarem juntos.
+
+São basicamente 2 coisas pessoais + 1 social:
+1) Escolher TODOS os artistas que eu quero ver (favoritos).
+2) Montar o meu timetable FECHADO (um artista por momento, resolvendo conflitos).
+3) Grupo (timetable do grupo + se achar no festival).
+
+------------------------------------------------------------
+PILAR 1 — FAVORITOS ("quem eu quero ver")
+------------------------------------------------------------
+- Eu passo pela lista e vou selecionando todos os artistas que eu gostaria de assistir.
+- Não é o artista que eu VOU ver, é o artista que eu QUERO ver — porque depois ele vai bater com vários outros.
+- Posso favoritar vários no mesmo horário. Favoritar é desejo, não compromisso.
+- Favoritos são uma coisa; o timetable fechado é outra coisa.
+
+------------------------------------------------------------
+PILAR 2 — TIMETABLE FECHADO ("o que eu vou fazer de verdade")
+------------------------------------------------------------
+- É uma função separada e explícita: "você quer criar um timetable fechado? nele só tem um artista por hora/momento, e você escolhe qual."
+- O nome "timetable fechado" é péssimo — precisa achar um nome melhor. A ideia: você só pode escolher um artista por momento.
+- Como funciona: por dia de festival, o app mostra a linha dos meus favoritos. Onde 3 artistas (por exemplo) tocam ao mesmo tempo em palcos diferentes, eu tenho que escolher só um (não posso ir a 3 lugares).
+- Gamificado: a cada ponto de conflito, mostra os artistas ao mesmo tempo e pergunta. Mostra gênero, o que ele vai tocar, coisa sobre o artista, para ajudar a escolher. Ele escolhe um só (não pode sobrepor horário).
+- Quando escolhe, isso vira o horário do timetable dele. Quando acabar aquele artista (o horário dele), aí vai para a próxima escolha. Só pode fazer a próxima escolha depois que esse horário acabar. (resolução em ordem cronológica, uma de cada vez)
+
+SETS PARCIAIS (nuance importante):
+- Às vezes quero ouvir uma parte de um artista e uma parte de outro.
+- Ex.: o artista do palco 1 vai até 20h, mas eu quero muito ver o do palco 2 que começa 19h40 e vai até 22h. Então quero ver o do palco 1 até 19h30 e depois ando até o outro palco para pegar o outro logo no começo.
+- Não é só pegar o horário bruto. Tem que dar para fazer essas distinções de "quero sair um pouco mais cedo desse para ir para aquele". E isso envolve o tempo de caminhada entre palcos.
+- Criar o meu lineup real: o que o usuário vai sentir/fazer de verdade no festival.
+
+------------------------------------------------------------
+PILAR 3 — GRUPOS ("ficar junto")
+------------------------------------------------------------
+- Um dos usuários cria um grupo; os amigos se juntam.
+- No festival a gente tem vários amigos; cada um tem seu lineup/timetable. Mas a gente quer ficar junto na maior parte do tempo.
+- Seria legal um timetable do GRUPO. Cada um fala "esse é o meu timetable / é o que eu quero fazer".
+- Quem criou o grupo pode ter acesso aos timetables de todo mundo e ajudar a definir: faz a lista de cada horário, vê quem escolheu o quê, e escolhe o artista do grupo (ex.: por maioria — tantas pessoas escolheram esse, tantas aquele).
+- Monta o timetable do grupo de acordo com os timetables das pessoas.
+
+DUAS LINHAS DE PENSAMENTO (chave):
+- Primeiro tenta bater os timetables FECHADOS. Mas o fechado é muito específico da pessoa; muitas vezes não vai bater com o dos outros.
+- Se não bater: lembra que cada pessoa também tem os FAVORITOS (vários artistas que ela queria ver, antes de fechar). Para fechar, ela excluiu vários. Então: se o "um" que ela fechou não bate com o grupo, será que um dos outros 3 que ela excluiu bate com o grupo? Aí pega esse como segunda opção. Assim ela fica com o grupo e ainda vê alguém que gosta.
+- Ex.: eu tinha 4 no mesmo horário, excluí 3 e deixei 1 para o fechado. Mas eu gosto dos 4. Se o 1 não bate com o grupo, talvez um dos outros 3 bata.
+
+DÚVIDA DO JULIO (em aberto):
+- Como trocar as informações / como o dono do grupo faz o timetable do grupo / se pergunta para a pessoa, manda mensagem de volta etc. "Eu realmente não sei como lidar com isso." -> decisão em aberto.
+
+------------------------------------------------------------
+FONTE DE DADOS DO LINEUP (resumo; detalhe em 2026-06-23-festival-lineup-data-source.md)
+------------------------------------------------------------
+- Para um app, Ctrl+A / OCR / ler a grade visual não servem (não dá para garantir qual artista é de qual palco).
+- Tomorrowland: o site (Next.js) traz event + uuid no __NEXT_DATA__; um CDN serve JSON de config (weekends), stages e performances. Cada performance já vem com artista + palco + dia + horário.
+- Não hardcodar o uuid: pegar event+uuid sempre da página oficial. O uuid pode mudar; e os dados podem atualizar com o mesmo uuid.
+- Normalizar: timezone (Europe/Brussels), +1 segundo no fim, sets que viram a meia-noite.
+- App lê o NOSSO banco, nunca o site direto.
+- Worker que de tempos em tempos verifica se houve atualização (ETag/Last-Modified/hash), pega o que mudou, atualiza, e avisa quem favoritou/fechou aquele artista. Não apagar removidos — marcar inativo.
+
+------------------------------------------------------------
+MAPA, PALCOS E TEMPO DE DESLOCAMENTO
+------------------------------------------------------------
+- Cada festival tem seus palcos (ex.: ~16). Quero definir no mapa onde está cada palco: abre o mapa no celular, ele pergunta "onde está o palco tal?", eu clico no ponto real. Vou clicando em cada palco.
+- Definir a ÁREA de cada palco: clico no palco e expando um círculo (raio) para dizer "tudo dentro dessa área aqui é o Mainstage". Depois outro palco, outra área. Mapear o festival inteiro assim. (círculo no começo; polígono depois)
+- Por quê: (1) saber quanto tempo demora para ir de um palco a outro (ex.: do Mainstage para o Freedom é uma caminhada). O app tem que ser inteligente para saber que preciso andar X minutos. (2) Saber, por uma coordenada de GPS, qual é o palco mais próximo / em qual palco a pessoa está.
+
+------------------------------------------------------------
+PRESENÇA / GPS / GRUPO NO FESTIVAL
+------------------------------------------------------------
+- No grupo, ter o status de cada pessoa por GPS: onde cada um está. Quando o GPS der uma coordenada, quero saber qual o palco mais próximo / em qual área ela está.
+- Juntar as pessoas que estão no mesmo palco: "Thales, Andy e Vitor estão no Mainstage vendo tal artista". O palco só toca uma coisa por vez, então dá para mostrar o que estão vendo. Mostrar bonitinho que eles estão juntos.
+- Botão "onde está todo mundo?": manda notificação para o grupo; nem sempre o GPS está rodando (app fechado/segundo plano). Na notificação já põe o palco mais perto e pergunta se é esse o artista que está vendo. A pessoa responde rápido.
+- Se o GPS estiver funcionando (background service), já mostra todo mundo sem perguntar nada.
+
+GPS POR PADRÃO (decisão do Julio):
+- O app deve funcionar por padrão com GPS (ativado por padrão como postura de produto). Mas, na prática, só ativa quando a pessoa for usar uma função de GPS — nesse momento pergunta se quer ativar. Quem quiser, desativa.
+- Não precisa mostrar a localização exata: "está no Mainstage" (se tem certeza), "perto do Mainstage" (menos certeza), "entre Mainstage e Core" (em uma área entre os dois). Localização aproximada/por palco está ok como padrão.
+
+------------------------------------------------------------
+PONTOS DE ENCONTRO ("vem até mim")
+------------------------------------------------------------
+- Função separada e mais precisa: às vezes a precisão é ótima (uns 3 metros) e eu quero encontrar a pessoa. "Estou aqui, vem até aqui, exatamente onde eu estou."
+- A pessoa liga essa função quando quer ser encontrada (ou eu peço para ela ligar). Aí libera uma camada bem mais precisa do que "estou no palco tal".
+- Poder colocar uma IMAGEM: "o ponto de encontro é aqui, estou embaixo dessa placa" e manda a foto da placa para a pessoa se localizar.
+- O ponto de encontro expira: fica disponível por um tempo; verifica se a pessoa ainda está lá; se saiu, mantém o ponto mas vai sumindo (fica no mapa, mas não na cara). Quem quiser ver onde foi o ponto, vê quem foi; mas "o ponto não existe mais" porque já faz muitas horas / não tem mais ninguém. Meio que fazer ele sumir aos poucos.
+
+------------------------------------------------------------
+RESUMO DAS DÚVIDAS EM ABERTO
+------------------------------------------------------------
+- Nome do app (working name: FestPilot).
+- Nome do "timetable fechado" (o atual é ruim).
+- Como o grupo coordena / como o dono monta e divulga o timetable do grupo (Julio não sabe ainda).
+- Plataforma/stack (PWA x Capacitor x React Native) — afeta GPS em segundo plano e push interativo.
+- Backend (o app precisa de servidor: grupos, presença, push, updater do lineup).

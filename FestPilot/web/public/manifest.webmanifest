@@ -1,0 +1,10 @@
+{
+  "name": "FestPilot",
+  "short_name": "FestPilot",
+  "description": "Your festival companion — lineup, plan, and find your group.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0a07",
+  "theme_color": "#0c0a07",
+  "icons": []
+}

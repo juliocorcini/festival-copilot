@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>#19 Amber Glass — Map (illustrated, presence, meeting point)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}*::-webkit-scrollbar{display:none}*{scrollbar-width:none}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:#0c130f;
+  box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),rgba(15,13,9,.55);
+  border:1px solid var(--border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.stage{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5}
+.bubble{border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;
+  box-shadow:0 8px 18px -4px rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.7)}
+.stage small{display:block;font-size:9px;font-weight:800;margin-top:4px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);letter-spacing:.04em}
+.ava{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.5);background-clip:padding-box}
+.me-pin{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 0 6px rgba(245,166,35,.22)}
+.radar{position:absolute;width:64px;height:64px;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,166,35,.25),transparent 70%)}
+.chip{font-size:11px;font-weight:700;padding:6px 12px;border-radius:99px;white-space:nowrap}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 26px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <!-- map area -->
+  <div class="relative flex-1 overflow-hidden">
+    <!-- illustrated base -->
+    <svg viewBox="0 0 390 620" preserveAspectRatio="xMidYMid slice" class="absolute inset-0 w-full h-full">
+      <defs>
+        <radialGradient id="amb" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#1a2118"/><stop offset="100%" stop-color="#0c130f"/></radialGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#13344a"/><stop offset="100%" stop-color="#0e2636"/></linearGradient>
+      </defs>
+      <rect width="390" height="620" fill="url(#amb)"/>
+      <!-- green areas -->
+      <path d="M-20,120 Q90,80 180,140 T420,120 L420,260 Q260,300 120,250 T-20,290 Z" fill="#16241a" opacity=".9"/>
+      <path d="M-20,430 Q120,390 240,450 T420,420 L420,640 L-20,640 Z" fill="#13201a" opacity=".9"/>
+      <!-- lake -->
+      <ellipse cx="300" cy="360" rx="90" ry="54" fill="url(#water)" opacity=".85"/>
+      <ellipse cx="300" cy="360" rx="90" ry="54" fill="none" stroke="#2a6a8f" stroke-opacity=".3"/>
+      <!-- paths -->
+      <g stroke="#3a3324" stroke-width="11" fill="none" stroke-linecap="round" opacity=".8">
+        <path d="M60,600 C120,470 90,360 195,300 C300,240 250,150 200,60"/>
+        <path d="M195,300 C120,280 70,250 40,180"/>
+        <path d="M195,300 C300,320 340,420 300,560"/>
+      </g>
+      <g stroke="#534726" stroke-width="2.5" stroke-dasharray="2 8" fill="none" stroke-linecap="round" opacity=".7">
+        <path d="M60,600 C120,470 90,360 195,300 C300,240 250,150 200,60"/>
+        <path d="M195,300 C300,320 340,420 300,560"/>
+      </g>
+      <!-- trees -->
+      <g fill="#1f3324" opacity=".9">
+        <circle cx="40" cy="150" r="8"/><circle cx="70" cy="170" r="6"/><circle cx="350" cy="180" r="7"/><circle cx="60" cy="470" r="7"/><circle cx="330" cy="520" r="8"/><circle cx="150" cy="520" r="6"/>
+      </g>
+    </svg>
+
+    <!-- search overlay -->
+    <div class="absolute top-0 left-0 right-0 z-20 px-5 pt-12">
+      <div class="glass px-4 py-3 flex items-center gap-3" style="border-radius:16px">
+        <span class="ms text-[var(--muted)]">search</span>
+        <span class="text-[13px] text-[var(--muted)] flex-1">Stage, friend, food…</span>
+        <span class="ms" style="color:var(--accent)">tune</span>
+      </div>
+      <div class="flex gap-2 mt-3 overflow-auto">
+        <span class="chip" style="background:var(--accent);color:var(--bg)">Friends</span>
+        <span class="chip glass">Stages</span>
+        <span class="chip glass">WC</span>
+        <span class="chip glass">Food</span>
+        <span class="chip glass">Water</span>
+        <span class="chip glass">Exits</span>
+      </div>
+    </div>
+
+    <!-- stages -->
+    <div class="stage" style="left:51%;top:14%"><div class="bubble" style="background:#FF5A36;width:58px;height:58px"><span class="ms" style="font-size:30px">star</span></div><small>MAINSTAGE</small></div>
+    <div class="stage" style="left:13%;top:33%"><div class="bubble" style="background:#3B82F6;width:44px;height:44px"><span class="ms" style="font-size:24px">bolt</span></div><small>FREEDOM</small></div>
+    <div class="stage" style="left:82%;top:30%"><div class="bubble" style="background:#F59E0B;width:44px;height:44px"><span class="ms" style="font-size:24px">whatshot</span></div><small>CAGE</small></div>
+    <div class="stage" style="left:24%;top:64%"><div class="bubble" style="background:#22C55E;width:40px;height:40px"><span class="ms" style="font-size:22px">graphic_eq</span></div><small>CORE</small></div>
+    <div class="stage" style="left:74%;top:74%"><div class="bubble" style="background:#D946EF;width:40px;height:40px"><span class="ms" style="font-size:22px">auto_awesome</span></div><small>ELIXIR</small></div>
+
+    <!-- me + radar -->
+    <div class="absolute" style="left:50%;top:48%;transform:translate(-50%,-50%);z-index:6"><div class="radar"></div><div class="me-pin"></div></div>
+    <!-- friends -->
+    <div class="absolute" style="left:55%;top:16%;transform:translate(-50%,-50%);z-index:6"><div class="ava" style="background:#FF5A36">AN</div></div>
+    <div class="absolute" style="left:47%;top:18%;transform:translate(-50%,-50%);z-index:6"><div class="ava" style="background:#7C3AED">TH</div></div>
+    <div class="absolute" style="left:80%;top:34%;transform:translate(-50%,-50%);z-index:6"><div class="ava" style="background:#0EA5E9">LU</div></div>
+    <!-- meeting point pin -->
+    <div class="absolute" style="left:62%;top:54%;transform:translate(-50%,-100%);z-index:7">
+      <div class="flex flex-col items-center"><div class="px-2 py-0.5 rounded-full text-[9px] font-bold mb-0.5" style="background:var(--accent);color:var(--bg)">Meet</div><span class="ms text-[30px]" style="color:var(--accent);text-shadow:0 2px 6px rgba(0,0,0,.6)">location_on</span></div>
+    </div>
+  </div>
+
+  <!-- bottom sheet -->
+  <div class="relative z-20 rounded-t-[26px] px-5 pt-3 pb-2 flex-shrink-0" style="background:rgba(15,13,9,.94);backdrop-filter:blur(16px);border-top:1px solid var(--border);box-shadow:0 -12px 30px -10px rgba(0,0,0,.6)">
+    <div class="w-10 h-1.5 rounded-full bg-white/15 mx-auto mb-3"></div>
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1"><span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-[10px] font-bold tracking-wide text-green-400">NOW · MAINSTAGE</span></div>
+        <div class="poster text-[18px] font-bold">Charlotte de Witte</div>
+        <div class="text-[12px] text-[var(--muted)] mt-0.5">ends 23:00 · 12 min left</div>
+      </div>
+      <button class="flex items-center gap-1 px-4 py-2.5 rounded-2xl text-[12px] font-bold" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)"><span class="ms text-[16px]">near_me</span>Route to next</button>
+    </div>
+    <div class="mt-2 text-[11px] text-[var(--muted)] flex items-center gap-1"><span class="ms text-[14px]">directions_walk</span>Amelie Lens (CAGE) starts 23:15 · 6 min walk</div>
+  </div>
+
+  <div class="nav">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem active"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+</body>
+</html>

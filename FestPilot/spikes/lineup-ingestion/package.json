@@ -1,0 +1,17 @@
+{
+  "name": "festpilot-lineup-ingestion-spike",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Spike: resolve event+uuid, fetch the structured Tomorrowland lineup CDN JSON, and normalize it (timezone, +1s quirk, midnight-crossing) into clean domain objects. Validated offline against fixtures mined from a real HAR.",
+  "scripts": {
+    "start": "tsx src/run.ts",
+    "mine": "node mine-har.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

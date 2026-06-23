@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FestPilot · Admin map editor</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0c0a07; --panel:#15110b; --panel2:#1d1810; --line:rgba(245,166,35,.18);
+    --amber:#F5A623; --amber-hi:#FFD874; --ink:#0f0d09; --text:#F5F0E6; --muted:#9a8c70;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--text);font-family:"Albert Sans",system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+  h1,h2,h3,.font-display{font-family:"Oswald",sans-serif;letter-spacing:.04em}
+  aside{width:360px;flex:0 0 360px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+  .brand{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .brand h1{margin:0;font-size:18px;text-transform:uppercase;color:var(--amber-hi)}
+  .brand p{margin:4px 0 0;font-size:12px;color:var(--muted)}
+  .scroll{overflow:auto;padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1}
+  input,select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px 10px;font:inherit;font-size:13px}
+  input:focus,select:focus{outline:none;border-color:var(--amber)}
+  .stages{display:flex;flex-direction:column;gap:6px}
+  .stage{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 9px}
+  .stage .idx{width:20px;height:20px;flex:0 0 20px;border-radius:50%;display:grid;place-items:center;font:700 11px "Oswald";background:var(--amber);color:var(--ink)}
+  .stage.unverified .idx{background:transparent;border:1.5px dashed var(--amber);color:var(--amber)}
+  .stage input.name{flex:1;border:none;background:transparent;padding:2px 0;font-size:13px}
+  .stage button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px}
+  .stage button:hover{color:var(--amber-hi)}
+  .hint{font-size:12px;color:var(--muted);line-height:1.5}
+  .actions{padding:14px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+  button.btn{font:600 14px "Albert Sans";border-radius:10px;padding:11px 14px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+  button.btn:hover{border-color:var(--amber)}
+  button.btn.primary{background:linear-gradient(180deg,var(--amber-hi),var(--amber));color:var(--ink);border:none}
+  button.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+  .btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
+  main{flex:1;position:relative}
+  #map{position:absolute;inset:0}
+  .leaflet-container{background:#0a0a0a}
+  .pin{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 38% 32%,var(--amber-hi),var(--amber));color:var(--ink);font:700 12px "Oswald";border:2px solid var(--ink);box-shadow:0 0 0 2px rgba(245,166,35,.35),0 6px 14px -4px rgba(0,0,0,.7)}
+  .pin.unverified{background:rgba(245,166,35,.18);border:2px dashed var(--amber);color:var(--amber);box-shadow:none}
+  .overlay{position:absolute;right:14px;top:14px;width:330px;max-height:calc(100vh - 28px);overflow:auto;background:rgba(15,13,9,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:14px;display:none;z-index:1000}
+  .overlay.show{display:block}
+  .overlay h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;color:var(--amber-hi)}
+  .overlay img{width:100%;border-radius:10px;display:block;margin-bottom:8px;border:1px solid var(--line)}
+  .overlay .meta{font-size:11px;color:var(--muted);line-height:1.5}
+  .overlay a{color:var(--amber-hi)}
+  .toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--amber);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;z-index:1200;display:none}
+  .toast.show{display:block}
+  .seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px;margin-bottom:8px}
+  .seg button{border:0;background:transparent;color:var(--muted);font:600 12px "Albert Sans";padding:5px 12px;border-radius:999px;cursor:pointer}
+  .seg button.on{background:linear-gradient(180deg,var(--amber-hi),var(--amber));color:var(--ink)}
+</style>
+</head>
+<body>
+  <aside>
+    <div class="brand">
+      <h1>Map editor</h1>
+      <p>Drop &amp; drag stage pins · generate the map</p>
+    </div>
+    <div class="scroll">
+      <div class="field">
+        <label>Festival ID</label>
+        <input id="festivalId" placeholder="tomorrowland-deschorre" />
+      </div>
+      <div class="row">
+        <div class="field"><label>Title</label><input id="title" placeholder="De Schorre" /></div>
+        <div class="field"><label>Subtitle</label><input id="subtitle" placeholder="Tomorrowland · Boom" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Pad (m)</label><input id="padMeters" type="number" value="230" /></div>
+        <div class="field"><label>Relief</label>
+          <select id="relief"><option>auto</option><option>flanders</option><option>global</option><option>none</option></select>
+        </div>
+        <div class="field"><label>Relief px</label><input id="reliefWidth" type="number" value="3072" /></div>
+      </div>
+      <div class="field">
+        <label>Stages <span id="count" class="hint"></span></label>
+        <div id="stages" class="stages"></div>
+        <p class="hint">Click the map to add a pin. Drag to reposition. Mark each <b>verified</b> (solid) once its placement is right — that is the only spatial input; everything else is derived.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="btn-row">
+        <button class="btn" id="loadSeed">Load De Schorre seed</button>
+        <button class="btn" id="download">Export JSON</button>
+      </div>
+      <button class="btn primary" id="generate">Generate map</button>
+    </div>
+  </aside>
+
+  <main>
+    <div id="map"></div>
+    <div class="overlay" id="overlay">
+      <h3>Generated map</h3>
+      <div class="seg" id="seg"><button data-p="night" class="on">Night</button><button data-p="day">Day</button></div>
+      <img id="preview" alt="map preview" />
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

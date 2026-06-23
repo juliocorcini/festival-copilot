@@ -1,0 +1,17 @@
+{
+  "name": "festpilot-map-import-spike",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Spike: parse the seeded Google My Maps KML into ImportedMapFeature[], auto-match the official lineup stages, flag old/renamed venues, and emit an admin verify map.",
+  "scripts": {
+    "start": "tsx src/run.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "fast-xml-parser": "^5.9.3",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

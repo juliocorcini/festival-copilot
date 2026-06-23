@@ -1,0 +1,113 @@
+:root {
+  --bg: #0c0a07;
+  --panel: rgba(15, 13, 9, 0.86);
+  --line: rgba(245, 166, 35, 0.2);
+  --amber: #f5a623;
+  --amber-hi: #ffd874;
+  --ink: #0f0d09;
+  --text: #f5f0e6;
+  --muted: #9a8c70;
+  --friend: #7cf59a;
+  --me: #5ad1ff;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Albert Sans", system-ui, sans-serif;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map { position: relative; height: 100%; width: 100%; }
+
+.viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  background: radial-gradient(120% 90% at 50% 0%, #16110a 0%, #08070a 70%);
+}
+.viewport:active { cursor: grabbing; }
+
+.world { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+.base { display: block; user-select: none; -webkit-user-drag: none; border-radius: 2px; }
+.overlay { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+
+/* ---- markers ---- */
+.lbl {
+  font-family: "Oswald", sans-serif;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #08070a;
+  stroke-width: 3px;
+}
+.name { font-size: 12px; fill: var(--text); }
+.sub { font-size: 9.5px; fill: var(--amber-hi); font-weight: 500; }
+.me-lbl { fill: var(--me); }
+
+.friend { fill: var(--friend); stroke: #08070a; stroke-width: 2.4px; }
+.off .friend, .offdot { fill: #6b6657; }
+.off .name { fill: var(--muted); }
+
+.me { fill: var(--me); stroke: #08070a; stroke-width: 2.4px; }
+.me-acc { fill: var(--me); opacity: 0.22; }
+.pulse { animation: pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { 0% { r: 8px; opacity: 0.4; } 100% { r: 26px; opacity: 0; } }
+
+.meet { fill: var(--amber); stroke: var(--ink); stroke-width: 2px; }
+.meet-shadow { fill: rgba(0, 0, 0, 0.35); }
+.meet-dot { fill: var(--ink); }
+.meet-lbl { fill: var(--amber-hi); font-size: 11px; }
+
+/* ---- chrome ---- */
+.topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: linear-gradient(180deg, rgba(8, 7, 10, 0.85), rgba(8, 7, 10, 0));
+}
+.topbar .title { display: flex; flex-direction: column; line-height: 1.2; }
+.topbar .title strong { font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.04em; font-size: 17px; color: var(--amber-hi); }
+.topbar .title span { font-size: 11px; color: var(--muted); }
+
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; backdrop-filter: blur(8px); }
+.seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 600 12px "Albert Sans", sans-serif; padding: 6px 13px; border-radius: 999px; cursor: pointer; }
+.seg button.on { background: linear-gradient(180deg, var(--amber-hi), var(--amber)); color: var(--ink); }
+
+.recenter {
+  position: absolute; right: 14px; bottom: calc(150px + env(safe-area-inset-bottom));
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--panel); color: var(--amber-hi);
+  font-size: 20px; cursor: pointer; backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.8);
+}
+
+.friends-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--panel); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+  max-height: 42vh; overflow: auto;
+}
+.friends-sheet h3 { margin: 2px 0 10px; font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; color: var(--amber-hi); }
+.friends-sheet ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.friends-sheet li { display: flex; align-items: center; gap: 9px; font-size: 14px; }
+.friends-sheet li.muted { color: var(--muted); }
+.friends-sheet li b { font-weight: 600; }
+.friends-sheet li em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--amber-hi); }
+.friends-sheet li.muted em { color: var(--muted); }
+.dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 11px; }
+.dot.friend { background: var(--friend); }
+.dot.me { background: var(--me); }
+.dot.offdot { background: #6b6657; }
+.src { margin: 10px 0 0; font-size: 10px; color: var(--muted); }
+
+.map-msg { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 14px; }
