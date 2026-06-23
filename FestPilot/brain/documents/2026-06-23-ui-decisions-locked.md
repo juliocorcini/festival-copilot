@@ -3,7 +3,8 @@
 > Created 2026-06-23 from the prototype-review sessions with Julio.
 > Source of truth for **concrete UI/UX decisions**. Visual identity lives in
 > `2026-06-23-ui-dna-and-directions.md`; prototypes in `brain/wireframes/directions/`.
-> These feed the future `design-system.md` and the build phases.
+> These feed `2026-06-23-design-system.md` (tokens/components) + `2026-06-23-screen-catalog.md` (every screen) + the build phases.
+> **§§9–16 below were added 2026-06-23 after the 8-batch design pass** (the social layer, identity, notifications, map POI, admin) — answers locked in **DEC-039**.
 
 ---
 
@@ -107,6 +108,67 @@ Favoriting flow:
 
 ---
 
+## 9. Groups — formation (Pillar 3a) — prototype `23`
+
+- **Squad is one tab** ("Squad"); empty state offers **Create** or **Join** (no group yet).
+- **Auth gate at create/join only** (DEC-024): anonymous use everywhere; creating/joining triggers the sign-in upgrade.
+- **Profile asked at first join** (DEC-039 Q-F): display name + avatar (**upload or initials**, no preset gallery); editable in Settings.
+- **Invite = short link + QR**; **link does not expire while the festival is active** (DEC-038). Squad cap **50** (DEC-038).
+- Members list: roles (owner/member), leave, owner-remove. "Share my plan" pushes the personal plan into the group aggregation.
+
+## 10. Group shared timetable (Pillar 3a) — prototype `24`
+
+- **Blocks = per performance/set boundaries**, not fixed 30/60-min (DEC-039 Q-A).
+- **Auto-plan = plurality of locked picks** + tally; **owner override** per block; **per-block follow / do-my-own**; **no member voting** in V1 (DEC-039 Q-B, DEC-013/019).
+- **Never silently change a locked must-see** — show "**group → X, you locked Y · [Join]/[Keep]**" + a **favorites-fallback** offer (a favorite of yours near the group).
+- **Splitting is shown, not fought** — a split view of who's at each stage + CTA to a post-set meeting point.
+- "Needs input" state when too few members have locked plans → nudge members.
+
+## 11. Presence & consent (Pillar 3b) — prototype `25`
+
+- **Consent pre-prompt before the OS dialog** (DEC-015) with plain-language value + privacy promises; request **foreground-only** (no background tracking, DEC-012).
+- **Sharing modes:** **Stage labels = default** (coarse "at MAINSTAGE"), **Precise live pin = opt-in, auto-expires in 60 min**, **Ghost** (you see them, they don't see you). Per-squad scope; **squad-only**, never public (DEC-007/008/015).
+- **Where's the squad:** map peek + roster (coarse label, freshness, live ring for precise sharers, offline/ghost) with Ping/Nudge.
+- **Precise-active control** always reachable: countdown, who-can-see, +60 min / downgrade to coarse / stop now.
+- Privacy settings: master switch, default mode, expiry stepper, audience, **pause-all**. (Clients never receive raw coordinates — server-coarsened, §3 non-negotiable.)
+
+## 12. Meeting points & safety (Pillar 3c) — prototype `26`
+
+- **Create** = pick a spot (drag pin / my-spot / a stage / a bar; auto-label by nearest landmark) + details (name, when = now/after-this-set/custom, who = whole squad or selected, optional note) → notifies the squad.
+- **Active detail** = convergence map + roster with **live ETA/distance** + here / no-response; **Navigate** (compass-arrow + distance, no turn-by-turn) · **I'm here**.
+- **Lifecycle:** active → on-the-way → everyone-here (reunion moment) → expired (auto-close ~30 min after) → cancelled.
+- **Safety / "I'm lost"** (DEC-039 Q-H): calm, non-alarmist menu reachable from **Squad** and **Map** — share live location + alert squad · nearest landmark · medical/info/exit · call a member. Safety-active = broadcast + nearest help + one-tap "I'm okay". **Exact coords leave the device only via meeting point or this action** (DEC-014/015).
+
+## 13. Identity, account & settings — prototype `27`
+
+- **Anonymous-first**; **Google + email-link** to save the account; **no Apple, no iOS** — the future native build is **Android-only** (DEC-039 Q-E; supersedes the old "Apple before native iOS").
+- **Guest → save** upsell (don't lose squads/plans across devices); **sign out**; **delete account & data** (GDPR-friendly).
+- **Settings hub:** account · notifications · location & privacy (→ §11) · **language** · **appearance** · legal (Privacy/Terms) · support · version.
+- **Language: default English**, switchable per-user in Settings (i18n; not auto-forced by location — DEC-039 Q-K).
+- **Appearance:** Auto (follows festival day/night) / Day / Night — drives the **map's light/dark art**.
+
+## 14. Notifications & system states — prototype `28`
+
+- **Personal-gap filler**: empty plan slots suggest a ❤ favorite nearby / a popular pick / a **first-class break** (food/toilet/drinks, DEC-039 Q-L).
+- **Light in-app notification inbox** (DEC-039 Q-G) — reminders, clashes, pings, meeting points, squad-pick changes; **OS push is primary**; in-app banners mirror it.
+- **Alert preferences:** set reminders + lead time, "leave now" walk alerts (travel-time aware), clash alerts, friend pings, squad/meeting. Push optional; inbox always works.
+- **System states** are first-class: **offline/sync** (cached plan stays usable, live presence pauses, edits auto-sync), **empty** (with a way out), **loading skeletons**, **error + retry**.
+
+## 15. Map — POI layer & stage routing — prototype `29` (extends §7)
+
+- **POI layer** in V1 (DEC-022/039 Q-J): filterable pins (toilets · water · food · medical · bars · ATM) + a one-tap **"nearest essentials"** + POI detail (crowd/accessibility → navigate / make meeting point / share).
+- **Stage-to-stage routing** (DEC-039 Q-J): from→to, route + walk time + a **"leave by" nudge** tied to the set start; POIs on the way; lightweight **walking navigation** (next move, distance, landmark cue, friends on the same route).
+- **Layers/legend** panel: toggle friends · stages · meeting points · route + each POI category; day/night map style. Live overlay stays a **separate vector layer** over the SVG (DEC-030/034).
+
+## 16. Admin (desktop web) — prototype `30`
+
+- Separate **desktop** back-office to onboard any festival (DEC-039 Q-I). Sidebar: Festivals · Lineup & timetable · Map editor · POIs · Travel times · Settings.
+- **Map editor = the productized engine** (DEC-034): **drag stage pins → "Generate SVG"** (illustrated, georeferenced) → preview in app; then **georeference/verify** with a **3-point affine** (SVG↔GPS) and **drag-fix off-position stages** (the "Google pin is off" problem the user raised).
+- **Lineup dashboard:** source is the **documented capture** (`__NEXT_DATA__` route → CDN JSON, **never invented** — intake Q2); per-stage counts, verify flags, alias merge, re-import.
+- **POI editor** (click-to-place) feeds §15; **travel-time matrix** (auto-estimate from positions + manual overrides) powers the "leave by" nudge + clash math.
+
+---
+
 ## Prototype index (brain/wireframes/directions/)
 
 - `15e-amber-timetable-tml.html` — **current Timetable** (this spec). Header carries a single `groups` icon → Lineup (no segmented bar).
@@ -120,5 +182,15 @@ Favoriting flow:
 - `19-amber-map.html` — **refined Map** (illustrated SVG base: paths/lake/greens, stage bubbles, presence avatars, "me" radar, meeting-point pin, route sheet).
 - `20-amber-squad.html` — **refined Squad** (presence by stage, meeting point with compass + distance/bearing, pinned board with add-note).
 - `21-amber-myplan.html` — **refined My Plan** (polished vertical timeline, done/now/upcoming states, walk + break chips, add break/set, share).
+- **Design pass (2026-06-23) — the social layer + the rest (DEC-039):**
+  - `23-amber-groups-flow.html` — **Squad formation** (8): empty · sign-in · profile · create · invite(link+QR) · join · members · share plan (§9).
+  - `24-amber-group-timetable.html` — **Group shared timetable** (6): plan · block detail · locked-conflict+fallback · owner override · split · needs-input (§10).
+  - `25-amber-presence-consent.html` — **Presence & consent** (6): pre-prompt · OS dialog · sharing mode · where's-the-squad · precise-active · privacy (§11).
+  - `26-amber-meeting-safety.html` — **Meeting points & safety** (6): pick spot · details · active detail · lifecycle · "I'm lost" · safety-active (§12).
+  - `27-amber-identity-settings.html` — **Identity/account/settings** (6): sign-in · magic-link · edit profile · account · settings hub · language&appearance (§13).
+  - `28-amber-states-notifications.html` — **Gaps/notifications/system states** (6): gap filler · inbox · alert prefs · push · offline/sync · empty/loading/error (§14).
+  - `29-amber-map-poi-routing.html` — **Map POI & routing** (6): map+POI · nearest essentials · POI detail · stage routing · walking nav · layers (§15).
+  - `30-amber-admin.html` — **Admin desktop** (6): overview · lineup dashboard · map editor(drag→generate) · georeference · POI editor · travel-time matrix (§16).
+- Full catalog (all 59 screens → UC/DEC → phase): `2026-06-23-screen-catalog.md`. Tokens/components: `2026-06-23-design-system.md`.
 - Superseded: `16-amber-squad.html`, `11-amber-home-v2.html`, `07-amber-map.html`, `09-amber-myplan.html`, `01/04` originals.
 - Nav standardized across all screens: **Now · Timetable · My Plan · Map · Squad**. **Lineup is NOT a bottom tab** — it's a sub-view reached from the Timetable header icon, so the Timetable keeps its full height (DEC-032).

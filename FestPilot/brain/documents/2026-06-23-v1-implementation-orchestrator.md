@@ -19,8 +19,11 @@
 You are a senior full-stack engineer implementing **FestPilot V1 end-to-end, alone, in this session**.
 Everything the app does is already decided (3 pillars + on-site essentials + togetherness layer, DEC-016/022/023).
 The data model, the UI direction, the map engine, and the Phase-1 backend **already exist** (see §4 Baseline).
-Your job is to turn the current state — *spikes + backend + a PWA map view* — into a **shipped, deployed,
-tested V1** following the 6 phases, **without stopping and without asking the user anything**.
+**The full UI is also designed (2026-06-23 8-batch pass): all 59 V1 screens are locked as Amber-Glass prototypes
+(`brain/wireframes/directions/`), catalogued in `2026-06-23-screen-catalog.md`, with tokens in
+`2026-06-23-design-system.md`. Each gate in §13 lists its exact screens — build only what the catalog defines
+(DEC-039).** Your job is to turn the current state — *spikes + backend + a PWA map view* — into a **shipped,
+deployed, tested V1** following the 6 phases, **without stopping and without asking the user anything**.
 
 **One-paragraph product reminder:** FestPilot is a festival companion. You (1) browse the lineup and **favorite**
 artists (overlaps allowed); (2) **Lock in** a conflict-free personal **My Plan** (chronological clash resolution,
@@ -75,8 +78,9 @@ At the **start of each phase**, read (in this order), then implement:
 4. `brain/documents/v1-data-model-d1-schema.md` — the tables/columns you touch.
 5. `brain/documents/v1-use-cases.md` — the UC IDs the phase implements.
 6. `brain/decision-log.md` — only the `DEC-NNN` entries cited by the phase.
-7. UI phases additionally: `brain/documents/2026-06-23-ui-decisions-locked.md` (DEC-025→029) and the relevant
-   prototype in `brain/wireframes/directions/`.
+7. UI phases additionally: `brain/documents/2026-06-23-ui-decisions-locked.md` (DEC-025→029, §§9–16 for the social
+   layer/identity/notifications/map/admin), the **`2026-06-23-screen-catalog.md`** entries for the gate's screens,
+   `2026-06-23-design-system.md` (tokens/components), and the relevant prototype in `brain/wireframes/directions/`.
 8. Map phases additionally: `brain/documents/2026-06-23-realtime-map-technical-plan.md` (§8/§10/§11) and
    `spikes/map-art/README.md`.
 
@@ -106,8 +110,9 @@ These are invariants. Breaking one is a defect even if tests pass. (Each cites i
   into the illustration (DEC-030/034). Stage placement truth = the **admin pin editor** (DEC-034/035).
 - **Visual identity = "Amber Glass"** (DEC-025): warm dark base, amber/gold accent, reflective glass,
   Oswald titles / Albert Sans body. Must not look "AI-made" (no neon purple/pink, no Inter/DM Sans).
-- **Auth**: Firebase, **anonymous-first**; permanent account (Google + email; Apple before native iOS)
-  required only to create/join a group; Workers verify the ID token behind `getUserFromRequest()` (DEC-024/035).
+- **Auth**: Firebase, **anonymous-first**; permanent account (**Google + email-link only — no Apple, no iOS**;
+  native is **Android-only**, DEC-039) required only to create/join a group; Workers verify the ID token behind
+  `getUserFromRequest()` (DEC-024/039).
 
 ---
 
@@ -178,9 +183,9 @@ velocity-standard, test-routing). **Git initialized on `master` 2026-06-23** (ba
 | Map assets + photos | **R2** bucket `festpilot-assets` | map SVG/relief (Phase 0), meeting-point photos (Phase 6) |
 | Source hashes / cache | **KV** `LINEUP_CACHE` | optional; change-detection snapshots |
 | Web hosting | **Cloudflare Pages** project `festpilot` | builds `web/`; production branch **`master`** |
-| Auth | **Firebase Auth** | anonymous-first + Google + email; Apple before native iOS |
+| Auth | **Firebase Auth** | anonymous-first + Google + email-link; **no Apple/iOS** (DEC-039) |
 | Push | **FCM** | Phase 3+ (lineup alerts, walk-time, where-is-everyone) |
-| Native shell | **Capacitor 8** (Android first) | added before public launch (DEC-003/035) |
+| Native shell | **Capacitor 8** (**Android only**) | added before public launch (DEC-003/039) |
 | Map generation | **managed Node job** | `generateMap` can't run in a Worker; admin-triggered (local now) |
 
 **Environments:** `dev` (local `wrangler dev` + `db:migrate:local` + Vite), `production` (live Worker + remote D1
@@ -398,6 +403,13 @@ commit (don't `--amend` pushed work); (e) if a shell hangs, see §14.
 > detail in `implementation-phases.md`. **Read that phase's section before building** (§2). Phases 1–6 and their
 > ACs are defined there; **Phase 0 is defined fully here** (it's the bring-up + map-to-prod the user asked for).
 > Status legend: ✅ done · 🔨 build now · ⏳ needs live credentials.
+>
+> **🆕 Screen-complete (2026-06-23).** After the 8-batch design pass, **every gate now lists its exact screens** as
+> `Screens:` (IDs from `2026-06-23-screen-catalog.md` → prototypes in `brain/wireframes/directions/`, tokens in
+> `2026-06-23-design-system.md`). **A gate is not done until its listed screens are built and match the prototype +
+> design-system.** All 59 V1 screens are designed & locked; nothing may be built outside the catalog (DEC-039).
+> The **Admin desktop (B8.1–B8.6)** is a parallel back-office track folded into Phase 3 (the map editor is the
+> source of truth for stage positions) + ingest ops — see each gate below.
 
 ### Phase 0 — Bring-up & Map-to-Production (the immediate unblockers) 🔨
 
@@ -452,11 +464,16 @@ serve the asset; `web` renders the map from the API; lineup API live (or fully l
 Backend is **done** (§4). Remaining P1 work = the **app shell** the rest of the UI hangs on.
 **Read:** `implementation-phases.md` Phase 1; `ai-execution-guide.md` Phase 1.
 
-- **Gate 1.1 — App shell + nav + offline groundwork:** routing (Home/Lineup/Timetable/Map/Group per DEC-032),
-  Amber-Glass theme tokens, install **manifest** + icons, a hand-written **service worker** (cache app shell +
-  map asset + lineup JSON; network-first nav, cache-first assets — TripPilot pattern). Typed API client (from P0).
+- **Gate 1.1 — App shell + nav + offline groundwork:** routing (Now/Timetable/My Plan/Map/Squad per DEC-032),
+  Amber-Glass theme tokens (implement `2026-06-23-design-system.md` §1–§4 into `web/src/styles.css`), install
+  **manifest** + icons, a hand-written **service worker** (cache app shell + map asset + lineup JSON; network-first
+  nav, cache-first assets — TripPilot pattern). Typed API client (from P0).
+  **Screens:** `B5.5` Settings hub shell (`27`#5, grows per phase) · `B5.6` language(EN default)/appearance
+  (`27`#6) · `B6.5` offline/sync shell (`28`#5) · `B6.6` system states — empty/loading skeleton/error+retry
+  (`28`#6, reused by every later screen). Avatar/header entry to the Settings stack (no 6th tab — DEC-032).
 - **Gate 1.2 — Raw lineup read (UC-03):** a screen that fetches `/api/festivals` + `/festivals/:id/lineup`
   and renders it (no styling battle yet) to prove end-to-end data.
+  **Screens:** `A2` Home/"Now & Next" minimal shell (`18`, fully built in P3 G3.3).
 - **Tests:** web unit for the API client + SW registration; Playwright smoke "app loads, lineup renders".
 - **ACs:** `implementation-phases.md` Phase 1 (lineup ingested ✅; app shell fetches + renders raw lineup;
   `tsc` clean; ingestion tests pass in CI ✅).
@@ -465,19 +482,23 @@ Backend is **done** (§4). Remaining P1 work = the **app shell** the rest of the
 ### Phase 2 — Favorites & "My Plan" (Pillars 1–2, shippable PWA) 🔨
 
 The product's unique core; ships as a **standalone PWA**. **Read:** `implementation-phases.md` Phase 2;
-DEC-005/017/018/026/027/028/029; prototypes `15e` (timetable), `14b` (onboarding), `12b`/`13` (lock-in).
+DEC-005/017/018/026/027/028/029; prototypes `15e` (timetable), `17` (onboarding), `12c`/`13` (lock-in), `21`/`22`.
 
 - **Gate 2.1 — Onboarding + Favorites (UC-04/05, DEC-028):** festival→week→days pre-step (correctness:
   filter artists to the chosen weekend/day; dedup multi-day artists), then the **swipe "Would you see this set?"**
   flow (text actions, Skip, progress). Backend: `POST/DELETE /api/favorites`, `GET /api/me/favorites`.
+  **Screens:** `A1` Onboarding flow (`17`). Favorites = the Lineup grid filter (no separate screen — DEC-039 Q-C).
 - **Gate 2.2 — Timetable (DEC-026/027/032):** TML-style grid (rows=stages, cols=time, real-time positioning,
   sticky stage name + time header, continuous NOW line, **no scrollbars**, dark-glass cards, **gold favorites**,
   per-card heart, "only my favs", 1h/2h zoom). Lineup as a separate full-height screen via one header icon.
+  **Screens:** `A3` Timetable grid (`15e`) · `A4` Lineup list + filters / favorites grid (`22`).
 - **Gate 2.3 — Lock in → My Plan (UC-06/07/08, DEC-017/018/029):** the **gated clash resolver** as an explicit
   state machine (queue of clashes by start; unlock pointer = last locked slot's end); **multi-option** select
   (2–6+), "all clashes" overview, "add nearby artist" search, partial-set cut points with a **stubbed
   travel-time interface** (real matrix in Phase 3); celebration. Backend: `GET /api/me/clashes?day`,
   `POST /api/me/plan/slots`, `GET /api/me/plan?day`.
+  **Screens:** `A5` Lock-in multi-option + add-nearby search (`12c`) · `A6` Lock-in celebration (`13`) ·
+  `A7` My Plan vertical timeline + walk + breaks + share (`21`).
 - **Tests (critical):** the **no-overlap invariant** — property test: for N random favorite sets, the locked
   plan has zero overlaps; partial-set transition feasibility; favorites persist. Domain logic pure-TS, real numbers.
 - **ACs:** `implementation-phases.md` Phase 2 (free overlapping favorites; one-at-a-time chronological resolve →
@@ -489,36 +510,64 @@ DEC-005/017/018/026/027/028/029; prototypes `15e` (timetable), `14b` (onboarding
 Make it usable in the field. **Read:** `implementation-phases.md` Phase 3; DEC-010/011/021/022/030/031/034;
 map plan §11; `spikes/map-import`.
 
+> **Admin desktop track starts here** (B8). It is the productized map/lineup engine onboarding any festival;
+> implement against prototype `30` + design-system (desktop variant). `B8.1` Festivals overview + `B8.2` Lineup
+> dashboard (source = the **documented capture**, never invented — intake Q2) come online with G3.1.
+
 - **Gate 3.1 — Admin map verify → `stage_location` (DEC-034/035):** productionize the admin pin editor as the
   **source of truth**: persist pins to `stage_location` (lat/lng, radius, `verified`, source) via a guarded
   Worker route; KML import = initial seed only. Trigger the map publish job (P0.3).
+  **Screens (admin desktop):** `B8.1` Festivals overview (`30`#1) · `B8.2` Lineup dashboard (`30`#2) ·
+  `B8.3` **Map editor — drag stage pins → Generate SVG** (`30`#3, the productized `generateMap`) ·
+  `B8.4` Georeference/verify — 3-point affine SVG↔GPS + fix off-position stages (`30`#4).
 - **Gate 3.2 — Map data API + coord→stage (UC-11):** `GET /api/festivals/:id/map` already serves art+transform;
   add stages/areas/POIs + travel-times endpoints; implement coord→stage (circle area + nearest fallback +
   confidence) as pure TS (shared with presence later).
+  **Screens:** `B7-base` Map base — illustrated SVG + affine overlay (`19`) · `B7.4` stage-to-stage routing
+  scaffolding (`29`#4, "leave by" wired in G3.3).
 - **Gate 3.3 — Now & Next + offline (UC-12/13, DEC-022):** glanceable home (on-now / next pick / where /
   **when to leave** countdown); finalize the **offline cache/sync contract** (lineup, my plan, map/POIs, last
   group plan). Swap Phase-2's travel-time stub for the **manual matrix** (DEC-011).
+  **Screens:** `A2` Home/"Now & Next" full (`18`) · `A8`/`B6.1` personal gap filler — favorite/popular/**break**
+  (`28`#1, DEC-039 Q-L) · `B7.5` walking navigation (`29`#5) · `B6.5` offline/sync (`28`#5) ·
+  admin `B8.6` travel-time matrix — auto-estimate + manual overrides (`30`#6).
 - **Gate 3.4 — FCM groundwork + walk-time reminders (UC-14) + POI layer (UC-15, T2):** stand up **FCM**
   (registration + first push types: lineup-change alerts from P1 + walk-time reminders scheduled server-side via
-  DO alarms); togglable **POI overlay** (toilets/water/medical/exits/…) on the same affine.
+  DO alarms); togglable **POI overlay** (toilets/water/medical/exits/…) on the same affine. Plus the **in-app
+  notification inbox** (DEC-039 Q-G — push primary, inbox mirrors it).
+  **Screens:** `B7.1` Map + POI layer (`29`#1) · `B7.2` nearest essentials (`29`#2) · `B7.3` POI detail (`29`#3) ·
+  `B7.6` map layers/legend (`29`#6) · `B6.2` notification inbox (`28`#2) · `B6.3` alert preferences (`28`#3) ·
+  `B6.4` OS push lock-screen (`28`#4) · admin `B8.5` POI editor — click-to-place (`30`#5).
 - **Tests:** coord→stage cases (at/near/between); offline render; a reminder fires accounting for travel time.
 - **Close:** deploy; `feat(map): admin verify + now&next + offline + reminders`; bump `0.4.0`.
 
 ### Phase 4 — Groups & Shared Timetable (Pillar 3a) 🔨 — first Durable Object + auth gate
 
-**Read:** `implementation-phases.md` Phase 4; DEC-013/019/024; technical-direction §6.1.
+**Read:** `implementation-phases.md` Phase 4; DEC-013/019/024/038/039; technical-direction §6.1.
 
 - **Gate 4.1 — Auth (DEC-024) — prerequisite:** Firebase anonymous-first; **upgrade to permanent**
-  (Google + email) required to create/join a group; Worker verifies the ID token behind
+  (Google + email-link) required to create/join a group; Worker verifies the ID token behind
   `getUserFromRequest()` (JWT via JWKS). `app_user` carries `firebase_uid` + `auth_provider` + `is_anonymous`.
-  Anonymous favorites/plan **carry over** on link.
+  Anonymous favorites/plan **carry over** on link. **No Apple / no iOS** auth — native is Android-only (DEC-039 Q-E).
+  **Profile asked at first join** (display name + avatar upload/initials — DEC-039 Q-F).
+  **Screens:** `B1.2` sign-in gate (`23`#2) · `B1.3` profile setup (`23`#3) · `B5.1` sign-in Google/email-link/guest
+  (`27`#1) · `B5.2` magic-link sent (`27`#2) · `B5.3` edit profile (`27`#3) · `B5.4` account — guest→save / sign out /
+  **delete account & data** (`27`#4).
 - **Gate 4.2 — Groups + invites (UC-16/17):** `POST /api/groups`, `POST /api/groups/:id/join` (link + QR token),
   membership; share my plan with the group. **`GroupRoom` Durable Object** per group (plan + board fan-out).
   **Use the SQLite storage backend** — declare it with `new_sqlite_classes` in a new wrangler migration (the only
-  DO backend on the Free plan; free per DEC-037). Add the DO binding to `wrangler.toml`.
-- **Gate 4.3 — Shared timetable (UC-18/19/20, DEC-013/019):** auto-build by **plurality of locked picks**;
-  tie/no-majority → most-favorited → owner picks; **member fallback** (your best favorite at that block when your
-  lock ≠ winner); **owner override** per slot; **never silently override a locked must-see**; basic split viz.
+  DO backend on the Free plan; free per DEC-037). Add the DO binding to `wrangler.toml`. **Squad cap 50; invite link
+  does not expire until the event ends** (DEC-038).
+  **Screens:** `B1.1` squad empty → create/join (`23`#1) · `B1.4` create squad — name/festival/cap 50 (`23`#4) ·
+  `B1.5` invite — link + QR (`23`#5) · `B1.6` join squad (`23`#6) · `B1.7` members list — roles/leave/remove (`23`#7).
+- **Gate 4.3 — Shared timetable (UC-18/19/20, DEC-013/019/039 Q-A/Q-B):** **blocks = per-set boundaries** (not fixed
+  30/60 min); auto-build by **plurality of locked picks**; tie/no-majority → most-favorited → owner picks;
+  **per-block follow / do-my-own**; **member favorites-fallback** (your best favorite at that block when your lock ≠
+  winner); **owner override** per slot (revertible to auto); **never silently override a locked must-see**; split viz
+  + CTA → meeting point; **no member voting** in V1.
+  **Screens:** `B1.8` share my plan with the squad (`23`#8) · `B2.1` squad plan overview (`24`#1) · `B2.2` block
+  detail — split + Join/Keep/Override (`24`#2) · `B2.3` locked conflict + favorites-fallback (`24`#3) · `B2.4` owner
+  override (`24`#4) · `B2.5` split view (`24`#5) · `B2.6` needs-input/nudge (`24`#6).
 - **Gate 4.4 — Group board (UC-20b, DEC-013):** lightweight pinned notes/announcements (post/edit/remove),
   fanned out via the DO. **No real-time chat.**
 - **Tests:** aggregation correctness (plurality, tie→favorited→owner; fallback; never-silent-override); DO
@@ -527,39 +576,55 @@ map plan §11; `spikes/map-import`.
 
 ### Phase 5 — Live Presence & "Where Is Everyone?" (Pillar 3b) 🔨 — highest risk
 
-**Read:** `implementation-phases.md` Phase 5; DEC-006/007/008/012/015/035; map plan (overlay).
+**Read:** `implementation-phases.md` Phase 5; DEC-006/007/008/012/015/035/039; map plan (overlay).
 
 - **Gate 5.1 — Presence pipeline (UC-21/22, privacy-critical):** `POST /api/presence` (raw fix **in**, coarse
   **out**); server keeps raw `lat/lng`, computes stage + confidence + expiry (GPS ~15m, manual/push ~45m);
   `GET /api/groups/:id/presence`; **WebSocket** fan-out via `GroupRoom` DO (DEC-035). **Replace mock**
   `web/src/map/presence.ts`. Consent-at-point-of-use pre-prompt (DEC-015 copy). Battery-aware sampling
-  (map-open + significant-move + low-freq timer; last-known fallback).
+  (map-open + significant-move + low-freq timer; last-known fallback). **Precise sharing auto-expires in 60 min**
+  (DEC-039).
+  **Screens:** `B3.1` consent pre-prompt (`25`#1) · `B3.2` OS permission dialog moment + coaching (`25`#2) ·
+  `B3.5` precise-sharing-active control — countdown / extend / downgrade / stop (`25`#5).
 - **Gate 5.2 — Group-by-stage + map markers (UC-23/24):** clusters ("MAINSTAGE — Thales, Andy — watching
   Martin Garrix"); current-artist auto-detect from presence + lineup; coarse markers on the live overlay.
-- **Gate 5.3 — "Where is everyone?" + sharing modes (UC-25/26, DEC-012/015):** interactive FCM round-trip
-  (pre-filled nearest stage; one-tap answer); per-group time-boxed sharing; **"disappear from map"** toggle.
+  **Screens:** `B3.4` where's the squad — map peek + roster (live/coarse/offline) + Ping/Nudge (`25`#4).
+- **Gate 5.3 — "Where is everyone?" + sharing modes (UC-25/26, DEC-012/015/039):** interactive FCM round-trip
+  (pre-filled nearest stage; one-tap answer); **three modes — Stage labels (default) / Precise 60-min / Ghost**;
+  per-group time-boxed sharing; **"disappear from map"** (Ghost) toggle.
+  **Screens:** `B3.3` sharing mode picker (`25`#3) · `B3.6` location & privacy settings — master switch / default
+  mode / expiry / audience / pause-all (`25`#6).
 - **Tests (must):** clients **never** receive raw coordinates; coarse at/near/between + confidence + expiry
   correct; push-reply path works with GPS off.
 - **Close:** deploy; `feat(presence): coarse honest presence over WS DO + where-is-everyone`; bump `0.6.0`.
 
 ### Phase 6 — Meeting Points, Navigation & Safety (Pillar 3c) 🔨
 
-**Read:** `implementation-phases.md` Phase 6; DEC-014/015/022; R2.
+**Read:** `implementation-phases.md` Phase 6; DEC-014/015/022/039; R2.
 
 - **Gate 6.1 — "Come to me" meeting point (UC-27):** exact point + **R2 photo** + note + expiry (10/20/30/60) +
-  visibility (group/selected); `POST /api/groups/:id/meeting-points`; group notified.
-- **Gate 6.2 — Lifecycle + fade (UC-28):** active→expiring_soon→expired→empty→archived with smart prompts
-  (creator drifted? empty ~10m?); pin fades, "who went" record kept; purge on archive (DEC-015).
-- **Gate 6.3 — Navigation + safety (UC-29/30):** compass-arrow + distance (no turn-by-turn); **safety/"I'm lost"**
-  shares exact location + nearest exit/medical (reuse Phase-3 POIs).
+  visibility (group/selected); when = now / after-this-set / custom; `POST /api/groups/:id/meeting-points`; group
+  notified.
+  **Screens:** `B4.1` create — pick spot (drag pin / quick-pick) (`26`#1) · `B4.2` create — details: name/when/who/note
+  (`26`#2).
+- **Gate 6.2 — Lifecycle + fade (UC-28):** active→on-the-way→everyone-here→expiring_soon→expired→empty→archived with
+  smart prompts (creator drifted? empty ~10m?); pin fades, "who went" record kept; purge on archive (DEC-015).
+  **Screens:** `B4.3` meeting detail — active: convergence map + live ETAs + here/no-response (`26`#3) ·
+  `B4.4` lifecycle states — everyone-here / on-the-way / expired / cancelled (`26`#4).
+- **Gate 6.3 — Navigation + safety (UC-29/30, DEC-039 Q-H):** compass-arrow + distance (no turn-by-turn);
+  **safety / "I'm lost"** (calm, non-alarmist, reachable from Squad + Map) shares exact location + nearest
+  exit/medical/info + call a member (reuse Phase-3 POIs); safety-active = broadcast + nearest help + one-tap "I'm okay".
+  **Screens:** `B4.5` "I'm lost" menu (`26`#5) · `B4.6` safety-active broadcast (`26`#6).
 - **Tests:** exact coords leave **only** via meeting point or safety action (never automatically); lifecycle
   transitions; photo upload/expire.
 - **Close:** deploy; `feat(meeting): meeting points + nav + safety`; bump `0.7.0`.
 
 ### Phase 7 — Native shell + launch hardening (before public release) 🔨
 
-- Wrap the PWA with **Capacitor 8** (Android first): native geolocation + **FCM** notification actions +
-  local notifications + share; App Links. Add **Sign in with Apple** before any native **iOS** build (DEC-035).
+- Wrap the PWA with **Capacitor 8 — Android only** (DEC-039 Q-E; supersedes the old "iOS + Sign in with Apple"
+  note): native geolocation + **FCM** notification actions + local notifications + share; App Links. **No iOS build
+  and no Sign in with Apple in V1** (auth = Google + email-link only). The PWA remains the cross-platform path for
+  non-Android users.
 - Privacy/legal: location-consent UX, privacy policy, **attribution screen** (OSM ODbL + Flanders DHMV + AWS
   terrain). Performance + battery pass. Full **E2E** suite green in CI.
 - **Stop Criteria (§15) must all be TRUE.** Final deploy + `chore(release): 1.0.0`.
@@ -602,7 +667,7 @@ smoke passes; deployed (or ⏳ live with local proof); committed; dev-log update
 - [ ] FCM push works (lineup alerts, walk-time, where-is-everyone).
 - [ ] Full test suite green (unit + integration + E2E) in CI; coverage targets met.
 - [ ] `project-status.md`, `decision-log.md`, `dev-log.md` current; `README` build/deploy steps accurate.
-- [ ] (Native release only) Capacitor shell + **Sign in with Apple** + privacy policy + attribution screen.
+- [ ] (Native release only) Capacitor **Android** shell + privacy policy + attribution screen (**no iOS/Apple** — DEC-039).
 
 ---
 
@@ -709,7 +774,8 @@ OSM/Overpass geometry · Flanders DHMV-II hillshade (WMS) · AWS Open Terrain Ti
     `web/.env` (`VITE_FCM_VAPID_KEY`), used to mint device tokens.
   - **Server send:** a **service account JSON** (FCM HTTP v1) → stored as a **Worker secret**
     (`wrangler secret put FIREBASE_SERVICE_ACCOUNT`), used to send notifications. This is the one true secret.
-- **Apple Sign-In:** only before a native **iOS** build (Phase 7) — needs an **Apple Developer** account + key.
+- **Apple Sign-In:** **not used in V1** — native is Android-only and auth is Google + email-link (DEC-039). No
+  Apple Developer account needed.
 
 ### 19.4 Secrets the build sets itself / generates
 - `ADMIN_TOKEN` — the executor generates a strong random value and runs `wrangler secret put ADMIN_TOKEN`
