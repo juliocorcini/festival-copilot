@@ -125,6 +125,8 @@ export interface GroupMemberDto {
   userId: string;
   displayName: string | null;
   avatarColor: string | null;
+  /** R2-hosted avatar photo (DEC-059); null → fall back to the color initial. */
+  avatarUrl: string | null;
   role: string;
   isYou: boolean;
 }

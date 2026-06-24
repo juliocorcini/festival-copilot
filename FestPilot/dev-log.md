@@ -12,16 +12,24 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R8 (P1 My Plan editable) CLOSED ✅.** The locked plan is now editable in place without re-walking Lock-in:
-  tap any set → **Swap / Remove / View on map**; **Add a set** opens a picker that only offers acts that fit. New pure
-  `domain/planEdit.ts` (`removeFromPlan`/`addToPlan`/`swapInPlan`/`setFits`/`fittingAdds`/`fittingSwaps`) keeps the plan
-  **zero-overlap** by construction; walk/break chips recompute after every edit. Next: **R9 (P1 Squad)**.
-- **Tests now:** typecheck clean · **server 136 + web 240 unit** pass · **e2e green** (onboarding swipe+grid, timetable
-  favorite/only-favs/zoom + Lineup switch, squad, now R6, **my-plan remove/add/swap R8**) · build OK · **app v0.10.3
-  (deployed Production, `index-Cp8KCfov.js`)** · Worker unchanged from R5 (`555c03b9`; R6–R8 are frontend-only).
+- **Gate:** **R9 (P1 Squad) IN PROGRESS.** Done & committed: **R9.1** multiple squads + switcher · **R9.2** honest hero
+  copy · **R9.6** AI icon → real "refresh" action + J → profile menu · **R9.4** auto-share plan+favorites on join
+  (DEC-054) + Settings opt-out · **R9.3** **avatar photo on R2 (DEC-059)** + custom emoji. **Remaining: R9.5** (real
+  mini-map preview + richer meeting card + meeting photo on R2 + main-screen density) → then **R9 gate close** (full e2e +
+  Pages deploy + version bump + brain sync).
+- **R9.3 shipped (this session):** R2 bucket `festpilot-media` bound as **`MEDIA`**; storage adapter
+  `server/src/media/store.ts` (`putImage`/`getImage`/`deleteImage`, allowlist jpeg/png/webp, app quota = pure
+  `checkMediaQuota` over a D1 **`media_object`** ledger: per-object ≤256 KB, global object-count + total-byte budget,
+  overwrite-aware); routes `POST/DELETE /api/media/avatar` + `GET /media/*` (immutable cache). Versioned keys
+  `avatars/<userId>-<ts>.<ext>` so the immutable cache busts on replace. Client compresses to ~150 KB (`ui/imageCompress.ts`);
+  `ui/Avatar.tsx` renders photo-or-initials everywhere (header, squad roster, profile). Migration **0011 applied remote**;
+  **Worker redeployed** with the R2 binding (Version `95c8462e`).
+- **Tests now:** typecheck clean · **server 150 + web 240 unit** pass (server +14 `media.test.ts`: quota allowlist/size/
+  count/byte-budget + overwrite math + ledger accounting + route accept/reject via a mocked R2) · build OK (web
+  `index-*.js` rebuilt) · **e2e not yet re-run for R9** (gate-close artifact).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
-  Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0010** applied.
-- Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
+  Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0011** applied. R2 bucket `festpilot-media` live.
+- Live URLs unchanged: app https://festpilot.pages.dev (Pages redeploy pending R9 gate close) · API https://festpilot.trippilot.workers.dev (Worker live w/ R2).
 
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
@@ -33,11 +41,38 @@
 - [x] **R6** (P1 now/next) — plan-then-favorites, never arbitrary (DEC-022). **CLOSED 2026-06-24 (v0.10.1).**
 - [x] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar. **CLOSED 2026-06-24 (v0.10.2).**
 - [x] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap. **CLOSED 2026-06-24 (v0.10.3).**
-- [ ] **R9** (P1 squad) — multiple squads · honest copy · avatar on R2 + custom emoji (DEC-059) · auto-share (DEC-054) · real mini-map · meeting photo · AI-icon/J-menu.
+- [~] **R9** (P1 squad) — multiple squads ✅ · honest copy ✅ · AI-icon/J-menu ✅ · auto-share (DEC-054) ✅ · avatar on R2 + custom emoji (DEC-059) ✅ · **remaining: real mini-map · richer meeting card · meeting photo (R9.5)**.
 - [ ] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select.
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R9.3 ✅ (2026-06-24) — Avatar photo on R2 + custom emoji (DEC-059).** R2 is enabled (card on file), so the avatar is a
+  **real photo on Cloudflare R2**, not just initials. **Backend:** new storage adapter `server/src/media/store.ts` — the
+  only code that touches the `MEDIA` bucket (`putImage`/`getImage`/`deleteImage`, content-type allowlist jpeg/png/webp,
+  immutable cache headers). The **app** enforces the quota (Cloudflare has no hard spend cap): pure **`checkMediaQuota`**
+  (allowlist → per-object ≤256 KB → global object-count ceiling → total-byte budget, **overwrite-aware** so replacing an
+  avatar reuses its slot) over a new D1 ledger table **`media_object`** (one row per stored object, migration **0011**).
+  Routes: `POST /api/media/avatar` (raw image body; ensures the user, computes a **versioned** key
+  `avatars/<userId>-<ts>.<ext>`, stores, ledgers, purges the prior object, points `app_user.avatar_url` at `/media/<key>`),
+  `DELETE /api/media/avatar` (purge + clear), and `GET /media/*` served straight from R2 (no auth, immutable long-cache —
+  versioned keys make a new photo a new URL, so no stale cache). `GroupMemberDto` gained `avatarUrl`; `users.setAvatarUrl`
+  writes the literal value (the COALESCE path can't clear). **Frontend:** `ui/imageCompress.ts` downscales to ≤512px and
+  steps JPEG quality to ~150 KB before upload; `ui/Avatar.tsx` renders photo-or-initials consistently (header, squad member
+  roster, profile preview); `ProfileScreen` got a tappable avatar + camera badge (pick → compress → upload, with the
+  server's **honest reject reason** surfaced) + **Remove photo**; `CreateSquadScreen` got a **custom emoji** input
+  (grapheme-clamped via `Intl.Segmenter`) beside the picker. **Tests:** **+14** `server/test/media.test.ts` — quota
+  allowlist/empty/oversize, count-ceiling (new vs replacement), byte-budget with replaced-bytes credit, `mediaKeyFromUrl`,
+  D1 ledger accounting, and the **route accept/reject** flow (401/415, store, **replace purges old + count stays 1**,
+  delete) against an in-memory R2 mock. **server 150 + web 240 unit · typecheck + build OK.** **Deployed:** migration 0011
+  → remote D1; Worker redeployed with the `MEDIA` binding (Version `95c8462e`). Pages redeploy deferred to the R9 gate close.
+  Prod smoke: `POST /api/media/avatar` → 401 (no auth), `GET /media/<missing>` → 404, OPTIONS preflight → 204. → **R9.5**.
+- **R9.1 / R9.2 / R9.6 / R9.4 ✅ (2026-06-24, committed prior — logged here for the record).** **R9.1** `SquadScreen` reads the
+  full `useMyGroups()` list and renders a **squad switcher** (active squad remembered in `localStorage`, data isolated per
+  `group.id`). **R9.2** honest hero copy (dropped the "signal dies / 2% battery" promise). **R9.6** the squad-plan "AI" icon
+  became an honest **refresh** action, and the Now/Next **"J"** opens a **profile menu** (Profile / Settings) sourced from
+  the real user initials instead of a hardcoded letter jumping to Settings. **R9.4** auto-share: joining a squad routes to a
+  one-time **Share your plan?** confirm (defaults on: plan + favorites) via `ShareMyPlanScreen?joined=1`, with a **Settings
+  opt-out** (`autoShareOnJoin`); join flow + e2e updated. Commits `b455c02`, `e9088ea`, `c7b13f9`.
 - **R8 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.10.3, frontend-only).** My Plan is **editable in place**
   (review §6 / DEC-017/029/041) without re-running Lock-in. New pure **`domain/planEdit.ts`**: `removeFromPlan` (can never
   create an overlap), `addToPlan` (chronological insert, rejects an overlap or a duplicate act, returns `null` when it

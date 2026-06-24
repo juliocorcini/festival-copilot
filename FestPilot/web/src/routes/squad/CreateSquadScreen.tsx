@@ -11,6 +11,19 @@ import { useOnboarding } from "../../data/localStore";
 
 const EMOJI_CHOICES = ["🔥", "🎉", "🫶", "🌈", "⚡", "🎶", "💃", "🚀"] as const;
 
+/** Keep the squad glyph to a single grapheme so a custom emoji (incl. ZWJ/skin-tone) stays one symbol. */
+function firstEmoji(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const Segmenter = (Intl as { Segmenter?: typeof Intl.Segmenter }).Segmenter;
+  if (Segmenter) {
+    const seg = new Segmenter(undefined, { granularity: "grapheme" });
+    const first = seg.segment(trimmed)[Symbol.iterator]().next();
+    return first.done ? trimmed : (first.value as { segment: string }).segment;
+  }
+  return [...trimmed][0] ?? "";
+}
+
 export function CreateSquadScreen(): JSX.Element {
   const navigate = useNavigate();
   const { onboarding } = useOnboarding();
@@ -81,20 +94,36 @@ export function CreateSquadScreen(): JSX.Element {
             </button>
             {showPalette && (
               <div className="emoji-palette glass" role="listbox" aria-label="Squad emoji">
-                {EMOJI_CHOICES.map((e) => (
-                  <button
-                    key={e}
-                    type="button"
-                    className="emoji-opt"
-                    aria-label={`Emoji ${e}`}
-                    onClick={() => {
-                      setEmoji(e);
-                      setShowPalette(false);
-                    }}
-                  >
-                    {e}
-                  </button>
-                ))}
+                <div className="emoji-grid">
+                  {EMOJI_CHOICES.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      className={`emoji-opt${e === emoji ? " on" : ""}`}
+                      aria-label={`Emoji ${e}`}
+                      onClick={() => {
+                        setEmoji(e);
+                        setShowPalette(false);
+                      }}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+                <label className="emoji-custom">
+                  <span className="label" style={{ marginTop: 0 }}>
+                    Or type your own
+                  </span>
+                  <input
+                    className="field emoji-custom-input"
+                    value={emoji}
+                    maxLength={8}
+                    inputMode="text"
+                    aria-label="Custom squad emoji"
+                    placeholder="🎪"
+                    onChange={(e) => setEmoji(firstEmoji(e.target.value))}
+                  />
+                </label>
               </div>
             )}
           </div>

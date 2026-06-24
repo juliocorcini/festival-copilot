@@ -10,8 +10,9 @@ import { AppHeader } from "../app/AppHeader";
 import { api } from "../data/api";
 import { useMyGroups, useGroup } from "../data/groups";
 import { useMeetingPoints, useSafety } from "../data/meetingPoints";
-import { initialsOf, useIdentity } from "../data/identity";
+import { useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
+import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
@@ -246,20 +247,7 @@ function GroupHome({
           <div className="members-list">
             {members.map((m) => (
               <div className="member-row" key={m.userId}>
-                <span
-                  className="ava"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    fontSize: 11,
-                    background: m.avatarColor
-                      ? `linear-gradient(135deg, ${m.avatarColor}, ${m.avatarColor}cc)`
-                      : "linear-gradient(135deg, #6B7280, #6B7280cc)",
-                    color: "#0F0D09",
-                  }}
-                >
-                  {initialsOf(m.displayName)}
-                </span>
+                <Avatar url={m.avatarUrl} color={m.avatarColor} name={m.displayName} size={36} />
                 <div className="member-main">
                   <div className="member-name">
                     {m.displayName ?? "Guest"}

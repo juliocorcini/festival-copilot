@@ -7,6 +7,7 @@ import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
 import { suggestFestival } from "./festivalSuggestions";
 import { getUserFromRequest } from "../auth";
 import { me } from "./me";
+import { media } from "./media";
 import { groups } from "./groups-routes";
 import { presence } from "./presence-routes";
 
@@ -19,6 +20,9 @@ api.get("/health", (c) => c.json({ ok: true, service: "festpilot-api" }));
 
 // Identity (anonymous-first; DEC-024).
 api.route("/me", me);
+
+// Media upload (DEC-059): avatar photos to R2. Serving is at GET /media/* (Worker top-level).
+api.route("/media", media);
 
 // Groups (Pillar 3a — UC-16/17). Auth-gated; realtime via the GroupRoom Durable Object.
 api.route("/groups", groups);

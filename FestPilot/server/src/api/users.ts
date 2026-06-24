@@ -135,3 +135,22 @@ export async function getUserById(db: D1Database, id: string): Promise<UserDto |
   const row = await db.prepare(`SELECT ${SELECT_COLS} FROM app_user WHERE id = ?`).bind(id).first<UserRow>();
   return row ? toDto(row) : null;
 }
+
+/**
+ * Set or clear the avatar photo URL directly (DEC-059). Unlike the COALESCE path in `ensureUser`,
+ * this writes the literal value so passing `null` removes the photo (revert to the color initial).
+ * The media route owns the R2 object lifecycle; this only mirrors the pointer onto the user row.
+ */
+export async function setAvatarUrl(
+  db: D1Database,
+  firebaseUid: string,
+  url: string | null,
+  nowIso: string
+): Promise<UserDto | null> {
+  await db
+    .prepare(`UPDATE app_user SET avatar_url = ?, last_seen_utc = ? WHERE firebase_uid = ?`)
+    .bind(url, nowIso, firebaseUid)
+    .run();
+  const row = await findByUid(db, firebaseUid);
+  return row ? toDto(row) : null;
+}

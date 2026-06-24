@@ -4,6 +4,9 @@ export interface Env {
   DB: D1Database;
   // Per-group realtime fan-out (DEC-037). SQLite-backed Durable Object; see group/room.ts.
   GROUP_ROOM: DurableObjectNamespace;
+  // R2 media bucket (DEC-059): avatars + meeting-point photos. The binding is the in-Worker access
+  // path; the account token is only for the CLI create/deploy step, never stored in code.
+  MEDIA: R2Bucket;
   LINEUP_PAGE_URL: string;
   FESTIVAL_NAME: string;
   FESTIVAL_SLUG: string;

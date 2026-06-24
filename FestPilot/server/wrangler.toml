@@ -37,6 +37,13 @@ class_name = "GroupRoom"
 tag = "v1"
 new_sqlite_classes = ["GroupRoom"]
 
+# R2 media bucket (DEC-059): avatars + meeting-point photos. Created 2026-06-24 via
+# `wrangler r2 bucket create festpilot-media`. App-enforced quota lives in src/media/store.ts;
+# set a ~$1 budget alert in the dashboard (R2 free tier: 10 GB + 1M Class-A + 10M Class-B / mo).
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "festpilot-media"
+
 # ADMIN_TOKEN is a secret (guards POST /admin/ingest). Set with:
 #   wrangler secret put ADMIN_TOKEN
 # For local dev, put it in .dev.vars (gitignored).

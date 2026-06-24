@@ -116,6 +116,7 @@ interface MemberRow {
   userId: string;
   displayName: string | null;
   avatarColor: string | null;
+  avatarUrl: string | null;
   role: string;
 }
 
@@ -127,7 +128,8 @@ export async function listMembers(
 ): Promise<GroupMemberDto[]> {
   const { results } = await db
     .prepare(
-      `SELECT u.id AS userId, u.display_name AS displayName, u.avatar_color AS avatarColor, m.role AS role
+      `SELECT u.id AS userId, u.display_name AS displayName, u.avatar_color AS avatarColor,
+              u.avatar_url AS avatarUrl, m.role AS role
          FROM group_member m
          JOIN app_user u ON u.id = m.user_id
         WHERE m.group_id = ?
@@ -139,6 +141,7 @@ export async function listMembers(
     userId: r.userId,
     displayName: r.displayName,
     avatarColor: r.avatarColor,
+    avatarUrl: r.avatarUrl,
     role: r.role,
     isYou: r.userId === meId,
   }));

@@ -20,6 +20,9 @@ export function AppHeader({ eyebrow, title, avatarInitial, right }: Props): JSX.
   const { user } = useIdentity();
   const [menuOpen, setMenuOpen] = useState(false);
   const initial = avatarInitial ?? initialsOf(user?.displayName);
+  // A real avatar photo (DEC-059) replaces the initial when set; custom `avatarInitial` callers
+  // (which pass a non-user glyph) keep their initial.
+  const photoUrl = avatarInitial ? null : user?.avatarUrl;
 
   const go = (target: string): void => {
     setMenuOpen(false);
@@ -41,7 +44,7 @@ export function AppHeader({ eyebrow, title, avatarInitial, right }: Props): JSX.
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            {initial}
+            {photoUrl ? <img className="ava-img" src={photoUrl} alt="Your avatar" /> : initial}
           </button>
           {menuOpen && (
             <>

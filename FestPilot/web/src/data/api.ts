@@ -177,6 +177,35 @@ export const api = {
     );
   },
 
+  // Avatar photo on R2 (DEC-059). The compressed image rides as the raw body; the server enforces
+  // the app quota (type/size/object-count/byte-budget) and returns the updated user.
+  async uploadAvatar(blob: Blob, signal?: AbortSignal): Promise<UserDto> {
+    const url = `${API_BASE}/api/media/avatar`;
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        signal,
+        headers: { accept: "application/json", "content-type": blob.type || "image/jpeg", ...authHeader() },
+        body: blob,
+      });
+    } catch {
+      throw new ApiError(`Network error reaching /api/media/avatar`, 0, url);
+    }
+    if (!res.ok) {
+      // Surface the server's honest reason (oversize / wrong-type / over-budget) to the UI.
+      const reason = await res.json().then((d: { error?: string }) => d?.error).catch(() => undefined);
+      throw new ApiError(reason ?? `Upload failed (${res.status})`, res.status, url);
+    }
+    return ((await res.json()) as { user: UserDto }).user;
+  },
+
+  removeAvatar(signal?: AbortSignal): Promise<UserDto> {
+    return authedJson<{ user: UserDto }>("/api/media/avatar", { method: "DELETE", signal }).then(
+      (d) => d.user
+    );
+  },
+
   // Groups (Pillar 3a — UC-16/17). All authenticated through the same bearer token.
   listMyGroups(signal?: AbortSignal): Promise<GroupDto[]> {
     return authedJson<{ groups: GroupDto[] }>("/api/groups/mine", { signal }).then((d) => d.groups);

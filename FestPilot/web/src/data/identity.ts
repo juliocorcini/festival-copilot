@@ -18,6 +18,10 @@ export interface Identity {
   ensure: () => Promise<UserDto | null>;
   /** Persist a profile edit and refresh the cached user. */
   updateProfile: (profile: ProfileInput) => Promise<UserDto | null>;
+  /** Upload an avatar photo to R2 (DEC-059); refreshes the cached user. Throws the server's reason. */
+  uploadAvatar: (blob: Blob) => Promise<UserDto>;
+  /** Remove the avatar photo (revert to the colour initial); refreshes the cached user. */
+  removeAvatar: () => Promise<UserDto | null>;
 }
 
 export function useIdentity(): Identity {
@@ -67,6 +71,36 @@ export function useIdentity(): Identity {
     }
   }, []);
 
+  // Avatar upload rethrows so the screen can show the server's honest reject reason (DEC-059).
+  const uploadAvatar = useCallback(async (blob: Blob): Promise<UserDto> => {
+    setLoading(true);
+    setError(false);
+    try {
+      const saved = await api.uploadAvatar(blob);
+      cacheUser(saved);
+      setUser(saved);
+      return saved;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const removeAvatar = useCallback(async (): Promise<UserDto | null> => {
+    setLoading(true);
+    setError(false);
+    try {
+      const saved = await api.removeAvatar();
+      cacheUser(saved);
+      setUser(saved);
+      return saved;
+    } catch {
+      setError(true);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     user,
     hasProfile: Boolean(user?.displayName),
@@ -74,6 +108,8 @@ export function useIdentity(): Identity {
     error,
     ensure,
     updateProfile,
+    uploadAvatar,
+    removeAvatar,
   };
 }
 

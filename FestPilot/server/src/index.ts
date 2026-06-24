@@ -11,12 +11,28 @@ import { listFestivalSuggestions } from "./api/festivalSuggestions";
 import { runScheduledIngest } from "./ingest/ingest";
 import { purgeExpiredPresence } from "./api/presence";
 import { purgeExpiredMeetingPoints } from "./api/meetingPoints";
+import { getImage } from "./media/store";
 export { GroupRoom } from "./group/room";
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.get("/", (c) => c.json({ name: "FestPilot API", ok: true }));
 app.route("/api", api);
+
+// Serve media straight from R2 (DEC-059): avatars + meeting photos. No auth — the key is opaque and
+// the object is public-by-URL; objects are stored `immutable` so the edge/browser cache them for a
+// year (avatar keys are versioned, so a new photo is a new URL — no stale cache).
+app.get("/media/*", async (c) => {
+  const key = c.req.path.slice("/media/".length);
+  if (!key) return c.notFound();
+  const obj = await getImage(c.env, key);
+  if (!obj) return c.notFound();
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set("etag", obj.httpEtag);
+  if (!headers.has("cache-control")) headers.set("cache-control", "public, max-age=31536000, immutable");
+  return new Response(obj.body, { headers });
+});
 
 /** Guard admin routes with the ADMIN_TOKEN secret. Returns null when authorized. */
 function adminUnauthorized(c: Context<{ Bindings: Env }>): Response | null {
