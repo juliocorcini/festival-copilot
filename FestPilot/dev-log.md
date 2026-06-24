@@ -124,7 +124,19 @@
 - Shipped map SVG currently inlines the relief raster (~19MB) — slimmed in P0 G0.2.
 - System default node is v18; **must `nvm use 22`** before any wrangler/build command (`.node-version` = 22 is set).
 
-## Next
+## Next (resume point — P3 in progress)
+- **Shipped this session (P3 core):** travel matrix + coord→stage (`domain/travel.ts`, `data/useTravelMatrix.ts`),
+  Now & Next home (`domain/nowNext.ts`, `NowScreen` rebuilt). 68 web unit + 6 e2e green · typecheck/build clean ·
+  committed **cb6517b** · **deployed to Pages** (https://555bcdff.festpilot.pages.dev → alias festpilot.pages.dev).
+- **Remaining P3 (forks — pick by priority):**
+  1. **POI layer (G3.4, no creds):** extract real De Schorre POIs from OSM/Overpass (curl, §14) → seed `poi` →
+     `GET /api/festivals/:id/pois` → toggleable map overlay + filter chips + nearest-essentials + POI detail (`29`#1-3/6).
+  2. **Walking nav on the map (G3.2/3.3 B7.4/B7.5):** destination stage → route hint + walk-time + "leave by"
+     from the travel matrix (data in hand; touches `MapView` — regression-guard the working base + mock presence).
+  3. **Admin desktop map-verify (G3.1, B8.*):** persist pins to `stage_location` via a guarded route; separate desktop track.
+  4. **Phase 4 groups + GroupRoom DO (mock/anonymous-local auth per DEC-038):** buildable on the Cloudflare token; large multi-gate.
+  - ⏳ **Credential-gated:** FCM/push (G3.4) + permanent auth (P4) need Firebase — run mock/local, mark ⏳ (orchestrator §5/§19).
+- **Older design-pass backlog (already RESOLVED — kept for history):**
 - **Review Batch 1** (`brain/wireframes/directions/23-amber-groups-flow.html`, 8 screens) + **Batch 2**
   (`24-amber-group-timetable.html`, 6 screens: plan overview · block detail · locked-conflict+fallback · owner override ·
   split view · needs-input) → apply Julio's edits.
