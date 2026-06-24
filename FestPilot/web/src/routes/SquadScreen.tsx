@@ -13,6 +13,7 @@ import { useMeetingPoints } from "../data/meetingPoints";
 import { initialsOf, useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { LoadingState } from "../ui/states";
+import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
 export function SquadScreen(): JSX.Element {
   const { hasProfile } = useIdentity();
@@ -125,7 +126,7 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
         </button>
 
         {points.map((p) => (
-          <MeetingPointCard key={p.id} point={p} />
+          <MeetingPointCard key={p.id} groupId={group.id} point={p} />
         ))}
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/board`)}>
@@ -193,12 +194,13 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
   );
 }
 
-/** A live "come to me" meeting point on the squad home — title, landmark, who's going, when it closes. */
-function MeetingPointCard({ point }: { point: MeetingPointDto }): JSX.Element {
-  const closesIn = expiresInLabel(point.expiresAtUtc);
-  const goingLine = point.hereCount > 0 ? `${point.goingCount} on the way · ${point.hereCount} here` : `${point.goingCount} going`;
+/** A live "come to me" meeting point on the squad home — opens the convergence detail (#26.3). */
+function MeetingPointCard({ groupId, point }: { groupId: string; point: MeetingPointDto }): JSX.Element {
+  const navigate = useNavigate();
+  const closesIn = closesInLabel(point.expiresAtUtc);
+  const badge = lifecycleBadge(point.lifecycle);
   return (
-    <section className="glass meet-active-card">
+    <button className="glass meet-active-card" onClick={() => navigate(`/squad/${groupId}/meet/${point.id}`)}>
       <div className="meet-active-icon">
         <span className="ms">flag</span>
       </div>
@@ -209,20 +211,11 @@ function MeetingPointCard({ point }: { point: MeetingPointDto }): JSX.Element {
           {point.note ? ` · "${point.note}"` : ""}
         </div>
         <div className="meet-active-meta">
-          {goingLine}
+          {convergenceSummary(point)}
           {closesIn ? ` · ${closesIn}` : ""}
         </div>
       </div>
-      <span className="pill on">Active</span>
-    </section>
+      <span className={`pill meet-badge meet-badge-${badge.tone}`}>{badge.label}</span>
+    </button>
   );
-}
-
-/** "closes in 24m" / "closing" from an ISO expiry, or null when far off. */
-function expiresInLabel(expiresAtUtc: string): string | null {
-  const ms = Date.parse(expiresAtUtc) - Date.now();
-  if (!Number.isFinite(ms)) return null;
-  if (ms <= 0) return "closing";
-  const min = Math.round(ms / 60_000);
-  return min < 60 ? `closes in ${min}m` : `closes in ${Math.round(min / 60)}h`;
 }

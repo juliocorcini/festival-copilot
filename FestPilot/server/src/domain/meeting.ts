@@ -50,3 +50,70 @@ export function landmarkLabel(coarse: CoarsePresence, nameById: ReadonlyMap<stri
       return "in the venue";
   }
 }
+
+// --- Lifecycle (Gate 6.2, UC-28, wireframe #26.3/#26.4) -------------------------------------------
+// The persisted `meeting_point.status` is intentionally coarse (active / archived / cancelled); the
+// rich, time-sensitive state the squad sees is DERIVED at read time from the responders + expiry +
+// now, so it stays honest as people respond and the clock moves — no extra writes, no schema change.
+
+/** The state a meeting point presents to the squad (computed, never stored). */
+export type MeetingLifecycle =
+  | "active" // just dropped — only the creator is committed so far
+  | "on_the_way" // people are heading over (someone's here, or ≥2 committed)
+  | "everyone_here" // every committed member made it — the reunion moment (#26.4)
+  | "expiring_soon" // inside the final window before auto-close
+  | "expired" // past its grace window (or archived) — auto-faded
+  | "cancelled"; // the creator called it off
+
+/** Inside this window before expiry → "expiring_soon" (a gentle "closing" nudge). */
+export const EXPIRING_SOON_MS = 5 * 60_000;
+/** The creator's live fix being further than this from the spot → a "you've drifted" prompt. */
+export const DRIFT_RADIUS_M = 250;
+/** Walk model shared with domain/travel.ts: ~4 km/h through a packed festival, ×1.3 for the real path. */
+const WALK_METERS_PER_MIN = 67;
+const WALK_DETOUR = 1.3;
+
+export interface LifecycleInput {
+  /** The persisted coarse status: active / archived / cancelled. */
+  dbStatus: string;
+  expiresAtMs: number;
+  nowMs: number;
+  /** Members heading over (status = going). */
+  onTheWayCount: number;
+  /** Members who arrived (status = arrived). */
+  hereCount: number;
+}
+
+/**
+ * Derive the live lifecycle state (pure, exhaustively unit-tested). Order matters: a cancelled or
+ * expired point is terminal; otherwise "everyone's here" wins over the time-based and progress
+ * states. "everyone_here" needs ≥2 committed members so a solo creator never triggers the reunion.
+ */
+export function meetingLifecycle(input: LifecycleInput): MeetingLifecycle {
+  if (input.dbStatus === "cancelled") return "cancelled";
+  if (input.dbStatus === "archived" || input.nowMs >= input.expiresAtMs) return "expired";
+  const committed = input.onTheWayCount + input.hereCount;
+  if (committed >= 2 && input.hereCount === committed) return "everyone_here";
+  if (input.expiresAtMs - input.nowMs <= EXPIRING_SOON_MS) return "expiring_soon";
+  if (input.hereCount >= 1 || input.onTheWayCount >= 2) return "on_the_way";
+  return "active";
+}
+
+/** Whether a derived lifecycle state still counts the point as "live" (shown on the squad home). */
+export function isLiveLifecycle(state: MeetingLifecycle): boolean {
+  return state !== "expired" && state !== "cancelled";
+}
+
+/**
+ * Walking ETA in minutes from the straight-line metres between a member and the spot — the same
+ * conservative model My Plan / Now&Next use. Floored at 1 min so "here-ish" never reads "0 min".
+ * Returns a count of minutes; the caller decides whether to expose it (only for sharing members).
+ */
+export function walkEtaMinutes(straightMeters: number): number {
+  return Math.max(1, Math.round((straightMeters * WALK_DETOUR) / WALK_METERS_PER_MIN));
+}
+
+/** A gentle "you've drifted from the spot" prompt for the creator (null distance = unknown → false). */
+export function creatorDrifted(creatorDistanceMeters: number | null): boolean {
+  return creatorDistanceMeters != null && creatorDistanceMeters > DRIFT_RADIUS_M;
+}

@@ -15,6 +15,7 @@ import type {
   InvitePreviewDto,
   LineupDto,
   MeetingPointDto,
+  SettableMeetingStatus,
   ShareMode,
   SquadPlanDataDto,
   StageDto,
@@ -361,6 +362,43 @@ export const api = {
       body: input,
       signal,
     });
+    return data.meetingPoint;
+  },
+
+  /** One meeting point with the full convergence roster + live ETAs + lifecycle (#26.3). */
+  async getMeetingPoint(groupId: string, mpId: string, signal?: AbortSignal): Promise<MeetingPointDto> {
+    const data = await authedJson<{ meetingPoint: MeetingPointDto }>(`/api/groups/${groupId}/meeting-points/${mpId}`, {
+      method: "GET",
+      signal,
+    });
+    return data.meetingPoint;
+  },
+
+  /** Set my own status on a point: going / arrived / not_going (the going/here/can't loop). */
+  async setMeetingStatus(
+    groupId: string,
+    mpId: string,
+    status: SettableMeetingStatus,
+    signal?: AbortSignal
+  ): Promise<MeetingPointDto> {
+    const data = await authedJson<{ meetingPoint: MeetingPointDto }>(
+      `/api/groups/${groupId}/meeting-points/${mpId}/status`,
+      { method: "POST", body: { status }, signal }
+    );
+    return data.meetingPoint;
+  },
+
+  /** End a point — creator-only. "close" wraps it up (#26.4); "cancel" calls it off. */
+  async endMeetingPoint(
+    groupId: string,
+    mpId: string,
+    mode: "close" | "cancel",
+    signal?: AbortSignal
+  ): Promise<MeetingPointDto> {
+    const data = await authedJson<{ meetingPoint: MeetingPointDto }>(
+      `/api/groups/${groupId}/meeting-points/${mpId}/end`,
+      { method: "POST", body: { mode }, signal }
+    );
     return data.meetingPoint;
   },
 };

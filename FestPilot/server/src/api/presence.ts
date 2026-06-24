@@ -61,6 +61,48 @@ export async function getStageCoords(db: D1Database, festivalId: string): Promis
   return out;
 }
 
+/** A member's latest raw fix in a squad — SERVER-ONLY (lat/lng never leave this process). */
+export interface RawFix {
+  lat: number;
+  lng: number;
+  ageSeconds: number;
+  /** Still inside its freshness window (gps ~15 min / manual ~45 min). */
+  fresh: boolean;
+}
+
+/**
+ * Latest raw fixes for a squad, keyed by user id — the SERVER-ONLY input to meeting-point ETAs.
+ * Presence rows already store the exact lat/lng (DEC-007/008); this exposes them ONLY inside the
+ * Worker so the meeting repo can derive a walk ETA. The lat/lng are never returned to any client.
+ */
+export async function getGroupRawFixes(
+  db: D1Database,
+  groupId: string,
+  nowIso: string
+): Promise<Map<string, RawFix>> {
+  const nowMs = Date.parse(nowIso);
+  const { results } = await db
+    .prepare(
+      `SELECT user_id AS userId, lat, lng, updated_at_utc AS updatedAt, expires_at_utc AS expiresAt
+         FROM presence WHERE group_id = ?`
+    )
+    .bind(groupId)
+    .all<{ userId: string; lat: number | null; lng: number | null; updatedAt: string | null; expiresAt: string | null }>();
+  const out = new Map<string, RawFix>();
+  for (const r of results) {
+    if (r.lat == null || r.lng == null || !r.updatedAt) continue;
+    const updatedMs = Date.parse(r.updatedAt);
+    const expiresMs = r.expiresAt ? Date.parse(r.expiresAt) : 0;
+    out.set(r.userId, {
+      lat: r.lat,
+      lng: r.lng,
+      ageSeconds: Math.max(0, Math.round((nowMs - updatedMs) / 1000)),
+      fresh: expiresMs > nowMs,
+    });
+  }
+  return out;
+}
+
 /** The act playing at a stage right now (first-billed), for the "watching X" line. Null when none. */
 async function currentArtistAt(
   db: D1Database,

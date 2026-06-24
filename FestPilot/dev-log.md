@@ -5,10 +5,10 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 + PHASE 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + LIVE.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 + PHASE 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + G6.2 ✅ + LIVE.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P6 IN PROGRESS** — **G6.1 "come to me" meeting point (B4.1 pick-spot + B4.2 details + POST + list + DO fan-out; photo deferred DEC-047) ✅** —
-  next: **G6.2** (meeting lifecycle: going/here/can't + ETA + everyone's-here + auto-fade/expiry purge), then **G6.3** (compass nav + "I'm lost" safety).
+- Active Phase / Gate: **P6 IN PROGRESS** — **G6.1 "come to me" meeting point ✅ + G6.2 meeting lifecycle (going/here/can't + live ETA + everyone's-here + cancel/close + cron purge) ✅** —
+  next: **G6.3** (compass nav + "I'm lost" safety).
   P5 ✅ (presence pipeline + G5.1 consent + G5.2 roster/coarse map + G5.3 ping/sharing-picker/privacy; precise exact-dot rides this Phase-6 channel per DEC-046).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
@@ -115,6 +115,33 @@
   domain], `transform` round-trip test, new `meeting-points` spec: home→pick→details→active-card, 4 screenshots faithful to
   #26; SW blocked in that spec so multi-nav stays on stubs). Migration 0007 applied remote, Worker redeployed. Pages
   https://f262f5a4.festpilot.pages.dev.
+- **P6 G6.2 meeting lifecycle ✅ (this session):** the going/here/can't loop + live ETAs + the "everyone's here"
+  reunion + auto-fade/purge (UC-28, #26.3/#26.4). **Lifecycle is DERIVED at read time — no schema change, NO
+  migration** (the persisted `status` stays coarse active/archived/cancelled; the rich state is computed from the
+  responders + expiry + now, so it stays honest as people respond and the clock moves). Pure `domain/meeting.ts`:
+  `meetingLifecycle` (active→on_the_way→everyone_here→expiring_soon→expired/cancelled; order = terminal first, then
+  reunion needs **≥2 committed all-here** so a solo creator never triggers it), `isLiveLifecycle`, `walkEtaMinutes`
+  (the shared ~67 m/min ×1.3 walk model), `creatorDrifted` (>250 m from the spot), `EXPIRING_SOON_MS`/`DRIFT_RADIUS_M`
+  — **20 domain tests**. Repo `api/meetingPoints.ts`: `getMeetingPoint` (the WHOLE squad roster — responders +
+  non-responders synthesized as `no_response`; **per-member walk ETA + distance DERIVED server-side from the raw
+  presence fix, NEVER a coordinate** — DEC-007/015/046; `creatorDrifted`), `setMyMeetingStatus` (going/arrived/
+  not_going; refuses a non-active point → **409**), `endMeetingPoint` (**creator-only** cancel/close), and the cron
+  `purgeExpiredMeetingPoints` (archive past-expiry active points, then delete archived/cancelled after a grace —
+  DEC-015). `assembleDto` derives lifecycle + everyoneHere; new `getGroupRawFixes` in `api/presence.ts` is the
+  **server-only** raw-fix source for ETAs (lat/lng never leave the Worker). 3 member-gated routes (`GET
+  /:id/meeting-points/:mpId`, `POST .../status`, `POST .../end`), cron wired in `index.ts`. Web: DTOs mirrored
+  (`no_response`, `MeetingLifecycle`, eta/distance/lifecycle/everyoneHere/creatorDrifted), `api.getMeetingPoint/
+  setMeetingStatus/endMeetingPoint`, `useMeetingPoint` (reuses the WS+focus+30s-tick refresh). Pure **`meetUi.tsx`**
+  (`lifecycleBadge`/`memberStatusLine`/`etaLabel`/`formatMeters`/`convergenceSummary`/`closesInLabel`/`whenLabel`)
+  — **14 unit tests**. **`MeetConvergenceMap`** (exact-spot flag + coarse converging member pins on resolved stages,
+  reuses `geoToSvg`, degrades to just the flag). **`MeetDetailScreen`** (#26.3 active convergence detail — map +
+  roster sorted here→ETA→no-response→can't + the going/here/can't picker + drift/closing prompts + creator cancel;
+  #26.4 **reunion** "the squad's back together" + close / keep-open; terminal cancelled/expired states). Route
+  `squad/:id/meet/:mpId`; the squad-home active card now opens the detail. **116 server + 129 web unit + 21 e2e green**
+  (new `meeting-lifecycle` spec: active detail → "I'm here" → reunion, 2 screenshots faithful to #26.3/#26.4; the 6.1
+  spec is unchanged). **No migration.** Worker redeployed + **live smoke validated** (create→drop[active]→join→
+  `[going,no_response]`→member arrived[on_the_way]→owner arrived[**everyone_here**]→cancel[cancelled]→dropped from the
+  active list→status-on-cancelled **409**). Pages https://8879f4ba.festpilot.pages.dev. Web `0.5.0`→`0.6.0`.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the

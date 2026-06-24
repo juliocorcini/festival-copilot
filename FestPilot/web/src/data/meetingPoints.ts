@@ -5,7 +5,7 @@
  * tallies stay honest while the screen is open.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "./api";
+import { api, ApiError } from "./api";
 import { useGroupLive, type LoadStatus } from "./groups";
 import type { MeetingPointDto } from "./types";
 
@@ -72,4 +72,72 @@ export function useMeetingPoints(groupId: string | undefined): MeetingPointsStat
   useGroupLive(groupId, reload);
 
   return { points, status, reload };
+}
+
+export interface MeetingPointState {
+  point: MeetingPointDto | null;
+  status: LoadStatus;
+  reload: () => void;
+}
+
+/**
+ * One meeting point with its full convergence roster (#26.3), kept fresh by the same contract as the
+ * list: the GroupRoom socket, a focus refetch, and a slow tick so ETAs + the expiry countdown stay
+ * honest while the detail is open. A 404 (ended/purged) resolves to `point: null`, status "ready".
+ */
+export function useMeetingPoint(groupId: string | undefined, mpId: string | undefined): MeetingPointState {
+  const [point, setPoint] = useState<MeetingPointDto | null>(null);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [nonce, setNonce] = useState(0);
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
+  const hasData = useRef(false);
+
+  useEffect(() => {
+    if (!groupId || !mpId) return;
+    const controller = new AbortController();
+    let alive = true;
+    if (!hasData.current) setStatus("loading");
+    api
+      .getMeetingPoint(groupId, mpId, controller.signal)
+      .then((data) => {
+        if (!alive) return;
+        setPoint(data);
+        hasData.current = true;
+        setStatus("ready");
+      })
+      .catch((err: unknown) => {
+        if (!alive || controller.signal.aborted) return;
+        // A 404 means the point ended or was purged — show the empty state, not an error.
+        if (err instanceof ApiError && err.status === 404) {
+          setPoint(null);
+          hasData.current = true;
+          setStatus("ready");
+          return;
+        }
+        if (!hasData.current) setStatus("error");
+      });
+    return () => {
+      alive = false;
+      controller.abort();
+    };
+  }, [groupId, mpId, nonce]);
+
+  useEffect(() => {
+    if (!groupId || !mpId) return;
+    const onFocus = (): void => {
+      if (document.visibilityState === "visible") reload();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    const id = setInterval(reload, POINTS_TICK_MS);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      clearInterval(id);
+    };
+  }, [groupId, mpId, reload]);
+
+  useGroupLive(groupId, reload);
+
+  return { point, status, reload };
 }

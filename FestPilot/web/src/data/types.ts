@@ -211,7 +211,20 @@ export interface GroupPresenceDto {
 // Meeting points (Phase 6 — UC-27, DEC-014/046/047). An exact opt-in spot the squad walks to.
 // Unlike presence, the meeting point IS an explicit, intentional share of an exact coordinate by
 // its creator — the one place an exact coordinate is exposed in V1. Photo deferred (DEC-047).
-export type MeetingMemberStatus = "going" | "arrived" | "left" | "not_going";
+// "no_response" is synthesized for squad members who haven't responded (the detail roster, #26.3).
+export type MeetingMemberStatus = "going" | "arrived" | "left" | "not_going" | "no_response";
+
+/** Statuses a member can set on themselves (the going/here/can't loop). */
+export type SettableMeetingStatus = "going" | "arrived" | "not_going";
+
+/** Derived live state a meeting point presents to the squad (#26.3/#26.4). */
+export type MeetingLifecycle =
+  | "active"
+  | "on_the_way"
+  | "everyone_here"
+  | "expiring_soon"
+  | "expired"
+  | "cancelled";
 
 export interface MeetingPointMemberDto {
   userId: string;
@@ -220,6 +233,10 @@ export interface MeetingPointMemberDto {
   isYou: boolean;
   status: MeetingMemberStatus;
   updatedAtUtc: string;
+  /** Walking ETA to the spot (min), derived server-side — never a coordinate. Null unless heading over. */
+  etaMinutes: number | null;
+  /** Straight-line distance to the spot (m); pairs with etaMinutes for the convergence view. */
+  distanceMeters: number | null;
 }
 
 export interface MeetingPointDto {
@@ -239,9 +256,16 @@ export interface MeetingPointDto {
   expiresAtUtc: string;
   createdAtUtc: string;
   members: MeetingPointMemberDto[];
+  /** Members heading over (status = going) — the "on the way" tally. */
   goingCount: number;
+  /** Members who arrived (status = arrived). */
   hereCount: number;
   myStatus: MeetingMemberStatus | null;
+  /** Derived live state (active → on_the_way → everyone_here → expiring_soon → expired/cancelled). */
+  lifecycle: MeetingLifecycle;
+  everyoneHere: boolean;
+  /** Smart prompt: the creator's live fix is far from the spot (only ever true for the creator). */
+  creatorDrifted: boolean;
 }
 
 /** The B4.2 create payload — the exact spot is chosen on B4.1. */

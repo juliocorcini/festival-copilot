@@ -241,7 +241,9 @@ export interface GroupPresenceDto {
 // label is a coarse landmark for copy; the photo is deferred (DEC-047, R2 not enabled in V1).
 
 /** A member's response on a meeting point. DB enum: going / arrived / left / not_going. */
-export type MeetingMemberStatus = "going" | "arrived" | "left" | "not_going";
+// "no_response" is SYNTHESIZED for squad members without a row (the detail roster shows them dimmed,
+// wireframe #26.3 "Theo · no response"); it is never written to the DB (only the first four are).
+export type MeetingMemberStatus = "going" | "arrived" | "left" | "not_going" | "no_response";
 
 export interface MeetingPointMemberDto {
   userId: string;
@@ -250,7 +252,21 @@ export interface MeetingPointMemberDto {
   isYou: boolean;
   status: MeetingMemberStatus;
   updatedAtUtc: string;
+  /** Walking ETA to the spot (min), DERIVED server-side from the member's fix — never a coordinate.
+   *  Null unless the member is sharing presence and still heading over (Gate 6.2, DEC-048). */
+  etaMinutes: number | null;
+  /** Straight-line distance to the spot (m), rounded; pairs with etaMinutes for the convergence view. */
+  distanceMeters: number | null;
 }
+
+/** The live state a meeting point presents to the squad (derived, never stored — see domain/meeting). */
+export type MeetingLifecycle =
+  | "active"
+  | "on_the_way"
+  | "everyone_here"
+  | "expiring_soon"
+  | "expired"
+  | "cancelled";
 
 export interface MeetingPointDto {
   id: string;
@@ -272,8 +288,16 @@ export interface MeetingPointDto {
   expiresAtUtc: string;
   createdAtUtc: string;
   members: MeetingPointMemberDto[];
+  /** Members heading over (status = going) — the "on the way" tally. */
   goingCount: number;
+  /** Members who arrived (status = arrived). */
   hereCount: number;
   /** The caller's own status on this point, or null when they haven't responded. */
   myStatus: MeetingMemberStatus | null;
+  /** Derived live state (active → on_the_way → everyone_here → expiring_soon → expired/cancelled). */
+  lifecycle: MeetingLifecycle;
+  /** True when every committed member arrived (the #26.4 reunion). Convenience over `lifecycle`. */
+  everyoneHere: boolean;
+  /** Smart prompt (#26): the creator's live fix is far from the spot. Only ever true for the creator. */
+  creatorDrifted: boolean;
 }

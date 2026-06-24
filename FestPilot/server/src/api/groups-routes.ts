@@ -28,7 +28,14 @@ import {
 import { editNote, listNotes, MAX_NOTE_LENGTH, postNote, removeNote, setPinned } from "./board";
 import { getGroupPresence, PRECISE_DEFAULT_MINUTES, setGroupShareMode } from "./presence";
 import { answerPing, dismissPing, listInbox, sendPing } from "./pings";
-import { createMeetingPoint, listMeetingPoints } from "./meetingPoints";
+import {
+  createMeetingPoint,
+  endMeetingPoint,
+  getMeetingPoint,
+  isSettableStatus,
+  listMeetingPoints,
+  setMyMeetingStatus,
+} from "./meetingPoints";
 import type { PingKind } from "../domain/presence";
 
 export const groups = new Hono<{ Bindings: Env }>();
@@ -382,6 +389,45 @@ groups.post("/:id/meeting-points", async (c) => {
   );
   await notifyGroup(c.env, m.group.id, "meeting");
   return c.json({ meetingPoint: point }, 201);
+});
+
+// One meeting point with the full convergence roster + live ETAs + lifecycle (Gate 6.2, #26.3).
+groups.get("/:id/meeting-points/:mpId", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const point = await getMeetingPoint(c.env.DB, m.group.festivalId, m.group.id, c.req.param("mpId"), m.user.id, new Date().toISOString());
+  if (!point) return c.json({ error: "not found" }, 404);
+  return c.json({ meetingPoint: point });
+});
+
+// Set my own status on a point: going / arrived / not_going (the going/here/can't loop, #26.3).
+groups.post("/:id/meeting-points/:mpId/status", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const status = typeof body.status === "string" ? body.status : "";
+  if (!isSettableStatus(status)) return c.json({ error: "invalid status" }, 400);
+  const point = await setMyMeetingStatus(c.env.DB, m.group.festivalId, m.group.id, c.req.param("mpId"), m.user.id, status, new Date().toISOString());
+  if (!point) return c.json({ error: "not active" }, 409);
+  await notifyGroup(c.env, m.group.id, "meeting");
+  return c.json({ meetingPoint: point });
+});
+
+// End a point — creator-only. { mode: "close" | "cancel" } (#26.4 close / cancel).
+groups.post("/:id/meeting-points/:mpId/end", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const mpId = c.req.param("mpId");
+  const now = new Date().toISOString();
+  const existing = await getMeetingPoint(c.env.DB, m.group.festivalId, m.group.id, mpId, m.user.id, now);
+  if (!existing) return c.json({ error: "not found" }, 404);
+  if (!existing.isMine) return c.json({ error: "only the creator can end this" }, 403);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const mode = body.mode === "cancel" ? "cancel" : "close";
+  const point = await endMeetingPoint(c.env.DB, m.group.festivalId, m.group.id, mpId, m.user.id, mode, now);
+  if (!point) return c.json({ error: "not found" }, 404);
+  await notifyGroup(c.env, m.group.id, "meeting");
+  return c.json({ meetingPoint: point });
 });
 
 // Realtime subscription — forwarded to the group's Durable Object. Members only.

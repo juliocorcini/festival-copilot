@@ -9,6 +9,7 @@ import { api } from "./api/routes";
 import { upsertFestivalMap, type FestivalMapInput } from "./api/repo";
 import { runScheduledIngest } from "./ingest/ingest";
 import { purgeExpiredPresence } from "./api/presence";
+import { purgeExpiredMeetingPoints } from "./api/meetingPoints";
 export { GroupRoom } from "./group/room";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -59,9 +60,16 @@ export default {
       })
     );
     // Presence hygiene (DEC-008/015): drop stale fixes + downgrade lapsed precise shares to coarse.
+    const nowIso = new Date().toISOString();
     ctx.waitUntil(
-      purgeExpiredPresence(env.DB, new Date().toISOString()).then((r) => {
+      purgeExpiredPresence(env.DB, nowIso).then((r) => {
         console.log("[cron] presence purge:", JSON.stringify(r));
+      })
+    );
+    // Meeting-point hygiene (UC-28, DEC-015): auto-fade expired points + purge old archived/cancelled.
+    ctx.waitUntil(
+      purgeExpiredMeetingPoints(env.DB, nowIso).then((r) => {
+        console.log("[cron] meeting-point purge:", JSON.stringify(r));
       })
     );
   },

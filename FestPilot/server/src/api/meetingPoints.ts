@@ -5,11 +5,28 @@
 // reusing the presence coarsener (domain/presence.ts) + the venue stage names. Photo deferred (DEC-047).
 
 import { ulid } from "../db/ids";
-import { getStageCoords } from "./presence";
+import { getGroupRawFixes, getStageCoords } from "./presence";
+import { listMembers } from "./groups";
 import { listStages } from "./repo";
-import { coarsenPresence, type StageCoord } from "../domain/presence";
-import { clampGraceMinutes, landmarkLabel, meetingExpiry } from "../domain/meeting";
-import type { MeetingPointDto, MeetingPointMemberDto } from "./dto";
+import { coarsenPresence, metersBetween, type StageCoord } from "../domain/presence";
+import {
+  clampGraceMinutes,
+  creatorDrifted,
+  landmarkLabel,
+  meetingExpiry,
+  meetingLifecycle,
+  walkEtaMinutes,
+} from "../domain/meeting";
+import type { MeetingMemberStatus, MeetingPointDto, MeetingPointMemberDto } from "./dto";
+
+/** Statuses a client may set on itself (the DB's "left" is unused in V1; "no_response" is synthesized). */
+const SETTABLE_STATUSES = new Set<MeetingMemberStatus>(["going", "arrived", "not_going"]);
+export function isSettableStatus(value: string): value is "going" | "arrived" | "not_going" {
+  return SETTABLE_STATUSES.has(value as MeetingMemberStatus);
+}
+
+/** Keep an archived/cancelled point's "who went" record this long after expiry, then purge it (DEC-015). */
+const PURGE_AFTER_EXPIRY_MS = 6 * 60 * 60_000;
 
 /** A new meeting point coming from B4.2 (the exact spot is chosen on B4.1). */
 export interface MeetingPointInput {
@@ -34,6 +51,7 @@ interface MeetingPointRow {
   lat: number;
   lng: number;
   accuracyMeters: number | null;
+  status: string;
   meetAtUtc: string | null;
   expiresAtUtc: string;
   createdAtUtc: string;
@@ -65,6 +83,8 @@ function memberDto(row: MemberRow, meId: string): MeetingPointMemberDto {
     isYou: row.userId === meId,
     status: row.status as MeetingPointMemberDto["status"],
     updatedAtUtc: row.updatedAt,
+    etaMinutes: null,
+    distanceMeters: null,
   };
 }
 
@@ -92,14 +112,30 @@ async function loadMembers(db: D1Database, mpIds: string[]): Promise<Map<string,
   return byId;
 }
 
-function toDto(
+/**
+ * Assemble the DTO from a point row + its final roster (responders for the list cards; the FULL
+ * squad for the detail). Counts, lifecycle and `myStatus` are all derived here so the list and detail
+ * stay consistent. `creatorDrifted` is the detail-only smart prompt (false elsewhere).
+ */
+function assembleDto(
   row: MeetingPointRow,
-  memberRows: MemberRow[],
+  members: MeetingPointMemberDto[],
   ctx: { coords: StageCoord[]; nameById: Map<string, string> },
-  meId: string
+  meId: string,
+  nowMs: number,
+  drifted = false
 ): MeetingPointDto {
   const coarse = coarsenPresence({ lat: row.lat, lng: row.lng }, ctx.coords, row.accuracyMeters);
-  const members = memberRows.map((m) => memberDto(m, meId));
+  const goingCount = members.filter((m) => m.status === "going").length;
+  const hereCount = members.filter((m) => m.status === "arrived").length;
+  const lifecycle = meetingLifecycle({
+    dbStatus: row.status,
+    expiresAtMs: Date.parse(row.expiresAtUtc),
+    nowMs,
+    onTheWayCount: goingCount,
+    hereCount,
+  });
+  const mine = members.find((m) => m.isYou);
   return {
     id: row.id,
     groupId: row.groupId,
@@ -115,16 +151,19 @@ function toDto(
     expiresAtUtc: row.expiresAtUtc,
     createdAtUtc: row.createdAtUtc,
     members,
-    goingCount: members.filter((m) => m.status === "going").length,
-    hereCount: members.filter((m) => m.status === "arrived").length,
-    myStatus: members.find((m) => m.isYou)?.status ?? null,
+    goingCount,
+    hereCount,
+    myStatus: mine && mine.status !== "no_response" ? mine.status : null,
+    lifecycle,
+    everyoneHere: lifecycle === "everyone_here",
+    creatorDrifted: drifted,
   };
 }
 
 const SELECT_POINT = `SELECT mp.id AS id, mp.group_id AS groupId, mp.created_by_user_id AS createdByUserId,
         u.display_name AS createdByName, mp.title AS title, mp.note AS note, mp.lat AS lat, mp.lng AS lng,
-        mp.accuracy_meters AS accuracyMeters, mp.meet_at_utc AS meetAtUtc, mp.expires_at_utc AS expiresAtUtc,
-        mp.created_at_utc AS createdAtUtc
+        mp.accuracy_meters AS accuracyMeters, mp.status AS status, mp.meet_at_utc AS meetAtUtc,
+        mp.expires_at_utc AS expiresAtUtc, mp.created_at_utc AS createdAtUtc
    FROM meeting_point mp
    JOIN app_user u ON u.id = mp.created_by_user_id`;
 
@@ -173,27 +212,68 @@ export async function createMeetingPoint(
       )
       .bind(id, userId, nowIso),
   ]);
-  const created = await getMeetingPoint(db, festivalId, groupId, id, userId);
+  const created = await getMeetingPoint(db, festivalId, groupId, id, userId, nowIso);
   // The row was just written in this same DB; this is only null under a concurrent delete.
   if (!created) throw new Error("meeting point vanished after create");
   return created;
 }
 
-/** A single meeting point (any status) for a squad, or null when it isn't this group's. */
+/**
+ * One meeting point (any status) for a squad, with the FULL convergence roster (#26.3): every squad
+ * member with their status (going / arrived / not_going / synthesized "no_response"), a live walk ETA
+ * for those still heading over who are sharing presence, and the creator-drift smart prompt. Returns
+ * null when the point isn't this group's. ETAs are DERIVED server-side — no coordinate ever leaves.
+ */
 export async function getMeetingPoint(
   db: D1Database,
   festivalId: string,
   groupId: string,
   mpId: string,
-  meId: string
+  meId: string,
+  nowIso: string
 ): Promise<MeetingPointDto | null> {
   const row = await db
     .prepare(`${SELECT_POINT} WHERE mp.id = ? AND mp.group_id = ?`)
     .bind(mpId, groupId)
     .first<MeetingPointRow>();
   if (!row) return null;
-  const [members, ctx] = await Promise.all([loadMembers(db, [mpId]), venueLabelContext(db, festivalId)]);
-  return toDto(row, members.get(mpId) ?? [], ctx, meId);
+  const [responders, squad, fixes, ctx] = await Promise.all([
+    loadMembers(db, [mpId]),
+    listMembers(db, groupId, meId),
+    getGroupRawFixes(db, groupId, nowIso),
+    venueLabelContext(db, festivalId),
+  ]);
+  const byUser = new Map((responders.get(mpId) ?? []).map((r) => [r.userId, r]));
+  const point = { lat: row.lat, lng: row.lng };
+
+  const roster: MeetingPointMemberDto[] = squad.map((gm) => {
+    const responded = byUser.get(gm.userId);
+    const status = (responded?.status ?? "no_response") as MeetingPointMemberDto["status"];
+    // ETA only for members still heading over who are sharing a fresh fix (arrived members are there).
+    let etaMinutes: number | null = null;
+    let distanceMeters: number | null = null;
+    if (status !== "arrived" && status !== "not_going") {
+      const fix = fixes.get(gm.userId);
+      if (fix && fix.fresh) {
+        distanceMeters = Math.round(metersBetween(fix, point));
+        etaMinutes = walkEtaMinutes(distanceMeters);
+      }
+    }
+    return {
+      userId: gm.userId,
+      displayName: gm.displayName,
+      avatarColor: gm.avatarColor,
+      isYou: gm.isYou,
+      status,
+      updatedAtUtc: responded?.updatedAt ?? row.createdAtUtc,
+      etaMinutes,
+      distanceMeters,
+    };
+  });
+
+  const creatorFix = fixes.get(row.createdByUserId);
+  const creatorDistance = creatorFix && creatorFix.fresh ? metersBetween(creatorFix, point) : null;
+  return assembleDto(row, roster, ctx, meId, Date.parse(nowIso), creatorDrifted(creatorDistance));
 }
 
 /**
@@ -210,7 +290,8 @@ export async function listMeetingPoints(
   const { results: rows } = await db
     .prepare(
       `${SELECT_POINT}
-        WHERE mp.group_id = ? AND mp.is_safety = 0 AND mp.status != 'archived' AND mp.expires_at_utc > ?
+        WHERE mp.group_id = ? AND mp.is_safety = 0 AND mp.status NOT IN ('archived', 'cancelled')
+          AND mp.expires_at_utc > ?
         ORDER BY mp.created_at_utc DESC`
     )
     .bind(groupId, nowIso)
@@ -220,5 +301,99 @@ export async function listMeetingPoints(
     loadMembers(db, rows.map((r) => r.id)),
     venueLabelContext(db, festivalId),
   ]);
-  return rows.map((r) => toDto(r, membersById.get(r.id) ?? [], ctx, meId));
+  const nowMs = Date.parse(nowIso);
+  // The list cards need counts + lifecycle, not the full roster/ETA — keep it lean (responders only).
+  return rows.map((r) =>
+    assembleDto(r, (membersById.get(r.id) ?? []).map((m) => memberDto(m, meId)), ctx, meId, nowMs)
+  );
+}
+
+/**
+ * Set the caller's own status on a point (going / arrived / not_going — the going/here/can't loop,
+ * #26.3). Upserts the member row; refuses a point that isn't this squad's or is no longer live
+ * (cancelled / expired). Returns the refreshed detail so the caller re-renders the convergence view.
+ */
+export async function setMyMeetingStatus(
+  db: D1Database,
+  festivalId: string,
+  groupId: string,
+  mpId: string,
+  userId: string,
+  status: "going" | "arrived" | "not_going",
+  nowIso: string
+): Promise<MeetingPointDto | null> {
+  const row = await db
+    .prepare(`SELECT status, expires_at_utc AS expiresAt FROM meeting_point WHERE id = ? AND group_id = ?`)
+    .bind(mpId, groupId)
+    .first<{ status: string; expiresAt: string }>();
+  if (!row) return null;
+  if (row.status !== "active" || Date.parse(row.expiresAt) <= Date.parse(nowIso)) return null; // not live
+  await db
+    .prepare(
+      `INSERT INTO meeting_point_member (meeting_point_id, user_id, status, updated_at_utc)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT (meeting_point_id, user_id) DO UPDATE SET status = excluded.status, updated_at_utc = excluded.updated_at_utc`
+    )
+    .bind(mpId, userId, status, nowIso)
+    .run();
+  return getMeetingPoint(db, festivalId, groupId, mpId, userId, nowIso);
+}
+
+/**
+ * End a point (creator-only — enforced by the route): "close" wraps it up cleanly after everyone
+ * arrived (#26.4); "cancel" calls it off. Both drop it from the active list and keep the "who went"
+ * record until the purge window. Returns the refreshed (now-terminal) detail.
+ */
+export async function endMeetingPoint(
+  db: D1Database,
+  festivalId: string,
+  groupId: string,
+  mpId: string,
+  userId: string,
+  mode: "cancel" | "close",
+  nowIso: string
+): Promise<MeetingPointDto | null> {
+  const status = mode === "cancel" ? "cancelled" : "archived";
+  const res = await db
+    .prepare(`UPDATE meeting_point SET status = ? WHERE id = ? AND group_id = ?`)
+    .bind(status, mpId, groupId)
+    .run();
+  if (!res.meta.changes) return null;
+  return getMeetingPoint(db, festivalId, groupId, mpId, userId, nowIso);
+}
+
+/**
+ * Cron hygiene (UC-28, DEC-015): auto-fade active points past their grace window to "archived" (the
+ * "who went" record is kept), then purge any archived/cancelled point whose expiry is well behind us
+ * — deleting its member rows first. Returns counts. Safety broadcasts (is_safety = 1) are untouched.
+ */
+export async function purgeExpiredMeetingPoints(
+  db: D1Database,
+  nowIso: string
+): Promise<{ archived: number; purged: number }> {
+  const archive = await db
+    .prepare(
+      `UPDATE meeting_point SET status = 'archived'
+        WHERE is_safety = 0 AND status = 'active' AND expires_at_utc <= ?`
+    )
+    .bind(nowIso)
+    .run();
+
+  const purgeBefore = new Date(Date.parse(nowIso) - PURGE_AFTER_EXPIRY_MS).toISOString();
+  const { results: stale } = await db
+    .prepare(
+      `SELECT id FROM meeting_point
+        WHERE is_safety = 0 AND status IN ('archived', 'cancelled') AND expires_at_utc <= ?`
+    )
+    .bind(purgeBefore)
+    .all<{ id: string }>();
+  if (stale.length > 0) {
+    const placeholders = stale.map(() => "?").join(",");
+    const ids = stale.map((s) => s.id);
+    await db.batch([
+      db.prepare(`DELETE FROM meeting_point_member WHERE meeting_point_id IN (${placeholders})`).bind(...ids),
+      db.prepare(`DELETE FROM meeting_point WHERE id IN (${placeholders})`).bind(...ids),
+    ]);
+  }
+  return { archived: archive.meta.changes ?? 0, purged: stale.length };
 }
