@@ -5,10 +5,17 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 COMPLETE + LIVE; PHASE 2 G2.1 ✅ + LIVE.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P2 — Onboarding + Favorites + Timetable + Lock-in clash resolver + My Plan**.
-  Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ (Timetable TML grid)** — deployed. **G2.3 (Lock-in resolver + My Plan) next.**
+- Active Phase / Gate: **P2 COMPLETE → P3 next (Map + travel time + Now&Next + offline + POI + admin map-verify)**.
+  Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅ (Lock-in + Celebration + My Plan)** — deployed.
+- **P2 G2.3 ✅ (this session):** A5 **Lock in** (#12c) — gated one-at-a-time clash picker (`LockInScreen`) over the day's
+  favorites: progress bar, **all-clashes** overview (`resolver.previewRemainingClashes`), **add-nearby** sheet
+  (`lineup.nearbySets`), **partial-set scissors** (`resolver.pickSet`/`pickOption(cut)` + `partialSet.latestFeasibleDeparture`).
+  A6 **Celebration** (#13) → persists the plan locally (DEC-041), View My Plan / Share (`lib/share.ts`, Web Share + clipboard).
+  A7 **My Plan** (#21) — pure `domain/plan.ts` timeline (done/now/upcoming + walk/break gap chips); empty-state CTA; a
+  **Lock in** entry added to the Timetable controls. 8 new domain tests + a full Playwright flow (favorite→resolve→celebrate→plan)
+  with 3 screenshots. commit **cbdbc9b**, deployed to Pages (**5b294f17**, alias festpilot.pages.dev).
 - **P2 G2.2 ✅ (this session):** A3 Timetable (#15e) — pure numeric layout (`domain/timetable.ts`: window snapped to
   local hours, sets as time-percentages, stage ordering, per-stage/​per-set fav flags) + `stageColorRgb` for the
   card recipe. `TimetableScreen` renders the TML grid: sticky time header + stage pills, dark-glass cards w/ gold
@@ -38,20 +45,25 @@
 - **G0.2 ✅**: map base **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). **G0.3 ✅**: `festival_map` + map API.
 - **DEC-040:** V1 map ships as a pre-rendered raster base (WebP) + live vector overlay; the ~20 MB inline-relief SVG
   is dropped from shipped assets. R2 stays out (DEC-038).
-- Last green test run: 2026-06-23 — **server 32 pass**, **web 49 vitest** (domain: intervals/resolver/partialSet/lineup/
-  timetable + festival + localStore + api client + SW reg + map assets), **4 Playwright** e2e (phase0-map + phase1 shell
-  + phase2 onboarding→lineup-favorites + phase2 timetable grid). Screenshots in `web/e2e/screenshots/`
-  (phase2 festival/swipe/lineup + timetable + timetable-favs).
+- Last green test run: 2026-06-23 — **server 32 pass**, **web 57 vitest** (domain: intervals/resolver/partialSet/lineup/
+  timetable/**plan** + festival + localStore + api client + SW reg + map assets), **5 Playwright** e2e (phase0-map + phase1 shell
+  + phase2 onboarding→lineup-favorites + phase2 timetable grid + **phase2 lock-in→celebrate→my-plan**). Screenshots in
+  `web/e2e/screenshots/` (… + phase2-lockin-clash / phase2-lockin-done / phase2-myplan).
 - typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages (v0.2.0)**.
 - Live: D1 **created+migrated** · Worker **deployed+ingesting** · Pages **deployed** · R2 **NOT used** (DEC-038 Q1).
 - Credentials: Cloudflare token **saved + verified**. Firebase: deferred (DEC-038 Q3).
 - Confidence: 90% (Phase 0 verified end-to-end in production).
 
 ## Completed (most recent first)
+- [x] **P2 G2.3** — Lock-in resolver + Celebration + My Plan (DEC-017/018/029): `LockInScreen` (#12c) gated multi-option
+  picker w/ progress, all-clashes overview, add-nearby sheet, partial-set scissors; Celebration (#13) persists plan
+  (DEC-041) + Share (`lib/share.ts`); `MyPlanScreen` (#21) pure `domain/plan.ts` timeline (done/now/upcoming + walk/break
+  chips) + empty-state CTA; Timetable "Lock in" entry. 8 new domain tests + full Playwright flow + 3 screenshots
+  (57 web unit + 5 e2e green). commit **cbdbc9b**, deployed to Pages (**5b294f17**).
 - [x] **P2 G2.2** — A3 Timetable (#15e, DEC-027): pure `domain/timetable.ts` (local-hour window snap, time-% set
   positions, stage ordering, fav flags) + `stageColorRgb`; `TimetableScreen` TML grid (sticky time header + stage
   pills, dark-glass cards + gold favorites + per-card heart, live NOW line, only-favs filter, 1h/2h zoom). 5 domain
-  tests + Playwright grid spec (49 web unit + 4 e2e green). commit pending, deploy pending.
+  tests + Playwright grid spec. commit **b4dfc8c**, deployed to Pages.
 - [x] **P2 G2.1** — onboarding + Lineup favorites + local-first domain: pure `web/src/domain/` (intervals, gated
   resolver w/ zero-overlap property tests, partial-set feasibility, lineup mapping); `localStore.ts` (DEC-041);
   `OnboardingScreen` (#17) + `RequireOnboarding` gate; `LineupScreen` (#22). Hardened `festival.ts` date parsing
