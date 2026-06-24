@@ -2,9 +2,17 @@
   "name": "FestPilot",
   "short_name": "FestPilot",
   "description": "Your festival companion — lineup, plan, and find your group.",
+  "lang": "en",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0c0a07",
-  "theme_color": "#0c0a07",
-  "icons": []
+  "orientation": "portrait",
+  "background_color": "#0F0D09",
+  "theme_color": "#0F0D09",
+  "categories": ["music", "events", "navigation", "lifestyle"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }

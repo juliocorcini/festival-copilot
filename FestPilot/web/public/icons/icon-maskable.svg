@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="FestPilot">
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD060"/>
+      <stop offset="1" stop-color="#F5A623"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="28%" r="80%">
+      <stop offset="0" stop-color="#1B1206"/>
+      <stop offset="1" stop-color="#0F0D09"/>
+    </radialGradient>
+  </defs>
+  <!-- full-bleed background for maskable safe-zone; mark kept within central 60% -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <path d="M300 690 C 392 690, 392 568, 512 568 C 632 568, 632 690, 724 690"
+        fill="none" stroke="#F5A623" stroke-opacity="0.30" stroke-width="22"
+        stroke-linecap="round" stroke-dasharray="5 40"/>
+  <path d="M512 318
+           C 420 318, 348 390, 348 482
+           C 348 598, 512 748, 512 748
+           C 512 748, 676 598, 676 482
+           C 676 390, 604 318, 512 318 Z"
+        fill="url(#amber)"/>
+  <circle cx="512" cy="478" r="70" fill="#0F0D09"/>
+</svg>

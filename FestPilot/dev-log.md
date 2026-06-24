@@ -5,10 +5,17 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 COMPLETE + LIVE.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 COMPLETE + LIVE.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P1 — App shell + nav + service worker + typed API client + raw lineup read** (next).
-  Phase 0: G0.1✅ G0.2✅ G0.3✅ **G0.4✅ (live)**.
+- Active Phase / Gate: **P2 — Onboarding + Favorites + Timetable + Lock-in clash resolver + My Plan** (next).
+  Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ (shell) · G1.2 ✅ (raw lineup read)** — deployed, v0.2.0.
+- **P1 ✅ (this session):** Amber-Glass app shell — 5-tab bottom nav (Now/Timetable/My Plan/Map/Squad, DEC-032),
+  design-system §1–§4 tokens + glass recipe in `styles.css`, PWA manifest + branded icons (192/512/maskable +
+  apple-touch), hand-written **service worker** (network-first nav, cache-first assets, network-first /api with
+  offline fallback; precaches shell + map + lineup), SPA `_redirects`, typed API client (`data/api.ts`, `VITE_API_URL`),
+  `react-router-dom` routing (tabs + settings stack). Screens: **Now** (A2, renders the LIVE 813-set lineup), Timetable/
+  My Plan/Squad shells, **Map** (wraps the working MapView), Settings hub (B5.5), Appearance+language (B5.6),
+  Offline/sync shell (B6.5), system states (B6.6). Appearance/lang are a persisted single source of truth (map palette reads it).
 - **🌎 LIVE URLs (test on phone):** App → **https://festpilot.pages.dev** · API → **https://festpilot.trippilot.workers.dev**
   (`/api/festivals`, `/api/festivals/:id/lineup`, `/api/festivals/:id/stages`, `/api/festivals/:id/map`).
 - **Live festival id:** `01KVVF5VERH4AB28NAM6NM65VD` (Tomorrowland Belgium 2026) — **813 performances**, 15 stages,
@@ -20,14 +27,18 @@
 - **G0.2 ✅**: map base **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). **G0.3 ✅**: `festival_map` + map API.
 - **DEC-040:** V1 map ships as a pre-rendered raster base (WebP) + live vector overlay; the ~20 MB inline-relief SVG
   is dropped from shipped assets. R2 stays out (DEC-038).
-- Last green test run: 2026-06-23 — **server 32 pass / 0 fail** (+3 fallback), **web 3 pass** (vitest), **1 Playwright**
-  visual smoke pass (screenshot `web/e2e/screenshots/phase0-map.png` — map renders with overlay + controls). All Node 22.
-- typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages**.
+- Last green test run: 2026-06-23 — **server 32 pass**, **web 10 vitest** (api client + SW reg + map assets),
+  **2 Playwright** e2e (phase0-map + phase1 shell: live lineup, 5-tab nav, settings). Screenshots in `web/e2e/screenshots/`.
+- typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages (v0.2.0)**.
 - Live: D1 **created+migrated** · Worker **deployed+ingesting** · Pages **deployed** · R2 **NOT used** (DEC-038 Q1).
 - Credentials: Cloudflare token **saved + verified**. Firebase: deferred (DEC-038 Q3).
 - Confidence: 90% (Phase 0 verified end-to-end in production).
 
 ## Completed (most recent first)
+- [x] **P1 (G1.1 + G1.2)** — Amber-Glass PWA shell: 5-tab nav, tokens+glass in `styles.css`, manifest + icons,
+  hand-written service worker, SPA `_redirects`, typed API client (`VITE_API_URL`), react-router (tabs + settings stack);
+  **Now screen reads the LIVE lineup**; Timetable/Plan/Squad shells; Map wraps MapView; Settings/Appearance/Offline/states.
+  10 web unit tests + 2 Playwright e2e. Deployed to Pages, **v0.2.0**. commit pending.
 - [x] **P0 G0.4** — LIVE bring-up: D1 created+migrated (remote), Worker deployed (cron), **live ingest 813 perfs**
   (fixed WAF 403 via browser headers + Workers illegal-invocation via local `fetch` ref + saved-ref fallback),
   `festival_map` published, **Pages deployed** (festpilot.pages.dev). Playwright mobile visual smoke green (+screenshot).

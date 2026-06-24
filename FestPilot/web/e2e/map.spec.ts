@@ -5,8 +5,8 @@ import { test, expect } from "@playwright/test";
 // is placed through the affine. Freeze animations so the screenshot is stable.
 test.describe("Phase 0 — map bring-up", () => {
   test("renders the georeferenced map with overlay and controls", async ({ page }) => {
+    await page.goto("/map");
     await page.addStyleTag({ content: `*,*::before,*::after{animation:none!important;transition:none!important}` });
-    await page.goto("/");
 
     const base = page.locator("img.base");
     await expect(base).toBeVisible();

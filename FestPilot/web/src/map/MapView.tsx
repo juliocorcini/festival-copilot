@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { coarseLabel, geoToSvg, type MapTransform } from "./transform";
-import { usePalette } from "./usePalette";
+import { useAppearance } from "../app/settings";
 import { usePanZoom } from "./usePanZoom";
 import { usePresence } from "./presence";
 
@@ -16,7 +16,7 @@ interface Props {
 export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.Element {
   const [t, setT] = useState<MapTransform | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { mode, setMode, palette } = usePalette();
+  const { mode, setMode, palette } = useAppearance();
 
   useEffect(() => {
     let alive = true;
