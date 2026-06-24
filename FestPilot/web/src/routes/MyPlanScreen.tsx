@@ -116,9 +116,9 @@ export function MyPlanScreen(): JSX.Element {
             <div className="plan-tl-line" />
             {timeline.items.map((item, index) =>
               item.kind === "set" ? (
-                <PlanSetRow key={item.slot.setId} item={item} tz={tz} onNavigate={() => navigate("/map")} />
+                <PlanSetRow key={item.slot.setId} item={item} tz={tz} onNavigate={() => navigate(routeHref(dayKey))} />
               ) : (
-                <PlanGapRow key={`gap-${index}`} item={item} />
+                <PlanGapRow key={`gap-${index}`} item={item} onRoute={() => navigate(routeHref(dayKey))} />
               )
             )}
             <div className="plan-row">
@@ -170,16 +170,16 @@ function PlanSetRow({ item, tz, onNavigate }: { item: PlanSetItem; tz: string; o
   );
 }
 
-function PlanGapRow({ item }: { item: PlanGapItem }): JSX.Element {
+function PlanGapRow({ item, onRoute }: { item: PlanGapItem; onRoute: () => void }): JSX.Element {
   return (
     <div className="plan-row gap">
       <span className="plan-dot mini" />
       <div className="plan-chips">
         {item.walkMinutes > 0 && (
-          <span className="plan-chip">
+          <button type="button" className="plan-chip" onClick={onRoute}>
             <span className="ms" style={{ fontSize: 13 }}>directions_walk</span>
             {item.walkMinutes} min walk to {item.toStageName}
-          </span>
+          </button>
         )}
         {item.breakMinutes >= 20 && (
           <span className="plan-chip">
@@ -195,4 +195,8 @@ function PlanGapRow({ item }: { item: PlanGapItem }): JSX.Element {
 function dayOfMonth(startMs: number, timeZone: string): string {
   if (!Number.isFinite(startMs)) return "";
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone }).format(startMs);
+}
+
+function routeHref(dayKey: string | null): string {
+  return `/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`;
 }

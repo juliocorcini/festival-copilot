@@ -7,7 +7,7 @@
 ## Current State
 - 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P3 in progress** — G3.2 (travel matrix + coord→stage) ✅ domain · G3.3 (Now & Next home) ✅ — next: offline contract, map coord→stage UI, POI layer.
+- Active Phase / Gate: **P3 in progress** — G3.2 (travel matrix + coord→stage) ✅ · G3.3 (Now & Next home) ✅ · **B7.4/B7.5 stage routing + walking nav ✅** — next: offline contract, POI layer (needs data), admin map-verify.
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅ (Lock-in + Celebration + My Plan)** — deployed.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
@@ -17,6 +17,17 @@
   (live set + next + **leave-in countdown** accounting for walk time + progress + later list). `NowScreen` rebuilt:
   plan-driven **LEAVE IN** hero when a plan exists for the active day; lineup-driven **DOORS IN** fallback pre-festival.
   11 new domain tests (travel + nowNext) + a `now` Playwright spec (hero + up-next + screenshot `phase3-now.png`).
+- **P3 B7.4/B7.5 ✅ (this session):** stage-to-stage **routing + walking nav** (#29 screens 4/5). Pure `domain/route.ts`
+  (`buildRouteLeg`: matrix minutes + straight-line metres + leaveBy = set start − walk) + 6 tests. `RouteScreen`
+  (`/route`, full-screen under StackLayout): from→to picker (defaults to current→next set from the plan via
+  `buildNowNext`, or first-two-stages ad-hoc) over the georeferenced map (real WebP base + affine line/pins),
+  walk-time sheet + "Leave by HH:MM" nudge, GPS-free "Start walking" guidance (live position deferred to Phase 5).
+  Entry points wired from Now&Next walk line + My Plan now-card/walk-chips. `route` Playwright spec + 2 screenshots
+  (`phase3-route`, `phase3-route-walking`). **74 web unit + 7 e2e green**; Playwright capped to 2 workers + retry:1
+  (specs hit the live API → was flaking under parallel load). Deployed to Pages (https://a2911147.festpilot.pages.dev).
+- **POI layer deferred (honest-data):** festival POIs (toilets/water/medical/exits) are temporary infra not in OSM;
+  the brain's valid sources are KML import / the admin POI editor (not built yet). Building it now = inventing data
+  (violates fact-verification). Sequenced after the admin POI editor (G3.4 B8.5) or a real KML/capture.
 - **P2 G2.3 ✅ (this session):** A5 **Lock in** (#12c) — gated one-at-a-time clash picker (`LockInScreen`) over the day's
   favorites: progress bar, **all-clashes** overview (`resolver.previewRemainingClashes`), **add-nearby** sheet
   (`lineup.nearbySets`), **partial-set scissors** (`resolver.pickSet`/`pickOption(cut)` + `partialSet.latestFeasibleDeparture`).
@@ -129,12 +140,12 @@
   Now & Next home (`domain/nowNext.ts`, `NowScreen` rebuilt). 68 web unit + 6 e2e green · typecheck/build clean ·
   committed **cb6517b** · **deployed to Pages** (https://555bcdff.festpilot.pages.dev → alias festpilot.pages.dev).
 - **Remaining P3 (forks — pick by priority):**
-  1. **POI layer (G3.4, no creds):** extract real De Schorre POIs from OSM/Overpass (curl, §14) → seed `poi` →
-     `GET /api/festivals/:id/pois` → toggleable map overlay + filter chips + nearest-essentials + POI detail (`29`#1-3/6).
-  2. **Walking nav on the map (G3.2/3.3 B7.4/B7.5):** destination stage → route hint + walk-time + "leave by"
-     from the travel matrix (data in hand; touches `MapView` — regression-guard the working base + mock presence).
-  3. **Admin desktop map-verify (G3.1, B8.*):** persist pins to `stage_location` via a guarded route; separate desktop track.
-  4. **Phase 4 groups + GroupRoom DO (mock/anonymous-local auth per DEC-038):** buildable on the Cloudflare token; large multi-gate.
+  1. **Offline cache/sync contract (G3.3, no creds):** make `OfflineScreen` show real cache status + a "make this
+     festival available offline" pre-cache action (lineup + map + plan); SW already caches shell/map/lineup.
+  2. **Admin desktop map-verify (G3.1, B8.*):** persist pins to `stage_location` via a guarded route → unlocks the
+     **POI editor (B8.5)** → real POI data → then the POI layer (#29 1-3/6). Separate desktop track.
+  3. **Phase 4 groups + GroupRoom DO (mock/anonymous-local auth per DEC-038):** buildable on the Cloudflare token; large multi-gate.
+  - ✅ **Done this session:** travel matrix + coord→stage (G3.2), Now & Next (G3.3), stage routing + walking nav (B7.4/B7.5).
   - ⏳ **Credential-gated:** FCM/push (G3.4) + permanent auth (P4) need Firebase — run mock/local, mark ⏳ (orchestrator §5/§19).
 - **Older design-pass backlog (already RESOLVED — kept for history):**
 - **Review Batch 1** (`brain/wireframes/directions/23-amber-groups-flow.html`, 8 screens) + **Batch 2**

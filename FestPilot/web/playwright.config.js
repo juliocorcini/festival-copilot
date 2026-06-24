@@ -14,7 +14,10 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  // Specs exercise the live lineup/map API; cap parallelism and retry once so transient
+  // network timeouts under load don't flake the gate (each spec passes deterministically alone).
+  retries: 1,
+  workers: 2,
   reporter: [["list"]],
   outputDir: "./e2e/.output",
   use: {

@@ -9,6 +9,7 @@ import { MyPlanScreen } from "./routes/MyPlanScreen";
 import { MapScreen } from "./routes/MapScreen";
 import { SquadScreen } from "./routes/SquadScreen";
 import { LockInScreen } from "./routes/lockin/LockInScreen";
+import { RouteScreen } from "./routes/RouteScreen";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
@@ -30,6 +31,7 @@ export function App(): JSX.Element {
           </Route>
           <Route element={<StackLayout />}>
             <Route path="lockin" element={<LockInScreen />} />
+            <Route path="route" element={<RouteScreen />} />
             <Route path="settings" element={<SettingsScreen />} />
             <Route path="settings/appearance" element={<AppearanceScreen />} />
             <Route path="settings/offline" element={<OfflineScreen />} />

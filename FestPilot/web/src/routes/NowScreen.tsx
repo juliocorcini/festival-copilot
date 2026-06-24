@@ -6,6 +6,7 @@
  * day countdown. The math lives in `domain/nowNext.ts`; this screen only renders it.
  */
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { ErrorState, EmptyState, LoadingState } from "../ui/states";
 import { useLineup } from "../data/useLineup";
@@ -97,7 +98,7 @@ export function NowScreen(): JSX.Element {
       <>
         <AppHeader eyebrow={eyebrow} title="Now & Next" />
         <div className="screen">
-          <PlanHero nn={nowNext} tz={tz} />
+          <PlanHero nn={nowNext} tz={tz} dayKey={activeDay?.key ?? null} />
           {nowNext.later.length > 0 && <LaterList rows={nowNext.later.slice(0, 6)} tz={tz} />}
           <p className="src" style={{ textAlign: "center" }}>
             From your locked plan · {model.totalCount} sets in the lineup
@@ -182,7 +183,8 @@ export function NowScreen(): JSX.Element {
   );
 }
 
-function PlanHero({ nn, tz }: { nn: NonNullable<ReturnType<typeof buildNowNext>>; tz: string }): JSX.Element {
+function PlanHero({ nn, tz, dayKey }: { nn: NonNullable<ReturnType<typeof buildNowNext>>; tz: string; dayKey: string | null }): JSX.Element {
+  const navigate = useNavigate();
   const live = nn.live!;
   const leave = nn.leaveInMinutes;
   return (
@@ -232,11 +234,15 @@ function PlanHero({ nn, tz }: { nn: NonNullable<ReturnType<typeof buildNowNext>>
       </div>
 
       {nn.next && nn.walkMinutes > 0 && (
-        <div className="now-walk">
+        <button
+          type="button"
+          className="now-walk"
+          onClick={() => navigate(`/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
+        >
           <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
           {nn.walkMinutes} min walk to {nn.next.stageName}
           <span className="ms" style={{ fontSize: 15, marginLeft: "auto" }}>arrow_forward</span>
-        </div>
+        </button>
       )}
     </section>
   );
