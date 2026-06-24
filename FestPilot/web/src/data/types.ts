@@ -162,3 +162,39 @@ export interface BoardNoteDto {
   createdAtUtc: string;
   updatedAtUtc: string | null;
 }
+
+// Live presence (Phase 5 — DEC-007/008/015/046). Coarse + honest; the server NEVER sends a
+// coordinate. "precise" is a 60-min, server-hard-expiring intent (live + countdown).
+export type ShareMode = "stage" | "precise" | "ghost";
+
+export interface CoarsePresenceDto {
+  coarseLabel: "at" | "near" | "between" | "none";
+  stageName: string | null;
+  betweenStageName: string | null;
+  currentArtistName: string | null;
+  confidence: "high" | "medium" | "low";
+  source: "gps" | "manual" | "push_reply";
+  updatedAtUtc: string;
+  stale: boolean;
+  ageSeconds: number;
+}
+
+export interface PresenceMemberDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  role: string;
+  isYou: boolean;
+  shareMode: ShareMode;
+  live: boolean;
+  liveSecondsLeft: number | null;
+  presence: CoarsePresenceDto | null;
+}
+
+export interface GroupPresenceDto {
+  groupId: string;
+  memberCount: number;
+  liveCount: number;
+  members: PresenceMemberDto[];
+  me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
+}

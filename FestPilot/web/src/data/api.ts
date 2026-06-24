@@ -10,8 +10,10 @@ import type {
   FestivalMapDto,
   GroupDto,
   GroupMemberDto,
+  GroupPresenceDto,
   InvitePreviewDto,
   LineupDto,
+  ShareMode,
   SquadPlanDataDto,
   StageDto,
   UserDto,
@@ -269,6 +271,42 @@ export const api = {
   deleteNote(id: string, noteId: string, signal?: AbortSignal): Promise<void> {
     return authedJson<{ ok: boolean }>(`/api/groups/${id}/board/${noteId}`, {
       method: "DELETE",
+      signal,
+    }).then(() => undefined);
+  },
+
+  // Live presence (Phase 5 — UC-21/22/24). Raw fix in; coarse-only roster out (DEC-046).
+  getGroupPresence(id: string, signal?: AbortSignal): Promise<GroupPresenceDto> {
+    return authedJson<{ presence: GroupPresenceDto }>(`/api/groups/${id}/presence`, { signal }).then(
+      (d) => d.presence
+    );
+  },
+
+  /** Report one raw fix; the server coarsens it into every squad you share with. */
+  reportFix(
+    fix: { lat: number; lng: number; accuracyMeters?: number | null; source?: "gps" | "manual" | "push_reply" },
+    signal?: AbortSignal
+  ): Promise<{ ok: boolean; groups: number }> {
+    return authedJson<{ ok: boolean; groups: number }>("/api/presence", {
+      method: "POST",
+      body: fix,
+      signal,
+    });
+  },
+
+  setShareMode(id: string, mode: ShareMode, durationMinutes?: number, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/share`, {
+      method: "PUT",
+      body: { mode, ...(durationMinutes != null ? { durationMinutes } : {}) },
+      signal,
+    }).then(() => undefined);
+  },
+
+  /** Master switch (#25.6): pause sharing across all squads, or resume to coarse ("stage"). */
+  pauseSharing(paused: boolean, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>("/api/presence/pause", {
+      method: "POST",
+      body: { paused },
       signal,
     }).then(() => undefined);
   },

@@ -5,10 +5,10 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 core + PHASE 4 in progress.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 COMPLETE + LIVE; PHASE 3 core done; PHASE 5 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P4 COMPLETE** — **G4.1 identity ✅ · G4.2 groups ✅ · G4.3 shared timetable ✅ · G4.4 board ✅** —
-  next: **Phase 5** (live presence + where-is-everyone).
+- Active Phase / Gate: **P5 in progress** — backend presence pipeline ✅ · **G5.1 consent + precise control ✅ · G5.2 roster + coarse map + current-artist ✅** —
+  next: **G5.3** (where-is-everyone ping round-trip + sharing-mode picker #25.3 + privacy/master-switch #25.6).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
 - **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
@@ -57,6 +57,28 @@
   squad DNA). `d1-shim` upgraded to return `meta.changes` (`getRowsModified()`). **61 server + 95 web unit + 13 e2e green**
   (new `squad-board` spec: post→edit→pin→remove, 2 screenshots; per-test 120s budget for the live-API round-trips). Worker
   live (board routes deployed + smoke-validated last session); Pages https://25c7fe2e.festpilot.pages.dev.
+- **P5 presence pipeline ✅ (backend, committed `224a434` + LIVE):** coarse-only, **server-only raw coords** (DEC-007/008/
+  015/046). Pure `domain/presence.ts` (`coarsenPresence`: raw fix → `at`/`near`/`between`/`none` + confidence by distance
+  & GPS accuracy; `presenceExpiry`: gps 15 min, manual/push 45 min) + `metersBetween`. Repo `api/presence.ts`: `recordFix`
+  (resolves stage coords from the **`festival_map` transform** — `stage_location` is never populated — coarsens, writes
+  `presence` for groups where the member shares), `getGroupPresence` (coarse roster — **never lat/lng**), `setGroupShareMode`
+  (stage/precise[60-min hard expiry]/ghost), `setSharingForAllGroups` (master pause), `purgeExpiredPresence` (cron). Routes:
+  `POST /api/presence` (raw intake, all my groups), `POST /api/presence/pause`, `GET /api/groups/:id/presence`,
+  `PUT /api/groups/:id/share` — DO fan-out `notifyGroup(...,"presence")`; cron purge wired in `index.ts`. **14 tests** (incl.
+  the privacy "no coordinate leaks" contract). Live smoke validated (coarse "at FREEDOM BY BUD/high", precise→live 3600s,
+  ghost→hidden). **DEC-046:** Phase 5 ships coarse-only; the *exact moving dot* for "precise" defers to Phase 6 (rides the
+  meeting-point exact-coords channel) — precise UI here honestly shows a high-confidence coarse position + countdown.
+- **P5 G5.1 + G5.2 presence frontend ✅ (this session):** mirrored DTOs + `api` methods (`getGroupPresence`/`reportFix`/
+  `setShareMode`/`pauseSharing`). `data/presence.ts`: `useGroupPresence` (WS+focus+15s tick for live countdowns) and
+  `useLocationSharing` — the device engine: geolocation consent, **battery-aware** sampling (coarse accuracy, cached fixes,
+  significant-move ≥25 m + 75 s keepalive), posts raw fixes; **foreground-only** (runs while a presence screen is open).
+  `data/shareOptIn.ts` reactive opt-in flag. Screens (3): **Consent** (#25.1/2 pre-prompt → real OS prompt → set stage +
+  open roster), **Where's the squad** (#25.4 coarse map peek with pins **placed on resolved stages, never raw coords** +
+  roster: at/near/between/last-seen/not-sharing, live ring, **current-artist auto-detect** "watching …", invisible-banner
+  when not opted in), **Precise control** (#25.5 countdown ring to the 60-min hard auto-off, who-can-see-you stack, +60 /
+  Coarse / Stop). Shared `presenceUi.tsx` (`presenceLine`/`ago`/`mmss` + live-ring avatar) — **12 unit tests**. Entry: a
+  "Where's the squad" group-home card. **75 server + 107 web unit + 16 e2e green** (new `presence` spec: consent/roster/
+  precise, 3 screenshots faithful to #25). Web `0.3.0`→`0.4.0`. Pages https://3fce6f1a.festpilot.pages.dev.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the
