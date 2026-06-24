@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.9.0";
+export const APP_VERSION = "0.10.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.10.0",
+    date: "2026-06-24",
+    title: "A favorites flow with a face",
+    icon: "photo_library",
+    whatsNew: [
+      "FestPilot now opens by asking your name — and an optional email, no password — so your squad sees you on the plan and the map. Don't want to share an email? One tap skips it.",
+      "Pick your way: swipe artists with a real drag (right to keep, left to skip), or flip to a photo grid and just tap everyone you'd see. Both build the same favorites.",
+      "Artists have photos now — on the swipe card, the grid, the Lineup, your Plan, Now & Next and the stage map — with a clean fallback when a photo isn't available.",
+      "Picking is grouped day by day with its own progress, and a clear reminder that you're building favorites — not the final plan. We solve the clashes later.",
+    ],
+    howToTest: [
+      "Reset/first launch → type your name (email is optional, \"skip\" proceeds) → you land in the picker.",
+      "Onboarding step 4 → toggle Swipe ⇆ Grid at the top; drag a card right/left in Swipe, tap photos in Grid — both add to favorites.",
+      "Watch the \"Day 1 of N · %\" header and per-day sections; artist photos show on Lineup, Timetable, My Plan, Now & Next and the map's stage sheet.",
+    ],
+  },
   {
     version: "0.9.0",
     date: "2026-06-24",

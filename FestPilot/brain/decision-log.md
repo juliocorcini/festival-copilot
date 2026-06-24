@@ -804,7 +804,7 @@
 
 ### DEC-060 — Lightweight identity at onboarding: ask name (required) + email (optional) up front; prefill on real sign-in
 - **Date**: 2026-06-24 (review-remediation r2, inline `/council`)
-- **Status**: PROPOSED (review-remediation pass; refines DEC-024/041)
+- **Status**: **IMPLEMENTED 2026-06-24 (R5.0, commit `a3dc4f2`; deployed v0.10.0, migration 0010)** — refines DEC-024/041
 - **Council synthesis**: name is light and has immediate product value (real name on squad cards/map); email is PII and
   must stay optional with honest microcopy; never collect a password here; country comes free from `CF-IPCountry`.
   Weightiest lens = User-Advocate.
@@ -818,7 +818,7 @@
 
 ### DEC-061 — Artist photos are already in the CDN performances JSON (`artists[].image`); re-ingest + render — the ⏳ is resolved
 - **Date**: 2026-06-24 (review-remediation r2, verified from the live HAR)
-- **Status**: VERIFIED · **IMPLEMENTED 2026-06-24 (R1.3, commit `7218378`)** — resolves the ⏳ in DEC-052 / orchestrator R1.3
+- **Status**: VERIFIED · **IMPLEMENTED 2026-06-24** — ingestion R1.3 (commit `7218378`); UI render on every surface via shared `<ArtistPhoto>` (CDN `?width=`, placeholder) R5.4 (commit `09ad8d4`, deployed v0.10.0). Resolves the ⏳ in DEC-052
 - **Finding (VERIFIED 2026-06-24)**: the live CDN performances JSON
   (`artist-lineup-cdn.tomorrowland.com/TL26BE-W{1,2}-{uuid}.json`) **already carries the artist photo** inline:
   `{"id":"1536127184","name":"BassBrain","image":"https://artist-lineup-cdn.tomorrowland.com/233262902-Presspic Bassbrain - 4.jpg"}`.

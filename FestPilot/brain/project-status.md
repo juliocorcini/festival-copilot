@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) CLOSED**, app v0.9.0)
+> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (P1 favorites) CLOSED**, app v0.10.0)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -15,8 +15,13 @@ live (DEC-061). R2: pan-clamp + safe-area fit, **interactive vector stage overla
 (stale-while-revalidate) — instant tab switches, no refetch/reparse. R4: API exposes the honest **data-state**
 (`hasLineup`/`hasTimetable`, DEC-052); a discoverable **Timetable⇆Lineup switch** that defaults to Lineup before the
 schedule is out (DEC-049); a **revisit-favorites banner** when the lineup changes (DEC-048/052); and **suggest-a-festival**
-capture with an admin inbox (DEC-055). App **v0.9.0**, deployed to Production; Worker redeployed (suggestions API).
-**Next: R5 (P1 favorites — identity name+email, real swipe, grid mode, per-day grouping, photos everywhere).**
+capture with an admin inbox (DEC-055). **R5 (P1 favorites) ✅ CLOSED:** a lightweight **identity** (name + optional
+email, no password) at first run, persisted locally and synced to the server for metrics with country from
+`CF-IPCountry` (DEC-060, migration 0010); a **real swipe** drag gesture with a first-use hint (buttons kept); a **grid**
+pick mode that writes the same favorites store; **per-day grouping + per-day progress** with an intent explainer
+(DEC-048); and **artist photos on every surface** via a shared `<ArtistPhoto>` (CDN `?width=` right-sizing + placeholder,
+DEC-061). App **v0.10.0**, deployed to Production; Worker redeployed (identity metrics) + remote D1 migration 0010.
+**Next: R6 (P1 Now & Next — drive from the locked plan, then favorites, never arbitrary).**
 
 ## How we build from here (the orchestrator)
 

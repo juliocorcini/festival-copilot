@@ -12,14 +12,13 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R4 (P0 nav/data-states) CLOSED ✅ — ALL P0 DONE (R0–R4).** Honest data-state from the API
-  (`hasLineup`/`hasTimetable`, DEC-052) · discoverable Timetable⇆Lineup switch defaulting to Lineup when no schedule
-  (DEC-049) · dynamic days + revisit-favorites banner on lineup changes (DEC-048/052) · suggest-a-festival capture +
-  admin inbox (DEC-055). Next: **R5 (P1 favorites)**.
-- **Tests now:** typecheck clean · **server 132 + web 204 unit** pass · **e2e 26/26 green** (incl. new Timetable⇆Lineup
-  switch + onboarding) · build OK · **app v0.9.0 (deployed Production)** · Worker deployed (`b66bb712`).
+- **Gate:** **R5 (P1 favorites) CLOSED ✅.** Lightweight identity name+email at first run (DEC-060) · real swipe drag +
+  hint · grid pick mode · per-day grouping + per-day progress + intent copy (DEC-048) · artist photos on every surface
+  via shared `<ArtistPhoto>` (DEC-061). Next: **R6 (P1 Now & Next)**.
+- **Tests now:** typecheck clean · **server 136 + web 222 unit** pass · **e2e green** (onboarding swipe + grid, timetable,
+  squad) · build OK · **app v0.10.0 (deployed Production, `index-BEYZTPQv.js`)** · Worker deployed (`555c03b9`).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
-  Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
+  Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0010** applied.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
 
 ### Gate checklist
@@ -28,7 +27,7 @@
 - [x] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom. **CLOSED 2026-06-24 (v0.8.2).**
 - [x] **R3** (P0 perf) — shared lineup cache (stale-while-revalidate; instant tab switch). **CLOSED 2026-06-24.**
 - [x] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days + revisit-favorites · suggest-a-festival (DEC-055). **CLOSED 2026-06-24 (v0.9.0). ← all P0 (R0–R4) done.**
-- [ ] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere.
+- [x] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere (DEC-061). **CLOSED 2026-06-24 (v0.10.0).**
 - [ ] **R6** (P1 now/next) — plan-then-favorites, never arbitrary.
 - [ ] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar.
 - [ ] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap.
@@ -37,6 +36,50 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R5 GATE CLOSED ✅ (2026-06-24) — deployed + live.** Five milestones (R5.0 identity, R5.1 real swipe, R5.2 grid mode,
+  R5.3 per-day grouping/progress, R5.4 photos everywhere). User-visible, so bumped **v0.9.0 → v0.10.0** (`changelog.ts`
+  single source + `package.json`) with an "A favorites flow with a face" note. Cumulative **server 136 + web 222 unit**
+  green, **e2e green** (onboarding swipe+grid, timetable, squad), typecheck + build clean. **Remote D1:** migration
+  **0010** applied (`app_user.email/country/last_seen_utc`). **Deployed:** Worker → `555c03b9` (smoke: `/api/health` ok,
+  `/festivals` `withTimetable:true`, lineup `hasLineup/hasTimetable=true`, 813 perfs / **670 artists with photo**;
+  verified the CDN `?width=160` resizer cuts a 565 KB press shot to **80 KB**) · Pages → Production `master`
+  (`festpilot.pages.dev` serves `index-BEYZTPQv.js`). Brain sync: dev-log + decision-log (DEC-060/061 → IMPLEMENTED) +
+  project-status. → **R6 (P1 Now & Next)**.
+- **R5.4 ✅ (2026-06-24) — artist photos on every surface (DEC-061), commit `09ad8d4`.** Shared **`<ArtistPhoto>`**
+  (CDN `?width=` per surface: ~96 avatar / 160 list / 360 card; idempotent URL-encode for the raw-space CDN paths;
+  branded **initials fallback** when null or on `onerror`). Wired into: **swipe card** (full-bleed + scrim), **grid**,
+  **Lineup** rows, **timetable** cards, **My Plan** cards, **Now/Next** hero + up-next/later rows, and the **map stage
+  sheet** (now + next). New `domain/lineup → imageByActKey` resolves a photo for surfaces that render by `actKey`/
+  `PlanSlot` without threading it through every shape; removed the now-dead `initials`/`stageColor` imports in Lineup.
+  **Tests:** `imageByActKey` +2 unit (first-non-null upgrade; null kept); onboarding + timetable e2e green.
+  **web 222 unit · typecheck + build OK.** → R5 gate close.
+- **R5.3 ✅ (2026-06-24) — per-day grouping + progress + intent copy, commit `cac105d`.** Picker acts grouped by the
+  derived festival-day block (DEC-048): the swipe deck advances day by day with per-day progress ("Day 1 of 3 · 70%" +
+  an in-day "k of n" counter), the grid renders a **sticky section per day**, each act shown once under the earliest day
+  it plays (DEC-026/028). Added an **intent explainer** to both modes ("building favorites, not the final plan — clashes
+  solved later"). New pure `domain/onboardingDays` (`groupActsByDay`/`dayProgressAt`) **+4 unit** (earliest-day
+  placement, contiguous blocks, progress clamp). Pointed the undo e2e at the deterministic `.swipe-day` counter (pct can
+  round equal between adjacent swipes). **web 220 unit · onboarding e2e green · typecheck + build OK.** → R5.4.
+- **R5.2 ✅ (2026-06-24) — grid pick mode + shared ArtistPhoto, commit `2f61a36`.** A **Swipe ⇆ Grid** mode toggle on
+  step 4; grid = 2-col photo+name, tapping a card toggles the favorite into the **same store** the swipe deck writes.
+  Introduced the shared `<ArtistPhoto>` + `lib/photo → artistPhotoSrc` (CDN `?width=`, idempotent encode). **Tests:**
+  photo helper **+3 unit**; e2e picks two acts via the grid and confirms they reach the Lineup. **web 216 unit ·
+  onboarding e2e (swipe+grid) green · typecheck + build OK.** → R5.3.
+- **R5.1 ✅ (2026-06-24) — real swipe gesture + first-use hint, commit `ba3ea2a`.** `StepSwipe` now has a real pointer
+  **drag** (right = keep, left = skip) with card tilt + Keep/Skip stamps and a fly-out, plus a first-use "swipe" cue;
+  the **Nah/I'd see this** buttons stay as an explicit fallback. New pure `domain/swipe` (`swipeOutcome`/`cardDragStyle`)
+  **+4 unit** (thresholds, stamp reveal, tilt clamp). **web 213 unit · onboarding e2e green · typecheck + build OK.** → R5.2.
+- **R5.0 ✅ (2026-06-24) — lightweight identity at first run (DEC-060).** Onboarding now opens with a **StepIdentity**
+  welcome: **name (required)** + **email (optional, no password, one-tap skip)**, gated before the festival picker.
+  Saved on-device (new `localStore.profile`) and **best-effort** synced to the server (`PUT /api/me`) for admin
+  metrics — never blocks the user on the network; the lineup loads in the background meanwhile. **Privacy:** email is
+  PII — stored server-side (metrics only, DEC-057c) and **never** in the shared `UserDto` (group members can't see it);
+  **country** comes from the edge `CF-IPCountry` header, never the client body. Server **migration 0010** adds
+  `app_user.email/country/last_seen_utc`; `ensureUser` persists them COALESCE-safe and refreshes last-seen on every
+  touch. `ProfileScreen` prefills its name from the onboarding identity. **Tests:** server `me` +4 (email/country/
+  last-seen persisted; PII not leaked; COALESCE-preserve), web `localStore` +3 + `validate` +2, onboarding e2e fills
+  name + proceeds with email skipped. Fixed the 6 user-touching server test harnesses to include migration 0010.
+  **server 136 · web 209 unit · e2e onboarding+squad green · typecheck + build OK.** → R5.1 (real swipe).
 - **R4 GATE CLOSED ✅ (2026-06-24) — deployed + live. ALL P0 (R0–R4) COMPLETE.** Four milestones (R4.1 backend
   data-state, R4.2 discoverable Lineup, R4.3 revisit-favorites, R4.4 suggest-a-festival). User-visible, so bumped
   **v0.8.2 → v0.9.0** (`changelog.ts` single source + `package.json`) with a "Find the full lineup — and never miss a
