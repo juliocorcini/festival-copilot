@@ -297,6 +297,8 @@ export interface MeetingPointDto {
   isMine: boolean;
   title: string;
   note: string | null;
+  /** R2-hosted photo of the spot (DEC-047/059); null → render the graceful no-photo state. */
+  photoUrl: string | null;
   /** Exact spot — the creator's explicit, intentional share (DEC-046). */
   lat: number;
   lng: number;

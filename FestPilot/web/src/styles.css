@@ -1035,6 +1035,10 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .ava-stack { display: inline-flex; }
 .ava-stack > * { margin-left: -8px; }
 .ava-stack > *:first-child { margin-left: 0; }
+/* Live presence stack on the squad-home "Where's the squad" card (R9.5). */
+.squad-live-stack { display: inline-flex; flex-shrink: 0; }
+.squad-live-stack > * { margin-left: -9px; }
+.squad-live-stack > *:first-child { margin-left: 0; }
 .squad-ava { border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
 .squad-ava-more { background: rgba(255, 255, 255, 0.12); color: var(--ink); box-shadow: 0 0 0 2px var(--bg); }
 
@@ -1237,6 +1241,11 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 /* --- Map peek + coarse pins (#25.4 / #25.5) --- */
 .presence-maptile { position: relative; display: block; width: 100%; height: 116px; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; padding: 0;
   background: radial-gradient(circle at 30% 40%, rgba(245, 166, 35, 0.12), transparent 32%), linear-gradient(135deg, #14241a, #0d1410); }
+/* Real mini-map preview (R9.5): the venue base image defines the box (true aspect, no distortion),
+   centered + height-bounded; percentage-placed pins land exactly on the venue. */
+.presence-maptile--map { height: auto; width: fit-content; max-width: 100%; margin-inline: auto; background: none; }
+.presence-maptile--map .presence-map-base { position: static; display: block; width: auto; height: 248px; max-width: 100%; object-fit: cover; }
+.presence-map-base { user-select: none; -webkit-user-drag: none; }
 .mpin { position: absolute; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; transform: translate(-50%, -50%); }
 .mpin.is-live::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--ok-ink); opacity: 0.55; animation: presence-pulse 1.8s ease-out infinite; }
 .presence-maptile-hint { position: absolute; bottom: 8px; right: 12px; font-size: 10px; color: rgba(255, 255, 255, 0.5); font-weight: 600; }
@@ -1409,6 +1418,20 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .meet-detail-title { font-size: 19px; font-weight: 700; line-height: 1.05; }
 .meet-detail-sub { font-size: 12px; color: var(--muted); margin-top: 5px; }
 .meet-detail-tally { margin: 2px 0 0; }
+/* Meeting-point photo (R9.5 / DEC-047). Real photo when set; an honest invite + creator action otherwise. */
+.meet-photo { margin: 12px 0 4px; position: relative; }
+.meet-photo-img { display: block; width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; }
+.meet-photo-empty { display: flex; align-items: center; gap: 10px; padding: 16px; border-radius: 14px; font-size: 12.5px;
+  color: var(--muted); border: 1px dashed var(--border); background: rgba(255, 255, 255, 0.03); }
+.meet-photo-empty .ms { font-size: 22px; color: var(--accent); }
+.meet-photo-action { position: absolute; right: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 11px; border-radius: 999px; border: 0; cursor: pointer; font-size: 12px; font-weight: 800;
+  background: rgba(8, 7, 10, 0.72); color: var(--ink); backdrop-filter: blur(8px); }
+.meet-photo-empty + .meet-photo-action { position: static; margin-top: 8px; background: var(--glass); border: 1px solid var(--border); }
+.meet-photo-action:disabled { opacity: 0.7; cursor: default; }
+.meet-photo-action .ms { font-size: 16px; }
+.meet-photo-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+
 .meet-drift { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; padding: 10px 12px; border-radius: 12px;
   background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3); color: var(--accent2); }
 .meet-drift .ms { font-size: 16px; }

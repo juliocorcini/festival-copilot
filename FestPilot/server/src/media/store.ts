@@ -17,6 +17,7 @@ export const MEDIA_CONTENT_TYPES: Record<string, string> = {
 };
 
 export const MAX_AVATAR_BYTES = 256 * 1024; // client compresses to ~150 KB; 256 KB is the hard ceiling
+export const MAX_MEETING_PHOTO_BYTES = 512 * 1024; // a landmark photo; client compresses to ~400 KB
 export const MAX_MEDIA_OBJECTS = 50_000; // app object-count ceiling
 export const MAX_MEDIA_TOTAL_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB app budget (R2 free tier = 10 GB)
 

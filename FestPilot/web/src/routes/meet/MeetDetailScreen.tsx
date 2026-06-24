@@ -4,7 +4,7 @@
  * and the going/here/can't loop. When everyone arrives it becomes the reunion moment (#26.4); a
  * creator can close it or call it off. Lifecycle is derived server-side, so this screen just renders it.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { api } from "../../data/api";
@@ -13,6 +13,7 @@ import { useGroupPresence } from "../../data/presence";
 import { initialsOf } from "../../data/identity";
 import type { MeetingPointMemberDto, SettableMeetingStatus } from "../../data/types";
 import { ErrorState, LoadingState } from "../../ui/states";
+import { compressMeetingPhoto } from "../../ui/imageCompress";
 import { PresenceAvatar } from "../presence/presenceUi";
 import { MeetConvergenceMap } from "./MeetConvergenceMap";
 import { closesInLabel, convergenceSummary, lifecycleBadge, memberStatusLine, whenLabel } from "./meetUi";
@@ -33,6 +34,25 @@ export function MeetDetailScreen(): JSX.Element {
   const { presence } = useGroupPresence(id);
   const [busy, setBusy] = useState<string | null>(null);
   const [keptOpen, setKeptOpen] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
+
+  const pickPhoto = async (file: File | undefined): Promise<void> => {
+    if (!file || !mpId) return;
+    setPhotoError(null);
+    setPhotoBusy(true);
+    try {
+      const { blob } = await compressMeetingPhoto(file);
+      await api.uploadMeetingPhoto(mpId, blob);
+      reload();
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : "Could not upload that photo.");
+    } finally {
+      setPhotoBusy(false);
+      if (photoRef.current) photoRef.current.value = "";
+    }
+  };
 
   const roster = useMemo(() => {
     const members = point?.members ?? [];
@@ -154,6 +174,40 @@ export function MeetDetailScreen(): JSX.Element {
             </div>
             <span className={`pill meet-badge meet-badge-${badge.tone}`}>{badge.label}</span>
           </div>
+
+          {(point.photoUrl || point.isMine) && (
+            <div className="meet-photo">
+              {point.photoUrl ? (
+                <img className="meet-photo-img" src={point.photoUrl} alt={`Photo of ${point.title}`} />
+              ) : (
+                <div className="meet-photo-empty">
+                  <span className="ms" aria-hidden="true">add_a_photo</span>
+                  <span>Add a photo so the squad spots it</span>
+                </div>
+              )}
+              {point.isMine && (
+                <button
+                  type="button"
+                  className="meet-photo-action"
+                  onClick={() => photoRef.current?.click()}
+                  disabled={photoBusy}
+                >
+                  <span className="ms" aria-hidden="true">{photoBusy ? "hourglass_empty" : "photo_camera"}</span>
+                  {photoBusy ? "Uploading…" : point.photoUrl ? "Change photo" : "Add photo"}
+                </button>
+              )}
+              <input
+                ref={photoRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={(e) => void pickPhoto(e.target.files?.[0])}
+              />
+            </div>
+          )}
+          {photoError && (
+            <p className="meet-detail-sub" style={{ color: "var(--danger)" }}>{photoError}</p>
+          )}
 
           {point.isMine && point.creatorDrifted && (
             <div className="meet-drift">

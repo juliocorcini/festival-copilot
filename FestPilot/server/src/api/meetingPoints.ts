@@ -53,6 +53,7 @@ interface MeetingPointRow {
   createdByName: string | null;
   title: string | null;
   note: string | null;
+  photoUrl: string | null;
   lat: number;
   lng: number;
   accuracyMeters: number | null;
@@ -150,6 +151,7 @@ function assembleDto(
     isMine: row.createdByUserId === meId,
     title: row.title ?? "Meeting point",
     note: row.note,
+    photoUrl: row.photoUrl,
     lat: row.lat,
     lng: row.lng,
     landmarkLabel: landmarkLabel(coarse, ctx.nameById),
@@ -168,7 +170,8 @@ function assembleDto(
 }
 
 const SELECT_POINT = `SELECT mp.id AS id, mp.group_id AS groupId, mp.created_by_user_id AS createdByUserId,
-        u.display_name AS createdByName, mp.title AS title, mp.note AS note, mp.lat AS lat, mp.lng AS lng,
+        u.display_name AS createdByName, mp.title AS title, mp.note AS note, mp.photo_url AS photoUrl,
+        mp.lat AS lat, mp.lng AS lng,
         mp.accuracy_meters AS accuracyMeters, mp.status AS status, mp.is_safety AS isSafety, mp.meet_at_utc AS meetAtUtc,
         mp.expires_at_utc AS expiresAtUtc, mp.created_at_utc AS createdAtUtc
    FROM meeting_point mp
@@ -401,6 +404,25 @@ export async function endMeetingPoint(
     .run();
   if (!res.meta.changes) return null;
   return getMeetingPoint(db, festivalId, groupId, mpId, userId, nowIso);
+}
+
+/** Creator + group + current photo for the media route's authorization + overwrite accounting. */
+export async function getMeetingPhotoContext(
+  db: D1Database,
+  mpId: string
+): Promise<{ createdByUserId: string; groupId: string; photoUrl: string | null } | null> {
+  return db
+    .prepare(
+      `SELECT created_by_user_id AS createdByUserId, group_id AS groupId, photo_url AS photoUrl
+         FROM meeting_point WHERE id = ?`
+    )
+    .bind(mpId)
+    .first<{ createdByUserId: string; groupId: string; photoUrl: string | null }>();
+}
+
+/** Point the meeting point at an R2 photo URL (creator-only — enforced by the route). */
+export async function setMeetingPhoto(db: D1Database, mpId: string, url: string | null): Promise<void> {
+  await db.prepare(`UPDATE meeting_point SET photo_url = ? WHERE id = ?`).bind(url, mpId).run();
 }
 
 /**

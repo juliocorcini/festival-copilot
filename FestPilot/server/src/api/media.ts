@@ -9,7 +9,9 @@ import { Hono } from "hono";
 import type { Env } from "../env";
 import { getUserFromRequest } from "../auth";
 import { ensureUser, setAvatarUrl } from "./users";
+import { getMeetingPhotoContext, setMeetingPhoto } from "./meetingPoints";
 import {
+  MAX_MEETING_PHOTO_BYTES,
   checkMediaQuota,
   deleteImage,
   forgetMediaObject,
@@ -71,4 +73,40 @@ media.delete("/avatar", async (c) => {
   }
   const updated = await setAvatarUrl(c.env.DB, identity.firebaseUid, null, nowIso);
   return c.json({ user: updated });
+});
+
+// Meeting-point photo (DEC-047/059). Creator-only; the same compress + quota + serve path as avatars.
+media.post("/meeting/:id/photo", async (c) => {
+  const identity = getUserFromRequest(c.req.raw);
+  if (!identity) return c.json({ error: "unauthorized" }, 401);
+
+  const nowIso = new Date().toISOString();
+  const user = await ensureUser(c.env.DB, identity, nowIso, undefined, null);
+  const mpId = c.req.param("id");
+  const point = await getMeetingPhotoContext(c.env.DB, mpId);
+  if (!point) return c.json({ error: "meeting point not found" }, 404);
+  if (point.createdByUserId !== user.id) return c.json({ error: "only the creator can add a photo" }, 403);
+
+  const contentType = c.req.header("content-type")?.split(";")[0]?.trim() ?? "";
+  const body = await c.req.arrayBuffer();
+  const oldKey = mediaKeyFromUrl(point.photoUrl);
+  const usage = await mediaUsage(c.env.DB, oldKey);
+  const verdict = checkMediaQuota(contentType, body.byteLength, usage, MAX_MEETING_PHOTO_BYTES);
+  if (!verdict.ok) return c.json({ error: verdict.reason }, verdict.status as 400);
+
+  const newKey = `meetings/${mpId}-${Date.now()}.${verdict.ext}`;
+  await putImage(c.env, newKey, body, contentType);
+  await recordMediaObject(
+    c.env.DB,
+    { key: newKey, kind: "meeting", ownerUserId: user.id, byteSize: body.byteLength, contentType },
+    nowIso
+  );
+  if (oldKey && oldKey !== newKey) {
+    await deleteImage(c.env, oldKey);
+    await forgetMediaObject(c.env.DB, oldKey);
+  }
+
+  const photoUrl = mediaUrl(c.req.raw, newKey);
+  await setMeetingPhoto(c.env.DB, mpId, photoUrl);
+  return c.json({ photoUrl });
 });

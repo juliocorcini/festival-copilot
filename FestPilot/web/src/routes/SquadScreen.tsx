@@ -10,6 +10,7 @@ import { AppHeader } from "../app/AppHeader";
 import { api } from "../data/api";
 import { useMyGroups, useGroup } from "../data/groups";
 import { useMeetingPoints, useSafety } from "../data/meetingPoints";
+import { useGroupPresence } from "../data/presence";
 import { useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
@@ -103,7 +104,14 @@ function GroupHome({
   const { members } = useGroup(group.id);
   const { points } = useMeetingPoints(group.id);
   const { points: safetyPoints } = useSafety(group.id);
+  const { presence } = useGroupPresence(group.id);
   const [leaving, setLeaving] = useState(false);
+
+  // Live squad state for the "Where's the squad" card (DEC-015 coarse-only — never a coordinate).
+  const liveMembers = (presence?.members ?? []).filter((m) => m.live && m.presence && !m.presence.stale);
+  const liveCount = presence?.liveCount ?? liveMembers.length;
+  const whereSub =
+    liveCount > 0 ? `${liveCount} sharing now · who's at which stage` : "Live map · who's at which stage";
 
   const count = group.memberCount;
   const leave = async (): Promise<void> => {
@@ -187,9 +195,17 @@ function GroupHome({
           </div>
           <div className="squad-plan-main">
             <div className="squad-plan-title">Where's the squad</div>
-            <div className="squad-plan-sub">Live map · who's at which stage</div>
+            <div className="squad-plan-sub">{whereSub}</div>
           </div>
-          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+          {liveMembers.length > 0 ? (
+            <div className="squad-live-stack" aria-label={`${liveCount} sharing now`}>
+              {liveMembers.slice(0, 3).map((m) => (
+                <Avatar key={m.userId} color={m.avatarColor} name={m.displayName} size={28} ring />
+              ))}
+            </div>
+          ) : (
+            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+          )}
         </button>
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/meet`)}>
@@ -277,11 +293,16 @@ function MeetingPointCard({ groupId, point }: { groupId: string; point: MeetingP
   const navigate = useNavigate();
   const closesIn = closesInLabel(point.expiresAtUtc);
   const badge = lifecycleBadge(point.lifecycle);
+  const owner = point.isMine ? "Your spot" : `${point.createdByName ?? "A squadmate"}'s spot`;
   return (
     <button className="glass meet-active-card" onClick={() => navigate(`/squad/${groupId}/meet/${point.id}`)}>
-      <div className="meet-active-icon">
-        <span className="ms">flag</span>
-      </div>
+      {point.photoUrl ? (
+        <img className="meet-photo-thumb" src={point.photoUrl} alt="" />
+      ) : (
+        <div className="meet-active-icon">
+          <span className="ms">flag</span>
+        </div>
+      )}
       <div className="meet-active-main">
         <div className="meet-active-title">{point.title}</div>
         <div className="meet-active-sub">
@@ -289,7 +310,7 @@ function MeetingPointCard({ groupId, point }: { groupId: string; point: MeetingP
           {point.note ? ` · "${point.note}"` : ""}
         </div>
         <div className="meet-active-meta">
-          {convergenceSummary(point)}
+          {owner} · {convergenceSummary(point)}
           {closesIn ? ` · ${closesIn}` : ""}
         </div>
       </div>

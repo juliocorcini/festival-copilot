@@ -206,6 +206,28 @@ export const api = {
     );
   },
 
+  // Meeting-point photo on R2 (DEC-047). Creator-only (server-enforced); raw compressed body in,
+  // the new photo URL out. The caller refetches the point to re-render with the photo.
+  async uploadMeetingPhoto(mpId: string, blob: Blob, signal?: AbortSignal): Promise<string> {
+    const url = `${API_BASE}/api/media/meeting/${mpId}/photo`;
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        signal,
+        headers: { accept: "application/json", "content-type": blob.type || "image/jpeg", ...authHeader() },
+        body: blob,
+      });
+    } catch {
+      throw new ApiError(`Network error reaching /api/media/meeting/${mpId}/photo`, 0, url);
+    }
+    if (!res.ok) {
+      const reason = await res.json().then((d: { error?: string }) => d?.error).catch(() => undefined);
+      throw new ApiError(reason ?? `Upload failed (${res.status})`, res.status, url);
+    }
+    return ((await res.json()) as { photoUrl: string }).photoUrl;
+  },
+
   // Groups (Pillar 3a — UC-16/17). All authenticated through the same bearer token.
   listMyGroups(signal?: AbortSignal): Promise<GroupDto[]> {
     return authedJson<{ groups: GroupDto[] }>("/api/groups/mine", { signal }).then((d) => d.groups);

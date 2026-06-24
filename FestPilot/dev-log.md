@@ -12,24 +12,23 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R9 (P1 Squad) IN PROGRESS.** Done & committed: **R9.1** multiple squads + switcher · **R9.2** honest hero
-  copy · **R9.6** AI icon → real "refresh" action + J → profile menu · **R9.4** auto-share plan+favorites on join
-  (DEC-054) + Settings opt-out · **R9.3** **avatar photo on R2 (DEC-059)** + custom emoji. **Remaining: R9.5** (real
-  mini-map preview + richer meeting card + meeting photo on R2 + main-screen density) → then **R9 gate close** (full e2e +
-  Pages deploy + version bump + brain sync).
-- **R9.3 shipped (this session):** R2 bucket `festpilot-media` bound as **`MEDIA`**; storage adapter
-  `server/src/media/store.ts` (`putImage`/`getImage`/`deleteImage`, allowlist jpeg/png/webp, app quota = pure
-  `checkMediaQuota` over a D1 **`media_object`** ledger: per-object ≤256 KB, global object-count + total-byte budget,
-  overwrite-aware); routes `POST/DELETE /api/media/avatar` + `GET /media/*` (immutable cache). Versioned keys
-  `avatars/<userId>-<ts>.<ext>` so the immutable cache busts on replace. Client compresses to ~150 KB (`ui/imageCompress.ts`);
-  `ui/Avatar.tsx` renders photo-or-initials everywhere (header, squad roster, profile). Migration **0011 applied remote**;
-  **Worker redeployed** with the R2 binding (Version `95c8462e`).
-- **Tests now:** typecheck clean · **server 150 + web 240 unit** pass (server +14 `media.test.ts`: quota allowlist/size/
-  count/byte-budget + overwrite math + ledger accounting + route accept/reject via a mocked R2) · build OK (web
-  `index-*.js` rebuilt) · **e2e not yet re-run for R9** (gate-close artifact).
+- **Gate:** **R9 (P1 Squad) CLOSED ✅ — deployed + live (v0.11.0).** The whole squad cluster: **R9.1** multiple squads +
+  switcher · **R9.2** honest hero copy · **R9.3** avatar photo on R2 (DEC-059) + custom emoji · **R9.4** auto-share
+  plan+favorites on join (DEC-054) + Settings opt-out · **R9.5** real venue mini-map + richer meeting card + meeting-point
+  photo on R2 (DEC-047) + squad-home density · **R9.6** AI icon → real action + J → profile menu. Next: **R10 (P1
+  Settings/polish)**.
+- **Media on R2 (DEC-059/047):** bucket `festpilot-media` bound as **`MEDIA`**; one storage adapter `server/src/media/store.ts`
+  (`putImage`/`getImage`/`deleteImage`, allowlist jpeg/png/webp, immutable cache). The **app** enforces the quota via pure
+  `checkMediaQuota` over a D1 **`media_object`** ledger (per-object cap, global object-count + total-byte budget,
+  overwrite-aware). Avatar: `POST/DELETE /api/media/avatar`, versioned key `avatars/<userId>-<ts>.<ext>`. Meeting photo:
+  `POST /api/media/meeting/:id/photo` (creator-only), key `meetings/<mpId>-<ts>.<ext>`. Served at `GET /media/*`. Client
+  compresses (`ui/imageCompress.ts`: avatar ≤512px ~150 KB; meeting ≤1280px ~400 KB); `ui/Avatar.tsx` = photo-or-initials.
+- **Tests now:** typecheck clean · **server 153 + web 240 unit** pass · **e2e 29/29 green** (full suite, incl. squad/meet/
+  presence) · build OK. Worker **Version `b5f9ce0d`** (R2 + media routes + photoUrl). Pages Production serves
+  **`index-CCNjzyCU.js`** (v0.11.0).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0011** applied. R2 bucket `festpilot-media` live.
-- Live URLs unchanged: app https://festpilot.pages.dev (Pages redeploy pending R9 gate close) · API https://festpilot.trippilot.workers.dev (Worker live w/ R2).
+- Live URLs: app https://festpilot.pages.dev (v0.11.0) · API https://festpilot.trippilot.workers.dev (Worker `b5f9ce0d`, R2 bound).
 
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
@@ -41,11 +40,30 @@
 - [x] **R6** (P1 now/next) — plan-then-favorites, never arbitrary (DEC-022). **CLOSED 2026-06-24 (v0.10.1).**
 - [x] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar. **CLOSED 2026-06-24 (v0.10.2).**
 - [x] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap. **CLOSED 2026-06-24 (v0.10.3).**
-- [~] **R9** (P1 squad) — multiple squads ✅ · honest copy ✅ · AI-icon/J-menu ✅ · auto-share (DEC-054) ✅ · avatar on R2 + custom emoji (DEC-059) ✅ · **remaining: real mini-map · richer meeting card · meeting photo (R9.5)**.
+- [x] **R9** (P1 squad) — multiple squads · honest copy · AI-icon/J-menu · auto-share (DEC-054) · avatar on R2 + custom emoji (DEC-059) · real mini-map · richer meeting card + meeting photo on R2 (DEC-047) · squad-home density. **CLOSED 2026-06-24 (v0.11.0).**
 - [ ] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select.
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R9 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.11.0).** Closes the **R9.5** slice and the whole P1 Squad cluster.
+  **R9.5 — real mini-map + richer meeting card + meeting photo on R2 (DEC-047) + squad-home density.** *Meeting photo
+  (backend):* `meeting_point.photo_url` already existed; surfaced it as `MeetingPointDto.photoUrl` (server + web types,
+  `assembleDto`/`SELECT_POINT`). New `meetingPoints.getMeetingPhotoContext` (creator + existing key) and `setMeetingPhoto`;
+  reused the R9.3 media adapter for **`POST /api/media/meeting/:id/photo`** — **creator-only** (403 otherwise, 404 unknown),
+  quota-checked at `MAX_MEETING_PHOTO_BYTES` (512 KB), versioned key `meetings/<mpId>-<ts>.<ext>`, purges the prior photo,
+  ledgers it. *Meeting photo (frontend):* generalised `imageCompress.ts` into `compressImage(opts)` exposing `compressAvatar`
+  (square ≤512px) + **`compressMeetingPhoto`** (aspect-preserving ≤1280px ~400 KB); `api.uploadMeetingPhoto`; `MeetDetailScreen`
+  shows a banner photo with a creator-only **Add/Change photo** action (honest reject reason surfaced); `MeetingPointCard`
+  shows the photo as a thumbnail + **who set it** (creator attribution) instead of a bare flag icon. *Real mini-map:*
+  `CoarsePresenceMap` gained `showBase` — on **"Where's the squad"** it now renders the **actual venue base image**
+  (day/night via `useAppearance`, correct aspect) with the squad plotted on it, while the full-screen `PreciseSharingScreen`
+  keeps the clean gradient (`showBase={false}`). *Squad-home density:* the "Where's the squad" CTA now reads live presence
+  (`useGroupPresence`) and renders a **count + avatar stack** of who's active, not a static chevron. **Tests:** **+3**
+  `media.test.ts` (meeting route: 404 unknown / 403 non-creator / 200 sets `photoUrl` + ledgers); `meetUi.test.ts` fixture
+  updated for the new `photoUrl` field. **server 153 + web 240 unit · full e2e 29/29 green · typecheck + build OK.**
+  **Deployed:** Worker **Version `b5f9ce0d`** (R2 + `/api/media/meeting/:id/photo` + `photoUrl`); Pages → Production `master`
+  (`festpilot.pages.dev` serves **`index-CCNjzyCU.js`**, v0.11.0). Version bump 0.10.3 → **0.11.0** + "Your squad, upgraded"
+  changelog entry. → **R10 (P1 Settings/polish)**.
 - **R9.3 ✅ (2026-06-24) — Avatar photo on R2 + custom emoji (DEC-059).** R2 is enabled (card on file), so the avatar is a
   **real photo on Cloudflare R2**, not just initials. **Backend:** new storage adapter `server/src/media/store.ts` — the
   only code that touches the `MEDIA` bucket (`putImage`/`getImage`/`deleteImage`, content-type allowlist jpeg/png/webp,

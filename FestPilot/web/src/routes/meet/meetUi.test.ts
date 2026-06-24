@@ -34,6 +34,7 @@ function point(partial: Partial<MeetingPointDto>): MeetingPointDto {
     isMine: true,
     title: "Regroup",
     note: null,
+    photoUrl: null,
     lat: 51,
     lng: 4,
     landmarkLabel: "near CORE",

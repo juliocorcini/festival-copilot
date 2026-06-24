@@ -6,6 +6,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { geoToSvg, type MapTransform } from "../../map/transform";
+import { useAppearance } from "../../app/settings";
 import { initialsOf } from "../../data/identity";
 import type { PresenceMemberDto } from "../../data/types";
 
@@ -66,11 +67,16 @@ export function CoarsePresenceMap({
   festivalId = "tomorrowland-deschorre",
   members,
   onOpen,
+  showBase = true,
 }: {
   festivalId?: string;
   members: PresenceMemberDto[];
   onOpen?: () => void;
+  /** Render the real venue map behind the pins (the mini-map preview). Off for the full-screen
+   *  precise-sharing backdrop, which keeps the plain tint so the scrim + dot read clearly. */
+  showBase?: boolean;
 }): JSX.Element {
+  const { palette } = useAppearance();
   const [t, setT] = useState<MapTransform | null>(null);
 
   useEffect(() => {
@@ -85,9 +91,21 @@ export function CoarsePresenceMap({
   }, [festivalId]);
 
   const pins = useMemo(() => (t ? buildPins(t, members) : []), [t, members]);
+  // With the base shown, match the tile to the map's aspect so percentage-placed pins land exactly
+  // on the venue (object-fit: fill, same as the convergence map).
+  const withBase = showBase && t;
+  const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.webp`;
 
   return (
-    <button type="button" className="presence-maptile" onClick={onOpen} aria-label="Open the full map">
+    <button
+      type="button"
+      className={`presence-maptile${withBase ? " presence-maptile--map" : ""}`}
+      onClick={onOpen}
+      aria-label="Open the full map"
+    >
+      {withBase && (
+        <img className="presence-map-base" src={base} width={t.canvas.width} height={t.canvas.height} alt="" draggable={false} />
+      )}
       {pins.map((p) => (
         <span
           key={p.id}

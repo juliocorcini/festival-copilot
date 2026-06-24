@@ -546,7 +546,9 @@
 
 ### DEC-047 — Phase 6 meeting-point **photo is deferred** (rides the DEC-038 R2 block); everything else ships
 - **Date**: 2026-06-23 (build, Phase 6 G6.1)
-- **Status**: APPROVED (executor decision; the brain already decides this — see Why)
+- **Status**: APPROVED → **flip condition MET; photo SHIPPED 2026-06-24 in R9.5** (R2 enabled per DEC-059). The deferral
+  below is history; the meeting-point photo is now live via the shared R2 media adapter (`POST /api/media/meeting/:id/photo`,
+  creator-only, app-quota-checked) + `MeetingPointDto.photoUrl`, surfaced on the meeting detail + squad-home card.
 - **Context**: The orchestrator §13 Phase 6 + DEC-014 describe a meeting point as "exact point + **R2 photo** + note +
   expiry + visibility". But **DEC-038 Q1 is APPROVED and explicit: "NO R2 for V1 … R2 not enabled on the account
   (`code 10042`); avoids card-on-file"** — and the map raster already shipped statically for exactly this reason
@@ -780,7 +782,8 @@
 
 ### DEC-059 — Avatar/profile photo storage: R2 (CONFIRMED — card on file); budget alert + app-enforced quota; Cloudinary no-card fallback retired
 - **Date**: 2026-06-24 (review-remediation r2, inline `/council`)
-- **Status**: PROPOSED → **R2 CONFIRMED 2026-06-24 (Julio added a card on file)**; supersedes DEC-053
+- **Status**: PROPOSED → **R2 CONFIRMED 2026-06-24 (Julio added a card on file)** → **SHIPPED 2026-06-24** (R9.3 avatar +
+  R9.5 meeting photo, one R2 media adapter + D1 `media_object` app-quota ledger); supersedes DEC-053
 - **Council synthesis**: avatars are few and tiny (~50–150 KB after client compression; ~10k users ≈ 1 GB → **$0** on
   R2's permanent free tier, egress always free). The real risk Julio fears ("conta gigante") is a tail risk, since
   **Cloudflare has no hard spend cap** (only budget alerts). The effective limiter is therefore an **app-enforced

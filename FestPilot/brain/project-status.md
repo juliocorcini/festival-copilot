@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) + R7 (timetable polish) + R8 (My Plan editable) CLOSED**, app v0.10.3)
+> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) + R7 (timetable polish) + R8 (My Plan editable) + R9 (Squad) CLOSED**, app v0.11.0)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -33,7 +33,14 @@ single non-wrapping day row) so controls don't steal grid height. App **v0.10.2*
 map**, or **Add a set** from a picker that only offers acts that fit. New pure `domain/planEdit.ts`
 (`removeFromPlan`/`addToPlan`/`swapInPlan` + `fittingAdds`/`fittingSwaps`) keeps the plan **zero-overlap by construction**;
 walk/break chips recompute after each edit. App **v0.10.3**, deployed to Production (frontend-only; Worker unchanged).
-**Next: R9 (P1 Squad — multiple squads, honest copy, avatar+emoji DEC-059, auto-share DEC-054, real mini-map, meeting photo).**
+**R9 (P1 Squad) ✅ CLOSED:** **multiple squads** with a top switcher (data isolated per group); **honest hero copy** (dropped
+the un-deliverable promises); a real **profile photo on Cloudflare R2** with a coloured-initials fallback, plus a **custom
+emoji** for squads (DEC-059); **auto-share** plan + favorites on join via a one-time confirm + Settings opt-out (DEC-054);
+a **real venue mini-map** on "Where's the squad" (day/night base + squad plotted) while precise sharing keeps the gradient;
+**richer meeting cards** with a creator attribution + an optional **meeting-spot photo on R2** (DEC-047); and a denser squad
+home (live count + avatar stack). One R2 media adapter + a D1 `media_object` quota ledger backs both photo kinds; client-side
+compression keeps uploads small. App **v0.11.0**, deployed to Production; Worker redeployed (R2 binding + media routes + `photoUrl`).
+**Next: R10 (P1 Settings/polish — i18n EN/PT, PWA install, check-updates, About, contrast + no-select).**
 
 ## How we build from here (the orchestrator)
 

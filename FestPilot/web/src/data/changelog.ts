@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.10.3";
+export const APP_VERSION = "0.11.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,24 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.11.0",
+    date: "2026-06-24",
+    title: "Your squad, upgraded",
+    icon: "diversity_3",
+    whatsNew: [
+      "Be in more than one squad: a switcher at the top of the Squad tab lets you hop between them, each with its own plan, map and meeting points.",
+      "Put a face to your name — add a real profile photo (we keep it small), shown to your squad and on the map. No photo? Your coloured initials still look great.",
+      "Joining a squad now offers to share your plan and favourites in one tap, so the shared timetable fills in instantly (you can turn this off in Settings).",
+      "A real mini-map of the venue with your squad on it, richer meeting-point cards — with who set it and an optional photo of the exact spot — and honest, accurate copy throughout.",
+    ],
+    howToTest: [
+      "Profile → tap your avatar → choose a photo (it appears in the header and your squad's member list); 'Remove photo' reverts to initials.",
+      "Create a custom-emoji squad, then a second one → the switcher appears at the top of the Squad tab.",
+      "Join via an invite link → the one-time 'Share your plan?' confirm (toggle it in Settings → Auto-share).",
+      "Set a meeting point → open it → 'Add photo'; the squad home card shows the photo + who set it. 'Where's the squad' shows the real venue mini-map.",
+    ],
+  },
   {
     version: "0.10.3",
     date: "2026-06-24",

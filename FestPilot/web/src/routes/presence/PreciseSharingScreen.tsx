@@ -101,7 +101,7 @@ export function PreciseSharingScreen(): JSX.Element {
   return (
     <div className="precise-screen">
       <div className="precise-map">
-        <CoarsePresenceMap members={presence?.members ?? []} />
+        <CoarsePresenceMap members={presence?.members ?? []} showBase={false} />
       </div>
 
       <button className="precise-back ava" aria-label="Back" onClick={() => navigate(`/squad/${id}/where`)}>
