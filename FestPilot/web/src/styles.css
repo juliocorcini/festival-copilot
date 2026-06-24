@@ -1606,3 +1606,74 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .safety-home-main { flex: 1; min-width: 0; }
 .safety-home-title { font-size: 15px; font-weight: 800; }
 .safety-home-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ===========================================================================
+   Admin back-office (R11 / DEC-057) — desktop shell. Escapes the mobile body
+   (overflow:hidden) via a fixed full-viewport layout with its own scroll.
+   Reuses the Amber-Glass tokens (wireframe 30-amber-admin.html).
+   =========================================================================== */
+.admin-lock { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(90% 50% at 50% 0%, #1a140a, #08070a 60%); }
+.admin-lock-card { width: 100%; max-width: 380px; padding: 26px 24px; display: flex; flex-direction: column; gap: 12px; }
+.admin-lock-hint { font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
+.admin-lock-error { font-size: 12px; font-weight: 700; color: var(--danger-ink); margin: 0; }
+.admin-lock-btn { margin-top: 4px; }
+.admin-brand { display: flex; align-items: center; gap: 9px; }
+.admin-brand-mark { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+.admin-brand-mark .ms { font-size: 18px; color: var(--bg); }
+.admin-brand-name { font-size: 18px; font-weight: 700; }
+.admin-brand-tag { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
+.admin-shell { position: fixed; inset: 0; display: flex; background: radial-gradient(90% 50% at 50% 0%, #1a140a, #08070a 60%); }
+.admin-side { width: 230px; flex-shrink: 0; background: rgba(0, 0, 0, 0.22); border-right: 1px solid var(--border);
+  padding: 18px 12px; display: flex; flex-direction: column; }
+.admin-side-brand { padding: 6px 10px 16px; }
+.admin-nav { display: flex; flex-direction: column; gap: 2px; }
+.admin-navi { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; color: var(--muted);
+  font-weight: 600; font-size: 13px; cursor: pointer; background: none; border: 1px solid transparent; width: 100%; text-align: left; }
+.admin-navi:hover { color: var(--ink); }
+.admin-navi.on { background: var(--glass); color: var(--ink); border-color: var(--border); }
+.admin-navi .ms { font-size: 19px; }
+.admin-side-foot { margin-top: auto; }
+.admin-main { flex: 1; min-width: 0; padding: 26px 30px; overflow: auto; }
+
+.admin-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.admin-title { font-size: 26px; font-weight: 700; line-height: 1; margin: 4px 0 0; }
+.admin-head-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.admin-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 60px 20px; color: var(--muted); text-align: center; }
+.admin-state .ms { font-size: 40px; }
+.admin-state-spin { color: var(--accent); animation: adminSpin 1s linear infinite; }
+@keyframes adminSpin { to { transform: rotate(360deg); } }
+
+.admin-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+.admin-kpi { padding: 16px; }
+.admin-kpi-num { font-size: 28px; font-weight: 700; margin-top: 4px; }
+
+.admin-table-card { overflow: hidden; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  text-align: left; font-weight: 700; padding: 12px 14px; }
+.admin-table td { padding: 13px 14px; font-size: 13px; border-top: 1px solid var(--border); vertical-align: middle; }
+.admin-cell-title { font-weight: 700; }
+.admin-cell-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.admin-empty-cell { text-align: center; color: var(--muted); padding: 26px 14px; }
+
+.admin-pill { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px; }
+.admin-pill .ms { font-size: 13px; }
+.admin-pill.ok { background: rgba(22, 163, 74, 0.16); color: var(--ok-ink); }
+.admin-pill.warn { background: rgba(245, 158, 11, 0.16); color: #f0c060; }
+.admin-pill.muted { background: rgba(255, 255, 255, 0.06); color: var(--muted); }
+.admin-pill.danger { background: rgba(224, 86, 59, 0.16); color: var(--danger-ink); }
+
+.admin-banner { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-bottom: 18px; }
+.admin-banner .ms { font-size: 22px; flex-shrink: 0; }
+.admin-banner.ok { border-color: rgba(22, 163, 74, 0.3); }
+.admin-banner.ok .ms { color: var(--ok-ink); }
+.admin-banner.warn { border-color: rgba(245, 158, 11, 0.3); }
+.admin-banner.warn .ms { color: #f0c060; }
+.admin-banner.info .ms { color: var(--accent); }
+.admin-banner-body { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.admin-banner-body b { color: var(--ink); }

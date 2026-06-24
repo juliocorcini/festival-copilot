@@ -3,11 +3,9 @@
 //   scheduled -> cron-driven lineup ingestion (resolve -> ... -> bump revision)
 
 import { Hono } from "hono";
-import type { Context } from "hono";
 import type { Env } from "./env";
 import { api } from "./api/routes";
-import { upsertFestivalMap, type FestivalMapInput } from "./api/repo";
-import { listFestivalSuggestions } from "./api/festivalSuggestions";
+import { admin } from "./api/admin";
 import { runScheduledIngest } from "./ingest/ingest";
 import { purgeExpiredPresence } from "./api/presence";
 import { purgeExpiredMeetingPoints } from "./api/meetingPoints";
@@ -18,6 +16,9 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.get("/", (c) => c.json({ name: "FestPilot API", ok: true }));
 app.route("/api", api);
+
+// Admin back-office (R11 / DEC-057): one guarded route group (x-admin-token). See api/admin.ts.
+app.route("/admin", admin);
 
 // Serve media straight from R2 (DEC-059): avatars + meeting photos. No auth — the key is opaque and
 // the object is public-by-URL; objects are stored `immutable` so the edge/browser cache them for a
@@ -32,45 +33,6 @@ app.get("/media/*", async (c) => {
   headers.set("etag", obj.httpEtag);
   if (!headers.has("cache-control")) headers.set("cache-control", "public, max-age=31536000, immutable");
   return new Response(obj.body, { headers });
-});
-
-/** Guard admin routes with the ADMIN_TOKEN secret. Returns null when authorized. */
-function adminUnauthorized(c: Context<{ Bindings: Env }>): Response | null {
-  const token = c.req.header("x-admin-token");
-  if (!c.env.ADMIN_TOKEN || token !== c.env.ADMIN_TOKEN) {
-    return c.json({ error: "unauthorized" }, 401);
-  }
-  return null;
-}
-
-// Manual ingestion trigger for dev/ops (guarded by ADMIN_TOKEN secret).
-app.post("/admin/ingest", async (c) => {
-  const denied = adminUnauthorized(c);
-  if (denied) return denied;
-  const result = await runScheduledIngest(c.env);
-  return c.json(result);
-});
-
-// Publish/replace a festival's map asset registry (DEC-040). Body = the map publish payload
-// (asset slug + static keys + the engine transform doc). Used by the local publish step.
-app.post("/admin/festivals/:id/map", async (c) => {
-  const denied = adminUnauthorized(c);
-  if (denied) return denied;
-  const festivalId = c.req.param("id");
-  const body = (await c.req.json()) as FestivalMapInput;
-  if (!body?.assetSlug || !body?.baseNightKey || !body?.baseDayKey || !body?.transform) {
-    return c.json({ error: "invalid map payload" }, 400);
-  }
-  await upsertFestivalMap(c.env.DB, festivalId, body, new Date().toISOString());
-  return c.json({ ok: true, festivalId, revision: body.revision ?? 1 });
-});
-
-// Festival suggestions inbox (DEC-055, R11.3). Guarded; most-requested first.
-app.get("/admin/festival-suggestions", async (c) => {
-  const denied = adminUnauthorized(c);
-  if (denied) return denied;
-  const suggestions = await listFestivalSuggestions(c.env.DB);
-  return c.json({ suggestions });
 });
 
 export default {
