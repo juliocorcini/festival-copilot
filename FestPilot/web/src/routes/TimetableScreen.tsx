@@ -14,6 +14,7 @@ import { daysForWeekends, initials, type DayInfo } from "../lib/festival";
 import { stageColor, stageColorRgb, timeInZone } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
+import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 
 type Zoom = "2h" | "1h";
 const PIXELS_PER_HOUR: Record<Zoom, number> = { "2h": 180, "1h": 360 };
@@ -91,6 +92,8 @@ export function TimetableScreen(): JSX.Element {
   return (
     <div className="tt-screen">
       <TimetableHeader days={days} dayKey={dayKey} tz={tz} onSelectDay={setSelectedDay} />
+
+      <LineupUpdateBanner />
 
       <div className="tt-controls">
         <div className="tt-controls-left">

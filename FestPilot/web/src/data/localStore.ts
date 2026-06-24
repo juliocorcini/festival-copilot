@@ -18,6 +18,12 @@ export interface OnboardingState {
   weekendIds: string[];
   dayKeys: string[];
   completed: boolean;
+  /**
+   * Unique act keys the user has already seen (captured at onboarding, refreshed on each "revisit"
+   * acknowledgement). Drives the R4.3 lineup-update prompt. Optional: absent = no baseline yet, so a
+   * pre-feature or skipped onboarding never triggers a false prompt.
+   */
+  seenActKeys?: string[];
 }
 
 export interface PersistedPlan {
@@ -57,6 +63,12 @@ export function clearFavorites(store: StoreShape, festivalId: string): StoreShap
 
 export function setOnboarding(store: StoreShape, onboarding: OnboardingState | null): StoreShape {
   return { ...store, onboarding };
+}
+
+/** Mark the current lineup as "seen" (R4.3) so the revisit-favorites prompt clears until acts change. */
+export function acknowledgeLineup(store: StoreShape, actKeys: string[]): StoreShape {
+  if (!store.onboarding) return store;
+  return { ...store, onboarding: { ...store.onboarding, seenActKeys: actKeys } };
 }
 
 export function setPlan(store: StoreShape, festivalId: string, dayKey: string, slots: PlanSlot[]): StoreShape {
@@ -123,12 +135,14 @@ export function useOnboarding(): {
   onboarding: OnboardingState | null;
   save: (state: OnboardingState) => void;
   reset: () => void;
+  acknowledgeLineup: (actKeys: string[]) => void;
 } {
   const [state, update] = useStore();
   return {
     onboarding: state.onboarding,
     save: (next) => update((store) => setOnboarding(store, next)),
     reset: () => update((store) => setOnboarding(store, null)),
+    acknowledgeLineup: (actKeys) => update((store) => acknowledgeLineup(store, actKeys)),
   };
 }
 

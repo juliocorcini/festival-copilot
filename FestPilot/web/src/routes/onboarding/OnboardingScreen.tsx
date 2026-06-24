@@ -71,7 +71,16 @@ export function OnboardingScreen(): JSX.Element {
   }
 
   const finish = (): void => {
-    onboarding.save({ festivalId: lineup.festival.id, weekendIds, dayKeys: [...activeDayKeys], completed: true });
+    // Capture the full festival's act keys as the baseline for the R4.3 "lineup updated" prompt:
+    // any acts added (or favorited acts later pulled) after this point will surface a revisit nudge.
+    const seenActKeys = uniqueActs(lineup.performances).map((a) => a.actKey);
+    onboarding.save({
+      festivalId: lineup.festival.id,
+      weekendIds,
+      dayKeys: [...activeDayKeys],
+      completed: true,
+      seenActKeys,
+    });
     navigate("/", { replace: true });
   };
 

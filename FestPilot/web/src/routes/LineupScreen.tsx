@@ -12,6 +12,7 @@ import { daysForWeekends, initials, type DayInfo } from "../lib/festival";
 import { stageColor } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
+import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 
 export function LineupScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
@@ -113,6 +114,8 @@ export function LineupScreen(): JSX.Element {
           <span>The full timetable isn't out yet — favorite who you want to see and we'll build your plan the moment it drops.</span>
         </div>
       )}
+
+      <LineupUpdateBanner />
 
       <div className="glass lineup-search">
         <span className="ms">search</span>
