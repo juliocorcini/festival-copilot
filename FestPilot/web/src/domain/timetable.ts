@@ -5,6 +5,7 @@
  * unit-testable with concrete numbers (use `timeZone: "UTC"` for offset-free assertions).
  */
 import type { PerformanceDto, StageDto } from "../data/types";
+import { assignFestivalDays } from "./festivalDay";
 import { toPlannableSets } from "./lineup";
 
 const HOUR_MS = 3_600_000;
@@ -91,12 +92,22 @@ function snapToLocalHour(ms: number, timeZone: string, mode: "floor" | "ceil"): 
 export function buildTimetable(input: BuildTimetableInput): TimetableModel {
   const { performances, stages, favorites, dayKey, weekendIds, timeZone } = input;
   const weekendScope = new Set(weekendIds);
+  const scoped =
+    weekendScope.size === 0
+      ? performances
+      : performances.filter((p) => !p.weekendId || weekendScope.has(p.weekendId));
 
-  const sets = toPlannableSets(performances, stages).filter((set) => {
-    if (dayKey && set.day !== dayKey) return false;
-    if (weekendScope.size > 0 && set.weekendId && !weekendScope.has(set.weekendId)) return false;
-    return true;
-  });
+  // Day filtering follows the derived festival-day block (DEC-048): block membership, not the raw
+  // `day` label — so post-midnight sets stay with their night and a mis-tagged set lands correctly.
+  let dayMembers: Set<string> | null = null;
+  if (dayKey) {
+    dayMembers = new Set();
+    for (const day of assignFestivalDays(scoped)) {
+      if (day.id === dayKey) for (const id of day.performanceIds) dayMembers.add(id);
+    }
+  }
+
+  const sets = toPlannableSets(scoped, stages).filter((set) => (dayMembers ? dayMembers.has(set.id) : true));
 
   if (sets.length === 0) {
     return { windowStartMs: 0, windowEndMs: 0, totalMs: 0, totalHours: 0, hourMarks: [], stages: [], isEmpty: true };

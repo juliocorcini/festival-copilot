@@ -1,5 +1,6 @@
 /** Presentation helpers for festival weekends and days, derived from lineup DTOs. */
-import type { LineupDto, WeekendDto } from "../data/types";
+import type { LineupDto, PerformanceDto, WeekendDto } from "../data/types";
+import { assignFestivalDays } from "../domain/festivalDay";
 
 export interface DayInfo {
   key: string;
@@ -10,50 +11,72 @@ export interface DayInfo {
   dateLabel: string;
 }
 
-function fmt(utcIso: string, timeZone: string, options: Intl.DateTimeFormatOptions, locale = "en-US"): string {
-  return new Intl.DateTimeFormat(locale, { ...options, timeZone }).format(new Date(utcIso));
-}
-
-/** Distinct festival days for the chosen weekends, ordered by first set, labelled in the festival tz. */
+/**
+ * Distinct festival days for the chosen weekends, ordered by first set, labelled in the festival tz.
+ * Days are the derived contiguous blocks (DEC-048), so a 00:30 set shows under the night it belongs to
+ * and the key stays the source day label ("FRIDAY") that persisted plans/onboarding are stored under.
+ */
 export function daysForWeekends(lineup: LineupDto, weekendIds: string[]): DayInfo[] {
   const tz = lineup.festival.timezone;
-  const byDay = new Map<string, DayInfo & { hasTime: boolean }>();
+  const scope = new Set(weekendIds);
+  const scoped =
+    weekendIds.length === 0
+      ? lineup.performances
+      : lineup.performances.filter((p) => !p.weekendId || scope.has(p.weekendId));
 
-  for (const performance of lineup.performances) {
-    if (!performance.day) continue;
-    if (weekendIds.length > 0 && performance.weekendId && !weekendIds.includes(performance.weekendId)) continue;
-    const startMs = performance.startAtUtc ? Date.parse(performance.startAtUtc) : NaN;
-    const existing = byDay.get(performance.day);
+  const blocks = assignFestivalDays(scoped);
+  if (blocks.length === 0) return legacyDaysByLabel(scoped);
+
+  // Merge blocks that share an id (e.g. W1 + W2 both yield "FRIDAY") so the day key stays
+  // weekend-agnostic, matching how plans are keyed. Earliest start wins for ordering and labels.
+  const byId = new Map<string, DayInfo>();
+  for (const block of blocks) {
+    const existing = byId.get(block.id);
     if (existing) {
-      if (Number.isFinite(startMs) && (!existing.hasTime || startMs < existing.startMs)) {
-        existing.startMs = startMs;
-        existing.hasTime = true;
-        applyLabels(existing, performance.startAtUtc!, tz);
+      if (block.startMs < existing.startMs) {
+        existing.startMs = block.startMs;
+        existing.weekendId = block.weekendId;
+        applyLabels(existing, block.startMs, tz);
       }
       continue;
     }
-    const info: DayInfo & { hasTime: boolean } = {
+    const info: DayInfo = {
+      key: block.id,
+      weekendId: block.weekendId,
+      startMs: block.startMs,
+      weekdayShort: block.id,
+      weekdayLong: block.id,
+      dateLabel: "",
+    };
+    applyLabels(info, block.startMs, tz);
+    byId.set(block.id, info);
+  }
+
+  return [...byId.values()].sort((a, b) => a.startMs - b.startMs);
+}
+
+/** Fallback for a lineup published without any scheduled times yet (DEC-049): group by source label. */
+function legacyDaysByLabel(performances: PerformanceDto[]): DayInfo[] {
+  const byDay = new Map<string, DayInfo>();
+  for (const performance of performances) {
+    if (!performance.day || byDay.has(performance.day)) continue;
+    byDay.set(performance.day, {
       key: performance.day,
       weekendId: performance.weekendId,
-      startMs: Number.isFinite(startMs) ? startMs : Number.POSITIVE_INFINITY,
+      startMs: Number.POSITIVE_INFINITY,
       weekdayShort: performance.day,
       weekdayLong: performance.day,
       dateLabel: "",
-      hasTime: Number.isFinite(startMs),
-    };
-    if (Number.isFinite(startMs)) applyLabels(info, performance.startAtUtc!, tz);
-    byDay.set(performance.day, info);
+    });
   }
-
-  return [...byDay.values()]
-    .sort((a, b) => a.startMs - b.startMs)
-    .map(({ hasTime: _hasTime, ...info }) => info);
+  return [...byDay.values()];
 }
 
-function applyLabels(info: DayInfo, utcIso: string, tz: string): void {
-  info.weekdayShort = fmt(utcIso, tz, { weekday: "short" });
-  info.weekdayLong = fmt(utcIso, tz, { weekday: "long" });
-  info.dateLabel = fmt(utcIso, tz, { month: "short", day: "numeric" });
+function applyLabels(info: DayInfo, ms: number, tz: string): void {
+  const date = new Date(ms);
+  info.weekdayShort = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: tz }).format(date);
+  info.weekdayLong = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: tz }).format(date);
+  info.dateLabel = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: tz }).format(date);
 }
 
 export function weekendTitle(weekend: WeekendDto): string {

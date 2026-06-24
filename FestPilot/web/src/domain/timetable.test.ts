@@ -78,3 +78,29 @@ describe("buildTimetable", () => {
     expect(empty.stages).toHaveLength(0);
   });
 });
+
+describe("buildTimetable across midnight (DEC-048)", () => {
+  const night: PerformanceDto[] = [
+    perf({ id: "n1", day: "FRIDAY", startAtUtc: "2026-07-17T22:00:00.000Z", endAtUtc: "2026-07-17T23:00:00.000Z" }),
+    perf({ id: "n2", day: "FRIDAY", startAtUtc: "2026-07-17T23:30:00.000Z", endAtUtc: "2026-07-18T00:30:00.000Z" }),
+    // Source mis-tags this after-midnight set by civil date; it belongs to the Friday night.
+    perf({ id: "n3", day: "SATURDAY", startAtUtc: "2026-07-18T00:15:00.000Z", endAtUtc: "2026-07-18T01:00:00.000Z" }),
+    // A real Saturday-afternoon set a full day later → its own block.
+    perf({ id: "d2", day: "SATURDAY", startAtUtc: "2026-07-18T18:00:00.000Z", endAtUtc: "2026-07-18T19:00:00.000Z" }),
+  ];
+
+  it("keeps the 00:15 set on the Friday grid and runs the window past midnight", () => {
+    const model = buildTimetable({ performances: night, stages, favorites: new Set(), dayKey: "FRIDAY", weekendIds: ["w1"], timeZone: "UTC" });
+    const ids = model.stages.flatMap((s) => s.sets.map((set) => set.id)).sort();
+    expect(ids).toEqual(["n1", "n2", "n3"]);
+    expect(model.windowStartMs).toBe(Date.parse("2026-07-17T22:00:00Z"));
+    expect(model.windowEndMs).toBe(Date.parse("2026-07-18T01:00:00Z"));
+    expect(model.totalHours).toBe(3);
+  });
+
+  it("does not leak the Friday-night set into Saturday", () => {
+    const model = buildTimetable({ performances: night, stages, favorites: new Set(), dayKey: "SATURDAY", weekendIds: ["w1"], timeZone: "UTC" });
+    const ids = model.stages.flatMap((s) => s.sets.map((set) => set.id));
+    expect(ids).toEqual(["d2"]);
+  });
+});

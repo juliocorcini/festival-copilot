@@ -2,10 +2,12 @@
  * Onboarding (#17): festival → weekend → days → swipe favorites. Selections persist locally
  * (DEC-041). Favoriting is by act/person (DEC-026/028) and an act shown once even across days.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { PerformanceDto } from "../../data/types";
 import { useFavorites, useOnboarding } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
+import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
 import { uniqueActs, type Act } from "../../domain/lineup";
 import { daysForWeekends, weekendDates, type DayInfo } from "../../lib/festival";
 import { stageColor } from "../../lib/format";
@@ -39,15 +41,29 @@ export function OnboardingScreen(): JSX.Element {
   const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds) : []), [lineup, weekendIds]);
   const activeDayKeys = selectedDays ?? new Set(days.map((d) => d.key));
 
+  // Resolve each act's day through the derived festival-day blocks (DEC-048), so the day filter and
+  // the day tag match the timetable instead of trusting the occasionally mis-tagged source label.
+  const dayIdByPerf = useMemo(() => {
+    if (!lineup) return new Map<string, string>();
+    const scope = new Set(weekendIds);
+    const scoped =
+      weekendIds.length === 0
+        ? lineup.performances
+        : lineup.performances.filter((p) => !p.weekendId || scope.has(p.weekendId));
+    return festivalDayIdByPerformanceId(scoped);
+  }, [lineup, weekendIds]);
+  const dayOf = useCallback((p: PerformanceDto): string | null => dayIdByPerf.get(p.id) ?? p.day, [dayIdByPerf]);
+
   const acts = useMemo(() => {
     if (!lineup) return [];
     const filtered = lineup.performances.filter((p) => {
       const inWeekend = weekendIds.length === 0 || !p.weekendId || weekendIds.includes(p.weekendId);
-      const inDay = !p.day || activeDayKeys.has(p.day);
+      const resolvedDay = dayOf(p);
+      const inDay = !resolvedDay || activeDayKeys.has(resolvedDay);
       return inWeekend && inDay;
     });
-    return uniqueActs(filtered);
-  }, [lineup, weekendIds, activeDayKeys]);
+    return uniqueActs(filtered, { dayOf });
+  }, [lineup, weekendIds, activeDayKeys, dayOf]);
 
   if (status === "loading") return <div className="ob"><LoadingState /></div>;
   if (status === "error" || !lineup) {

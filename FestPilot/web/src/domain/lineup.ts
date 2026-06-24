@@ -33,22 +33,28 @@ function stageNameMap(stages: StageDto[]): Map<string, string> {
   return new Map(stages.map((stage) => [stage.id, stage.name]));
 }
 
-/** Unique acts for browsing/onboarding (placeholders excluded), sorted alphabetically. */
+/**
+ * Unique acts for browsing/onboarding (placeholders excluded), sorted alphabetically.
+ * `dayOf` resolves the day an act plays (defaults to the source label); onboarding passes the derived
+ * festival-day id (DEC-048) so the day filter and day tag match the timetable's blocks.
+ */
 export function uniqueActs(
   performances: PerformanceDto[],
-  options: { includePlaceholders?: boolean } = {}
+  options: { includePlaceholders?: boolean; dayOf?: (performance: PerformanceDto) => string | null } = {}
 ): Act[] {
+  const dayOf = options.dayOf ?? ((performance: PerformanceDto): string | null => performance.day);
   const byKey = new Map<string, Act>();
   for (const performance of performances) {
     if (!options.includePlaceholders && performance.isPlaceholder) continue;
     const key = actKey(performance);
+    const day = dayOf(performance);
     const existing = byKey.get(key);
     if (existing) {
       existing.performances.push(performance);
       if (performance.stageId && !existing.stageIds.includes(performance.stageId)) {
         existing.stageIds.push(performance.stageId);
       }
-      if (performance.day && !existing.days.includes(performance.day)) existing.days.push(performance.day);
+      if (day && !existing.days.includes(day)) existing.days.push(day);
       if (!existing.imageUrl) existing.imageUrl = performance.artists[0]?.imageUrl ?? null;
     } else {
       byKey.set(key, {
@@ -57,7 +63,7 @@ export function uniqueActs(
         imageUrl: performance.artists[0]?.imageUrl ?? null,
         performances: [performance],
         stageIds: performance.stageId ? [performance.stageId] : [],
-        days: performance.day ? [performance.day] : [],
+        days: day ? [day] : [],
       });
     }
   }
