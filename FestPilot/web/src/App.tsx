@@ -40,6 +40,7 @@ import { AdminGate } from "./admin/AdminGate";
 import { AdminLayout } from "./admin/AdminLayout";
 import { AdminFestivalsScreen } from "./admin/AdminFestivalsScreen";
 import { AdminLineupScreen } from "./admin/AdminLineupScreen";
+import { AdminDataSourceScreen } from "./admin/AdminDataSourceScreen";
 import { AdminSuggestionsScreen } from "./admin/AdminSuggestionsScreen";
 
 export function App(): JSX.Element {
@@ -92,6 +93,7 @@ export function App(): JSX.Element {
           <Route element={<AdminLayout />}>
             <Route index element={<AdminFestivalsScreen />} />
             <Route path="lineup" element={<AdminLineupScreen />} />
+            <Route path="data-sources" element={<AdminDataSourceScreen />} />
             <Route path="suggestions" element={<AdminSuggestionsScreen />} />
           </Route>
         </Route>

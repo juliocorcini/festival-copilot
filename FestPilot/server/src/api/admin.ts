@@ -12,6 +12,7 @@ import {
   updateSuggestionStatus,
 } from "./festivalSuggestions";
 import { upsertFestivalMap, type FestivalMapInput } from "./repo";
+import { getDataSource, readDataSourceInput, upsertDataSource } from "./dataSource";
 import { runScheduledIngest } from "../ingest/ingest";
 
 export const admin = new Hono<{ Bindings: Env }>();
@@ -42,6 +43,21 @@ admin.get("/festivals/:id/lineup", async (c) => {
   const dashboard = await getLineupDashboard(c.env.DB, c.req.param("id"));
   if (!dashboard) return c.json({ error: "festival not found" }, 404);
   return c.json(dashboard);
+});
+
+// R11.2 — Per-festival data-source registry (DEC-057a): where the data comes from + how it's
+// captured, with the operational lineup_source surfaced read-only for cross-checking.
+admin.get("/festivals/:id/data-source", async (c) => {
+  const dto = await getDataSource(c.env.DB, c.req.param("id"));
+  return c.json(dto);
+});
+
+admin.put("/festivals/:id/data-source", async (c) => {
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+  const input = readDataSourceInput(body);
+  await upsertDataSource(c.env.DB, c.req.param("id"), input, new Date().toISOString());
+  const dto = await getDataSource(c.env.DB, c.req.param("id"));
+  return c.json(dto);
 });
 
 // R11.3 — Festival-suggestions inbox (DEC-055): most-requested first.

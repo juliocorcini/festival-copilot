@@ -8,11 +8,17 @@ import { describe, expect, it } from "vitest";
 
 import { admin } from "../src/api/admin";
 import { getAdminOverview, getLineupDashboard } from "../src/api/adminRepo";
+import { getDataSource, readDataSourceInput, upsertDataSource } from "../src/api/dataSource";
 import type { Env } from "../src/env";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const migrations = ["0001_init.sql", "0002_festival_map.sql", "0008_festival_with_timetable.sql"]
+const migrations = [
+  "0001_init.sql",
+  "0002_festival_map.sql",
+  "0008_festival_with_timetable.sql",
+  "0012_festival_data_source.sql",
+]
   .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
   .join("\n");
 
@@ -100,6 +106,43 @@ describe("getLineupDashboard (R11.1b)", () => {
   it("returns null for an unknown festival", async () => {
     const db = await freshDb();
     expect(await getLineupDashboard(db, "nope")).toBeNull();
+  });
+});
+
+describe("data-source registry (R11.2 / DEC-057a)", () => {
+  it("seeds an honest default from the operational source when no record is saved", async () => {
+    const db = await freshDb();
+    await seedFestival(db);
+    const dto = await getDataSource(db, "fest-1");
+    expect(dto.updatedAtUtc).toBeNull(); // never saved yet
+    expect(dto.origin).toBe("official_page");
+    expect(dto).toMatchObject({ event: "TL26BE", uuid: "uuid-123", pageUrl: "https://belgium.tomorrowland.com" });
+    expect(dto.operational).toMatchObject({ event: "TL26BE", uuid: "uuid-123" });
+  });
+
+  it("persists an operator record and keeps the operational reference", async () => {
+    const db = await freshDb();
+    await seedFestival(db);
+    await upsertDataSource(
+      db,
+      "fest-1",
+      { origin: "manual", pageUrl: null, event: null, uuid: null, captureMethod: "Typed by hand", notes: "no clean source", aiReaderEnabled: false },
+      "2026-06-24T12:00:00Z"
+    );
+    const dto = await getDataSource(db, "fest-1");
+    expect(dto.origin).toBe("manual");
+    expect(dto.captureMethod).toBe("Typed by hand");
+    expect(dto.updatedAtUtc).toBe("2026-06-24T12:00:00Z");
+    // The operational source is still surfaced read-only for cross-checking.
+    expect(dto.operational).toMatchObject({ event: "TL26BE" });
+  });
+
+  it("validates + trims the input, defaulting an unknown origin to manual", () => {
+    const input = readDataSourceInput({ origin: "garbage", event: "  TL26BE  ", aiReaderEnabled: true });
+    expect(input.origin).toBe("manual");
+    expect(input.event).toBe("TL26BE");
+    expect(input.aiReaderEnabled).toBe(true);
+    expect(input.notes).toBeNull();
   });
 });
 

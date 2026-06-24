@@ -1682,3 +1682,15 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .admin-foot-note { font-size: 12px; color: var(--muted); margin-top: 12px; }
 .admin-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .admin-mini-btn { padding: 5px 12px; font-size: 12px; }
+
+/* R11.2 — data-source registry form */
+.admin-form { display: flex; flex-direction: column; gap: 14px; max-width: 720px; }
+.admin-form .label { margin-bottom: -6px; }
+.admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.admin-field { display: flex; flex-direction: column; gap: 8px; }
+.admin-field .label { margin-bottom: 0; }
+.admin-textarea { resize: vertical; min-height: 56px; font: inherit; line-height: 1.45; }
+.admin-check { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--ink); cursor: pointer; }
+.admin-check input { margin-top: 2px; accent-color: var(--accent); width: 16px; height: 16px; }
+.admin-muted { color: var(--muted); font-weight: 400; }
+@media (max-width: 640px) { .admin-form-grid { grid-template-columns: 1fr; } }

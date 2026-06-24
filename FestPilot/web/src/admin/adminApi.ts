@@ -164,3 +164,37 @@ export const fetchSuggestions = (signal?: AbortSignal): Promise<{ suggestions: F
   adminGet<{ suggestions: FestivalSuggestion[] }>("/festival-suggestions", signal);
 export const setSuggestionStatus = (id: string, status: SuggestionStatus): Promise<{ ok: boolean }> =>
   adminSend<{ ok: boolean }>(`/festival-suggestions/${id}`, "PATCH", { status });
+
+// R11.2 — Data-source registry.
+export type DataSourceOrigin = "official_page" | "manual" | "ai_assisted";
+export interface OperationalSource {
+  event: string;
+  uuid: string;
+  pageUrl: string;
+  lastSeenUtc: string;
+}
+export interface DataSourceDto {
+  festivalId: string;
+  origin: DataSourceOrigin;
+  pageUrl: string | null;
+  event: string | null;
+  uuid: string | null;
+  captureMethod: string | null;
+  notes: string | null;
+  aiReaderEnabled: boolean;
+  updatedAtUtc: string | null;
+  operational: OperationalSource | null;
+}
+export interface DataSourceInput {
+  origin: DataSourceOrigin;
+  pageUrl: string | null;
+  event: string | null;
+  uuid: string | null;
+  captureMethod: string | null;
+  notes: string | null;
+  aiReaderEnabled: boolean;
+}
+export const fetchDataSource = (festivalId: string, signal?: AbortSignal): Promise<DataSourceDto> =>
+  adminGet<DataSourceDto>(`/festivals/${festivalId}/data-source`, signal);
+export const saveDataSource = (festivalId: string, input: DataSourceInput): Promise<DataSourceDto> =>
+  adminSend<DataSourceDto>(`/festivals/${festivalId}/data-source`, "PUT", input);
