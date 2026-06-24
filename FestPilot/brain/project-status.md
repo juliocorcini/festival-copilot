@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (P1 favorites) CLOSED**, app v0.10.0)
+> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) CLOSED**, app v0.10.1)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -21,7 +21,11 @@ email, no password) at first run, persisted locally and synced to the server for
 pick mode that writes the same favorites store; **per-day grouping + per-day progress** with an intent explainer
 (DEC-048); and **artist photos on every surface** via a shared `<ArtistPhoto>` (CDN `?width=` right-sizing + placeholder,
 DEC-061). App **v0.10.0**, deployed to Production; Worker redeployed (identity metrics) + remote D1 migration 0010.
-**Next: R6 (P1 Now & Next — drive from the locked plan, then favorites, never arbitrary).**
+**R6 (P1 Now & Next) ✅ CLOSED:** the home is now **sourced, never arbitrary** (DEC-022) — the active day's locked **My
+Plan** first (rich NOW + live LEAVE-IN hero), else the user's **favorites in chronological order** (now/next/later via the
+new pure `chronoNowNext`), else an **honest empty state** that points to the lineup. App **v0.10.1**, deployed to
+Production (frontend-only; Worker unchanged).
+**Next: R7 (P1 Timetable & Lineup polish — card recipe, hour gridlines, touching-card margin, compact top bar).**
 
 ## How we build from here (the orchestrator)
 

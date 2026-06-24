@@ -25,14 +25,21 @@ interface EmptyStateProps {
   icon?: string;
   title: string;
   message?: string;
+  /** Optional call-to-action so an empty state can also be a way forward (no dead ends). */
+  action?: { label: string; icon?: string; onClick: () => void };
 }
 
-export function EmptyState({ icon = "inbox", title, message }: EmptyStateProps): JSX.Element {
+export function EmptyState({ icon = "inbox", title, message, action }: EmptyStateProps): JSX.Element {
   return (
     <div className="state">
       <span className="ms">{icon}</span>
       <h2>{title}</h2>
       {message && <p>{message}</p>}
+      {action && (
+        <button className="btn btn-primary" onClick={action.onClick}>
+          {action.icon && <span className="ms">{action.icon}</span>} {action.label}
+        </button>
+      )}
     </div>
   );
 }

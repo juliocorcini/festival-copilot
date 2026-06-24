@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.10.0";
+export const APP_VERSION = "0.10.1";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.10.1",
+    date: "2026-06-24",
+    title: "Now & Next is yours, never random",
+    icon: "bolt",
+    whatsNew: [
+      "The home screen now follows your night: your locked plan first, then your favorites in order — what's on now, what's next, and when to leave.",
+      "No more random artists on the home — if you haven't picked anyone yet, it tells you so and points you to the lineup.",
+    ],
+    howToTest: [
+      "Open Now & Next before favoriting anyone — you get a friendly 'Pick the acts you can't miss' prompt, not a stranger.",
+      "Favorite a few artists on the Lineup, then return to Now & Next — the hero and 'Up next' are only acts you chose.",
+    ],
+  },
   {
     version: "0.10.0",
     date: "2026-06-24",

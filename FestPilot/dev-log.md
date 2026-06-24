@@ -12,11 +12,12 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R5 (P1 favorites) CLOSED ✅.** Lightweight identity name+email at first run (DEC-060) · real swipe drag +
-  hint · grid pick mode · per-day grouping + per-day progress + intent copy (DEC-048) · artist photos on every surface
-  via shared `<ArtistPhoto>` (DEC-061). Next: **R6 (P1 Now & Next)**.
-- **Tests now:** typecheck clean · **server 136 + web 222 unit** pass · **e2e green** (onboarding swipe + grid, timetable,
-  squad) · build OK · **app v0.10.0 (deployed Production, `index-BEYZTPQv.js`)** · Worker deployed (`555c03b9`).
+- **Gate:** **R6 (P1 Now & Next) CLOSED ✅.** Home is now sourced, never arbitrary: locked **My Plan** for the active
+  day first (rich LEAVE-IN hero), else the user's **favorites in chronological order** (now/next/later), else an honest
+  empty state ("Pick the acts you can't miss" → lineup). New pure `chronoNowNext` (DEC-022). Next: **R7 (P1 Timetable polish)**.
+- **Tests now:** typecheck clean · **server 136 + web 226 unit** pass · **e2e green** (onboarding swipe+grid, timetable,
+  squad, **now R6: empty + favorited-act-appears**) · build OK · **app v0.10.1 (deployed Production, `index-CaczvcIx.js`)**
+  · Worker unchanged from R5 (`555c03b9`; R6 is frontend-only).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0010** applied.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -28,7 +29,7 @@
 - [x] **R3** (P0 perf) — shared lineup cache (stale-while-revalidate; instant tab switch). **CLOSED 2026-06-24.**
 - [x] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days + revisit-favorites · suggest-a-festival (DEC-055). **CLOSED 2026-06-24 (v0.9.0). ← all P0 (R0–R4) done.**
 - [x] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere (DEC-061). **CLOSED 2026-06-24 (v0.10.0).**
-- [ ] **R6** (P1 now/next) — plan-then-favorites, never arbitrary.
+- [x] **R6** (P1 now/next) — plan-then-favorites, never arbitrary (DEC-022). **CLOSED 2026-06-24 (v0.10.1).**
 - [ ] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar.
 - [ ] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap.
 - [ ] **R9** (P1 squad) — multiple squads · honest copy · avatar on R2 + custom emoji (DEC-059) · auto-share (DEC-054) · real mini-map · meeting photo · AI-icon/J-menu.
@@ -36,6 +37,19 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R6 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.10.1, frontend-only).** Now & Next is **sourced, never arbitrary**
+  (review §4 / DEC-022). New pure **`chronoNowNext`** (`domain/nowNext.ts`): orders any `HomeSet[]` by absolute start and
+  returns `{live, hero, next, later}`. `NowScreen` now picks the hero in strict priority — (1) the active day's **locked
+  My Plan** (rich hero: NOW + live **LEAVE IN** + walk, reusing `buildNowNext`'s travel math), (2) else the user's
+  **favorites** mapped to `HomeSet`s and run through `chronoNowNext`, (3) else an **honest empty state** with a CTA
+  ("Pick the acts you can't miss" / "Set times aren't out yet" / "Nothing coming up" → lineup). Removed the old
+  arbitrary `timed[0]` lineup-wide hero fallback. Extended `EmptyState` with an optional CTA `action` (no dead ends).
+  **Tests:** `chronoNowNext` **+4 unit** (during/before/unsorted/all-ended branches); rewrote the `now` Playwright spec
+  to the new truth — (a) no favorites → empty state, no `.now-hero`; (b) favorite 6 acts via the Lineup → the hero **and**
+  every "up next" row are acts the user picked (`src` reads "From your favorites"). Caught + fixed a test bug: an
+  unconditional `addInitScript` re-seed was wiping favorites on `goto("/")`; made the seed idempotent. **server 136 +
+  web 226 unit · e2e green · typecheck + build OK.** **Deployed:** Pages → Production `master` (`festpilot.pages.dev`
+  serves `index-CaczvcIx.js`); Worker untouched (no backend change). → **R7 (P1 Timetable polish)**.
 - **R5 GATE CLOSED ✅ (2026-06-24) — deployed + live.** Five milestones (R5.0 identity, R5.1 real swipe, R5.2 grid mode,
   R5.3 per-day grouping/progress, R5.4 photos everywhere). User-visible, so bumped **v0.9.0 → v0.10.0** (`changelog.ts`
   single source + `package.json`) with an "A favorites flow with a face" note. Cumulative **server 136 + web 222 unit**

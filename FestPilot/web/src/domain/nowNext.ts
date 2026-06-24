@@ -57,3 +57,41 @@ export function buildNowNext(slots: PlanSlot[], travel: TravelMatrix, nowMs: num
 function clamp01(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
 }
+
+/**
+ * A normalized set for the home hero — works for both a locked plan slot and a favorited
+ * performance, so Now & Next can render one consistent hero regardless of source (DEC-022/R6).
+ */
+export interface HomeSet {
+  id: string;
+  actKey: string;
+  label: string;
+  stageName: string;
+  startMs: number;
+  endMs: number;
+  imageUrl: string | null;
+}
+
+export interface HomeChrono {
+  /** The set on now (start ≤ now < end), or null. */
+  live: HomeSet | null;
+  /** What the hero should show: the live set, else the next upcoming one, else null. */
+  hero: HomeSet | null;
+  /** The set after the hero (for "next up"/"then"), or null. */
+  next: HomeSet | null;
+  /** Sets after the hero, capped (for "later tonight"/"up next"). */
+  later: HomeSet[];
+}
+
+/**
+ * Chronological now/next/later over a set of favorites (R6): never arbitrary — only the user's own
+ * picks, ordered by start. Pure so the home, tests and any future reminder agree on the math.
+ */
+export function chronoNowNext(sets: HomeSet[], nowMs: number, laterLimit = 6): HomeChrono {
+  const ordered = [...sets].sort((a, b) => a.startMs - b.startMs);
+  const live = ordered.find((s) => s.startMs <= nowMs && nowMs < s.endMs) ?? null;
+  const upcoming = ordered.filter((s) => s.startMs > nowMs);
+  const hero = live ?? upcoming[0] ?? null;
+  const after = hero ? ordered.filter((s) => s.startMs > hero.startMs) : [];
+  return { live, hero, next: after[0] ?? null, later: after.slice(0, laterLimit) };
+}

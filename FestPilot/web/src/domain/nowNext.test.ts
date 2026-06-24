@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildNowNext } from "./nowNext";
+import { buildNowNext, chronoNowNext, type HomeSet } from "./nowNext";
 import { flatTravelMatrix } from "./partialSet";
 import type { PlanSlot } from "./types";
 
@@ -54,5 +54,39 @@ describe("buildNowNext", () => {
     expect(m.next).toBeNull();
     expect(m.leaveInMinutes).toBeNull();
     expect(m.later).toEqual([]);
+  });
+});
+
+function home(id: string, startMin: number, endMin: number): HomeSet {
+  return { id, actKey: id, label: id.toUpperCase(), stageName: "S", startMs: startMin * MIN, endMs: endMin * MIN, imageUrl: null };
+}
+
+describe("chronoNowNext (favorites source, R6)", () => {
+  const favs = [home("a", 0, 60), home("b", 70, 130), home("c", 200, 260)];
+
+  it("during a favorite: hero = the live set, next = the one after, later = the rest", () => {
+    const m = chronoNowNext(favs, 30 * MIN);
+    expect(m.live?.id).toBe("a");
+    expect(m.hero?.id).toBe("a");
+    expect(m.next?.id).toBe("b");
+    expect(m.later.map((s) => s.id)).toEqual(["b", "c"]);
+  });
+
+  it("before/between favorites: no live, hero = the next upcoming favorite", () => {
+    const m = chronoNowNext(favs, 65 * MIN);
+    expect(m.live).toBeNull();
+    expect(m.hero?.id).toBe("b");
+    expect(m.next?.id).toBe("c");
+  });
+
+  it("orders an unsorted favorites set chronologically", () => {
+    const m = chronoNowNext([home("c", 200, 260), home("a", 0, 60), home("b", 70, 130)], -10 * MIN);
+    expect(m.hero?.id).toBe("a");
+    expect(m.later.map((s) => s.id)).toEqual(["b", "c"]);
+  });
+
+  it("after every favorite has ended: hero is null (an honest empty state, not arbitrary)", () => {
+    expect(chronoNowNext(favs, 300 * MIN).hero).toBeNull();
+    expect(chronoNowNext([], 0).hero).toBeNull();
   });
 });

@@ -1,31 +1,48 @@
 /**
- * A2 "Now & Next" home (#18, UC-12/DEC-022). When the festival is running and the user has a locked
- * plan for the active day, the hero is plan-driven: what's on NOW, a live **LEAVE IN** countdown to
- * the next set (start − walk, via the real travel matrix), an elapsed progress bar and a compact
- * walk line. Otherwise (pre-festival / no plan) it falls back to the lineup: NEXT UP + a DOORS-IN
- * day countdown. The math lives in `domain/nowNext.ts`; this screen only renders it.
+ * A2 "Now & Next" home (#18, UC-12/DEC-022, R6). The hero is NEVER an arbitrary lineup act — it is
+ * sourced, in strict priority:
+ *   1. the day's locked plan (rich hero: what's on NOW + a live LEAVE IN to the next set + walk),
+ *   2. else the user's own favorites in chronological order (now / next / later),
+ *   3. else an honest empty state (pick artists · set times not out · nothing coming up).
+ * The chronology + leave-in math are pure (`domain/nowNext.ts`); this screen only renders the model.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
-import { ErrorState, EmptyState, LoadingState } from "../ui/states";
+import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { useLineup } from "../data/useLineup";
-import { useOnboarding, usePlan } from "../data/localStore";
+import { useFavorites, useOnboarding, usePlan } from "../data/localStore";
 import { useTravelMatrix } from "../data/useTravelMatrix";
-import { buildNowNext } from "../domain/nowNext";
-import { imageByActKey } from "../domain/lineup";
+import { buildNowNext, chronoNowNext, type HomeSet } from "../domain/nowNext";
+import { actKey, actLabel, imageByActKey } from "../domain/lineup";
 import { daysForWeekends } from "../lib/festival";
 import { dayLabel, daysUntil, stageColor, timeInZone } from "../lib/format";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
-import type { PerformanceDto } from "../data/types";
-import type { PlanSlot } from "../domain/types";
 
 const ms = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
+type HeroSource = "plan" | "favorites";
+
+interface HeroVM {
+  source: HeroSource;
+  isLive: boolean;
+  hero: HomeSet;
+  next: HomeSet | null;
+  later: HomeSet[];
+  /** Elapsed fraction of the live set [0..1]; 0 when nothing is live. */
+  progress: number;
+  /** Plan-only, live-only: minutes until you must leave for `next` (start − walk − now). */
+  leaveInMinutes: number | null;
+  /** Plan-only, live-only: whole-minute walk to `next`'s stage. */
+  walkMinutes: number;
+}
+
 export function NowScreen(): JSX.Element {
+  const navigate = useNavigate();
   const { status, lineup, error, reload } = useLineup();
   const { onboarding } = useOnboarding();
+  const favorites = useFavorites(lineup?.festival.id);
   const travel = useTravelMatrix(lineup);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -46,37 +63,53 @@ export function NowScreen(): JSX.Element {
   }, [days, now]);
   const plan = usePlan(lineup?.festival.id, activeDay?.key);
 
-  const model = useMemo(() => {
-    if (!lineup) return null;
-    const stageName = new Map(lineup.stages.map((s) => [s.id, s.name] as const));
-    const timed = lineup.performances
-      .filter((p) => p.startAtUtc && p.endAtUtc)
-      .sort((a, b) => ms(a.startAtUtc) - ms(b.startAtUtc));
-    const live = timed.find((p) => ms(p.startAtUtc) <= now && now < ms(p.endAtUtc)) ?? null;
-    const upcoming = timed.filter((p) => ms(p.startAtUtc) > now);
-    const hero = live ?? upcoming[0] ?? timed[0] ?? null;
-    const after = hero ? timed.filter((p) => ms(p.startAtUtc) > ms(hero.startAtUtc)) : [];
-    return {
-      tz: lineup.festival.timezone,
-      festivalName: lineup.festival.name,
-      stageName: (id: string | null) => (id ? stageName.get(id) ?? "" : ""),
-      isLive: Boolean(live),
-      hero,
-      next: after[0] ?? null,
-      later: after.slice(0, 7),
-      totalCount: timed.length,
-    };
-  }, [lineup, now]);
-
-  const nowNext = useMemo(
-    () => (plan.plan && plan.plan.slots.length > 0 ? buildNowNext(plan.plan.slots, travel, now) : null),
-    [plan.plan, travel, now]
+  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
+  const stageNameById = useMemo(
+    () => new Map((lineup?.stages ?? []).map((s) => [s.id, s.name] as const)),
+    [lineup]
   );
 
-  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
+  // Source 1 — the day's locked plan. `buildNowNext` carries the real walk + leave-in; we reuse the
+  // same slots as HomeSets so the hero renders through one consistent path.
+  const planSlots = plan.plan?.slots ?? [];
+  const planNN = useMemo(
+    () => (planSlots.length > 0 ? buildNowNext(planSlots, travel, now) : null),
+    [planSlots, travel, now]
+  );
+  const planSets = useMemo<HomeSet[]>(
+    () =>
+      planSlots.map((s) => ({
+        id: s.setId,
+        actKey: s.actKey,
+        label: s.label,
+        stageName: s.stageName,
+        startMs: s.startMs,
+        endMs: s.cutMs != null && s.cutMs > s.startMs && s.cutMs < s.endMs ? s.cutMs : s.endMs,
+        imageUrl: photoByKey.get(s.actKey) ?? null,
+      })),
+    [planSlots, photoByKey]
+  );
+  const planChrono = useMemo(() => chronoNowNext(planSets, now), [planSets, now]);
+
+  // Source 2 — the user's favorites, festival-wide, in chronological order. Only ones with set times.
+  const favSets = useMemo<HomeSet[]>(() => {
+    if (!lineup) return [];
+    return lineup.performances
+      .filter((p) => p.startAtUtc && p.endAtUtc && favorites.keys.has(actKey(p)))
+      .map((p) => ({
+        id: p.id,
+        actKey: actKey(p),
+        label: actLabel(p),
+        stageName: (p.stageId ? stageNameById.get(p.stageId) : "") || "TBA",
+        startMs: ms(p.startAtUtc),
+        endMs: ms(p.endAtUtc),
+        imageUrl: p.artists[0]?.imageUrl ?? null,
+      }));
+  }, [lineup, favorites.keys, stageNameById]);
+  const favChrono = useMemo(() => chronoNowNext(favSets, now), [favSets, now]);
 
   if (status === "loading") return <LoadingState />;
-  if (status === "error" || !model) {
+  if (status === "error" || !lineup) {
     return (
       <>
         <AppHeader eyebrow="FestPilot" title="Now & Next" />
@@ -85,195 +118,146 @@ export function NowScreen(): JSX.Element {
     );
   }
 
-  const { hero, tz } = model;
-  const eyebrow = hero ? `${shorten(model.festivalName)} · ${dayLabel(hero.startAtUtc, tz)}` : shorten(model.festivalName);
+  const festivalName = lineup.festival.name;
+  const tz = lineup.festival.timezone;
 
-  if (!hero) {
+  const source: HeroSource | null = planChrono.hero ? "plan" : favChrono.hero ? "favorites" : null;
+  const chrono = source === "plan" ? planChrono : source === "favorites" ? favChrono : null;
+  let vm: HeroVM | null = null;
+  if (source && chrono?.hero) {
+    const isLive = chrono.live != null;
+    const livePlan = source === "plan" && isLive;
+    vm = {
+      source,
+      isLive,
+      hero: chrono.hero,
+      next: chrono.next,
+      later: chrono.later,
+      progress: isLive ? clamp01((now - chrono.hero.startMs) / Math.max(1, chrono.hero.endMs - chrono.hero.startMs)) : 0,
+      leaveInMinutes: livePlan ? planNN?.leaveInMinutes ?? null : null,
+      walkMinutes: livePlan ? planNN?.walkMinutes ?? 0 : 0,
+    };
+  }
+
+  if (!vm) {
     return (
       <>
-        <AppHeader eyebrow={eyebrow} title="Now & Next" />
-        <EmptyState icon="calendar_month" title="Lineup coming soon" message="Sets will appear here as soon as the schedule is published." />
+        <AppHeader eyebrow={shorten(festivalName)} title="Now & Next" />
+        <NowEmpty
+          favCount={favorites.count}
+          hasTimetable={lineup.hasTimetable}
+          onBrowse={() => navigate("/lineup")}
+        />
       </>
     );
   }
 
-  // In-festival + a locked plan with a live set → the rich, plan-driven hero (LEAVE IN + walk).
-  if (model.isLive && nowNext?.live) {
-    return (
-      <>
-        <AppHeader eyebrow={eyebrow} title="Now & Next" />
-        <div className="screen">
-          <PlanHero nn={nowNext} tz={tz} dayKey={activeDay?.key ?? null} photoByKey={photoByKey} />
-          {nowNext.later.length > 0 && <LaterList rows={nowNext.later.slice(0, 6)} tz={tz} photoByKey={photoByKey} />}
-          <p className="src" style={{ textAlign: "center" }}>
-            From your locked plan · {model.totalCount} sets in the lineup
-          </p>
-        </div>
-      </>
-    );
-  }
-
-  const days_ = daysUntil(hero.startAtUtc);
+  const eyebrow = `${shorten(festivalName)} · ${dayLabel(new Date(vm.hero.startMs).toISOString(), tz)}`;
+  const dayKey = activeDay?.key ?? null;
+  const laterLabel = vm.source === "plan" ? "Later tonight" : "Up next";
+  const srcLine =
+    vm.source === "plan"
+      ? `From your locked plan · ${planSlots.length} set${planSlots.length === 1 ? "" : "s"}`
+      : `From your favorites · ${favSets.length} with set times`;
 
   return (
     <>
       <AppHeader eyebrow={eyebrow} title="Now & Next" />
       <div className="screen">
-        <section className="glass accent now-hero">
-          <div className="blob" />
-          <ArtistPhoto
-            src={hero.artists[0]?.imageUrl ?? null}
-            name={performanceName(hero)}
-            width={PHOTO_WIDTH.card}
-            className="now-hero-photo"
-          />
-          <div className="now-tag" style={{ color: model.isLive ? "var(--ok-ink)" : "var(--accent2)" }}>
-            {model.isLive ? <span className="live" /> : <span className="ms" style={{ fontSize: 14 }}>schedule</span>}
-            {model.isLive ? "NOW" : "NEXT UP"}
-          </div>
-          <div className="now-title poster">{performanceName(hero)}</div>
-          <div className="now-stage">
-            <span className="dot" style={{ background: stageColor(model.stageName(hero.stageId)) }} />
-            {model.stageName(hero.stageId) || "TBA"}
-            <span style={{ marginLeft: "auto", color: "var(--accent2)", fontWeight: 700 }}>{timeInZone(hero.startAtUtc, tz)}</span>
-          </div>
-
-          {!model.isLive && days_ > 0 && (
-            <div className="now-foot">
-              <div>
-                <div className="now-next-label">DOORS IN</div>
-                <div className="big-count">
-                  {days_}
-                  <span style={{ fontSize: 18 }}>{days_ === 1 ? "day" : "days"}</span>
-                </div>
-              </div>
-              {model.next && (
-                <div style={{ textAlign: "right" }}>
-                  <div className="now-next-label">then</div>
-                  <div className="now-next-name poster">{performanceName(model.next)}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {model.stageName(model.next.stageId)} · {timeInZone(model.next.startAtUtc, tz)}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {model.isLive && model.next && (
-            <div className="now-foot">
-              <div>
-                <div className="now-next-label">next up</div>
-                <div className="now-next-name poster">{performanceName(model.next)}</div>
-              </div>
-              <div style={{ textAlign: "right", fontSize: 11, color: "var(--muted)" }}>
-                {model.stageName(model.next.stageId)} · {timeInZone(model.next.startAtUtc, tz)}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {model.later.length > 0 && (
-          <section className="glass list-card">
-            <span className="label">Up next</span>
-            {model.later.map((p) => (
-              <div key={p.id} className="lineup-row">
-                <span className="t">{timeInZone(p.startAtUtc, tz)}</span>
-                <ArtistPhoto
-                  src={p.artists[0]?.imageUrl ?? null}
-                  name={performanceName(p)}
-                  width={PHOTO_WIDTH.avatar}
-                  className="row-photo"
-                />
-                <span className="dot" style={{ background: stageColor(model.stageName(p.stageId)) }} />
-                <span className="n">{performanceName(p)}</span>
-                <span className="s">{model.stageName(p.stageId)}</span>
-              </div>
-            ))}
-          </section>
-        )}
-
-        <p className="src" style={{ textAlign: "center" }}>
-          {model.totalCount} sets across the lineup · live from the API
-        </p>
+        <NowHero
+          vm={vm}
+          tz={tz}
+          now={now}
+          onRoute={() => navigate(`/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
+        />
+        {vm.later.length > 0 && <NowList rows={vm.later} tz={tz} label={laterLabel} />}
+        <p className="src" style={{ textAlign: "center" }}>{srcLine}</p>
       </div>
     </>
   );
 }
 
-function PlanHero({
-  nn,
+function NowHero({
+  vm,
   tz,
-  dayKey,
-  photoByKey,
+  now,
+  onRoute,
 }: {
-  nn: NonNullable<ReturnType<typeof buildNowNext>>;
+  vm: HeroVM;
   tz: string;
-  dayKey: string | null;
-  photoByKey: Map<string, string | null>;
+  now: number;
+  onRoute: () => void;
 }): JSX.Element {
-  const navigate = useNavigate();
-  const live = nn.live!;
-  const leave = nn.leaveInMinutes;
+  const { hero, next, isLive } = vm;
+  const heroIso = new Date(hero.startMs).toISOString();
+  const daysAhead = daysUntil(heroIso);
+  const startsInMin = Math.max(0, Math.round((hero.startMs - now) / 60_000));
+
   return (
     <section className="glass accent now-hero">
       <div className="blob" />
-      <ArtistPhoto
-        src={photoByKey.get(live.actKey) ?? null}
-        name={live.label}
-        width={PHOTO_WIDTH.card}
-        className="now-hero-photo"
-      />
-      <div className="now-tag" style={{ color: "var(--ok-ink)" }}>
-        <span className="live" />
-        NOW
+      <ArtistPhoto src={hero.imageUrl} name={hero.label} width={PHOTO_WIDTH.card} className="now-hero-photo" />
+      <div className="now-tag" style={{ color: isLive ? "var(--ok-ink)" : "var(--accent2)" }}>
+        {isLive ? <span className="live" /> : <span className="ms" style={{ fontSize: 14 }}>schedule</span>}
+        {isLive ? "NOW" : "NEXT UP"}
       </div>
-      <div className="now-title poster">{live.label}</div>
+      <div className="now-title poster">{hero.label}</div>
       <div className="now-stage">
-        <span className="dot" style={{ background: stageColor(live.stageName) }} />
-        {live.stageName || "TBA"}
+        <span className="dot" style={{ background: stageColor(hero.stageName) }} />
+        {hero.stageName || "TBA"}
         <span style={{ marginLeft: "auto", color: "var(--accent2)", fontWeight: 700 }}>
-          {timeInZone(new Date(live.startMs).toISOString(), tz)}
+          {timeInZone(heroIso, tz)}
         </span>
       </div>
 
       <div className="now-foot">
-        {nn.next && leave != null ? (
-          <div>
-            <div className="now-next-label">{leave <= 0 ? "LEAVE" : "LEAVE IN"}</div>
-            <div className="big-count">
-              {leave <= 0 ? "now" : leave}
-              {leave > 0 && <span style={{ fontSize: 24 }}>min</span>}
+        {isLive ? (
+          vm.source === "plan" && vm.leaveInMinutes != null && next ? (
+            <div>
+              <div className="now-next-label">{vm.leaveInMinutes <= 0 ? "LEAVE" : "LEAVE IN"}</div>
+              <div className="big-count">
+                {vm.leaveInMinutes <= 0 ? "now" : vm.leaveInMinutes}
+                {vm.leaveInMinutes > 0 && <span style={{ fontSize: 24 }}>min</span>}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <div className="now-next-label">{next ? "on now" : "enjoy"}</div>
+              <div className="now-next-name poster">{next ? "Live right now" : "Last on your list"}</div>
+            </div>
+          )
         ) : (
           <div>
-            <div className="now-next-label">enjoy</div>
-            <div className="now-next-name poster">Last set of your night</div>
+            <div className="now-next-label">{daysAhead > 0 ? "DOORS IN" : "STARTS IN"}</div>
+            <div className="big-count">
+              {daysAhead > 0 ? daysAhead : startsInMin}
+              <span style={{ fontSize: daysAhead > 0 ? 18 : 24 }}>
+                {daysAhead > 0 ? (daysAhead === 1 ? "day" : "days") : "min"}
+              </span>
+            </div>
           </div>
         )}
-        {nn.next && (
+        {next && (
           <div style={{ textAlign: "right" }}>
-            <div className="now-next-label">next up</div>
-            <div className="now-next-name poster">{nn.next.label}</div>
+            <div className="now-next-label">{isLive && vm.leaveInMinutes != null ? "next up" : "then"}</div>
+            <div className="now-next-name poster">{next.label}</div>
             <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-              {nn.next.stageName} · {timeInZone(new Date(nn.next.startMs).toISOString(), tz)}
+              {next.stageName} · {timeInZone(new Date(next.startMs).toISOString(), tz)}
             </div>
           </div>
         )}
       </div>
 
-      <div className="now-progress">
-        <div className="now-progress-fill" style={{ width: `${Math.round(nn.progress * 100)}%` }} />
-      </div>
+      {isLive && (
+        <div className="now-progress">
+          <div className="now-progress-fill" style={{ width: `${Math.round(vm.progress * 100)}%` }} />
+        </div>
+      )}
 
-      {nn.next && nn.walkMinutes > 0 && (
-        <button
-          type="button"
-          className="now-walk"
-          onClick={() => navigate(`/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
-        >
+      {isLive && vm.source === "plan" && next && vm.walkMinutes > 0 && (
+        <button type="button" className="now-walk" onClick={onRoute}>
           <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
-          {nn.walkMinutes} min walk to {nn.next.stageName}
+          {vm.walkMinutes} min walk to {next.stageName}
           <span className="ms" style={{ fontSize: 15, marginLeft: "auto" }}>arrow_forward</span>
         </button>
       )}
@@ -281,40 +265,64 @@ function PlanHero({
   );
 }
 
-function LaterList({
-  rows,
-  tz,
-  photoByKey,
-}: {
-  rows: PlanSlot[];
-  tz: string;
-  photoByKey: Map<string, string | null>;
-}): JSX.Element {
+function NowList({ rows, tz, label }: { rows: HomeSet[]; tz: string; label: string }): JSX.Element {
   return (
     <section className="glass list-card">
-      <span className="label">Later tonight</span>
-      {rows.map((slot) => (
-        <div key={slot.setId} className="lineup-row">
-          <span className="t">{timeInZone(new Date(slot.startMs).toISOString(), tz)}</span>
-          <ArtistPhoto
-            src={photoByKey.get(slot.actKey) ?? null}
-            name={slot.label}
-            width={PHOTO_WIDTH.avatar}
-            className="row-photo"
-          />
-          <span className="dot" style={{ background: stageColor(slot.stageName) }} />
-          <span className="n">{slot.label}</span>
-          <span className="s">{slot.stageName}</span>
+      <span className="label">{label}</span>
+      {rows.map((r) => (
+        <div key={`${r.actKey}-${r.startMs}`} className="lineup-row">
+          <span className="t">{timeInZone(new Date(r.startMs).toISOString(), tz)}</span>
+          <ArtistPhoto src={r.imageUrl} name={r.label} width={PHOTO_WIDTH.avatar} className="row-photo" />
+          <span className="dot" style={{ background: stageColor(r.stageName) }} />
+          <span className="n">{r.label}</span>
+          <span className="s">{r.stageName}</span>
         </div>
       ))}
     </section>
   );
 }
 
-function performanceName(p: PerformanceDto): string {
-  if (p.name && p.name.trim()) return p.name;
-  if (p.artists.length > 0) return p.artists.map((a) => a.name).join(", ");
-  return "TBA";
+function NowEmpty({
+  favCount,
+  hasTimetable,
+  onBrowse,
+}: {
+  favCount: number;
+  hasTimetable: boolean;
+  onBrowse: () => void;
+}): JSX.Element {
+  if (favCount === 0) {
+    return (
+      <EmptyState
+        icon="favorite"
+        title="Pick the acts you can't miss"
+        message="Favorite artists and FestPilot lines up what's on now and next — and when to leave to make it."
+        action={{ label: "Browse the lineup", icon: "queue_music", onClick: onBrowse }}
+      />
+    );
+  }
+  if (!hasTimetable) {
+    return (
+      <EmptyState
+        icon="schedule"
+        title="Set times aren't out yet"
+        message={`Your ${favCount} favorite${favCount === 1 ? "" : "s"} will appear here the moment the schedule drops.`}
+        action={{ label: "Review your favorites", icon: "favorite", onClick: onBrowse }}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      icon="event_available"
+      title="Nothing coming up"
+      message="You've seen all your picks for now — browse the lineup to add a few more."
+      action={{ label: "Open the lineup", icon: "queue_music", onClick: onBrowse }}
+    />
+  );
+}
+
+function clamp01(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
 }
 
 function shorten(name: string): string {
