@@ -7,12 +7,14 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { DOT_COLORS, initialsOf, useIdentity } from "../../data/identity";
+import { useProfile } from "../../data/localStore";
 
 export function ProfileScreen(): JSX.Element {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/squad";
   const { user, ensure, updateProfile, loading } = useIdentity();
+  const { profile } = useProfile();
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(DOT_COLORS[0]);
 
@@ -20,10 +22,12 @@ export function ProfileScreen(): JSX.Element {
     if (!user) void ensure();
   }, [user, ensure]);
 
+  // Prefill from the server profile, falling back to the name captured at onboarding (DEC-060).
   useEffect(() => {
     if (user?.displayName) setName(user.displayName);
+    else if (profile?.name) setName(profile.name);
     if (user?.avatarColor) setColor(user.avatarColor);
-  }, [user]);
+  }, [user, profile]);
 
   const canSave = name.trim().length >= 2 && !loading;
 

@@ -8,6 +8,8 @@ import type { UserDto } from "./dto";
 
 export interface ProfileInput {
   displayName?: string | null;
+  /** Optional email (DEC-060) — PII; stored for admin metrics, never returned in the shared UserDto. */
+  email?: string | null;
   avatarColor?: string | null;
   avatarUrl?: string | null;
   locale?: string | null;
@@ -47,7 +49,7 @@ async function findByUid(db: D1Database, firebaseUid: string): Promise<UserRow |
 
 function hasProfileEdit(profile: ProfileInput | undefined): profile is ProfileInput {
   if (!profile) return false;
-  return [profile.displayName, profile.avatarColor, profile.avatarUrl, profile.locale].some(
+  return [profile.displayName, profile.email, profile.avatarColor, profile.avatarUrl, profile.locale].some(
     (v) => v != null
   );
 }
@@ -55,12 +57,15 @@ function hasProfileEdit(profile: ProfileInput | undefined): profile is ProfileIn
 /**
  * Resolve the `app_user` for an identity, creating it on first sight (anonymous-first). When a
  * profile is passed, the provided fields are applied (COALESCE — absent fields keep their value).
+ * `country` (from `CF-IPCountry`) + `last_seen_utc` are refreshed on every call for admin metrics
+ * (DEC-060/057c), never overwriting a known country with null.
  */
 export async function ensureUser(
   db: D1Database,
   identity: AuthIdentity,
   nowIso: string,
-  profile?: ProfileInput
+  profile?: ProfileInput,
+  country?: string | null
 ): Promise<UserDto> {
   const existing = await findByUid(db, identity.firebaseUid);
 
@@ -69,8 +74,8 @@ export async function ensureUser(
     await db
       .prepare(
         `INSERT INTO app_user
-           (id, firebase_uid, auth_provider, is_anonymous, display_name, avatar_url, avatar_color, locale, created_at_utc)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+           (id, firebase_uid, auth_provider, is_anonymous, display_name, email, avatar_url, avatar_color, locale, country, last_seen_utc, created_at_utc)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         id,
@@ -78,9 +83,12 @@ export async function ensureUser(
         identity.provider,
         identity.isAnonymous ? 1 : 0,
         profile?.displayName ?? null,
+        profile?.email ?? null,
         profile?.avatarUrl ?? null,
         profile?.avatarColor ?? null,
         profile?.locale ?? null,
+        country ?? null,
+        nowIso,
         nowIso
       )
       .run();
@@ -92,22 +100,33 @@ export async function ensureUser(
       .prepare(
         `UPDATE app_user SET
            display_name = COALESCE(?, display_name),
+           email        = COALESCE(?, email),
            avatar_url   = COALESCE(?, avatar_url),
            avatar_color = COALESCE(?, avatar_color),
-           locale       = COALESCE(?, locale)
+           locale       = COALESCE(?, locale),
+           country      = COALESCE(?, country),
+           last_seen_utc = ?
          WHERE firebase_uid = ?`
       )
       .bind(
         profile.displayName ?? null,
+        profile.email ?? null,
         profile.avatarUrl ?? null,
         profile.avatarColor ?? null,
         profile.locale ?? null,
+        country ?? null,
+        nowIso,
         identity.firebaseUid
       )
       .run();
     return (await findByUid(db, identity.firebaseUid).then((r) => r && toDto(r)))!;
   }
 
+  // No profile edit: still refresh the metrics fields (last-seen + country) on every touch.
+  await db
+    .prepare(`UPDATE app_user SET last_seen_utc = ?, country = COALESCE(?, country) WHERE firebase_uid = ?`)
+    .bind(nowIso, country ?? null, identity.firebaseUid)
+    .run();
   return toDto(existing);
 }
 

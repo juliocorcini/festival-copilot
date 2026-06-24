@@ -11,6 +11,17 @@ test.describe("Phase 2 — onboarding + lineup favorites", () => {
 
     // Gated into onboarding on first run.
     await expect(page).toHaveURL(/onboarding/);
+
+    // Step 0 — lightweight identity (DEC-060): name required, email optional. Leaving email empty
+    // must still proceed (the AC), and the "Let's go" button is gated on a valid name.
+    await expect(page.locator(".ob-head h1")).toContainText("What should we call you", { timeout: 20_000 });
+    const letsGo = page.getByRole("button", { name: "Let's go" });
+    await expect(letsGo).toBeDisabled();
+    await page.locator("#ob-name").fill("Julio");
+    await expect(letsGo).toBeEnabled();
+    await letsGo.click();
+
+    // Step 1 — festival.
     await expect(page.locator(".ob-head h1")).toContainText("Which festival", { timeout: 20_000 });
     await page.screenshot({ path: "e2e/screenshots/phase2-onboarding-festival.png" });
     await page.getByRole("button", { name: "Continue" }).click();

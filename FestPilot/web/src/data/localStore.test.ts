@@ -10,6 +10,7 @@ import {
   saveStore,
   setOnboarding,
   setPlan,
+  setProfile,
   STORE_KEY,
   toggleFavorite,
   type StoreShape,
@@ -44,6 +45,24 @@ describe("favorites reducers", () => {
     store = toggleFavorite(store, "tml", "a");
     store = clearFavorites(store, "tml");
     expect(favoritesOf(store, "tml")).toEqual([]);
+  });
+});
+
+describe("identity profile reducer (DEC-060)", () => {
+  it("trims the name and keeps a valid email", () => {
+    const store = setProfile(EMPTY_STORE, { name: "  Julio  ", email: " j@x.com " });
+    expect(store.profile).toEqual({ name: "Julio", email: "j@x.com" });
+  });
+
+  it("drops an empty/whitespace email (email is optional)", () => {
+    expect(setProfile(EMPTY_STORE, { name: "Julio", email: "   " }).profile).toEqual({ name: "Julio" });
+    expect(setProfile(EMPTY_STORE, { name: "Julio" }).profile).toEqual({ name: "Julio" });
+  });
+
+  it("round-trips the profile through localStorage", () => {
+    localStorage.clear();
+    saveStore(setProfile(EMPTY_STORE, { name: "Julio", email: "j@x.com" }));
+    expect(loadStore().profile).toEqual({ name: "Julio", email: "j@x.com" });
   });
 });
 

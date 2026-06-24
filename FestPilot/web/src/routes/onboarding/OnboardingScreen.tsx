@@ -6,8 +6,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PerformanceDto } from "../../data/types";
 import { api } from "../../data/api";
-import { useFavorites, useOnboarding } from "../../data/localStore";
+import { useFavorites, useOnboarding, useProfile } from "../../data/localStore";
+import { useIdentity } from "../../data/identity";
 import { useLineup } from "../../data/useLineup";
+import { isValidEmail } from "../../lib/validate";
 import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
 import { uniqueActs, type Act } from "../../domain/lineup";
 import { daysForWeekends, weekendDates, type DayInfo } from "../../lib/festival";
@@ -20,6 +22,8 @@ export function OnboardingScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const navigate = useNavigate();
   const onboarding = useOnboarding();
+  const { profile, save: saveProfile } = useProfile();
+  const identity = useIdentity();
   const festivalId = lineup?.festival.id;
   const favorites = useFavorites(festivalId);
 
@@ -65,6 +69,25 @@ export function OnboardingScreen(): JSX.Element {
     });
     return uniqueActs(filtered, { dayOf });
   }, [lineup, weekendIds, activeDayKeys, dayOf]);
+
+  // First run: capture a lightweight identity (name required, email optional) before the picker
+  // (DEC-060). Persist locally and best-effort sync to the server for admin metrics — never block
+  // the user on the network. The lineup keeps loading in the background meanwhile.
+  const saveIdentity = (name: string, email: string): void => {
+    saveProfile({ name, ...(email ? { email } : {}) });
+    void identity
+      .ensure()
+      .then(() => identity.updateProfile({ displayName: name, ...(email ? { email } : {}) }))
+      .catch(() => undefined);
+  };
+
+  if (!profile?.name) {
+    return (
+      <div className="ob">
+        <StepIdentity onDone={saveIdentity} />
+      </div>
+    );
+  }
 
   if (status === "loading") return <div className="ob"><LoadingState /></div>;
   if (status === "error" || !lineup) {
@@ -173,6 +196,66 @@ function dayTag(act: Act, days: DayInfo[]): string {
   if (labels.length === 0) return "";
   if (labels.length === 1) return labels[0]!;
   return `plays ${labels.join(" + ")}`;
+}
+
+function StepIdentity({ onDone }: { onDone: (name: string, email: string) => void }): JSX.Element {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const emailOk = email.trim() === "" || isValidEmail(email);
+  const canStart = name.trim().length >= 2 && emailOk;
+
+  const submit = (): void => {
+    if (canStart) onDone(name.trim(), email.trim());
+  };
+
+  return (
+    <>
+      <div className="ob-body">
+        <div className="ob-head ob-id-head">
+          <div className="label">Welcome to FestPilot</div>
+          <h1>What should we call you?</h1>
+          <p>Your name is how your squad sees you — on the plan and the map. Change it anytime.</p>
+        </div>
+
+        <label className="label" htmlFor="ob-name">Your name</label>
+        <input
+          id="ob-name"
+          className="field"
+          value={name}
+          maxLength={40}
+          placeholder="e.g. Julio"
+          autoComplete="given-name"
+          autoFocus
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+
+        <label className="label ob-id-emaillabel" htmlFor="ob-email">
+          Email <span className="ob-id-opt">optional</span>
+        </label>
+        <input
+          id="ob-email"
+          className="field"
+          type="email"
+          inputMode="email"
+          value={email}
+          maxLength={120}
+          placeholder="you@email.com"
+          autoComplete="email"
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+        {!emailOk && <div className="ob-suggest-err">That email doesn't look right.</div>}
+        <p className="ob-id-note">
+          Add it to save your plan across devices and get lineup alerts. No password needed — skip it
+          if you'd rather not.
+        </p>
+      </div>
+      <div className="ob-foot">
+        <button className="btn btn-primary" onClick={submit} disabled={!canStart}>Let's go</button>
+      </div>
+    </>
+  );
 }
 
 function StepFestival({ name, onNext }: { name: string; onNext: () => void }): JSX.Element {

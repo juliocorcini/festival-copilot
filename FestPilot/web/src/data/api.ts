@@ -95,6 +95,8 @@ async function authedJson<T>(path: string, opts: RequestOpts = {}): Promise<T> {
 
 export interface ProfileInput {
   displayName?: string;
+  /** Optional email (DEC-060) — stored server-side for admin metrics; never returned in UserDto. */
+  email?: string;
   avatarColor?: string;
   locale?: string;
 }

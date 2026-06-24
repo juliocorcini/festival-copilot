@@ -31,14 +31,25 @@ export interface PersistedPlan {
   lockedAt: number;
 }
 
+/**
+ * Lightweight identity captured at first run (DEC-060): name (required) + email (optional). Lives
+ * on-device so the squad name and a future real sign-in prefill from it; the server copy (for admin
+ * metrics) is sent separately via `/api/me`.
+ */
+export interface ProfileState {
+  name: string;
+  email?: string;
+}
+
 export interface StoreShape {
   v: typeof VERSION;
+  profile: ProfileState | null;
   onboarding: OnboardingState | null;
   favorites: Record<string, string[]>;
   plans: Record<string, PersistedPlan>;
 }
 
-export const EMPTY_STORE: StoreShape = { v: VERSION, onboarding: null, favorites: {}, plans: {} };
+export const EMPTY_STORE: StoreShape = { v: VERSION, profile: null, onboarding: null, favorites: {}, plans: {} };
 
 export function planKey(festivalId: string, dayKey: string): string {
   return `${festivalId}:${dayKey}`;
@@ -63,6 +74,13 @@ export function clearFavorites(store: StoreShape, festivalId: string): StoreShap
 
 export function setOnboarding(store: StoreShape, onboarding: OnboardingState | null): StoreShape {
   return { ...store, onboarding };
+}
+
+/** Persist the local identity (DEC-060). Name is trimmed; an empty email is dropped (optional). */
+export function setProfile(store: StoreShape, profile: ProfileState): StoreShape {
+  const name = profile.name.trim();
+  const email = profile.email?.trim();
+  return { ...store, profile: { name, ...(email ? { email } : {}) } };
 }
 
 /** Mark the current lineup as "seen" (R4.3) so the revisit-favorites prompt clears until acts change. */
@@ -92,6 +110,7 @@ export function loadStore(): StoreShape {
     if (!parsed || parsed.v !== VERSION) return EMPTY_STORE;
     return {
       v: VERSION,
+      profile: parsed.profile ?? null,
       onboarding: parsed.onboarding ?? null,
       favorites: parsed.favorites ?? {},
       plans: parsed.plans ?? {},
@@ -129,6 +148,17 @@ function useStore(): [StoreShape, (mutate: (store: StoreShape) => StoreShape) =>
     setState(next);
   }, []);
   return [state, update];
+}
+
+export function useProfile(): {
+  profile: ProfileState | null;
+  save: (profile: ProfileState) => void;
+} {
+  const [state, update] = useStore();
+  return {
+    profile: state.profile,
+    save: (next) => update((store) => setProfile(store, next)),
+  };
 }
 
 export function useOnboarding(): {
