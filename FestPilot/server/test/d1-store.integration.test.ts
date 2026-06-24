@@ -99,6 +99,56 @@ describe("D1 integration (real migration applied via sql.js)", () => {
     db.close();
   });
 
+  it("stores and serves artist photos from artists[].image, leaving photoless artists null (DEC-061)", async () => {
+    const db = await createSqliteDb(schemaSql);
+    const store = new D1LineupStore(makeD1(db), ids);
+    const PHOTO = "https://cdn.test/artist-photo.jpg";
+
+    // The captured spike fixtures predate the artists[].image field. Inject a photo onto one real
+    // artist (every W1 occurrence, so first-seen dedup keeps it) to prove the full pipeline carries it.
+    let targetId = "";
+    const run = await ingest({
+      fetcher: new FixtureLineupFetcher(
+        buildFixturePayload({
+          weekendTransform: (name, text) => {
+            if (name !== "W1") return text;
+            const file = JSON.parse(text) as SourceWeekendFile;
+            const realArtist = file.performances
+              .flatMap((p) => p.artists)
+              .find((a) => a && !/more to be announced/i.test(a.name));
+            targetId = realArtist!.id;
+            for (const p of file.performances) {
+              for (const a of p.artists) if (a.id === targetId) a.image = PHOTO;
+            }
+            return JSON.stringify(file);
+          },
+        })
+      ),
+      store,
+      pageUrl: "https://example.test/line-up",
+      festival,
+      now: fixedNow,
+    });
+    expect(run.status).toBe("updated");
+
+    const d1 = makeD1(db);
+    const stored = await d1
+      .prepare("SELECT image_url FROM artist WHERE source_artist_id = ?")
+      .bind(targetId)
+      .first<{ image_url: string | null }>();
+    expect(stored!.image_url).toBe(PHOTO);
+
+    // Photoless artists are NOT fabricated — they stay null.
+    expect(count(db, "SELECT count(*) FROM artist WHERE image_url IS NULL")).toBeGreaterThan(0);
+
+    // The read API serves the photo as imageUrl on the act.
+    const lineup = await getLineup(d1, run.festivalId);
+    const withPhoto = lineup!.performances.flatMap((p) => p.artists).filter((a) => a.imageUrl === PHOTO);
+    expect(withPhoto.length).toBeGreaterThan(0);
+    expect(lineup!.performances.flatMap((p) => p.artists).some((a) => a.imageUrl === null)).toBe(true);
+    db.close();
+  });
+
   it("marks removed acts inactive, logs changes, and bumps the revision on a real diff", async () => {
     const db = await createSqliteDb(schemaSql);
     const store = new D1LineupStore(makeD1(db), ids);

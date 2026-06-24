@@ -12,7 +12,7 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** R1 in progress — **R1.1 ✅** (festival-day blocks) · **R1.2 ✅** (clash anchor-overlap) → next **R1.3** artist photo re-ingest.
+- **Gate:** R1 in progress — **R1.1 ✅ · R1.2 ✅ · R1.3 code ✅** → gate-close R1 next (live re-ingest + deploy + bump).
 - **Baseline (2026-06-24, pre-change):** typecheck clean · **server 121 + web 147 unit** pass · build OK
   (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121). Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -32,6 +32,15 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R1.3 ✅ code (2026-06-24) — artist photos pipeline verified + regression test (DEC-061).** Confirmed the
+  full path already carries the CDN photo end to end — `normalize.ts` keeps `a.image` → `store.ts` upserts
+  `artist.image_url` with `ON CONFLICT(source_artist_id) DO UPDATE SET image_url = excluded.image_url` (so a
+  re-ingest **backfills** photos onto rows imported before the field existed, idempotently) → `repo.ts`
+  selects `a.image_url` and serves it as `imageUrl`. **No production code change, no new scraper/endpoint
+  (DEC-009).** The spike HAR fixtures predate the field, so added a `sql.js` integration test that injects a
+  photo onto one real W1 artist (every occurrence, so first-seen dedup keeps it) and asserts `image_url`
+  stored + served as `imageUrl`, with photoless artists staying **null** (no fabrication). **server 122 + web
+  161 unit pass · typecheck · build OK.** Live re-ingest happens at gate-close R1 (deploy + verify on the API).
 - **R1.2 ✅ (2026-06-24) — Lock-in clash = anchor-overlap, not transitive chain (headline bug).** New
   `intervals.ts → clashAt(sets, fromEnd)`: anchors on the earliest unresolved set and returns it plus
   **only its true overlaps** (`overlaps(anchor, x)`), sorted by start — no transitive chaining. Used in
