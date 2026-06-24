@@ -1137,3 +1137,40 @@ a { color: inherit; text-decoration: none; }
 .meet-ended-orb.danger { background: rgba(224, 86, 59, 0.12); border-color: rgba(224, 86, 59, 0.4); }
 .meet-ended-orb.danger .ms { color: var(--danger-ink); }
 .meet-ended-body { font-size: 14px; color: var(--muted); max-width: 280px; }
+
+/* About + What's New (settings/about). */
+.about-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 24px 18px 20px; gap: 8px; }
+.about-orb { width: 72px; height: 72px; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+  background: radial-gradient(circle at 50% 35%, rgba(245, 166, 35, 0.3), rgba(245, 166, 35, 0.06)); border: 1px solid rgba(245, 166, 35, 0.45); }
+.about-orb .ms { font-size: 38px; color: var(--accent2); }
+.about-name { font-size: 28px; font-weight: 700; }
+.about-tagline { font-size: 13px; color: var(--muted); max-width: 260px; }
+.about-version { margin-top: 6px; color: var(--accent2); border-color: rgba(245, 166, 35, 0.4); background: rgba(245, 166, 35, 0.12); }
+.about-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.about-blurb { font-size: 13px; line-height: 1.5; color: var(--ink); }
+.about-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--border); }
+.about-meta .ms { font-size: 17px; color: var(--accent2); }
+.about-meta b { color: var(--ink); }
+.about-section-label { margin: 18px 2px 2px; }
+
+.changelog { display: flex; flex-direction: column; gap: 12px; position: relative; }
+.changelog-item { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.changelog-head { display: flex; align-items: flex-start; gap: 12px; }
+.changelog-icon { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(245, 166, 35, 0.12); border: 1px solid rgba(245, 166, 35, 0.28); }
+.changelog-icon .ms { font-size: 21px; color: var(--accent2); }
+.changelog-headmain { min-width: 0; flex: 1; }
+.changelog-titlerow { display: flex; align-items: center; gap: 8px; }
+.changelog-version { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; color: var(--muted); }
+.changelog-current { color: #0F0D09; border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--accent2)); font-size: 10px; }
+.changelog-title { font-size: 16px; font-weight: 700; line-height: 1.1; margin-top: 2px; }
+.changelog-date { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.changelog-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.changelog-list li { font-size: 13px; line-height: 1.45; color: var(--ink); }
+.changelog-test { border-top: 1px solid var(--border); padding-top: 8px; }
+.changelog-test > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 12px; font-weight: 800; color: var(--muted); }
+.changelog-test > summary::-webkit-details-marker { display: none; }
+.changelog-test > summary .ms { font-size: 15px; color: var(--accent2); }
+.changelog-test[open] > summary { color: var(--accent2); }
+.changelog-testlist { margin: 8px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.changelog-testlist li { font-size: 12px; line-height: 1.45; color: var(--muted); }

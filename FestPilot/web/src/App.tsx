@@ -32,6 +32,7 @@ import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
 import { OfflineScreen } from "./routes/settings/OfflineScreen";
+import { AboutScreen } from "./routes/settings/AboutScreen";
 
 export function App(): JSX.Element {
   return (
@@ -73,6 +74,7 @@ export function App(): JSX.Element {
             <Route path="settings/appearance" element={<AppearanceScreen />} />
             <Route path="settings/offline" element={<OfflineScreen />} />
             <Route path="settings/privacy" element={<LocationPrivacyScreen />} />
+            <Route path="settings/about" element={<AboutScreen />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

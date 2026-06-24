@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useAppearance, useLanguage } from "../../app/settings";
-
-const APP_VERSION = "0.4.0";
+import { APP_VERSION } from "../../data/changelog";
 
 const APPEARANCE_LABEL: Record<string, string> = { auto: "Auto", day: "Day", night: "Night" };
 const LANGUAGE_LABEL: Record<string, string> = { en: "English", pt: "Português" };
@@ -51,6 +50,17 @@ export function SettingsScreen(): JSX.Element {
             <span className="row-main">
               <span className="row-title">Location &amp; privacy</span>
               <span className="row-sub">Master switch · default mode · pause all</span>
+            </span>
+            <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
+          </button>
+        </section>
+
+        <section className="glass" style={{ overflow: "hidden" }}>
+          <button className="row" style={rowButton} onClick={() => navigate("/settings/about")}>
+            <span className="ms">info</span>
+            <span className="row-main">
+              <span className="row-title">About &amp; what's new</span>
+              <span className="row-sub">Version, the story, and the update history</span>
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
           </button>
