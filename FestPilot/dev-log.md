@@ -12,10 +12,12 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R3 (P0 perf) CLOSED ✅** — R3.1 shared lineup cache (stale-while-revalidate via `useSyncExternalStore`):
-  one in-memory entry, concurrent mounts share one fetch, tab switch served from memory (no refetch/reparse).
-  Next: **R4 (P0 nav/data-states)**.
-- **Tests now:** typecheck clean · **server 122 + web 194 unit** pass · e2e map + meeting-points green · build OK · **app v0.8.2 (deployed Production)**.
+- **Gate:** **R4 (P0 nav/data-states) CLOSED ✅ — ALL P0 DONE (R0–R4).** Honest data-state from the API
+  (`hasLineup`/`hasTimetable`, DEC-052) · discoverable Timetable⇆Lineup switch defaulting to Lineup when no schedule
+  (DEC-049) · dynamic days + revisit-favorites banner on lineup changes (DEC-048/052) · suggest-a-festival capture +
+  admin inbox (DEC-055). Next: **R5 (P1 favorites)**.
+- **Tests now:** typecheck clean · **server 132 + web 204 unit** pass · **e2e 26/26 green** (incl. new Timetable⇆Lineup
+  switch + onboarding) · build OK · **app v0.9.0 (deployed Production)** · Worker deployed (`b66bb712`).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -25,7 +27,7 @@
 - [x] **R1** (P0 data/logic) — festival-day blocks (DEC-048) · clash anchor-overlap (headline) · artist photo re-ingest (DEC-061). **CLOSED 2026-06-24.**
 - [x] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom. **CLOSED 2026-06-24 (v0.8.2).**
 - [x] **R3** (P0 perf) — shared lineup cache (stale-while-revalidate; instant tab switch). **CLOSED 2026-06-24.**
-- [ ] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days · suggest-a-festival (DEC-055).
+- [x] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days + revisit-favorites · suggest-a-festival (DEC-055). **CLOSED 2026-06-24 (v0.9.0). ← all P0 (R0–R4) done.**
 - [ ] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere.
 - [ ] **R6** (P1 now/next) — plan-then-favorites, never arbitrary.
 - [ ] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar.
@@ -35,6 +37,47 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R4 GATE CLOSED ✅ (2026-06-24) — deployed + live. ALL P0 (R0–R4) COMPLETE.** Four milestones (R4.1 backend
+  data-state, R4.2 discoverable Lineup, R4.3 revisit-favorites, R4.4 suggest-a-festival). User-visible, so bumped
+  **v0.8.2 → v0.9.0** (`changelog.ts` single source + `package.json`) with a "Find the full lineup — and never miss a
+  change" note. Cumulative **server 132 + web 204 unit** green, **e2e 26/26** green (incl. new Timetable⇆Lineup switch
+  and the onboarding walk with the new suggest affordance), typecheck + build clean. **Remote D1:** migration **0009**
+  applied (`festival_suggestion`). **Deployed:** Worker → `b66bb712` (new POST `/api/festival-suggestions` +
+  guarded admin inbox; smoke: POST→`{ok,count:1}`, short-name→400, admin→401, lineup `hasLineup/hasTimetable=true`,
+  813 perfs) · Pages → Production `master` (`festpilot.pages.dev` serves `index-BlIoikkP.js`). Brain sync: dev-log +
+  decision-log (DEC-048/049/052/055 → IMPLEMENTED) + project-status. → **R5 (P1 favorites)**.
+- **R4.4 ✅ (2026-06-24) — suggest a festival, capture + admin inbox (DEC-055).** Onboarding step 1 had a dead
+  "More festivals — coming soon" button. Replaced it with a real **"Suggest a festival"** affordance: tapping it reveals
+  an inline input → **POST `/api/festival-suggestions`** (public, no login; the anon bearer rides only for analytics).
+  Server `api/festivalSuggestions.ts` **normalizes** the name (trim/lower/collapse-space), **dedupes** on it via
+  `INSERT … ON CONFLICT(name_normalized) DO UPDATE count=count+1`, and records the optional `suggested_by`. New
+  **migration 0009** `festival_suggestion` (unique normalized name, count, status, count-desc index). Guarded
+  **GET `/admin/festival-suggestions`** returns the inbox ranked by demand (wires R11.3 later). Validation: name 2–80
+  chars → 400 otherwise. **Tests +5** (`festival-suggestions`: normalize · new=count1 · case/space dedupe bumps & keeps
+  first spelling · ranked by count desc · records caller id). **server 132 unit · typecheck · build OK.**
+- **R4.3 ✅ (2026-06-24) — dynamic days + revisit-favorites on data updates (DEC-048/052).** Lineups change after a user
+  has favorited: new acts appear, favorited acts get cut. Pure `domain/lineupDiff.ts` `lineupChangesSince(seen, current,
+  favorites)` → `{addedActKeys, removedFavoriteKeys}`; `OnboardingState` gains **`seenActKeys`** (baseline captured at
+  onboarding finish) + an **`acknowledgeLineup`** reducer. New `ui/LineupUpdateBanner.tsx` (mounted on Timetable +
+  Lineup) shows a dismissible prompt only when there's a real delta — "N newly added", "M of your picks were removed" —
+  with **Review** (→ favorites) and **Dismiss** (acknowledges = re-baselines `seenActKeys`). Day pills already derive
+  from the live lineup, so dynamic days fall out for free; this closes the "silent drift" half. **Tests +5**
+  (`lineupDiff`: added-only · removed-favorite-only · both · none · re-ack clears). **web 199 unit.**
+- **R4.2 ✅ (2026-06-24) — discoverable Lineup + default to it when no timetable (DEC-049).** The full lineup was hidden
+  behind a tiny icon. New pure `domain/dataState.ts` maps `{hasLineup,hasTimetable}` → **`nothing` / `lineup_only` /
+  `timetable`**, plus `showsViewSwitch`. New `ui/ViewSwitch.tsx` segmented **Timetable ⇆ Lineup** control. **Timetable**
+  now **redirects to `/lineup`** when `lineup_only`, shows an honest **empty state** when `nothing`, and carries the
+  switch in a compact top row (day pills below). **Lineup** shows the switch only when a timetable exists, a
+  "timetable isn't out yet" note when `lineup_only`, and the same empty state when `nothing`. **Tests +5** (`dataState`
+  all transitions + switch visibility) and a new e2e "reaches the Lineup in one tap via the switch". **web 194 unit.**
+- **R4.1 ✅ (2026-06-24) — honest data-state from the API (DEC-052).** Backend now tells the client which of the 3
+  states a festival is in. New **migration 0008** adds `festival.with_timetable` (default 1; persisted through
+  `normalize.ts`→`store.ts` from the source `config.withTimetable`). `repo.getLineup` computes, over the **whole
+  festival** (not the filtered slice): **`hasLineup`** = any active non-placeholder act with artists; **`hasTimetable`**
+  = `with_timetable` AND any active non-placeholder act with a start time. Threaded into `LineupDto`/`FestivalDto`
+  (server + web mirror). **Tests +5** (`repo-datastate`: nothing / lineup-only / timetable / published-but-no-times /
+  flags-ignore-day-filter) + integration assertions. **server 127 unit.** Deploy ordering: 0008 + Worker shipped
+  before the R4.2 frontend so the new DTO fields exist in Production.
 - **R3 GATE CLOSED ✅ (2026-06-24) — deployed + live.** Single milestone (R3.1) — perf only, no user-facing copy, so
   **no version bump** (per orchestrator R3 close = "deploy; dev-log"). Cumulative **server 122 + web 194 unit** green,
   typecheck + build clean, e2e map + meeting-points still green. **Deployed:** Pages → Production `master`

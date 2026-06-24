@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.8.2";
+export const APP_VERSION = "0.9.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.9.0",
+    date: "2026-06-24",
+    title: "Find the full lineup — and never miss a change",
+    icon: "splitscreen",
+    whatsNew: [
+      "Flip between the full Lineup and your Timetable with one tap — the lineup isn't hidden behind a tiny icon anymore.",
+      "Before the schedule is out, FestPilot shows the announced lineup and tells you set times aren't released yet — instead of a blank screen.",
+      "When the lineup changes, a friendly heads-up tells you what's newly added and whether any of your picks got cut, so your plan never breaks silently.",
+      "Don't see your festival yet? Suggest it right from the first screen — the most-requested ones come next.",
+    ],
+    howToTest: [
+      "Timetable or Lineup → tap the Timetable ⇆ Lineup switch at the top to flip between them in one tap.",
+      "Onboarding step 1 → \"Suggest a festival\" → type a name → Send (you get a thanks confirmation).",
+      "When acts are added or removed, the Timetable/Lineup shows an update banner with Review (jumps to favorites) and Dismiss.",
+    ],
+  },
   {
     version: "0.8.2",
     date: "2026-06-24",

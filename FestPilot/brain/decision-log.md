@@ -582,7 +582,7 @@
 
 ### DEC-048 — The "festival day" is a derived contiguous block, not the source `day` field nor the civil date
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio 2026-06-24) · **IMPLEMENTED 2026-06-24 (R1.1, commit `24142e7`)**
+- **Status**: APPROVED (Julio 2026-06-24) · **IMPLEMENTED 2026-06-24 (R1.1 blocks `24142e7`; dynamic days R4.3 `8663aeb`)**
 - **Implementation note (R1.1)**: the block's stable `festivalDayId` is the **plurality of the block's source
   `day` labels** (not the first set's label) so it stays equal to the persisted day key — `planKey` =
   `${festivalId}:${dayKey}` and onboarding `dayKeys` therefore survive the regrouping untouched (favorites are
@@ -605,7 +605,7 @@
 
 ### DEC-049 — Lineup is made discoverable without breaking DEC-032 (Timetable stays full-height)
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
+- **Status**: APPROVED (Julio confirmed 2026-06-24) · **IMPLEMENTED 2026-06-24 (R4.2, commit `86246d4`)** — `ViewSwitch` Timetable⇆Lineup segmented control on both screens; Timetable redirects to Lineup when no timetable; honest empty/lineup-only states.
 - **Decision**: Keep DEC-032 (no tall top toggle stealing Timetable grid height). Add a **compact, explicit**
   Timetable⇄Lineup switch (a single minimal-height labeled control, not a tall segmented bar) **and open Lineup
   by default when there is no timetable yet.** Clear empty states for "no lineup yet" and "timetable not released".
@@ -656,7 +656,7 @@
 
 ### DEC-052 — Festival data-state model: no-lineup / lineup-without-timetable / full-timetable, with dynamic updates
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
+- **Status**: APPROVED (Julio confirmed 2026-06-24) · **IMPLEMENTED 2026-06-24 (R4.1 backend `18b5cb9` + R4.3 dynamic `8663aeb`)** — `festival.with_timetable` persisted through ingest; `getLineup` exposes `hasLineup`/`hasTimetable` over the whole festival; client `domain/dataState.ts` maps the 3 states; lineup-change banner re-prompts favorites.
 - **Decision**: The API surfaces `hasLineup` / `hasTimetable` (derived from `withTimetable` + performance
   presence); every screen **degrades gracefully** across the three states. Data may update over time (add days
   like **The Gathering**, add artists, add times) — ingestion is already idempotent; the client **re-prompts the
@@ -696,7 +696,7 @@
 
 ### DEC-055 — Capture user-suggested festivals for admin review (no login required)
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
+- **Status**: APPROVED (Julio confirmed 2026-06-24) · **IMPLEMENTED 2026-06-24 (R4.4, commit `10f55a6`)** — onboarding "Suggest a festival" → public POST `/api/festival-suggestions` (deduped + counted, migration 0009); guarded admin inbox `GET /admin/festival-suggestions` ranked by demand (R11.3 UI later).
 - **Decision**: A guarded `POST /api/festival-suggestions` + a D1 table (`name`, `suggested_by` nullable,
   `created_at_utc`, `count`, `status` ∈ new/reviewing/planned/added/rejected) with **dedupe-by-name count**, plus
   an admin list route; a **discreet** "Suggest a festival" affordance on the festival-pick onboarding step. No
