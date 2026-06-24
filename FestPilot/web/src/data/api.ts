@@ -11,6 +11,7 @@ import type {
   GroupMemberDto,
   InvitePreviewDto,
   LineupDto,
+  SquadPlanDataDto,
   StageDto,
   UserDto,
 } from "./types";
@@ -98,6 +99,20 @@ export interface CreateGroupInput {
   festivalId: string;
 }
 
+/** One locked pick the user shares with a squad (mirrors the personal plan slot). */
+export interface ShareSlotInput {
+  performanceId: string;
+  startOverrideUtc?: string | null;
+  endOverrideUtc?: string | null;
+}
+
+export interface ShareMyPlanInput {
+  day: string;
+  slots: ShareSlotInput[];
+  shareFavorites: boolean;
+  favoriteActKeys: string[];
+}
+
 export interface LineupQuery {
   weekend?: string;
   day?: string;
@@ -181,5 +196,43 @@ export const api = {
     return authedJson<{ ok: boolean }>(`/api/groups/${id}/leave`, { method: "POST", signal }).then(
       () => undefined
     );
+  },
+
+  // Shared timetable (Gate 4.3). Raw data in; the client aggregates the squad plan.
+  getSquadPlan(id: string, day: string, signal?: AbortSignal): Promise<SquadPlanDataDto> {
+    return authedJson<{ plan: SquadPlanDataDto }>(
+      `/api/groups/${id}/plan${queryString({ day })}`,
+      { signal }
+    ).then((d) => d.plan);
+  },
+
+  shareMyPlan(id: string, input: ShareMyPlanInput, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/plan`, {
+      method: "PUT",
+      body: input,
+      signal,
+    }).then(() => undefined);
+  },
+
+  unshareMyPlan(id: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/plan`, { method: "DELETE", signal }).then(
+      () => undefined
+    );
+  },
+
+  setSquadOverride(id: string, day: string, performanceId: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/plan/override`, {
+      method: "POST",
+      body: { day, performanceId },
+      signal,
+    }).then(() => undefined);
+  },
+
+  clearSquadOverride(id: string, day: string, performanceId: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/plan/override`, {
+      method: "DELETE",
+      body: { day, performanceId },
+      signal,
+    }).then(() => undefined);
   },
 };

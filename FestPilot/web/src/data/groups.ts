@@ -105,7 +105,7 @@ export function useGroup(groupId: string | undefined): GroupState {
 }
 
 /** Best-effort realtime: connect to the GroupRoom socket and reload on any "changed" event. */
-function useGroupLive(groupId: string | undefined, onChange: () => void): void {
+export function useGroupLive(groupId: string | undefined, onChange: () => void): void {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 

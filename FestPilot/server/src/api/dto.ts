@@ -122,3 +122,35 @@ export interface InvitePreviewDto {
   ownerName: string | null;
   alreadyMember: boolean;
 }
+
+// Shared timetable (Pillar 3a, Gate 4.3 — DEC-013/019). The server returns the RAW shared data;
+// the client aggregates it against the lineup it already has (plurality → favorited → owner),
+// keeping the squad-plan logic pure, testable and consistent with the personal resolver.
+
+/** One member's contribution: their locked picks (+ favorites when shared as fallback). */
+export interface SquadMemberShareDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  role: string;
+  isYou: boolean;
+  /** The member has shared a locked plan for the requested day. */
+  shared: boolean;
+  /** "Use my favorites as fallback" was enabled (#23.8). */
+  shareFavorites: boolean;
+  /** Locked picks for the day (performance ids = local setIds). */
+  performanceIds: string[];
+  /** Shared favorites (act keys); empty unless shareFavorites is on. */
+  favoriteActKeys: string[];
+}
+
+/** The raw squad-plan data for one day; the client builds the timetable from it. */
+export interface SquadPlanDataDto {
+  groupId: string;
+  day: string | null;
+  memberCount: number;
+  sharedCount: number;
+  members: SquadMemberShareDto[];
+  /** Owner-pinned performance ids for the day (method=owner override). */
+  overrides: string[];
+}

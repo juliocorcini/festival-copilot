@@ -89,7 +89,7 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
         }
       />
       <div className="screen">
-        <button className="glass squad-plan-cta" disabled>
+        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">
             <span className="ms">event_available</span>
           </div>
@@ -97,7 +97,7 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
             <div className="squad-plan-title">Build the squad plan</div>
             <div className="squad-plan-sub">See where everyone wants to be</div>
           </div>
-          <span className="pill">Soon</span>
+          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>
 
         <section className="glass members-card">

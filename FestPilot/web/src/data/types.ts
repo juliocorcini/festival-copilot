@@ -127,3 +127,25 @@ export interface InvitePreviewDto {
   ownerName: string | null;
   alreadyMember: boolean;
 }
+
+// Shared timetable (Gate 4.3). The server returns raw shared data; the client aggregates it.
+export interface SquadMemberShareDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  role: string;
+  isYou: boolean;
+  shared: boolean;
+  shareFavorites: boolean;
+  performanceIds: string[];
+  favoriteActKeys: string[];
+}
+
+export interface SquadPlanDataDto {
+  groupId: string;
+  day: string | null;
+  memberCount: number;
+  sharedCount: number;
+  members: SquadMemberShareDto[];
+  overrides: string[];
+}

@@ -1,9 +1,9 @@
 {
   "name": "@festpilot/web",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
-  "description": "FestPilot PWA: Amber-Glass app shell — 5-tab nav, service worker, typed API client, live lineup (Now), and the georeferenced map.",
+  "description": "FestPilot PWA: Amber-Glass app — onboarding, favorites, timetable, lock-in, map, and squads with a shared timetable.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

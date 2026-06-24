@@ -464,3 +464,27 @@
 - **Detail**: `server/src/group/room.ts`, `server/src/api/{groups,groups-routes}.ts`, `server/wrangler.toml` (DO binding +
   migration v1), `web/src/data/groups.ts`, `web/src/routes/squad/{CreateSquad,Invite,Join}Screen.tsx`,
   `web/src/routes/SquadScreen.tsx`; orchestrator §13 Phase 4 G4.2.
+
+### DEC-044 — Shared timetable is server-raw + client-aggregated (pure `buildSquadPlan`); never-silent
+- **Date**: 2026-06-23 (build, Phase 4 G4.3)
+- **Status**: APPROVED (executor decision, implements DEC-013/018/019)
+- **Decision**: The squad timetable is **aggregated on the client** by a pure function (`web/src/domain/squadPlan.ts`,
+  `buildSquadPlan`) — the **server stores and returns only RAW shared data**: each member's locked picks
+  (`group_member_plan`, mirroring partial-set cuts per DEC-018), their opt-in shared favorites
+  (`group_member_favorite`, **act-keyed**, uploaded **only** when "use as fallback" is on — DEC-019), the sharing
+  intent flags on `group_member`, and the owner overrides (reusing the existing `group_plan_slot`). The client joins
+  this against the **lineup it already holds** to build per-block winners by the rule **plurality → favorited → owner
+  override**, plus the split, the "who's going" avatars, and **YOUR** status (`following` / `own` / **`conflict`**).
+  **Never-silent (DEC-013):** when your locked pick ≠ the squad's, the UI **never auto-changes it** — the block screen
+  offers explicit **Join squad** (a real local re-lock + re-share, your choice only) or **Keep my lock**, plus your
+  favorites-fallback if you also liked something near the squad. Freshness reuses the G4.2 contract (GroupRoom
+  `changed` fan-out + refetch-on-focus; `notifyGroup(...,"plan")`).
+- **Why (brain-consistent)**: keeping aggregation pure + client-side mirrors the **personal** resolver (one source of
+  truth for "one act per moment"), keeps the server a thin store (no heavy joins, no lineup coupling), and makes every
+  rule **unit-testable** offline (11 domain tests). Act-keyed favorites match the local favorites store (DEC-026/028).
+  Owner override as a pinned `group_plan_slot` makes "owner wins" a trivial last step in the same pipeline.
+- **Trade-off**: the client must hold the lineup to render the squad plan (already true on every screen); a member who
+  shares a pick for an act not in the viewer's lineup day is dropped (acceptable — same festival/lineup for all).
+- **Detail**: migration `0005_group_shared_plan.sql`; `server/src/api/squadPlan.ts` (+ routes in `groups-routes.ts`);
+  `web/src/domain/squadPlan.ts` (+ tests), `web/src/data/squadPlan.ts`, `web/src/routes/squad/{ShareMyPlan,SquadPlan,
+  SquadBlock,SquadOverride}Screen.tsx`, `web/src/routes/squad/squadUi.tsx`; orchestrator §13 Phase 4 G4.3.

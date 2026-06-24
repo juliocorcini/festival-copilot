@@ -17,6 +17,14 @@ import {
   listMembers,
   listMyGroups,
 } from "./groups";
+import {
+  clearOverride,
+  getSquadPlanData,
+  setOverride,
+  shareMyPlan,
+  unshareMyPlan,
+  type SharedSlotInput,
+} from "./squadPlan";
 
 export const groups = new Hono<{ Bindings: Env }>();
 
@@ -44,6 +52,24 @@ async function notifyGroup(env: Env, groupId: string, topic: string): Promise<vo
 
 function readString(v: unknown, max: number): string | null {
   return typeof v === "string" && v.trim() !== "" ? v.trim().slice(0, max) : null;
+}
+
+function readStringArray(v: unknown, max: number): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  for (const item of v) {
+    if (typeof item === "string" && item.trim() !== "" && out.length < max) out.push(item.trim().slice(0, 64));
+  }
+  return out;
+}
+
+/** Resolve the calling member of a group, or a typed failure for the route to translate. */
+async function member(c: Ctx, groupId: string): Promise<{ user: UserDto; group: NonNullable<Awaited<ReturnType<typeof getGroupForUser>>> } | { status: 401 | 404 }> {
+  const user = await caller(c);
+  if (!user) return { status: 401 };
+  const group = await getGroupForUser(c.env.DB, groupId, user.id);
+  if (!group) return { status: 404 };
+  return { user, group };
 }
 
 // --- Specific routes first (Hono matches in order; keep these before "/:id"). ---
@@ -104,6 +130,89 @@ groups.get("/:id", async (c) => {
   if (!group) return c.json({ error: "not found" }, 404);
   const members = await listMembers(c.env.DB, id, user.id);
   return c.json({ group, members });
+});
+
+// --- Shared timetable (Gate 4.3, DEC-013/019). All member-gated; owner-gated where noted. ---
+
+// The squad plan's raw data for one day — the client aggregates it (plurality → favorited → owner).
+groups.get("/:id/plan", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const day = readString(c.req.query("day"), 32);
+  if (!day) return c.json({ error: "day is required" }, 400);
+  const data = await getSquadPlanData(c.env.DB, m.group.id, m.user.id, day);
+  return c.json({ plan: data });
+});
+
+// Share my locked plan for a day (#23.8). Body: { day, slots, shareFavorites, favoriteActKeys }.
+groups.put("/:id/plan", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const day = readString(body.day, 32);
+  if (!day) return c.json({ error: "day is required" }, 400);
+  const rawSlots = Array.isArray(body.slots) ? (body.slots as Record<string, unknown>[]) : [];
+  const slots: SharedSlotInput[] = [];
+  for (const s of rawSlots) {
+    const performanceId = readString(s.performanceId, 64);
+    if (!performanceId) continue;
+    slots.push({
+      performanceId,
+      startOverrideUtc: readString(s.startOverrideUtc, 40),
+      endOverrideUtc: readString(s.endOverrideUtc, 40),
+    });
+  }
+  await shareMyPlan(
+    c.env.DB,
+    m.group.id,
+    m.user.id,
+    {
+      day,
+      slots,
+      shareFavorites: body.shareFavorites === true,
+      favoriteActKeys: readStringArray(body.favoriteActKeys, 500),
+    },
+    new Date().toISOString()
+  );
+  await notifyGroup(c.env, m.group.id, "plan");
+  return c.json({ ok: true });
+});
+
+// Stop sharing my plan for this squad.
+groups.delete("/:id/plan", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  await unshareMyPlan(c.env.DB, m.group.id, m.user.id);
+  await notifyGroup(c.env, m.group.id, "plan");
+  return c.json({ ok: true });
+});
+
+// Owner override (#24.4): pin a performance as the squad pick for its block. Owner only.
+groups.post("/:id/plan/override", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  if (m.group.role !== "owner") return c.json({ error: "owner only" }, 403);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const day = readString(body.day, 32);
+  const performanceId = readString(body.performanceId, 64);
+  if (!day || !performanceId) return c.json({ error: "day and performanceId are required" }, 400);
+  await setOverride(c.env.DB, m.group.id, day, performanceId, new Date().toISOString());
+  await notifyGroup(c.env, m.group.id, "plan");
+  return c.json({ ok: true });
+});
+
+// Revert an owner override back to the auto pick. Owner only.
+groups.delete("/:id/plan/override", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  if (m.group.role !== "owner") return c.json({ error: "owner only" }, 403);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const day = readString(body.day, 32);
+  const performanceId = readString(body.performanceId, 64);
+  if (!day || !performanceId) return c.json({ error: "day and performanceId are required" }, 400);
+  await clearOverride(c.env.DB, m.group.id, day, performanceId);
+  await notifyGroup(c.env, m.group.id, "plan");
+  return c.json({ ok: true });
 });
 
 // Realtime subscription — forwarded to the group's Durable Object. Members only.

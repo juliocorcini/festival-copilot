@@ -15,6 +15,10 @@ import { ProfileScreen } from "./routes/squad/ProfileScreen";
 import { CreateSquadScreen } from "./routes/squad/CreateSquadScreen";
 import { InviteScreen } from "./routes/squad/InviteScreen";
 import { JoinScreen } from "./routes/squad/JoinScreen";
+import { ShareMyPlanScreen } from "./routes/squad/ShareMyPlanScreen";
+import { SquadPlanScreen } from "./routes/squad/SquadPlanScreen";
+import { SquadBlockScreen } from "./routes/squad/SquadBlockScreen";
+import { SquadOverrideScreen } from "./routes/squad/SquadOverrideScreen";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
@@ -41,6 +45,10 @@ export function App(): JSX.Element {
             <Route path="squad/profile" element={<ProfileScreen />} />
             <Route path="squad/create" element={<CreateSquadScreen />} />
             <Route path="squad/invite/:id" element={<InviteScreen />} />
+            <Route path="squad/:id/share" element={<ShareMyPlanScreen />} />
+            <Route path="squad/:id/plan" element={<SquadPlanScreen />} />
+            <Route path="squad/:id/plan/:perfId" element={<SquadBlockScreen />} />
+            <Route path="squad/:id/plan/:perfId/override" element={<SquadOverrideScreen />} />
             <Route path="squad/join" element={<JoinScreen />} />
             <Route path="squad/join/:token" element={<JoinScreen />} />
             <Route path="j/:token" element={<JoinScreen />} />

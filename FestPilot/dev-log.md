@@ -7,8 +7,8 @@
 ## Current State
 - 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 core + PHASE 4 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P4 in progress** — **G4.1 identity ✅ · G4.2 groups ✅** — next: G4.3 (shared timetable: per-set
-  blocks, plurality→favorited→owner, fallback, owner override, never-silent).
+- Active Phase / Gate: **P4 in progress** — **G4.1 identity ✅ · G4.2 groups ✅ · G4.3 shared timetable ✅** — next: G4.4
+  (group board: pinned notes post/edit/remove over the DO).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
 - **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
@@ -32,6 +32,20 @@
   group-home (#23.7 plan CTA + member list + invite + leave). **10 server + 0 new web unit** (covered by repo tests) +
   `squad` Playwright rewritten: 2 flows (owner empty→create→invite→home; joiner link→guest→join→**members 2**) with 6
   screenshots. DEC-043. Worker + Pages deployed (https://cd81a5da.festpilot.pages.dev).
+- **P4 G4.3 shared timetable ✅ (this session):** the squad timetable is **server-raw + client-aggregated** (DEC-044).
+  Server stays a thin store: migration `0005_group_shared_plan.sql` (`group_member_plan` raw locked picks w/ partial-set
+  cuts; `group_member_favorite` **act-keyed**, opt-in only; `plan_shared_at_utc`/`share_favorites` flags on
+  `group_member`; owner overrides reuse `group_plan_slot`), `api/squadPlan.ts` (`shareMyPlan`/`unshareMyPlan`/
+  `getSquadPlanData`/`set+clearOverride`) + 5 routes (`GET/PUT/DELETE /:id/plan`, `POST/DELETE /:id/plan/override`,
+  all member-gated, override owner-gated), `notifyGroup(...,"plan")`. **Aggregation is the pure `domain/squadPlan.ts`
+  `buildSquadPlan`** (plurality → favorited → owner; split; "who's going"; YOUR status following/own/**conflict**;
+  favorites-fallback DEC-019) — **11 domain tests**. `data/squadPlan.ts` (`useSquadPlan` joins raw + lineup + local favs,
+  reusing the G4.2 WS+focus refresh). Screens (4): **Share my plan** (#23.8 toggles + locked preview), **Squad plan
+  overview** (#24.1 blocks + day seg + NOW + needs-input #24.6 + share CTA), **Block detail** (#24.2/3/5 squad pick +
+  avatars + split + **never-silent** Join/Keep + fallback — DEC-013), **Owner override** (#24.4 candidate list + pin/
+  revert). Shared `squadUi.tsx` (avatar stack, status pill, method label). **55 server + 95 web unit + 12 e2e green**
+  (new `squad-plan` spec: share→overview→block→override, 4 screenshots). Worker live (migration 0005 remote + routes);
+  Pages https://282aabd7.festpilot.pages.dev. Web `0.2.0`→`0.3.0`.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the
