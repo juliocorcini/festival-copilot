@@ -201,7 +201,7 @@ export function MeetDetailScreen(): JSX.Element {
             <StatusPill label="Can't" active={point.myStatus === "not_going"} busy={busy === "not_going"} onClick={() => setStatus("not_going")} />
           </div>
 
-          <button className="btn btn-primary" onClick={() => navigate("/map")}>
+          <button className="btn btn-primary" onClick={() => navigate(`/squad/${id}/meet/${mpId}/nav`)}>
             <span className="ms" aria-hidden="true">navigation</span>
             Navigate
           </button>

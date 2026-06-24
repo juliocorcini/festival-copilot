@@ -47,6 +47,7 @@ function point(partial: Partial<MeetingPointDto>): MeetingPointDto {
     lifecycle: "active",
     everyoneHere: false,
     creatorDrifted: false,
+    isSafety: false,
     ...partial,
   };
 }

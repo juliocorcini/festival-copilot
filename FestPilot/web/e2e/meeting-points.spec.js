@@ -96,6 +96,9 @@ test.describe("Phase 6 — meeting points (Gate 6.1)", () => {
       if (path.endsWith("/meeting-points") && method === "GET") {
         return route.fulfill({ json: { meetingPoints: created ? [POINT] : [] } });
       }
+      if (path.endsWith("/safety") && method === "GET") {
+        return route.fulfill({ json: { safetyPoints: [] } });
+      }
       if (path.endsWith("/presence") && method === "GET") {
         return route.fulfill({ json: { presence: { groupId: GROUP_ID, memberCount: 3, liveCount: 0, me: { shareMode: "stage", live: false, liveSecondsLeft: null }, inbox: [], members: [] } } });
       }

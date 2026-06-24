@@ -300,4 +300,7 @@ export interface MeetingPointDto {
   everyoneHere: boolean;
   /** Smart prompt (#26): the creator's live fix is far from the spot. Only ever true for the creator. */
   creatorDrifted: boolean;
+  /** A safety / "I'm lost" broadcast (Gate 6.3, #26.5/#26.6, DEC-022): the creator shares their exact
+   *  spot so the squad can converge to help. Surfaces in its own lane, never auto-fades, ends on "I'm okay". */
+  isSafety: boolean;
 }

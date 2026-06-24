@@ -39,7 +39,12 @@ export interface MeetingPointInput {
   meetAtUtc: string | null;
   /** Auto-close grace window after the meet time (minutes); defaults to 30 (DEC-014). */
   graceMinutes?: number | null;
+  /** Safety / "I'm lost" broadcast (Gate 6.3): exact spot the squad converges on; long-lived, no auto-fade. */
+  isSafety?: boolean;
 }
+
+/** A safety broadcast stays open far longer than a regular point — it ends on "I'm okay", not a timer. */
+const SAFETY_GRACE_MINUTES = 240;
 
 interface MeetingPointRow {
   id: string;
@@ -52,6 +57,7 @@ interface MeetingPointRow {
   lng: number;
   accuracyMeters: number | null;
   status: string;
+  isSafety: number;
   meetAtUtc: string | null;
   expiresAtUtc: string;
   createdAtUtc: string;
@@ -157,12 +163,13 @@ function assembleDto(
     lifecycle,
     everyoneHere: lifecycle === "everyone_here",
     creatorDrifted: drifted,
+    isSafety: row.isSafety === 1,
   };
 }
 
 const SELECT_POINT = `SELECT mp.id AS id, mp.group_id AS groupId, mp.created_by_user_id AS createdByUserId,
         u.display_name AS createdByName, mp.title AS title, mp.note AS note, mp.lat AS lat, mp.lng AS lng,
-        mp.accuracy_meters AS accuracyMeters, mp.status AS status, mp.meet_at_utc AS meetAtUtc,
+        mp.accuracy_meters AS accuracyMeters, mp.status AS status, mp.is_safety AS isSafety, mp.meet_at_utc AS meetAtUtc,
         mp.expires_at_utc AS expiresAtUtc, mp.created_at_utc AS createdAtUtc
    FROM meeting_point mp
    JOIN app_user u ON u.id = mp.created_by_user_id`;
@@ -180,9 +187,13 @@ export async function createMeetingPoint(
   nowIso: string
 ): Promise<MeetingPointDto> {
   const id = ulid();
+  const isSafety = input.isSafety === true;
   const meetAtMs = input.meetAtUtc ? Date.parse(input.meetAtUtc) : null;
+  // Safety broadcasts stay open for hours (they end on "I'm okay", not a timer); regular points use the
+  // picked grace (default 30, DEC-014).
+  const graceMinutes = isSafety ? input.graceMinutes ?? SAFETY_GRACE_MINUTES : input.graceMinutes;
   const expiresIso = new Date(
-    meetingExpiry(Number.isFinite(meetAtMs as number) ? meetAtMs : null, Date.parse(nowIso), clampGraceMinutes(input.graceMinutes))
+    meetingExpiry(Number.isFinite(meetAtMs as number) ? meetAtMs : null, Date.parse(nowIso), clampGraceMinutes(graceMinutes))
   ).toISOString();
   await db.batch([
     db
@@ -190,7 +201,7 @@ export async function createMeetingPoint(
         `INSERT INTO meeting_point
            (id, group_id, created_by_user_id, title, note, lat, lng, accuracy_meters, visibility, status,
             is_safety, created_at_utc, expires_at_utc, meet_at_utc)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'group', 'active', 0, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'group', 'active', ?, ?, ?, ?)`
       )
       .bind(
         id,
@@ -201,6 +212,7 @@ export async function createMeetingPoint(
         input.lat,
         input.lng,
         input.accuracyMeters,
+        isSafety ? 1 : 0,
         nowIso,
         expiresIso,
         input.meetAtUtc
@@ -306,6 +318,35 @@ export async function listMeetingPoints(
   return rows.map((r) =>
     assembleDto(r, (membersById.get(r.id) ?? []).map((m) => memberDto(m, meId)), ctx, meId, nowMs)
   );
+}
+
+/**
+ * Active safety broadcasts (is_safety = 1, Gate 6.3 #26.5/#26.6) for a squad, newest first. Each is
+ * assembled with the FULL converging roster + live ETAs (the squad walking to the lost member) by
+ * reusing `getMeetingPoint` — there is rarely more than one open at a time, so the per-row fetch is
+ * cheap and keeps the safety screen to a single request.
+ */
+export async function listActiveSafetyPoints(
+  db: D1Database,
+  festivalId: string,
+  groupId: string,
+  meId: string,
+  nowIso: string
+): Promise<MeetingPointDto[]> {
+  const { results: rows } = await db
+    .prepare(
+      `SELECT mp.id AS id FROM meeting_point mp
+        WHERE mp.group_id = ? AND mp.is_safety = 1 AND mp.status = 'active' AND mp.expires_at_utc > ?
+        ORDER BY mp.created_at_utc DESC`
+    )
+    .bind(groupId, nowIso)
+    .all<{ id: string }>();
+  const out: MeetingPointDto[] = [];
+  for (const r of rows) {
+    const dto = await getMeetingPoint(db, festivalId, groupId, r.id, meId, nowIso);
+    if (dto) out.push(dto);
+  }
+  return out;
 }
 
 /**

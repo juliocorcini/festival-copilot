@@ -1,11 +1,49 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildTravelMatrix, coordToStage, metersBetween, type LatLng } from "./travel";
+import { bearingDegrees, buildTravelMatrix, compassPoint, coordToStage, metersBetween, type LatLng } from "./travel";
 
 describe("metersBetween", () => {
   it("measures east-west distance at the equator (k = 1)", () => {
     // 0.003° lng at the equator ≈ 333.96 m.
     expect(metersBetween({ lat: 0, lng: 0 }, { lat: 0, lng: 0.003 })).toBeCloseTo(333.96, 0);
+  });
+});
+
+describe("bearingDegrees (compass-arrow navigation, Gate 6.3)", () => {
+  const origin: LatLng = { lat: 0, lng: 0 };
+  it("points due east toward a point to the east (~90°)", () => {
+    expect(bearingDegrees(origin, { lat: 0, lng: 0.01 })).toBeCloseTo(90, 1);
+  });
+  it("points due north toward a point to the north (~0°)", () => {
+    expect(bearingDegrees(origin, { lat: 0.01, lng: 0 })).toBeCloseTo(0, 1);
+  });
+  it("points due west toward a point to the west (~270°)", () => {
+    expect(bearingDegrees(origin, { lat: 0, lng: -0.01 })).toBeCloseTo(270, 1);
+  });
+  it("points roughly north-east toward a point up-and-right (~45°)", () => {
+    expect(bearingDegrees(origin, { lat: 0.01, lng: 0.01 })).toBeGreaterThan(40);
+    expect(bearingDegrees(origin, { lat: 0.01, lng: 0.01 })).toBeLessThan(50);
+  });
+  it("always returns a normalized 0–360 value", () => {
+    const b = bearingDegrees(origin, { lat: -0.01, lng: -0.01 });
+    expect(b).toBeGreaterThanOrEqual(0);
+    expect(b).toBeLessThan(360);
+  });
+});
+
+describe("compassPoint", () => {
+  it("maps cardinal + intercardinal bearings to 8-point labels", () => {
+    expect(compassPoint(0)).toBe("N");
+    expect(compassPoint(45)).toBe("NE");
+    expect(compassPoint(90)).toBe("E");
+    expect(compassPoint(180)).toBe("S");
+    expect(compassPoint(270)).toBe("W");
+    expect(compassPoint(315)).toBe("NW");
+  });
+  it("rounds to the nearest point and wraps past 360", () => {
+    expect(compassPoint(20)).toBe("N"); // 20 → nearest 0
+    expect(compassPoint(350)).toBe("N"); // wraps
+    expect(compassPoint(360 + 90)).toBe("E");
   });
 });
 

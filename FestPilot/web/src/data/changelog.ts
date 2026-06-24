@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.6.0";
+export const APP_VERSION = "0.7.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -33,8 +33,25 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
-    version: "0.6.0",
+    version: "0.7.0",
     date: "2026-06-24",
+    title: "Never lost — find your way back",
+    icon: "explore",
+    whatsNew: [
+      "Got separated? Tap \"I'm lost\" to share your exact spot and alert the squad — they'll see where you are and come to you.",
+      "A live compass points the way to any meeting point, with the walking distance and time.",
+      "Back together? One tap says \"I'm okay\" and stops sharing.",
+      "A new About screen with the app's story and the full update history (you're reading it).",
+    ],
+    howToTest: [
+      "Squad → \"I'm lost\" → \"Share my location + alert squad\" → the broadcast opens; \"I'm okay\" closes it.",
+      "Open a meeting point → Navigate → the arrow + distance/ETA update as you move (allow location).",
+      "Settings → \"About & what's new\" (this screen).",
+    ],
+  },
+  {
+    version: "0.6.0",
+    date: "2026-06-23",
     title: "Meeting points come alive",
     icon: "flag",
     whatsNew: [

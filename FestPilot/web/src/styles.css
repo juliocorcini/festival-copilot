@@ -1174,3 +1174,87 @@ a { color: inherit; text-decoration: none; }
 .changelog-test[open] > summary { color: var(--accent2); }
 .changelog-testlist { margin: 8px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 .changelog-testlist li { font-size: 12px; line-height: 1.45; color: var(--muted); }
+
+/* Meeting-point navigation — compass arrow + distance (Gate 6.3). */
+.nav-screen { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 20px 18px 24px; flex: 1; min-height: 0; }
+.nav-target { text-align: center; }
+.nav-target-title { font-size: 20px; font-weight: 700; line-height: 1.1; }
+.nav-target-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.nav-compass { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 8px; }
+.nav-dial { position: relative; width: 260px; height: 260px; border-radius: 50%; border: 1px solid var(--border);
+  background: radial-gradient(circle at 50% 50%, rgba(245, 166, 35, 0.1), transparent 62%), rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.3); }
+.nav-card { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px; }
+.nav-card i { font-style: normal; font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
+.nav-arrow { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.25s ease-out; }
+.nav-arrow .ms { font-size: 104px; color: var(--accent2);
+  filter: drop-shadow(0 6px 14px rgba(245, 166, 35, 0.4)); }
+.nav-arrow.pending .ms { color: var(--muted); opacity: 0.5; filter: none; }
+.nav-readout { text-align: center; }
+.nav-distance { font-size: 34px; font-weight: 700; line-height: 1; }
+.nav-eta { font-size: 14px; color: var(--accent2); font-weight: 700; margin-top: 6px; }
+.nav-arrived { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 30px; text-align: center; }
+.nav-arrived-orb { width: 92px; height: 92px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle, rgba(22, 163, 74, 0.3), rgba(22, 163, 74, 0.08)); border: 1px solid rgba(22, 163, 74, 0.5); }
+.nav-arrived-orb .ms { font-size: 46px; color: #5fd08a; }
+.nav-arrived-title { font-size: 30px; font-weight: 700; }
+.nav-arrived-sub { font-size: 14px; color: var(--muted); }
+.nav-hint { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.nav-hint .ms { font-size: 18px; color: var(--accent2); flex-shrink: 0; }
+.nav-hint b { color: var(--ink); }
+.nav-enable { max-width: 280px; }
+.nav-map { margin-top: auto; }
+
+/* "I'm lost" / safety (Gate 6.3, #26.5/#26.6). Calm teal, never alarmist. */
+.safety-menu { gap: 12px; }
+.safety-reassure { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-color: rgba(45, 182, 166, 0.4);
+  background: rgba(45, 182, 166, 0.08); }
+.safety-reassure > .ms { font-size: 24px; color: #3bd6c2; }
+.safety-reassure-title { font-size: 14px; font-weight: 800; }
+.safety-reassure-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.safety-action { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 14px 16px; border-radius: 18px;
+  background: var(--glass); border: 1px solid var(--border); color: inherit; cursor: pointer; appearance: none; }
+.safety-action.primary { border-color: rgba(45, 182, 166, 0.5); background: linear-gradient(135deg, rgba(45, 182, 166, 0.2), rgba(59, 214, 194, 0.1)); }
+.safety-action.disabled { cursor: default; opacity: 0.7; }
+.safety-action:disabled { cursor: default; }
+.safety-action-icon { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #2db6a6, #3bd6c2); }
+.safety-action-icon .ms { font-size: 23px; color: #04201d; }
+.safety-action-icon.help { background: rgba(45, 182, 166, 0.16); }
+.safety-action-icon.help .ms { color: #3bd6c2; }
+.safety-action-icon.danger { background: rgba(224, 86, 59, 0.16); }
+.safety-action-icon.danger .ms { color: #f08a73; }
+.safety-action-main { min-width: 0; flex: 1; }
+.safety-action-title { font-size: 15px; font-weight: 800; }
+.safety-action-sub { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+
+.safety-alert { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-color: rgba(224, 86, 59, 0.45);
+  background: rgba(224, 86, 59, 0.1); width: 100%; text-align: left; cursor: pointer; appearance: none; color: inherit; }
+.safety-alert-pulse { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: #e0563b; color: #fff; animation: safetyPulse 1.6s ease-out infinite; }
+.safety-alert-pulse .ms { font-size: 20px; }
+.safety-alert-main { flex: 1; min-width: 0; }
+.safety-alert-title { font-size: 15px; font-weight: 800; }
+.safety-alert-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+@keyframes safetyPulse { 0% { box-shadow: 0 0 0 0 rgba(224, 86, 59, 0.5); } 100% { box-shadow: 0 0 0 14px rgba(224, 86, 59, 0); } }
+
+.safety-active { gap: 14px; }
+.safety-banner { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 16px; font-size: 13px; font-weight: 800;
+  background: rgba(45, 182, 166, 0.16); border: 1px solid rgba(45, 182, 166, 0.5); color: #3bd6c2; }
+.safety-banner .ms { font-size: 20px; }
+.safety-where { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 13px; }
+.safety-where .ms { font-size: 18px; color: #3bd6c2; }
+.safety-where b { font-weight: 800; }
+.safety-coming-label { margin: 4px 2px 0; }
+.safety-roster { gap: 12px; }
+.safety-empty { font-size: 13px; color: var(--muted); padding: 4px 2px; }
+
+/* Squad-home safety surfaces. */
+.safety-home-banner { display: flex; align-items: center; gap: 12px; padding: 14px 16px; width: 100%; text-align: left; cursor: pointer;
+  appearance: none; color: inherit; border-color: rgba(224, 86, 59, 0.45); background: rgba(224, 86, 59, 0.1); }
+.safety-home-pulse { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: #e0563b; color: #fff; animation: safetyPulse 1.6s ease-out infinite; }
+.safety-home-pulse .ms { font-size: 20px; }
+.safety-home-main { flex: 1; min-width: 0; }
+.safety-home-title { font-size: 15px; font-weight: 800; }
+.safety-home-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }

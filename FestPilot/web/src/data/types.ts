@@ -266,6 +266,8 @@ export interface MeetingPointDto {
   everyoneHere: boolean;
   /** Smart prompt: the creator's live fix is far from the spot (only ever true for the creator). */
   creatorDrifted: boolean;
+  /** A safety / "I'm lost" broadcast (#26.5/#26.6): the squad converges to help; ends on "I'm okay". */
+  isSafety: boolean;
 }
 
 /** The B4.2 create payload — the exact spot is chosen on B4.1. */
@@ -277,4 +279,6 @@ export interface CreateMeetingPointInput {
   note?: string | null;
   /** ISO instant to meet at; omit/null = "now". The point auto-closes ~30 min after this (DEC-014). */
   meetAtUtc?: string | null;
+  /** Mark this as a safety / "I'm lost" broadcast (Gate 6.3) — long-lived, surfaced in the safety lane. */
+  isSafety?: boolean;
 }

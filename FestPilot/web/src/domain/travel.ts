@@ -27,6 +27,28 @@ export function metersBetween(a: LatLng, b: LatLng): number {
   return Math.hypot(dx, dy) * 111320;
 }
 
+/**
+ * Initial bearing from `from` to `to`, in degrees clockwise from true north (0 = N, 90 = E, 180 = S).
+ * Powers the compass-arrow meeting-point navigation (Gate 6.3): the arrow rotation is this bearing
+ * minus the device heading, so it points at the spot regardless of which way the phone faces.
+ */
+export function bearingDegrees(from: LatLng, to: LatLng): number {
+  const lat1 = from.lat * RAD;
+  const lat2 = to.lat * RAD;
+  const dLng = (to.lng - from.lng) * RAD;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return (Math.atan2(y, x) / RAD + 360) % 360;
+}
+
+const COMPASS_POINTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+
+/** The 8-point compass label for a bearing (0–360) — a plain "head NE" cue alongside the arrow. */
+export function compassPoint(bearing: number): string {
+  const i = Math.round(((bearing % 360) + 360) % 360 / 45) % 8;
+  return COMPASS_POINTS[i];
+}
+
 export interface TravelMatrixOptions {
   metersPerMinute?: number;
   fallbackMinutes?: number;

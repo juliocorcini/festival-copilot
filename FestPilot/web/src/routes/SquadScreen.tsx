@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { api } from "../data/api";
 import { useMyGroups, useGroup } from "../data/groups";
-import { useMeetingPoints } from "../data/meetingPoints";
+import { useMeetingPoints, useSafety } from "../data/meetingPoints";
 import { initialsOf, useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { LoadingState } from "../ui/states";
@@ -67,6 +67,7 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
   const navigate = useNavigate();
   const { members } = useGroup(group.id);
   const { points } = useMeetingPoints(group.id);
+  const { points: safetyPoints } = useSafety(group.id);
   const [leaving, setLeaving] = useState(false);
 
   const count = group.memberCount;
@@ -80,6 +81,10 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
     }
   };
 
+  const sosMine = safetyPoints.some((p) => p.isMine);
+  const sosOther = safetyPoints.find((p) => !p.isMine) ?? null;
+  const hasSos = safetyPoints.length > 0;
+
   return (
     <>
       <AppHeader
@@ -92,6 +97,23 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
         }
       />
       <div className="screen">
+        {hasSos && (
+          <button className="glass safety-home-banner" onClick={() => navigate(`/squad/${group.id}/safety`)}>
+            <span className="safety-home-pulse">
+              <span className="ms">{sosMine ? "share_location" : "sos"}</span>
+            </span>
+            <div className="safety-home-main">
+              <div className="safety-home-title">
+                {sosMine ? "You're sharing your location" : `${sosOther?.createdByName ?? "A squadmate"} needs help`}
+              </div>
+              <div className="safety-home-sub">
+                {sosMine ? "Your squad can see where you are — tap to manage" : `${sosOther?.landmarkLabel ?? ""} · tap to go to them`}
+              </div>
+            </div>
+            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+          </button>
+        )}
+
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">
             <span className="ms">event_available</span>
@@ -128,6 +150,19 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
         {points.map((p) => (
           <MeetingPointCard key={p.id} groupId={group.id} point={p} />
         ))}
+
+        {!hasSos && (
+          <button className="glass squad-plan-cta squad-lost-cta" onClick={() => navigate(`/squad/${group.id}/safety`)}>
+            <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #2DB6A6, #3BD6C2)" }}>
+              <span className="ms">volunteer_activism</span>
+            </div>
+            <div className="squad-plan-main">
+              <div className="squad-plan-title">I'm lost</div>
+              <div className="squad-plan-sub">Get back to the squad — calmly</div>
+            </div>
+            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+          </button>
+        )}
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/board`)}>
           <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #8B5CF6, #6366F1)" }}>

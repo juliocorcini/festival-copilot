@@ -33,6 +33,7 @@ import {
   endMeetingPoint,
   getMeetingPoint,
   isSettableStatus,
+  listActiveSafetyPoints,
   listMeetingPoints,
   setMyMeetingStatus,
 } from "./meetingPoints";
@@ -384,11 +385,24 @@ groups.post("/:id/meeting-points", async (c) => {
       note: readString(body.note, 280),
       meetAtUtc: readString(body.meetAtUtc, 40),
       graceMinutes: Number.isFinite(graceRaw) ? graceRaw : null,
+      isSafety: body.isSafety === true,
     },
     new Date().toISOString()
   );
-  await notifyGroup(c.env, m.group.id, "meeting");
+  await notifyGroup(c.env, m.group.id, body.isSafety === true ? "safety" : "meeting");
   return c.json({ meetingPoint: point }, 201);
+});
+
+// --- Safety / "I'm lost" broadcast (Gate 6.3, #26.5/#26.6 — UC-28, DEC-022). A meeting point flagged
+// is_safety: the creator shares their exact spot so the squad converges to help. It lives in its own
+// lane (excluded from the regular meeting list), never auto-fades, and ends on "I'm okay" (close). ---
+
+// The squad's active safety broadcasts, each with the converging roster + live ETAs.
+groups.get("/:id/safety", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const points = await listActiveSafetyPoints(c.env.DB, m.group.festivalId, m.group.id, m.user.id, new Date().toISOString());
+  return c.json({ safetyPoints: points });
 });
 
 // One meeting point with the full convergence roster + live ETAs + lifecycle (Gate 6.2, #26.3).

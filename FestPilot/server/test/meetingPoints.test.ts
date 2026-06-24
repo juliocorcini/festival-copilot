@@ -12,6 +12,7 @@ import {
   createMeetingPoint,
   endMeetingPoint,
   getMeetingPoint,
+  listActiveSafetyPoints,
   listMeetingPoints,
   purgeExpiredMeetingPoints,
   setMyMeetingStatus,
@@ -395,5 +396,82 @@ describe("meeting points — lifecycle, status loop, ETA & purge (Gate 6.2, UC-2
     const purged = await purgeExpiredMeetingPoints(d1, "2026-07-19T03:30:00Z");
     expect(purged.purged).toBe(1);
     expect(await getMeetingPoint(d1, FESTIVAL_ID, g.id, point.id, owner.id, "2026-07-19T03:30:00Z")).toBeNull();
+  });
+});
+
+describe("safety / 'I'm lost' broadcast (Gate 6.3, UC-28, DEC-022)", () => {
+  let d1: D1Database;
+  beforeEach(async () => (d1 = await freshDb()));
+
+  async function squadOf2() {
+    const owner = await makeUser(d1, "Julio");
+    const mara = await makeUser(d1, "Mara");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+    await joinByToken(d1, mara.id, g.inviteToken!, "t1");
+    return { owner, mara, g };
+  }
+
+  async function dropSafety(groupId: string, userId: string) {
+    return createMeetingPoint(
+      d1,
+      FESTIVAL_ID,
+      groupId,
+      userId,
+      { lat: MAIN.lat, lng: MAIN.lng, accuracyMeters: 8, title: "Julio needs help", note: null, meetAtUtc: null, isSafety: true },
+      NOW
+    );
+  }
+
+  it("a safety broadcast is flagged is_safety, carries the exact spot, and lives for hours", async () => {
+    const { owner, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    expect(sos.isSafety).toBe(true);
+    expect(sos.lat).toBeCloseTo(MAIN.lat, 6);
+    expect(sos.lng).toBeCloseTo(MAIN.lng, 6);
+    // It ends on "I'm okay", not a 30-min timer — the default safety grace is 4 h.
+    expect(Date.parse(sos.expiresAtUtc) - Date.parse(NOW)).toBe(240 * 60_000);
+  });
+
+  it("lives in its own lane: excluded from the meeting list, present in the safety list", async () => {
+    const { owner, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    // Not mixed into the regular "come to me" list…
+    expect((await listMeetingPoints(d1, FESTIVAL_ID, g.id, owner.id, NOW)).map((p) => p.id)).not.toContain(sos.id);
+    // …but visible in the safety lane, with isMine for the lost member.
+    const lane = await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, owner.id, NOW);
+    expect(lane.map((p) => p.id)).toEqual([sos.id]);
+    expect(lane[0].isMine).toBe(true);
+    expect(lane[0].isSafety).toBe(true);
+  });
+
+  it("the safety lane carries the converging squad with live ETAs to the lost member", async () => {
+    const { owner, mara, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    // Mara is heading over from CORE (~400 m) and sharing a fresh fix.
+    await setMyMeetingStatus(d1, FESTIVAL_ID, g.id, sos.id, mara.id, "going", NOW);
+    await putPresence(d1, g.id, mara.id, CORE.lat, CORE.lng, NOW);
+    const lane = await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, owner.id, NOW);
+    const maraRow = lane[0].members.find((m) => m.displayName === "Mara")!;
+    expect(maraRow.status).toBe("going");
+    expect(maraRow.etaMinutes).toBe(8);
+    expect(maraRow.distanceMeters).toBeGreaterThan(350);
+  });
+
+  it("'I'm okay' (close) ends the broadcast and clears the safety lane", async () => {
+    const { owner, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    const ended = (await endMeetingPoint(d1, FESTIVAL_ID, g.id, sos.id, owner.id, "close", NOW))!;
+    expect(ended.lifecycle).toBe("expired");
+    expect((await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, owner.id, NOW)).length).toBe(0);
+  });
+
+  it("the cron purge never auto-fades a safety broadcast (it ends only on 'I'm okay')", async () => {
+    const { owner, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    // Way past any regular grace window — a normal point would have faded; the safety point must not.
+    const r = await purgeExpiredMeetingPoints(d1, "2026-07-18T22:00:00Z");
+    expect(r.archived).toBe(0);
+    const lane = await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, owner.id, "2026-07-18T22:00:00Z");
+    expect(lane.map((p) => p.id)).toContain(sos.id);
   });
 });

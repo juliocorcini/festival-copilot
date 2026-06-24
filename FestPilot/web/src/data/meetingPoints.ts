@@ -141,3 +141,67 @@ export function useMeetingPoint(groupId: string | undefined, mpId: string | unde
 
   return { point, status, reload };
 }
+
+/** Safety convergence is urgent — refresh ETAs a little faster than regular points. */
+const SAFETY_TICK_MS = 15_000;
+
+export interface SafetyState {
+  points: MeetingPointDto[];
+  status: LoadStatus;
+  reload: () => void;
+}
+
+/**
+ * The squad's active safety broadcasts (Gate 6.3 #26.5/#26.6), kept fresh by the same contract as the
+ * rest of Pillar 3 (socket → refetch, focus refetch, fast tick). Drives both the "I'm lost" entry's
+ * active state and the squad-home safety banner. Empty array = nobody's broadcasting right now.
+ */
+export function useSafety(groupId: string | undefined): SafetyState {
+  const [points, setPoints] = useState<MeetingPointDto[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [nonce, setNonce] = useState(0);
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
+  const hasData = useRef(false);
+
+  useEffect(() => {
+    if (!groupId) return;
+    const controller = new AbortController();
+    let alive = true;
+    if (!hasData.current) setStatus("loading");
+    api
+      .listSafetyPoints(groupId, controller.signal)
+      .then((data) => {
+        if (!alive) return;
+        setPoints(data);
+        hasData.current = true;
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (!alive || controller.signal.aborted) return;
+        if (!hasData.current) setStatus("error");
+      });
+    return () => {
+      alive = false;
+      controller.abort();
+    };
+  }, [groupId, nonce]);
+
+  useEffect(() => {
+    if (!groupId) return;
+    const onFocus = (): void => {
+      if (document.visibilityState === "visible") reload();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    const id = setInterval(reload, SAFETY_TICK_MS);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      clearInterval(id);
+    };
+  }, [groupId, reload]);
+
+  useGroupLive(groupId, reload);
+
+  return { points, status, reload };
+}

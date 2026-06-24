@@ -5,10 +5,10 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 + PHASE 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + G6.2 ✅ + LIVE.**
-  Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P6 IN PROGRESS** — **G6.1 "come to me" meeting point ✅ + G6.2 meeting lifecycle (going/here/can't + live ETA + everyone's-here + cancel/close + cron purge) ✅** —
-  next: **G6.3** (compass nav + "I'm lost" safety).
+- 🔨 **BUILD IN PROGRESS (2026-06-24).** Executing the orchestrator autonomously. **PHASE 0 + 1 + 2 + 4 + 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + G6.2 ✅ + G6.3 ✅ → PHASE 6 COMPLETE.**
+  Design pass + brain are done (59 screens locked, prototypes `23`–`30`). About screen + changelog shipped (single-source `APP_VERSION`).
+- Active Phase / Gate: **PHASE 6 COMPLETE** — G6.1 "come to me" ✅ + G6.2 lifecycle ✅ + **G6.3 compass nav + "I'm lost" safety ✅** (deploy pending this session).
+  Post-build V1.x follow-ups requested by Julio: **undo / "what did I give up"** (clash + onboarding swipe), **rich group split viz**, **share my plan as branded image/link**.
   P5 ✅ (presence pipeline + G5.1 consent + G5.2 roster/coarse map + G5.3 ping/sharing-picker/privacy; precise exact-dot rides this Phase-6 channel per DEC-046).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
@@ -142,6 +142,30 @@
   spec is unchanged). **No migration.** Worker redeployed + **live smoke validated** (create→drop[active]→join→
   `[going,no_response]`→member arrived[on_the_way]→owner arrived[**everyone_here**]→cancel[cancelled]→dropped from the
   active list→status-on-cancelled **409**). Pages https://8879f4ba.festpilot.pages.dev. Web `0.5.0`→`0.6.0`.
+- **About screen + changelog ✅ (this session):** new `data/changelog.ts` = the **single source of `APP_VERSION`** (fixes
+  the stale `0.4.0` hardcoded in Settings) + a retroactive, dual-audience changelog (each release has `whatsNew` for
+  users + a collapsible `howToTest` for the maker). `routes/settings/AboutScreen.tsx` (identity: what the app is +
+  **creator Julio Corcini** + version, then the What's-new timeline; native `<details>` for the dev notes), wired at
+  `settings/about` + a Settings row. `about` e2e (identity + creator + changelog + expand, 2 screenshots).
+- **P6 G6.3 navigation + "I'm lost" safety ✅ (this session):** the regroup-and-reassure half of Pillar 2 (UC-28,
+  #26.5/#26.6, DEC-022/046). **Safety is a meeting point flagged `is_safety`** (the column already existed → **NO
+  migration**): the lost member shares their **exact** spot (the one deliberate exact-coordinate share) so the squad
+  converges to help. Server `api/meetingPoints.ts`: `createMeetingPoint` now takes `isSafety` (long **240-min** grace —
+  it ends on "I'm okay", not a timer), `is_safety` in the SELECT + DTO, new `listActiveSafetyPoints` (own lane,
+  reuses `getMeetingPoint` for the converging roster + live ETAs); the list + cron purge already excluded `is_safety`.
+  Routes: `POST /:id/meeting-points` accepts `isSafety` (notify topic `safety`), new `GET /:id/safety`. **5 new server
+  tests** (flagged + exact spot + 4 h life; own lane in/out; converging ETAs; "I'm okay"=close clears the lane; purge
+  never fades safety). Web: pure `domain/travel.ts` `bearingDegrees` + `compassPoint` (**+7 unit tests**); `useSafety`
+  hook (15 s tick); `api.listSafetyPoints` (defensive `?? []`) + `createMeetingPoint(isSafety)`. **`MeetNavScreen`**
+  (`/squad/:id/meet/:mpId/nav`) — compass dial + arrow (device heading − bearing; **north-up fallback** when no
+  compass, iOS permission button), live distance/ETA from `watchPosition`, "you're here" inside 15 m, every layer
+  degrades on its own. **`SafetyScreen`** (`/squad/:id/safety`) — calm menu (#26.5: share+alert primary · nearest
+  landmark from the local map coarsener · medical/info/exit **degrades honestly** — no POI data, no fake safety info)
+  and the active broadcast (#26.6: steady banner · squad converging w/ ETAs · "I'm okay — stop sharing"). Squad home
+  gets a live **SOS banner** + a calm "I'm lost" entry; meeting-detail "Navigate" now opens the compass. **No phone
+  calling** (anon V1 has no numbers) — the squad broadcast is the channel; **nearest help degrades** until POIs are
+  mapped. **121 server + 136 web unit + e2e green** (new `safety` spec: menu→share+alert[`isSafety:true`]→active→I'm
+  okay, + compass distance/ETA; 3 screenshots). **No migration.** Web `0.6.0`→`0.7.0`.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the

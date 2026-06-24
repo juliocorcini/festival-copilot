@@ -388,7 +388,8 @@ export const api = {
     return data.meetingPoint;
   },
 
-  /** End a point — creator-only. "close" wraps it up (#26.4); "cancel" calls it off. */
+  /** End a point — creator-only. "close" wraps it up (#26.4); "cancel" calls it off. Also "I'm okay"
+   *  on a safety broadcast (Gate 6.3 #26.6) → close. */
   async endMeetingPoint(
     groupId: string,
     mpId: string,
@@ -400,5 +401,17 @@ export const api = {
       { method: "POST", body: { mode }, signal }
     );
     return data.meetingPoint;
+  },
+
+  // Safety / "I'm lost" broadcast (Gate 6.3 — UC-28, DEC-022). A meeting point flagged is_safety: the
+  // creator shares their exact spot so the squad converges to help. Triggered via createMeetingPoint
+  // with isSafety; ended with endMeetingPoint("close") = "I'm okay".
+  /** The squad's active safety broadcasts, each with the converging roster + live ETAs. */
+  async listSafetyPoints(groupId: string, signal?: AbortSignal): Promise<MeetingPointDto[]> {
+    const data = await authedJson<{ safetyPoints: MeetingPointDto[] }>(`/api/groups/${groupId}/safety`, {
+      method: "GET",
+      signal,
+    });
+    return data.safetyPoints ?? [];
   },
 };
