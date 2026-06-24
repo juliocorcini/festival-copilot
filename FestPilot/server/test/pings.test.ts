@@ -21,6 +21,7 @@ const migrations = [
   "0005_group_shared_plan.sql",
   "0006_presence_ping.sql",
   "0010_app_user_identity.sql",
+  "0013_usage_metrics.sql",
 ]
   .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
   .join("\n");

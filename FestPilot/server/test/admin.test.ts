@@ -11,6 +11,8 @@ import { getAdminOverview, getLineupDashboard } from "../src/api/adminRepo";
 import { getDataSource, readDataSourceInput, upsertDataSource } from "../src/api/dataSource";
 import { getMetrics, recordUsage } from "../src/api/metricsRepo";
 import { GIB } from "../src/api/runway";
+import { injectStageFix, listTestMembers, purgeTestData, spawnTestMember } from "../src/api/testConsole";
+import { upsertFestivalMap, type FestivalMapInput } from "../src/api/repo";
 import type { Env } from "../src/env";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
@@ -18,6 +20,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const migrations = [
   "0001_init.sql",
   "0002_festival_map.sql",
+  "0003_app_user_profile.sql",
+  "0005_group_shared_plan.sql",
+  "0006_presence_ping.sql",
   "0008_festival_with_timetable.sql",
   "0010_app_user_identity.sql",
   "0011_media_object.sql",
@@ -242,6 +247,93 @@ describe("usage metrics + runway (R11.4 / DEC-057c)", () => {
     const m = await getMetrics(db, NOW);
     expect(m.activity.today).toBe(3);
     expect(m.activity.kind).toBe("me_touch");
+  });
+});
+
+describe("live test console (R11.5 / DEC-057d)", () => {
+  const NOW = "2026-06-24T20:00:00Z";
+
+  const mapInput: FestivalMapInput = {
+    assetSlug: "tml-deschorre",
+    baseNightKey: "maps/tml.webp",
+    baseDayKey: "maps/tml-day.webp",
+    transform: {
+      festival: "tml",
+      venue: "De Schorre",
+      canvas: { width: 1000, height: 1291 },
+      bbox: { west: 4.3756, east: 4.3897, south: 51.0849, north: 51.0964 },
+      affine: { a: 66789.5, b: 0, c: -292218.5, d: 2.79, e: -106339.4, f: 5433593.1 },
+      stages: [{ name: "MAINSTAGE", lng: 4.3864793, lat: 51.0921683, matched: true }],
+      source: "OSM",
+    },
+    revision: 1,
+  };
+
+  /** A festival (with map coords) + a real squad owned by a real user. Returns the group id. */
+  async function seedSquad(db: D1Database): Promise<string> {
+    await seedFestival(db);
+    await upsertFestivalMap(db, "fest-1", mapInput, NOW);
+    await db
+      .prepare(`INSERT INTO app_user (id, firebase_uid, auth_provider, is_anonymous, display_name, created_at_utc, is_test) VALUES (?,?,?,?,?,?,0)`)
+      .bind("owner-1", "uid-owner", "google", 0, "Julio", NOW)
+      .run();
+    await db
+      .prepare(`INSERT INTO app_group (id, festival_id, name, created_by_user_id, created_at_utc) VALUES (?,?,?,?,?)`)
+      .bind("grp-1", "fest-1", "Squad", "owner-1", NOW)
+      .run();
+    await db
+      .prepare(`INSERT INTO group_member (group_id, user_id, role, share_location, joined_at_utc) VALUES (?,?,?,?,?)`)
+      .bind("grp-1", "owner-1", "owner", "while_using", NOW)
+      .run();
+    return "grp-1";
+  }
+
+  it("spawns a synthetic member and drives it to a stage through the real pipeline", async () => {
+    const db = await freshDb();
+    const groupId = await seedSquad(db);
+    const member = await spawnTestMember(db, groupId, NOW);
+    expect(member).not.toBeNull();
+
+    const flag = await db.prepare(`SELECT is_test FROM app_user WHERE id = ?`).bind(member!.userId).first<{ is_test: number }>();
+    expect(flag?.is_test).toBe(1);
+
+    const res = await injectStageFix(db, member!.userId, groupId, "s-main", NOW);
+    expect(res.ok).toBe(true);
+
+    const members = await listTestMembers(db, groupId);
+    expect(members).toHaveLength(1);
+    expect(members[0]).toMatchObject({ coarseLabel: "at", stageName: "MAINSTAGE" });
+  });
+
+  it("REFUSES to inject a fix for a non-test (real) user", async () => {
+    const db = await freshDb();
+    const groupId = await seedSquad(db); // owner-1 is a real user
+    const res = await injectStageFix(db, "owner-1", groupId, "s-main", NOW);
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe("not a test user");
+    // No presence row was written for the real user.
+    const row = await db.prepare(`SELECT COUNT(*) AS c FROM presence WHERE user_id = ?`).bind("owner-1").first<{ c: number }>();
+    expect(Number(row?.c)).toBe(0);
+  });
+
+  it("purges every test entity and leaves real members untouched", async () => {
+    const db = await freshDb();
+    const groupId = await seedSquad(db);
+    const a = await spawnTestMember(db, groupId, NOW);
+    await injectStageFix(db, a!.userId, groupId, "s-main", NOW);
+    await spawnTestMember(db, groupId, NOW);
+
+    const purged = await purgeTestData(db);
+    expect(purged.users).toBe(2);
+    expect(await listTestMembers(db, groupId)).toHaveLength(0);
+
+    // The real owner + their membership survive.
+    const owner = await db.prepare(`SELECT COUNT(*) AS c FROM app_user WHERE id = 'owner-1'`).first<{ c: number }>();
+    expect(Number(owner?.c)).toBe(1);
+    const realMembers = await db.prepare(`SELECT COUNT(*) AS c FROM group_member WHERE group_id = ?`).bind(groupId).first<{ c: number }>();
+    expect(Number(realMembers?.c)).toBe(1); // only owner-1 left
+    const noPresence = await db.prepare(`SELECT COUNT(*) AS c FROM presence`).first<{ c: number }>();
+    expect(Number(noPresence?.c)).toBe(0);
   });
 });
 

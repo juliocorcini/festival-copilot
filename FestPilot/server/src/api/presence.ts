@@ -271,6 +271,7 @@ interface PresenceRosterRow {
   displayName: string | null;
   avatarColor: string | null;
   role: string;
+  isTest: number;
   shareLocation: string;
   shareUntil: string | null;
   coarseLabel: string | null;
@@ -330,6 +331,7 @@ export async function getGroupPresence(
   const { results } = await db
     .prepare(
       `SELECT u.id AS userId, u.display_name AS displayName, u.avatar_color AS avatarColor,
+              u.is_test AS isTest,
               m.role AS role, m.share_location AS shareLocation, m.share_until_utc AS shareUntil,
               p.coarse_label AS coarseLabel, p.confidence AS confidence, p.source AS source,
               p.updated_at_utc AS updatedAt, p.expires_at_utc AS expiresAt,
@@ -357,6 +359,7 @@ export async function getGroupPresence(
       avatarColor: row.avatarColor,
       role: row.role,
       isYou: row.userId === meId,
+      isTest: row.isTest === 1,
       shareMode: shareModeOf(row.shareLocation),
       live,
       liveSecondsLeft,

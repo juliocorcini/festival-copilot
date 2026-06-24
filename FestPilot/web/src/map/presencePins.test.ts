@@ -39,6 +39,7 @@ function member(over: Partial<PresenceMemberDto> = {}): PresenceMemberDto {
     avatarColor: "#0EA5E9",
     role: "member",
     isYou: false,
+    isTest: false,
     shareMode: "stage",
     live: false,
     liveSecondsLeft: null,

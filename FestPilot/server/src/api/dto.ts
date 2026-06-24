@@ -224,6 +224,8 @@ export interface PresenceMemberDto {
   avatarColor: string | null;
   role: string;
   isYou: boolean;
+  /** Synthetic member injected by the admin live test console (R11.5) — badged in the client. */
+  isTest: boolean;
   shareMode: ShareMode;
   /** Precise sharing is currently active (live_until and not yet expired). */
   live: boolean;

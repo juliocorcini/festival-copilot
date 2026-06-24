@@ -15,6 +15,7 @@ const NAV: NavSection[] = [
   { to: "/admin/data-sources", icon: "database", label: "Data sources" },
   { to: "/admin/metrics", icon: "speed", label: "Metrics & runway" },
   { to: "/admin/suggestions", icon: "inbox", label: "Suggestions" },
+  { to: "/admin/test-console", icon: "science", label: "Test console" },
 ];
 
 /** Amber-Glass desktop shell for the admin back-office (R11.0; wireframe 30-amber-admin.html). */

@@ -147,6 +147,7 @@ export function WhereScreen(): JSX.Element {
                   <div className="where-row-name">
                     {m.displayName ?? "Guest"}
                     {m.isYou && <span className="where-you"> · you</span>}
+                    {m.isTest && <span className="pill where-test">test</span>}
                     {m.live && <span className="pill pill-live">● live</span>}
                   </div>
                   <div className="where-row-line">

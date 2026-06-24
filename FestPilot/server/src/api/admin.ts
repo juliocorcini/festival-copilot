@@ -14,6 +14,15 @@ import {
 import { upsertFestivalMap, type FestivalMapInput } from "./repo";
 import { getDataSource, readDataSourceInput, upsertDataSource } from "./dataSource";
 import { getMetrics } from "./metricsRepo";
+import {
+  getInjectableStages,
+  injectStageFix,
+  listTestableGroups,
+  listTestMembers,
+  purgeTestData,
+  spawnTestMember,
+} from "./testConsole";
+import { notifyGroup } from "./groups-routes";
 import { runScheduledIngest } from "../ingest/ingest";
 
 export const admin = new Hono<{ Bindings: Env }>();
@@ -83,6 +92,52 @@ admin.patch("/festival-suggestions/:id", async (c) => {
   const ok = await updateSuggestionStatus(c.env.DB, c.req.param("id"), body.status, new Date().toISOString());
   if (!ok) return c.json({ error: "suggestion not found" }, 404);
   return c.json({ ok: true, status: body.status });
+});
+
+// R11.5 — Live test command console (DEC-057d). Inject synthetic is_test members + drive their
+// presence through the real pipeline; refuse non-test users; purge wipes every test entity.
+admin.get("/test/groups", async (c) => {
+  const groups = await listTestableGroups(c.env.DB);
+  return c.json({ groups });
+});
+
+admin.get("/test/festivals/:id/stages", async (c) => {
+  const stages = await getInjectableStages(c.env.DB, c.req.param("id"));
+  return c.json({ stages });
+});
+
+admin.get("/test/groups/:id/members", async (c) => {
+  const members = await listTestMembers(c.env.DB, c.req.param("id"));
+  return c.json({ members });
+});
+
+admin.post("/test/groups/:id/members", async (c) => {
+  const groupId = c.req.param("id");
+  const body = (await c.req.json().catch(() => ({}))) as { name?: string; color?: string; stageId?: string };
+  const nowIso = new Date().toISOString();
+  const member = await spawnTestMember(c.env.DB, groupId, nowIso, body.name, body.color);
+  if (!member) return c.json({ error: "group not found" }, 404);
+  let injected = false;
+  if (typeof body.stageId === "string" && body.stageId) {
+    const result = await injectStageFix(c.env.DB, member.userId, groupId, body.stageId, nowIso);
+    injected = result.ok;
+    if (result.ok) await notifyGroup(c.env, groupId, "presence");
+  }
+  return c.json({ member, injected }, 201);
+});
+
+admin.post("/test/members/:userId/inject", async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as { groupId?: string; stageId?: string };
+  if (!body.groupId || !body.stageId) return c.json({ error: "groupId and stageId are required" }, 400);
+  const result = await injectStageFix(c.env.DB, c.req.param("userId"), body.groupId, body.stageId, new Date().toISOString());
+  if (!result.ok) return c.json({ error: result.reason ?? "inject failed" }, 400);
+  await notifyGroup(c.env, body.groupId, "presence");
+  return c.json({ ok: true });
+});
+
+admin.post("/test/purge", async (c) => {
+  const result = await purgeTestData(c.env.DB);
+  return c.json(result);
 });
 
 // Manual lineup ingestion trigger for dev/ops (also the dashboard "Re-import" action, R11.1b).

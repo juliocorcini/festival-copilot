@@ -256,3 +256,40 @@ export interface MetricsDto {
 }
 export const fetchMetrics = (signal?: AbortSignal): Promise<MetricsDto> =>
   adminGet<MetricsDto>("/metrics", signal);
+
+// R11.5 — Live test console.
+export interface TestGroupRow {
+  id: string;
+  name: string;
+  festivalId: string;
+  festivalName: string;
+  memberCount: number;
+  testCount: number;
+  hasMap: boolean;
+}
+export interface InjectableStage {
+  stageId: string;
+  name: string;
+}
+export interface TestMemberRow {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  coarseLabel: string | null;
+  stageName: string | null;
+  updatedAtUtc: string | null;
+}
+export const fetchTestGroups = (signal?: AbortSignal): Promise<{ groups: TestGroupRow[] }> =>
+  adminGet<{ groups: TestGroupRow[] }>("/test/groups", signal);
+export const fetchInjectableStages = (festivalId: string, signal?: AbortSignal): Promise<{ stages: InjectableStage[] }> =>
+  adminGet<{ stages: InjectableStage[] }>(`/test/festivals/${festivalId}/stages`, signal);
+export const fetchTestMembers = (groupId: string, signal?: AbortSignal): Promise<{ members: TestMemberRow[] }> =>
+  adminGet<{ members: TestMemberRow[] }>(`/test/groups/${groupId}/members`, signal);
+export const spawnTestMember = (
+  groupId: string,
+  body: { name?: string; color?: string; stageId?: string }
+): Promise<{ member: { userId: string; displayName: string; avatarColor: string }; injected: boolean }> =>
+  adminSend(`/test/groups/${groupId}/members`, "POST", body);
+export const injectTestFix = (userId: string, body: { groupId: string; stageId: string }): Promise<{ ok: boolean }> =>
+  adminSend(`/test/members/${userId}/inject`, "POST", body);
+export const purgeTestData = (): Promise<{ users: number }> => adminSend("/test/purge", "POST");

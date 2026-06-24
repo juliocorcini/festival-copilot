@@ -1281,6 +1281,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .where-row-age { font-size: 11px; color: var(--muted); flex-shrink: 0; }
 .where-row-age.live { width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; color: var(--ok-ink); }
 .pill-live { color: var(--ok-ink); border-color: rgba(22, 163, 74, 0.4); background: rgba(22, 163, 74, 0.12); font-size: 10px; padding: 2px 8px; }
+.where-test { color: var(--accent); border-color: rgba(245, 166, 35, 0.45); background: rgba(245, 166, 35, 0.12); font-size: 10px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 800; }
 .where-actions { position: sticky; bottom: 0; padding: 12px 0 calc(8px + var(--safe-bottom)); background: linear-gradient(to top, var(--bg) 72%, transparent); }
 
 /* --- Precise sharing control (#25.5) --- */
@@ -1724,3 +1725,14 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .admin-recent-mail { font-size: 14px; color: var(--accent); }
 .admin-recent-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
 @media (max-width: 720px) { .admin-2col { grid-template-columns: 1fr; } }
+
+/* R11.5 — live test console */
+.admin-danger-btn { color: var(--danger-ink); border-color: rgba(224, 86, 59, 0.35); }
+.admin-test-add { margin-bottom: 16px; }
+.admin-test-add-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.admin-test-add-row .field { flex: 1; min-width: 140px; }
+.admin-test-add-row .btn { flex-shrink: 0; }
+.admin-test-member { display: flex; align-items: center; gap: 8px; }
+.admin-test-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.admin-inline-select { max-width: 200px; padding: 7px 10px; font-size: 13px; }
+@media (max-width: 640px) { .admin-test-add-row { flex-direction: column; } .admin-test-add-row .field { width: 100%; } }

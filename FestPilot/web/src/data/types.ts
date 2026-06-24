@@ -193,6 +193,8 @@ export interface PresenceMemberDto {
   avatarColor: string | null;
   role: string;
   isYou: boolean;
+  /** Synthetic member injected by the admin live test console (R11.5) — badged in the UI. */
+  isTest: boolean;
   shareMode: ShareMode;
   live: boolean;
   liveSecondsLeft: number | null;

@@ -21,6 +21,7 @@ function member(over: Partial<PresenceMemberDto>, presence?: CoarsePresenceDto |
     avatarColor: "#FF5A36",
     role: "member",
     isYou: false,
+    isTest: false,
     shareMode: "stage",
     live: false,
     liveSecondsLeft: null,
