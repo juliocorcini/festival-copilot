@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import type { Env } from "../env";
 import { getUserFromRequest } from "../auth";
 import { ensureUser, type ProfileInput } from "./users";
+import { recordUsage } from "./metricsRepo";
 
 export const me = new Hono<{ Bindings: Env }>();
 
@@ -38,7 +39,10 @@ function readCountry(req: Request): string | null {
 me.get("/", async (c) => {
   const identity = getUserFromRequest(c.req.raw);
   if (!identity) return c.json({ error: "unauthorized" }, 401);
-  const user = await ensureUser(c.env.DB, identity, new Date().toISOString(), undefined, readCountry(c.req.raw));
+  const nowIso = new Date().toISOString();
+  const user = await ensureUser(c.env.DB, identity, nowIso, undefined, readCountry(c.req.raw));
+  // First-party session ping for the admin runway (DEC-057c). Never let a counter write break auth.
+  await recordUsage(c.env.DB, "me_touch", nowIso).catch(() => undefined);
   return c.json({ user });
 });
 

@@ -13,6 +13,7 @@ import {
 } from "./festivalSuggestions";
 import { upsertFestivalMap, type FestivalMapInput } from "./repo";
 import { getDataSource, readDataSourceInput, upsertDataSource } from "./dataSource";
+import { getMetrics } from "./metricsRepo";
 import { runScheduledIngest } from "../ingest/ingest";
 
 export const admin = new Hono<{ Bindings: Env }>();
@@ -36,6 +37,13 @@ admin.get("/ping", (c) => c.json({ ok: true }));
 admin.get("/overview", async (c) => {
   const overview = await getAdminOverview(c.env.DB);
   return c.json(overview);
+});
+
+// R11.4 — Usage metrics + free-tier runway (DEC-057c): real users + R2 + first-party activity,
+// with exact platform figures surfaced honestly as "locked" until a Cloudflare Analytics token is set.
+admin.get("/metrics", async (c) => {
+  const metrics = await getMetrics(c.env.DB, new Date().toISOString());
+  return c.json(metrics);
 });
 
 // R11.1b — Lineup & timetable dashboard: documented source + per-stage health for one festival.

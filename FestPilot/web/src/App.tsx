@@ -41,6 +41,7 @@ import { AdminLayout } from "./admin/AdminLayout";
 import { AdminFestivalsScreen } from "./admin/AdminFestivalsScreen";
 import { AdminLineupScreen } from "./admin/AdminLineupScreen";
 import { AdminDataSourceScreen } from "./admin/AdminDataSourceScreen";
+import { AdminMetricsScreen } from "./admin/AdminMetricsScreen";
 import { AdminSuggestionsScreen } from "./admin/AdminSuggestionsScreen";
 
 export function App(): JSX.Element {
@@ -94,6 +95,7 @@ export function App(): JSX.Element {
             <Route index element={<AdminFestivalsScreen />} />
             <Route path="lineup" element={<AdminLineupScreen />} />
             <Route path="data-sources" element={<AdminDataSourceScreen />} />
+            <Route path="metrics" element={<AdminMetricsScreen />} />
             <Route path="suggestions" element={<AdminSuggestionsScreen />} />
           </Route>
         </Route>

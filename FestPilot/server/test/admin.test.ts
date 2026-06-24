@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest";
 import { admin } from "../src/api/admin";
 import { getAdminOverview, getLineupDashboard } from "../src/api/adminRepo";
 import { getDataSource, readDataSourceInput, upsertDataSource } from "../src/api/dataSource";
+import { getMetrics, recordUsage } from "../src/api/metricsRepo";
+import { GIB } from "../src/api/runway";
 import type { Env } from "../src/env";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
@@ -17,7 +19,10 @@ const migrations = [
   "0001_init.sql",
   "0002_festival_map.sql",
   "0008_festival_with_timetable.sql",
+  "0010_app_user_identity.sql",
+  "0011_media_object.sql",
   "0012_festival_data_source.sql",
+  "0013_usage_metrics.sql",
 ]
   .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
   .join("\n");
@@ -143,6 +148,100 @@ describe("data-source registry (R11.2 / DEC-057a)", () => {
     expect(input.event).toBe("TL26BE");
     expect(input.aiReaderEnabled).toBe(true);
     expect(input.notes).toBeNull();
+  });
+});
+
+describe("usage metrics + runway (R11.4 / DEC-057c)", () => {
+  const NOW = "2026-06-24T12:00:00Z";
+
+  async function seedUser(
+    db: D1Database,
+    u: { id: string; name?: string | null; email?: string | null; country?: string | null; anon?: boolean; isTest?: boolean; lastSeen?: string; created?: string }
+  ): Promise<void> {
+    await db
+      .prepare(
+        `INSERT INTO app_user (id, firebase_uid, auth_provider, is_anonymous, display_name, email, country, last_seen_utc, created_at_utc, is_test)
+         VALUES (?,?,?,?,?,?,?,?,?,?)`
+      )
+      .bind(
+        u.id,
+        `uid-${u.id}`,
+        u.anon ? "anonymous" : "google",
+        u.anon ? 1 : 0,
+        u.name ?? null,
+        u.email ?? null,
+        u.country ?? null,
+        u.lastSeen ?? "2026-06-23T00:00:00Z",
+        u.created ?? "2026-06-22T00:00:00Z",
+        u.isTest ? 1 : 0
+      )
+      .run();
+  }
+
+  async function seedMedia(db: D1Database, key: string, bytes: number, created: string): Promise<void> {
+    await db
+      .prepare(`INSERT INTO media_object (key, kind, owner_user_id, byte_size, content_type, created_at_utc) VALUES (?,?,?,?,?,?)`)
+      .bind(key, "avatar", "u1", bytes, "image/webp", created)
+      .run();
+  }
+
+  it("aggregates only REAL users, excluding is_test synthetic ones", async () => {
+    const db = await freshDb();
+    await seedUser(db, { id: "u1", name: "Julio", email: "j@x.io", country: "BE", lastSeen: NOW, created: "2026-06-23T00:00:00Z" });
+    await seedUser(db, { id: "u2", anon: true, country: "NL" });
+    await seedUser(db, { id: "t1", name: "Bot", isTest: true, country: "BE" }); // must be excluded
+
+    const m = await getMetrics(db, NOW);
+    expect(m.users.total).toBe(2);
+    expect(m.users.testUsers).toBe(1);
+    expect(m.users.withEmail).toBe(1);
+    expect(m.users.anonymous).toBe(1);
+    expect(m.users.named).toBe(1);
+    expect(m.users.activeLast7d).toBe(2);
+    expect(m.users.newLast7d).toBe(2);
+    expect(m.users.byCountry).toEqual([
+      { country: "BE", count: 1 },
+      { country: "NL", count: 1 },
+    ]); // test BE user not counted
+  });
+
+  it("reports real R2 storage from the media ledger and a growth-based runway", async () => {
+    const db = await freshDb();
+    await seedMedia(db, "avatars/a.webp", 2 * GIB, "2026-06-20T00:00:00Z"); // within the 7d window
+    await seedMedia(db, "meetings/m.webp", 1 * GIB, "2026-06-21T00:00:00Z");
+
+    const m = await getMetrics(db, NOW);
+    expect(m.storage.objectCount).toBe(2);
+    expect(m.storage.totalBytes).toBe(3 * GIB);
+    const r2 = m.runways.find((r) => r.id === "r2_storage")!;
+    expect(r2.used).toBe(3 * GIB);
+    expect(r2.ceiling).toBe(10 * GIB);
+    expect(r2.firstParty).toBe(true);
+    expect(r2.daysLeft).not.toBeNull(); // 3 GiB grew in 7 days → a finite runway
+    expect(r2.kind).toBe("cumulative");
+  });
+
+  it("surfaces locked services honestly instead of faking platform numbers", async () => {
+    const db = await freshDb();
+    const m = await getMetrics(db, NOW);
+    const ids = m.locked.map((l) => l.id);
+    expect(ids).toContain("d1_rows_written");
+    expect(ids).toContain("durable_objects");
+    // The first-party Workers card is present but flagged as a lower bound.
+    expect(m.runways.find((r) => r.id === "workers_requests")!.firstParty).toBe(false);
+  });
+
+  it("recordUsage increments one row per kind per UTC day", async () => {
+    const db = await freshDb();
+    await recordUsage(db, "me_touch", NOW);
+    await recordUsage(db, "me_touch", NOW);
+    await recordUsage(db, "me_touch", "2026-06-24T23:59:00Z"); // same UTC day
+    const row = await db.prepare(`SELECT count FROM usage_counter WHERE day = ? AND kind = ?`).bind("2026-06-24", "me_touch").first<{ count: number }>();
+    expect(Number(row?.count)).toBe(3);
+
+    const m = await getMetrics(db, NOW);
+    expect(m.activity.today).toBe(3);
+    expect(m.activity.kind).toBe("me_touch");
   });
 });
 

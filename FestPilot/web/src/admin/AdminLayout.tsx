@@ -13,6 +13,7 @@ const NAV: NavSection[] = [
   { to: "/admin", end: true, icon: "dashboard", label: "Festivals" },
   { to: "/admin/lineup", icon: "queue_music", label: "Lineup & timetable" },
   { to: "/admin/data-sources", icon: "database", label: "Data sources" },
+  { to: "/admin/metrics", icon: "speed", label: "Metrics & runway" },
   { to: "/admin/suggestions", icon: "inbox", label: "Suggestions" },
 ];
 

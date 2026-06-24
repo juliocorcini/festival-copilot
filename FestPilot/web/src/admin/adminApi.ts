@@ -198,3 +198,61 @@ export const fetchDataSource = (festivalId: string, signal?: AbortSignal): Promi
   adminGet<DataSourceDto>(`/festivals/${festivalId}/data-source`, signal);
 export const saveDataSource = (festivalId: string, input: DataSourceInput): Promise<DataSourceDto> =>
   adminSend<DataSourceDto>(`/festivals/${festivalId}/data-source`, "PUT", input);
+
+// R11.4 — Usage metrics + free-tier runway.
+export type RunwayStatus = "ok" | "watch" | "critical";
+export type LimitKind = "cumulative" | "daily";
+export interface UsersSummary {
+  total: number;
+  named: number;
+  withEmail: number;
+  anonymous: number;
+  activeLast7d: number;
+  newLast7d: number;
+  testUsers: number;
+  byCountry: { country: string; count: number }[];
+  recent: { displayName: string | null; country: string | null; hasEmail: boolean; lastSeenUtc: string | null }[];
+}
+export interface StorageUsage {
+  objectCount: number;
+  totalBytes: number;
+  bytesLast7d: number;
+  objectsLast7d: number;
+}
+export interface ActivitySummary {
+  kind: string;
+  today: number;
+  avgPerDay: number;
+  series: { day: string; count: number }[];
+}
+export interface ServiceRunway {
+  id: string;
+  label: string;
+  used: number;
+  ceiling: number;
+  unit: "bytes" | "count";
+  kind: LimitKind;
+  firstParty: boolean;
+  note: string;
+  usedPct: number;
+  perDayRate: number;
+  daysLeft: number | null;
+  status: RunwayStatus;
+}
+export interface LockedService {
+  id: string;
+  label: string;
+  ceiling: number;
+  unit: "bytes" | "count";
+  note: string;
+}
+export interface MetricsDto {
+  users: UsersSummary;
+  storage: StorageUsage;
+  activity: ActivitySummary;
+  runways: ServiceRunway[];
+  locked: LockedService[];
+  generatedAtUtc: string;
+}
+export const fetchMetrics = (signal?: AbortSignal): Promise<MetricsDto> =>
+  adminGet<MetricsDto>("/metrics", signal);
