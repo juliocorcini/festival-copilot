@@ -10,19 +10,18 @@ import { AppHeader } from "../app/AppHeader";
 import { useOnboarding, usePlan } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { buildPlanTimeline, type PlanGapItem, type PlanSetItem } from "../domain/plan";
-import { flatTravelMatrix } from "../domain/partialSet";
 import { daysForWeekends } from "../lib/festival";
 import { stageColor, timeInZone } from "../lib/format";
 import { sharePlan } from "../lib/share";
+import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
-
-const TRAVEL = flatTravelMatrix(8);
 
 export function MyPlanScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { onboarding } = useOnboarding();
+  const travel = useTravelMatrix(lineup);
   const tz = lineup?.festival.timezone ?? "UTC";
 
   const [now, setNow] = useState(() => Date.now());
@@ -43,8 +42,8 @@ export function MyPlanScreen(): JSX.Element {
   const plan = usePlan(lineup?.festival.id, dayKey ?? undefined);
 
   const timeline = useMemo(
-    () => buildPlanTimeline(plan.plan?.slots ?? [], TRAVEL, now),
-    [plan.plan?.slots, now]
+    () => buildPlanTimeline(plan.plan?.slots ?? [], travel, now),
+    [plan.plan?.slots, travel, now]
   );
 
   if (status === "loading") return <LoadingState />;

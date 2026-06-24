@@ -9,7 +9,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFavorites, useOnboarding, usePlan } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
 import { favoriteSets, nearbySets } from "../../domain/lineup";
-import { flatTravelMatrix, latestFeasibleDeparture } from "../../domain/partialSet";
+import { latestFeasibleDeparture } from "../../domain/partialSet";
+import { useTravelMatrix } from "../../data/useTravelMatrix";
 import {
   pickOption,
   pickSet,
@@ -22,8 +23,7 @@ import { daysForWeekends, initials } from "../../lib/festival";
 import { dayLabel, stageColor, timeInZone } from "../../lib/format";
 import { sharePlan } from "../../lib/share";
 import { EmptyState, ErrorState, LoadingState } from "../../ui/states";
-
-const TRAVEL = flatTravelMatrix(8);
+import type { TravelMatrix } from "../../domain/types";
 
 export function LockInScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
@@ -31,6 +31,7 @@ export function LockInScreen(): JSX.Element {
   const [params] = useSearchParams();
   const { onboarding } = useOnboarding();
   const favorites = useFavorites(lineup?.festival.id);
+  const travel = useTravelMatrix(lineup);
   const tz = lineup?.festival.timezone ?? "UTC";
 
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
@@ -125,7 +126,7 @@ export function LockInScreen(): JSX.Element {
   const options = [...decision.options, ...added];
   const selected = options.find((o) => o.id === selectedId) ?? options[0] ?? null;
   const progressPct = snapshot.decisionsTotal > 0 ? (snapshot.decisionsResolved / snapshot.decisionsTotal) * 100 : 100;
-  const split = selected ? feasibleSplit(selected, options) : null;
+  const split = selected ? feasibleSplit(selected, options, travel) : null;
 
   const lockIn = (cutMs: number | null = null): void => {
     if (!selected) return;
@@ -241,12 +242,12 @@ interface Split {
 }
 
 /** The earliest reachable later option you could catch by leaving the selected set early (DEC-018). */
-function feasibleSplit(selected: PlannableSet, options: PlannableSet[]): Split | null {
+function feasibleSplit(selected: PlannableSet, options: PlannableSet[], travel: TravelMatrix): Split | null {
   const from = asSlot(selected);
   let best: Split | null = null;
   for (const candidate of options) {
     if (candidate.id === selected.id || candidate.startMs <= selected.startMs) continue;
-    const cutMs = latestFeasibleDeparture(from, asSlot(candidate), TRAVEL);
+    const cutMs = latestFeasibleDeparture(from, asSlot(candidate), travel);
     if (cutMs == null || cutMs <= selected.startMs) continue;
     if (!best || candidate.startMs < best.target.startMs) best = { target: candidate, cutMs };
   }

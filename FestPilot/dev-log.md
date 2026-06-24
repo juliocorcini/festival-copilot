@@ -5,10 +5,18 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P2 COMPLETE → P3 next (Map + travel time + Now&Next + offline + POI + admin map-verify)**.
+- Active Phase / Gate: **P3 in progress** — G3.2 (travel matrix + coord→stage) ✅ domain · G3.3 (Now & Next home) ✅ — next: offline contract, map coord→stage UI, POI layer.
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅ (Lock-in + Celebration + My Plan)** — deployed.
+- **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
+  (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
+  `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the
+  lineup stages with the map transform's georeferenced stages → a real `TravelMatrix` (flat fallback when map absent).
+  Wired into `MyPlanScreen`, `LockInScreen` (real partial-set cut feasibility). `domain/nowNext.ts` — `buildNowNext`
+  (live set + next + **leave-in countdown** accounting for walk time + progress + later list). `NowScreen` rebuilt:
+  plan-driven **LEAVE IN** hero when a plan exists for the active day; lineup-driven **DOORS IN** fallback pre-festival.
+  11 new domain tests (travel + nowNext) + a `now` Playwright spec (hero + up-next + screenshot `phase3-now.png`).
 - **P2 G2.3 ✅ (this session):** A5 **Lock in** (#12c) — gated one-at-a-time clash picker (`LockInScreen`) over the day's
   favorites: progress bar, **all-clashes** overview (`resolver.previewRemainingClashes`), **add-nearby** sheet
   (`lineup.nearbySets`), **partial-set scissors** (`resolver.pickSet`/`pickOption(cut)` + `partialSet.latestFeasibleDeparture`).
