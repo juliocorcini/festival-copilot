@@ -334,3 +334,87 @@ a { color: inherit; text-decoration: none; }
 .src { margin: 10px 0 0; font-size: 10px; color: var(--muted); }
 
 .map-msg { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 14px; }
+
+/* =============================================================================
+   Onboarding flow (#17) — festival → weekend → days → swipe favorites
+   ============================================================================= */
+.ob { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto;
+  background: radial-gradient(ellipse 120% 55% at 50% 4%, rgba(245, 166, 35, 0.1), transparent 50%), var(--bg); }
+.ob-top { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: calc(18px + var(--safe-top)) 22px 10px; }
+.ob-back { appearance: none; background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 22px; padding: 0; }
+.ob-skip { appearance: none; background: transparent; border: 0; color: var(--muted); font-weight: 700; font-size: 13px; cursor: pointer; }
+.ob-dots { display: flex; gap: 6px; }
+.ob-dots .sd { width: 7px; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); transition: all 0.2s ease; }
+.ob-dots .sd.on { width: 22px; background: var(--accent); }
+.ob-body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px 22px 0; overflow-y: auto; }
+.ob-head { padding: 6px 0 18px; }
+.ob-head h1 { font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: -0.01em;
+  font-size: 30px; font-weight: 700; line-height: 1.1; margin: 6px 0 0; }
+.ob-head p { font-size: 13px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+.ob-options { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.ob-foot { flex-shrink: 0; padding: 16px 0 calc(22px + var(--safe-bottom)); }
+
+.opt { display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  border-radius: 18px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04);
+  padding: 16px; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease; color: inherit; }
+.opt:hover { background: rgba(255, 255, 255, 0.07); }
+.opt.sel { border-color: var(--accent); background: rgba(245, 166, 35, 0.12); box-shadow: 0 0 0 1px var(--accent); }
+.opt:disabled { opacity: 0.5; cursor: not-allowed; }
+.opt .opt-ico { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+.opt .opt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.opt .opt-title { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700; font-size: 18px; line-height: 1.1; }
+.opt .opt-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.opt .check { color: var(--accent); opacity: 0; flex-shrink: 0; }
+.opt.sel .check { opacity: 1; }
+
+/* swipe card (step 4) */
+.swipe-head { text-align: center; padding: 2px 0 6px; flex-shrink: 0; }
+.swipe-head .count { font-size: 12px; color: var(--muted); font-weight: 600; }
+.swipe-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 8px; }
+.swipe-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.25s ease; }
+.swipe-q { text-align: center; padding: 12px 0 8px; flex-shrink: 0; }
+.swipe-q .q { font-size: 14px; font-weight: 700; color: var(--accent); }
+.swipe-q .hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.art-card { width: 100%; border-radius: 26px; position: relative; overflow: hidden; aspect-ratio: 4 / 5;
+  background: linear-gradient(160deg, #221b12, #2c2216); border: 1px solid var(--border);
+  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6); }
+.art-card .art-glow { position: absolute; inset: 0; opacity: 0.25;
+  background: radial-gradient(circle at 60% 25%, rgba(245, 166, 35, 0.4), transparent 60%); }
+.art-card .art-inner { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+.art-card .art-stage { font-size: 12px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; }
+.art-card .art-day { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.4); }
+.art-card .art-name { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700;
+  font-size: 38px; line-height: 0.95; }
+.art-card .art-note { font-size: 12px; color: var(--muted); margin-top: 10px; font-style: italic; }
+.swipe-actions { display: flex; gap: 12px; padding: 14px 0 calc(18px + var(--safe-bottom)); flex-shrink: 0; }
+.swipe-actions .nah { flex: 1; background: var(--glass); border: 1px solid var(--border); border-radius: 16px;
+  padding: 14px; font-size: 15px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.swipe-actions .yes { flex: 2; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg);
+  border: 0; border-radius: 16px; padding: 14px; font-size: 15px; font-weight: 800; cursor: pointer; }
+
+/* =============================================================================
+   Lineup screen (#22) — people, separate from Timetable (DEC-026/028)
+   ============================================================================= */
+.lineup-search { display: flex; align-items: center; gap: 12px; padding: 11px 16px; margin: 0 0 4px; }
+.lineup-search .ms { color: var(--muted); font-size: 20px; }
+.lineup-search input { flex: 1; background: transparent; border: 0; outline: 0; color: var(--ink); font-size: 14px; font-family: inherit; }
+.lineup-search input::placeholder { color: var(--muted); }
+.filter-rail { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; }
+.filter-rail .chip { flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.sec { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: var(--muted); padding: 16px 6px 6px; }
+.art-row { display: flex; align-items: center; gap: 12px; padding: 10px 6px; }
+.art-row + .art-row { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+.avatar-sq { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #3a3224, #241f16); border: 1px solid var(--border); }
+.art-row .art-info { flex: 1; min-width: 0; }
+.art-row .art-info .nm { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700; font-size: 16px;
+  line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art-row .art-info .mt { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.heart-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--muted); transition: all 0.15s ease; }
+.heart-btn .ms { font-size: 18px; }
+.heart-btn.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); border-color: transparent; }
+.fav-count { text-align: right; }
+.fav-count .n { font-family: "Oswald", sans-serif; font-weight: 700; font-size: 20px; color: var(--accent); line-height: 1; }
+.fav-count .l { font-size: 10px; color: var(--muted); font-weight: 600; }

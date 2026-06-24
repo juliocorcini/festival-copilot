@@ -402,3 +402,23 @@
 - **Generator note**: a reusable `spikes/map-art/scripts/rasterize-base.ts` produces the shipped WebP from the engine SVG (resvg + sharp, no network). The vector-SVG-with-external-relief generator path is **deferred to the R2/multi-festival phase** (DEC-038) — the V1 web app uses the raster base.
 - **Supersedes**: the literal wording of orchestrator §13 P0.2/P0.3 ("externalize relief via external href in the shipped SVG", "R2 + map API") — the *intent* (slim shipped map, no 20 MB asset, served statically) is satisfied; R2 stays out per DEC-038.
 - **Detail**: orchestrator §13 Phase 0; `web/src/map/MapView.tsx`; `spikes/map-art/scripts/rasterize-base.ts`.
+
+### DEC-041 — V1 Favorites & My Plan are local-first (no server identity until auth lands)
+- **Date**: 2026-06-23 (build, Phase 2 G2.1)
+- **Status**: APPROVED (executor decision; resolves the Phase-2 "server vs local" question from the brain)
+- **Decision**: In the current V1 slice, **Favorites and the locked Plan persist on-device** (a versioned `localStorage`
+  store, ready to move to IndexedDB), keyed by the festival id + weekend. **No `/api/favorites` or `/api/me/*` server
+  routes are built yet.** The pure-domain logic (clash detection, the gated chronological resolver, partial-set
+  feasibility, the **zero-overlap invariant**) lives in framework-free TypeScript (`web/src/domain/`) so it is identical
+  whether data is local or server-backed, and is covered by property tests.
+- **Why (brain-consistent)**: **DEC-038** deferred Firebase ("anon/local"); **DEC-024** states Pillars 1–2 "work
+  immediately on an **anonymous** account" and that anonymous→permanent **linking preserves the uid so favorites/plan
+  carry over". With no auth there is **no server identity to key rows by**, and **DEC-022** makes offline-first a hard
+  requirement — a local store is offline by nature and gives instant reads/writes on a no-signal field. So local-first
+  is the only consistent reading for the no-auth slice; the server endpoints from `implementation-phases.md` §Phase-2
+  become the **sync target in Phase 4** (auth/groups), when identity exists.
+- **Migration**: when Firebase lands (Phase 4), the anonymous uid adopts the local store (one-time upload) — no data loss.
+- **Trade-off**: favorites don't roam across devices until sign-in (acceptable pre-auth; matches DEC-024's anonymous tier).
+- **Supersedes (timing only)**: the Phase-2 "Backend: POST/DELETE /api/favorites, GET /api/me/favorites" lines — the
+  endpoints are **moved to Phase 4**; the *intent* (favorites persist, plan is conflict-free) is fully met locally.
+- **Detail**: `web/src/domain/*` (pure logic + property tests); `web/src/data/localStore.ts`; orchestrator §13 Phase 2.

@@ -1,0 +1,49 @@
+import { test, expect } from "@playwright/test";
+
+const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+
+// Phase 2 / Gate 2.1: a first-run user is gated into onboarding (#17), walks festival →
+// weekend → days → swipe, and the chosen favorites then show up on the Lineup (#22).
+test.describe("Phase 2 — onboarding + lineup favorites", () => {
+  test("walks onboarding and builds favorites visible in the Lineup", async ({ page }) => {
+    await page.goto("/");
+    await page.addStyleTag({ content: FREEZE });
+
+    // Gated into onboarding on first run.
+    await expect(page).toHaveURL(/onboarding/);
+    await expect(page.locator(".ob-head h1")).toContainText("Which festival", { timeout: 20_000 });
+    await page.screenshot({ path: "e2e/screenshots/phase2-onboarding-festival.png" });
+    await page.getByRole("button", { name: "Continue" }).click();
+
+    // Step 2 — weekend.
+    await expect(page.locator(".ob-head h1")).toHaveText("Which weekend?");
+    await page.locator(".opt").first().click();
+    await page.getByRole("button", { name: "Continue" }).click();
+
+    // Step 3 — days (all selected by default).
+    await expect(page.locator(".ob-head h1")).toHaveText("Which days?");
+    await page.getByRole("button", { name: "Start picking artists" }).click();
+
+    // Step 4 — swipe a few favorites.
+    await expect(page.locator(".art-card")).toBeVisible({ timeout: 20_000 });
+    await page.screenshot({ path: "e2e/screenshots/phase2-onboarding-swipe.png" });
+    for (let i = 0; i < 5; i++) await page.locator(".swipe-actions .yes").click();
+
+    // Finish → app shell.
+    await page.locator(".ob-skip").click();
+    await expect(page.locator(".appbar h1")).toHaveText("Now & Next", { timeout: 20_000 });
+
+    // Lineup shows the favorites we just built.
+    await page.goto("/lineup");
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page.locator(".fav-count .n")).not.toHaveText("0", { timeout: 20_000 });
+    await expect(page.locator(".sec").first()).toContainText("YOUR FAVORITES");
+    await expect(page.locator(".heart-btn.on").first()).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/phase2-lineup.png" });
+
+    // Toggling a favorite off updates the counter live.
+    const before = Number(await page.locator(".fav-count .n").textContent());
+    await page.locator(".art-row .heart-btn.on").first().click();
+    await expect(page.locator(".fav-count .n")).toHaveText(String(before - 1));
+  });
+});

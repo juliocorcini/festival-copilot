@@ -6,6 +6,16 @@ const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!im
 // renders the LIVE lineup from the API, tab navigation works, and Settings is reachable
 // from the header avatar (no 6th tab — DEC-032).
 test.describe("Phase 1 — app shell", () => {
+  // Skip first-run onboarding so the shell renders directly (Phase 2 gate).
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "fp.store.v1",
+        JSON.stringify({ v: 1, onboarding: { festivalId: "x", weekendIds: [], dayKeys: [], completed: true }, favorites: {}, plans: {} })
+      );
+    });
+  });
+
   test("boots, renders live lineup, navigates tabs, opens settings", async ({ page }) => {
     await page.goto("/");
     await page.addStyleTag({ content: FREEZE });
