@@ -1028,3 +1028,49 @@ a { color: inherit; text-decoration: none; }
 .stage-sheet-row:disabled { opacity: 0.5; cursor: default; }
 .stage-sheet-row .ms:first-child { font-size: 20px; flex-shrink: 0; }
 .stage-sheet-name { flex: 1; font-weight: 700; font-size: 14px; }
+
+/* ── Meeting points — pick spot (B4.1) + details (B4.2), UC-27 ──────────────── */
+.meet-spot-body { position: relative; flex: 1; overflow: hidden; display: flex; flex-direction: column;
+  background: radial-gradient(circle at 50% 32%, rgba(245, 166, 35, 0.1), transparent 42%); }
+.meet-map { position: relative; width: 100%; overflow: hidden; cursor: crosshair;
+  background: radial-gradient(circle at 50% 35%, rgba(245, 166, 35, 0.14), transparent 40%), linear-gradient(135deg, #14241a, #0d1410); }
+.meet-map-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; -webkit-user-drag: none; }
+.meet-stage-dot { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.82); pointer-events: none; white-space: nowrap; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); }
+.meet-stage-dot i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(0, 0, 0, 0.4); flex-shrink: 0; }
+.meet-ring { position: absolute; transform: translate(-50%, -50%); width: 86px; height: 86px; border-radius: 50%;
+  background: rgba(245, 166, 35, 0.12); border: 1px dashed rgba(245, 166, 35, 0.5); pointer-events: none; }
+.meet-pin { position: absolute; transform: translate(-50%, -100%); width: 36px; height: 36px; border-radius: 50% 50% 50% 0;
+  rotate: 45deg; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px -6px rgba(245, 166, 35, 0.6); pointer-events: none; }
+.meet-pin .ms { rotate: -45deg; color: var(--bg); font-size: 19px; }
+.meet-chips { position: absolute; top: 12px; left: 0; right: 0; display: flex; gap: 8px; overflow-x: auto; padding: 0 16px; }
+.meet-chips .chip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0; }
+.meet-chips .chip:disabled { opacity: 0.5; cursor: default; }
+.meet-spot-label { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.meet-spot-label-main { flex: 1; font-size: 13px; font-weight: 700; }
+.meet-map-fallback { margin: 16px; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--muted); }
+.meet-map-fallback .ms { font-size: 32px; color: var(--accent); }
+
+.meet-details { gap: 18px; }
+.meet-spot-summary { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 13px 14px; cursor: pointer; }
+.meet-spot-summary .ms:first-child { font-size: 20px; flex-shrink: 0; }
+.meet-spot-summary-main { flex: 1; min-width: 0; }
+.meet-spot-summary-title { font-weight: 800; font-size: 14px; }
+.meet-spot-summary-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.meet-field-group { display: flex; flex-direction: column; gap: 8px; }
+.meet-when { display: flex; gap: 8px; flex-wrap: wrap; }
+.meet-who { display: flex; align-items: center; gap: 12px; padding: 13px 14px; }
+.meet-who .ms:first-child { font-size: 20px; }
+.meet-who-main { flex: 1; font-weight: 700; font-size: 13px; }
+.meet-error { font-size: 12px; font-weight: 600; color: var(--danger-ink); padding: 4px 2px; }
+
+/* Active meeting-point card on the squad home (presentational status, lifecycle in Gate 6.2). */
+.meet-active-card { display: flex; align-items: center; gap: 12px; padding: 14px; }
+.meet-active-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+.meet-active-icon .ms { color: var(--bg); font-size: 21px; }
+.meet-active-main { flex: 1; min-width: 0; }
+.meet-active-title { font-weight: 800; font-size: 14px; }
+.meet-active-sub { font-size: 12px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meet-active-meta { font-size: 11px; font-weight: 700; color: var(--accent2); margin-top: 4px; }

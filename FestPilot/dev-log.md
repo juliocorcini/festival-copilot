@@ -5,10 +5,11 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 + PHASE 5 COMPLETE + LIVE; PHASE 3 core done.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 + PHASE 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + LIVE.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P5 COMPLETE** — backend presence pipeline ✅ · **G5.1 consent + precise control ✅ · G5.2 roster + coarse map + current-artist ✅ · G5.3 ping round-trip + sharing-mode picker #25.3 + privacy/master-switch #25.6 ✅** —
-  next: **P6** (meeting points + nav + safety; rides the Phase-6 exact-coords channel for the precise dot per DEC-046).
+- Active Phase / Gate: **P6 IN PROGRESS** — **G6.1 "come to me" meeting point (B4.1 pick-spot + B4.2 details + POST + list + DO fan-out; photo deferred DEC-047) ✅** —
+  next: **G6.2** (meeting lifecycle: going/here/can't + ETA + everyone's-here + auto-fade/expiry purge), then **G6.3** (compass nav + "I'm lost" safety).
+  P5 ✅ (presence pipeline + G5.1 consent + G5.2 roster/coarse map + G5.3 ping/sharing-picker/privacy; precise exact-dot rides this Phase-6 channel per DEC-046).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
 - **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
@@ -94,6 +95,26 @@
   a ghost. New pure helpers `rosterRank`/`sortRoster`/`pingKindFor` in `presenceUi.tsx`. **78 server + 112 web unit + 19 e2e
   green** (3 new presence specs: picker #25.3, privacy #25.6, ping round-trip #25.4; 4 screenshots faithful to #25).
   Migration 0006 applied remote, Worker redeployed. Pages https://8d596d1c.festpilot.pages.dev.
+- **P6 G6.1 "come to me" meeting point ✅ (this session):** the squad drops an **exact spot to regroup** (UC-32/33, #26).
+  **Photo deferred → DEC-047** (R2 isn't enabled on the account, error 10042; same R2 deferral as the deep-zoom map per
+  DEC-038 Q1 — the create UI ships without the optional photo). Schema was pre-built upfront (`meeting_point` +
+  `meeting_point_member` in `0001_init`); only added migration **`0007_meeting_point_meet_at.sql`** (`meet_at_utc` + an
+  active-listing index). **Expiry is derived, not picked** (wireframe #26.4 "auto-closes 30 min after the time"): pure
+  `domain/meeting.ts` — `meetingExpiry(meetAtMs, now, grace)` (meet-time-or-now + grace), `clampGraceMinutes` (10–240,
+  default 30), and **`landmarkLabel`** (reuses the presence coarsen: at/near/between the nearest resolved stages → human
+  label like "between FREEDOM BY BUD & CORE"). Repo `api/meetingPoints.ts`: `createMeetingPoint` (writes point + creator's
+  `going` member row, derives `expires_at_utc`, labels via the `festival_map` transform stage coords), `listMeetingPoints`
+  (active only, member statuses, `isMine`/`myStatus`). 2 member-gated routes (`GET/POST /:id/meeting-points`), each
+  `notifyGroup(...,"meeting")` → DO fan-out. Web: client DTOs mirrored, `api.listMeetingPoints/createMeetingPoint`,
+  `data/meetingPoints.ts` (`useMeetingPoints` reusing the WS+focus+30s-tick refresh), and **`map/transform.ts svgToGeo`**
+  (inverse affine for drop-pin → geo). Screens (2, #26.1/#26.2): **Pick a spot** (`/squad/:id/meet` — georeferenced map,
+  **Drop pin / My spot (GPS) / A stage** quick-picks reusing `StagePickSheet`, live coarse label, "Use this spot") +
+  **Details** (`/squad/:id/meet/new` — name, WHEN now/15/30/60→`meetAtUtc`, WHO "Whole squad", optional note, "Send to
+  squad"). Squad home (#23.7) gains a **"Set a meeting point"** CTA + **active-point cards** (title · landmark · "N going ·
+  closes in Xm" · Active badge). **91 server + 115 web unit + 20 e2e green** (13 new server [`meetingPoints` + `meeting`
+  domain], `transform` round-trip test, new `meeting-points` spec: home→pick→details→active-card, 4 screenshots faithful to
+  #26; SW blocked in that spec so multi-nav stays on stubs). Migration 0007 applied remote, Worker redeployed. Pages
+  https://f262f5a4.festpilot.pages.dev.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the

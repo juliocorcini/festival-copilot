@@ -29,6 +29,21 @@ export function geoToSvg(t: Affine, lng: number, lat: number): [number, number] 
   return [t.a * lng + t.b * lat + t.c, t.d * lng + t.e * lat + t.f];
 }
 
+/**
+ * Invert the affine: a point in SVG canvas space -> [lng, lat]. Used by the meeting-point
+ * pick-spot map (B4.1) to turn a tap on the illustration into a real coordinate. Returns null
+ * for a degenerate (non-invertible) transform.
+ */
+export function svgToGeo(t: Affine, sx: number, sy: number): [number, number] | null {
+  const det = t.a * t.e - t.b * t.d;
+  if (det === 0) return null;
+  const u = sx - t.c;
+  const v = sy - t.f;
+  const lng = (t.e * u - t.b * v) / det;
+  const lat = (-t.d * u + t.a * v) / det;
+  return [lng, lat];
+}
+
 const RAD = Math.PI / 180;
 
 /** Approximate metres between two coordinates (equirectangular — fine at ~1 km). */

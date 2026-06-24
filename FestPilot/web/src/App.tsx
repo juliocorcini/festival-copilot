@@ -25,6 +25,8 @@ import { WhereScreen } from "./routes/presence/WhereScreen";
 import { PreciseSharingScreen } from "./routes/presence/PreciseSharingScreen";
 import { VisibilityScreen } from "./routes/presence/VisibilityScreen";
 import { LocationPrivacyScreen } from "./routes/presence/LocationPrivacyScreen";
+import { MeetSpotScreen } from "./routes/meet/MeetSpotScreen";
+import { MeetDetailsScreen } from "./routes/meet/MeetDetailsScreen";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
@@ -58,6 +60,8 @@ export function App(): JSX.Element {
             <Route path="squad/:id/plan/:perfId/override" element={<SquadOverrideScreen />} />
             <Route path="squad/:id/location" element={<PresenceConsentScreen />} />
             <Route path="squad/:id/where" element={<WhereScreen />} />
+            <Route path="squad/:id/meet" element={<MeetSpotScreen />} />
+            <Route path="squad/:id/meet/new" element={<MeetDetailsScreen />} />
             <Route path="squad/:id/precise" element={<PreciseSharingScreen />} />
             <Route path="squad/:id/visibility" element={<VisibilityScreen />} />
             <Route path="squad/join" element={<JoinScreen />} />

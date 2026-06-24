@@ -207,3 +207,50 @@ export interface GroupPresenceDto {
   me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
   inbox: PingDto[];
 }
+
+// Meeting points (Phase 6 — UC-27, DEC-014/046/047). An exact opt-in spot the squad walks to.
+// Unlike presence, the meeting point IS an explicit, intentional share of an exact coordinate by
+// its creator — the one place an exact coordinate is exposed in V1. Photo deferred (DEC-047).
+export type MeetingMemberStatus = "going" | "arrived" | "left" | "not_going";
+
+export interface MeetingPointMemberDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  isYou: boolean;
+  status: MeetingMemberStatus;
+  updatedAtUtc: string;
+}
+
+export interface MeetingPointDto {
+  id: string;
+  groupId: string;
+  createdByUserId: string;
+  createdByName: string | null;
+  isMine: boolean;
+  title: string;
+  note: string | null;
+  /** Exact spot — the creator's explicit share (DEC-046). */
+  lat: number;
+  lng: number;
+  /** Coarse landmark for copy ("at FREEDOM" / "between FREEDOM & CORE" / "in the venue"). */
+  landmarkLabel: string;
+  meetAtUtc: string | null;
+  expiresAtUtc: string;
+  createdAtUtc: string;
+  members: MeetingPointMemberDto[];
+  goingCount: number;
+  hereCount: number;
+  myStatus: MeetingMemberStatus | null;
+}
+
+/** The B4.2 create payload — the exact spot is chosen on B4.1. */
+export interface CreateMeetingPointInput {
+  lat: number;
+  lng: number;
+  accuracyMeters?: number | null;
+  title: string;
+  note?: string | null;
+  /** ISO instant to meet at; omit/null = "now". The point auto-closes ~30 min after this (DEC-014). */
+  meetAtUtc?: string | null;
+}

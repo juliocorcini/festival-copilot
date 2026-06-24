@@ -543,3 +543,30 @@
 - **Detail**: `server/src/domain/presence.ts` (pure `coarsenPresence` + tests), `server/src/api/presence.ts` (repo),
   `POST /api/presence` + `GET/PUT /api/groups/:id/presence|share` routes, cron purge in `index.ts`; web consent +
   precise-control + roster + sharing-mode + privacy screens (proto `25`); orchestrator §13 Phase 5.
+
+### DEC-047 — Phase 6 meeting-point **photo is deferred** (rides the DEC-038 R2 block); everything else ships
+- **Date**: 2026-06-23 (build, Phase 6 G6.1)
+- **Status**: APPROVED (executor decision; the brain already decides this — see Why)
+- **Context**: The orchestrator §13 Phase 6 + DEC-014 describe a meeting point as "exact point + **R2 photo** + note +
+  expiry + visibility". But **DEC-038 Q1 is APPROVED and explicit: "NO R2 for V1 … R2 not enabled on the account
+  (`code 10042`); avoids card-on-file"** — and the map raster already shipped statically for exactly this reason
+  (DEC-040). A meeting-point photo *requires* runtime blob upload, which has no home without R2 (D1 blobs are the wrong
+  tool — value-size limits, fan-out bloat, query cost).
+- **Decision**: Gate 6.1 ships the **full meeting-point core without the photo**: exact opt-in point (the device's exact
+  GPS or a dragged/quick-picked map spot), **name**, **when** (now / after-this-set / in-30-min / custom), **who**
+  (whole squad / selected — V1 ships whole-squad, "selected" reuses the same `visibility` column later), **note**, and
+  **expiry** (10/20/30/60 min). The `meeting_point.photo_url` column **stays in the schema, unused** (it's already
+  there from `0001_init`). The **photo is a named Phase-6.5 / R2-multi-festival deliverable**, deferred by the *same*
+  decision that defers the map deep-zoom + multi-festival R2 (DEC-038/040). The create UI omits the photo control in V1
+  (no dead "Soon" affordance on a calm flow).
+- **Why (brain-consistent, no council needed)**: this is **not an open question** — DEC-038 is an account-level **hard
+  blocker** (R2 literally returns `10042`), not a preference, so the only consistent reading is "defer the one feature
+  that needs R2", exactly as DEC-040 did for the map. The *intent* of DEC-014 (find your people in a crowd via an exact
+  spot + a label like "between FREEDOM & CORE") is **fully met** by the point + note + auto landmark label; the photo is
+  the enhancement, not the mechanism.
+- **Conditions / flip**: when R2 is enabled (card-on-file or account upgrade), add a `[[r2_buckets]]` binding +
+  `POST /api/groups/:id/meeting-points/:id/photo` (multipart → R2 key → `photo_url`) + a `GET` asset route, and surface
+  the camera/upload control in B4.2 — no schema change needed. If Julio enables R2 mid-build, do it then.
+- **Detail**: schema `meeting_point` already in `0001_init.sql`; `server/src/api/meetingPoints.ts` (+ routes); web
+  meeting-point create screens (proto `26` #1/#2); orchestrator §13 Phase 6 G6.1; supersedes the "R2 photo" wording of
+  Phase 6 P6.1 (intent preserved, photo deferred per DEC-038).

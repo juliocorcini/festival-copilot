@@ -9,8 +9,9 @@ import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { api } from "../data/api";
 import { useMyGroups, useGroup } from "../data/groups";
+import { useMeetingPoints } from "../data/meetingPoints";
 import { initialsOf, useIdentity } from "../data/identity";
-import type { GroupDto } from "../data/types";
+import type { GroupDto, MeetingPointDto } from "../data/types";
 import { LoadingState } from "../ui/states";
 
 export function SquadScreen(): JSX.Element {
@@ -64,6 +65,7 @@ function EmptySquad({ hasProfile }: { hasProfile: boolean }): JSX.Element {
 function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => void }): JSX.Element {
   const navigate = useNavigate();
   const { members } = useGroup(group.id);
+  const { points } = useMeetingPoints(group.id);
   const [leaving, setLeaving] = useState(false);
 
   const count = group.memberCount;
@@ -110,6 +112,21 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
           </div>
           <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>
+
+        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/meet`)}>
+          <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #F5A623, #FFD060)" }}>
+            <span className="ms">flag</span>
+          </div>
+          <div className="squad-plan-main">
+            <div className="squad-plan-title">Set a meeting point</div>
+            <div className="squad-plan-sub">Drop a spot for the squad to regroup</div>
+          </div>
+          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+        </button>
+
+        {points.map((p) => (
+          <MeetingPointCard key={p.id} point={p} />
+        ))}
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/board`)}>
           <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #8B5CF6, #6366F1)" }}>
@@ -174,4 +191,38 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
       </div>
     </>
   );
+}
+
+/** A live "come to me" meeting point on the squad home — title, landmark, who's going, when it closes. */
+function MeetingPointCard({ point }: { point: MeetingPointDto }): JSX.Element {
+  const closesIn = expiresInLabel(point.expiresAtUtc);
+  const goingLine = point.hereCount > 0 ? `${point.goingCount} on the way · ${point.hereCount} here` : `${point.goingCount} going`;
+  return (
+    <section className="glass meet-active-card">
+      <div className="meet-active-icon">
+        <span className="ms">flag</span>
+      </div>
+      <div className="meet-active-main">
+        <div className="meet-active-title">{point.title}</div>
+        <div className="meet-active-sub">
+          {point.landmarkLabel}
+          {point.note ? ` · "${point.note}"` : ""}
+        </div>
+        <div className="meet-active-meta">
+          {goingLine}
+          {closesIn ? ` · ${closesIn}` : ""}
+        </div>
+      </div>
+      <span className="pill on">Active</span>
+    </section>
+  );
+}
+
+/** "closes in 24m" / "closing" from an ISO expiry, or null when far off. */
+function expiresInLabel(expiresAtUtc: string): string | null {
+  const ms = Date.parse(expiresAtUtc) - Date.now();
+  if (!Number.isFinite(ms)) return null;
+  if (ms <= 0) return "closing";
+  const min = Math.round(ms / 60_000);
+  return min < 60 ? `closes in ${min}m` : `closes in ${Math.round(min / 60)}h`;
 }

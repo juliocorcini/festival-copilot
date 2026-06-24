@@ -234,3 +234,46 @@ export interface GroupPresenceDto {
   /** Pending pings addressed to the caller in this squad (one-tap answer with a stage). */
   inbox: PingDto[];
 }
+
+// Meeting points (Pillar 3b, Phase 6 — UC-27, DEC-014/046/047). An exact opt-in spot the squad walks
+// to ("come to me"). UNLIKE presence, the meeting point IS an explicit, intentional share of an exact
+// coordinate by its creator — the one place an exact coordinate leaves a device in V1 (DEC-046). The
+// label is a coarse landmark for copy; the photo is deferred (DEC-047, R2 not enabled in V1).
+
+/** A member's response on a meeting point. DB enum: going / arrived / left / not_going. */
+export type MeetingMemberStatus = "going" | "arrived" | "left" | "not_going";
+
+export interface MeetingPointMemberDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  isYou: boolean;
+  status: MeetingMemberStatus;
+  updatedAtUtc: string;
+}
+
+export interface MeetingPointDto {
+  id: string;
+  groupId: string;
+  createdByUserId: string;
+  createdByName: string | null;
+  /** The caller created this point. */
+  isMine: boolean;
+  title: string;
+  note: string | null;
+  /** Exact spot — the creator's explicit, intentional share (DEC-046). */
+  lat: number;
+  lng: number;
+  /** Coarse landmark for copy ("at FREEDOM" / "between FREEDOM & CORE" / "in the venue"). */
+  landmarkLabel: string;
+  /** When to meet (ISO, UTC); null = "now". */
+  meetAtUtc: string | null;
+  /** Auto-archives at this instant (10/20/30/60 min from creation, DEC-014). */
+  expiresAtUtc: string;
+  createdAtUtc: string;
+  members: MeetingPointMemberDto[];
+  goingCount: number;
+  hereCount: number;
+  /** The caller's own status on this point, or null when they haven't responded. */
+  myStatus: MeetingMemberStatus | null;
+}

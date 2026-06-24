@@ -6,6 +6,7 @@
  */
 import type {
   BoardNoteDto,
+  CreateMeetingPointInput,
   FestivalDto,
   FestivalMapDto,
   GroupDto,
@@ -13,6 +14,7 @@ import type {
   GroupPresenceDto,
   InvitePreviewDto,
   LineupDto,
+  MeetingPointDto,
   ShareMode,
   SquadPlanDataDto,
   StageDto,
@@ -336,5 +338,29 @@ export const api = {
       method: "POST",
       signal,
     }).then(() => undefined);
+  },
+
+  // Meeting points (Gate 6.1 — UC-27, DEC-014/046/047). "Come to me": an exact opt-in spot.
+  /** The squad's active meeting points (not archived, not yet expired), newest first. */
+  async listMeetingPoints(groupId: string, signal?: AbortSignal): Promise<MeetingPointDto[]> {
+    const data = await authedJson<{ meetingPoints: MeetingPointDto[] }>(`/api/groups/${groupId}/meeting-points`, {
+      method: "GET",
+      signal,
+    });
+    return data.meetingPoints;
+  },
+
+  /** Drop a meeting point (B4.2). The exact lat/lng is the caller's explicit share (DEC-046). */
+  async createMeetingPoint(
+    groupId: string,
+    input: CreateMeetingPointInput,
+    signal?: AbortSignal
+  ): Promise<MeetingPointDto> {
+    const data = await authedJson<{ meetingPoint: MeetingPointDto }>(`/api/groups/${groupId}/meeting-points`, {
+      method: "POST",
+      body: input,
+      signal,
+    });
+    return data.meetingPoint;
   },
 };

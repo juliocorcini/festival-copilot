@@ -28,6 +28,7 @@ import {
 import { editNote, listNotes, MAX_NOTE_LENGTH, postNote, removeNote, setPinned } from "./board";
 import { getGroupPresence, PRECISE_DEFAULT_MINUTES, setGroupShareMode } from "./presence";
 import { answerPing, dismissPing, listInbox, sendPing } from "./pings";
+import { createMeetingPoint, listMeetingPoints } from "./meetingPoints";
 import type { PingKind } from "../domain/presence";
 
 export const groups = new Hono<{ Bindings: Env }>();
@@ -337,6 +338,50 @@ groups.post("/:id/ping/:pingId/dismiss", async (c) => {
   if (!ok) return c.json({ error: "not found" }, 404);
   await notifyGroup(c.env, m.group.id, "ping");
   return c.json({ ok: true });
+});
+
+// --- Meeting points (Gate 6.1, UC-27 — DEC-014/046/047). "Come to me": an exact opt-in spot the
+// squad walks to. Member-gated; the exact coordinate is the creator's explicit share. Photo deferred. ---
+
+// The squad's active meeting points (not archived, not yet expired), newest first.
+groups.get("/:id/meeting-points", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const points = await listMeetingPoints(c.env.DB, m.group.festivalId, m.group.id, m.user.id, new Date().toISOString());
+  return c.json({ meetingPoints: points });
+});
+
+// Drop a meeting point (B4.2). Body: { lat, lng, accuracyMeters?, title?, note?, meetAtUtc?, expiryMinutes? }.
+// lat/lng are the creator's exact, intentional share (DEC-046). The creator is marked "going".
+groups.post("/:id/meeting-points", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const lat = Number(body.lat);
+  const lng = Number(body.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return c.json({ error: "valid lat and lng are required" }, 400);
+  }
+  const accuracyRaw = Number(body.accuracyMeters);
+  const graceRaw = Number(body.graceMinutes);
+  const point = await createMeetingPoint(
+    c.env.DB,
+    m.group.festivalId,
+    m.group.id,
+    m.user.id,
+    {
+      lat,
+      lng,
+      accuracyMeters: Number.isFinite(accuracyRaw) ? Math.round(accuracyRaw) : null,
+      title: readString(body.title, 60) ?? "Meeting point",
+      note: readString(body.note, 280),
+      meetAtUtc: readString(body.meetAtUtc, 40),
+      graceMinutes: Number.isFinite(graceRaw) ? graceRaw : null,
+    },
+    new Date().toISOString()
+  );
+  await notifyGroup(c.env, m.group.id, "meeting");
+  return c.json({ meetingPoint: point }, 201);
 });
 
 // Realtime subscription — forwarded to the group's Durable Object. Members only.
