@@ -451,6 +451,10 @@ a { color: inherit; text-decoration: none; }
 /* =============================================================================
    Lineup screen (#22) — people, separate from Timetable (DEC-026/028)
    ============================================================================= */
+.lineup-switch-row { display: flex; justify-content: center; padding: 0 0 12px; }
+.lineup-note { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0 10px; padding: 10px 13px; border-radius: 12px;
+  background: var(--glass); border: 1px solid var(--border); color: var(--muted); font-size: 13px; line-height: 1.45; }
+.lineup-note .ms { font-size: 18px; color: var(--accent); flex-shrink: 0; }
 .lineup-search { display: flex; align-items: center; gap: 12px; padding: 11px 16px; margin: 0 0 4px; }
 .lineup-search .ms { color: var(--muted); font-size: 20px; }
 .lineup-search input { flex: 1; background: transparent; border: 0; outline: 0; color: var(--ink); font-size: 14px; font-family: inherit; }
@@ -476,11 +480,21 @@ a { color: inherit; text-decoration: none; }
 
 /* ── Timetable (#15e, DEC-027): TML-style horizontal grid ─────────────────── */
 .tt-screen { height: 100%; display: flex; flex-direction: column; min-height: 0; }
-.tt-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 18px 8px; flex-shrink: 0; }
+.tt-top { display: flex; flex-direction: column; gap: 8px; padding: 6px 18px 8px; flex-shrink: 0; }
+.tt-top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .tt-top h1 { margin: 0; font-size: 26px; font-weight: 700; line-height: 1; }
-.tt-top-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.tt-days { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ava-sm { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   background: var(--glass); border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; padding: 0; }
+
+/* Timetable⇄Lineup segmented switch (DEC-049). */
+.view-switch { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--border); flex-shrink: 0; }
+.vs-seg { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: none; border-radius: 999px;
+  background: transparent; color: var(--muted); font-size: 13px; font-weight: 650; cursor: pointer; line-height: 1;
+  white-space: nowrap; transition: color .15s ease, background .15s ease; }
+.vs-seg .ms { font-size: 16px; }
+.vs-seg.on { background: var(--accent); color: var(--bg); }
 .pill.on { background: var(--accent); color: var(--bg); border-color: transparent; }
 .tt-day { cursor: pointer; background: var(--glass); color: var(--ink); }
 .tt-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 18px 10px; flex-shrink: 0; }

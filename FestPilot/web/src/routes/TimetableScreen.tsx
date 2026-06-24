@@ -9,9 +9,11 @@ import { useNavigate } from "react-router-dom";
 import { useFavorites, useOnboarding } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { buildTimetable } from "../domain/timetable";
+import { festivalDataState } from "../domain/dataState";
 import { daysForWeekends, initials, type DayInfo } from "../lib/festival";
 import { stageColor, stageColorRgb, timeInZone } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
+import { ViewSwitch } from "../ui/ViewSwitch";
 
 type Zoom = "2h" | "1h";
 const PIXELS_PER_HOUR: Record<Zoom, number> = { "2h": 180, "1h": 360 };
@@ -50,14 +52,33 @@ export function TimetableScreen(): JSX.Element {
     });
   }, [lineup, favorites.keys, dayKey, weekendIds, tz]);
 
-  const openLineup = (): void => navigate("/lineup");
+  // Data-state (DEC-052): a lineup-only festival defaults straight to the Lineup (no dead timetable);
+  // a not-yet-announced festival shows an honest empty state on both views.
+  const dataState = lineup ? festivalDataState(lineup.hasLineup, lineup.hasTimetable) : null;
+  useEffect(() => {
+    if (dataState === "lineup_only") navigate("/lineup", { replace: true });
+  }, [dataState, navigate]);
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !lineup || !model) {
     return (
       <div className="tt-screen">
-        <TimetableHeader days={[]} dayKey={null} tz={tz} onSelectDay={setSelectedDay} onLineup={openLineup} />
+        <TimetableHeader days={[]} dayKey={null} tz={tz} onSelectDay={setSelectedDay} />
         <ErrorState message={error ?? "Could not load the timetable."} onRetry={reload} />
+      </div>
+    );
+  }
+
+  if (dataState === "lineup_only") return <LoadingState />; // redirecting to /lineup
+  if (dataState === "nothing") {
+    return (
+      <div className="tt-screen">
+        <TimetableHeader days={[]} dayKey={null} tz={tz} onSelectDay={setSelectedDay} />
+        <EmptyState
+          icon="event_busy"
+          title="No lineup announced yet"
+          message="As soon as this festival reveals its artists, you'll pick favorites and build your plan right here."
+        />
       </div>
     );
   }
@@ -69,7 +90,7 @@ export function TimetableScreen(): JSX.Element {
 
   return (
     <div className="tt-screen">
-      <TimetableHeader days={days} dayKey={dayKey} tz={tz} onSelectDay={setSelectedDay} onLineup={openLineup} />
+      <TimetableHeader days={days} dayKey={dayKey} tz={tz} onSelectDay={setSelectedDay} />
 
       <div className="tt-controls">
         <div className="tt-controls-left">
@@ -167,31 +188,31 @@ function TimetableHeader({
   dayKey,
   tz,
   onSelectDay,
-  onLineup,
 }: {
   days: DayInfo[];
   dayKey: string | null;
   tz: string;
   onSelectDay: (key: string) => void;
-  onLineup: () => void;
 }): JSX.Element {
   return (
     <header className="tt-top">
-      <h1 className="poster">Timetable</h1>
-      <div className="tt-top-right">
-        <button className="ava-sm" aria-label="Open Lineup" onClick={onLineup}>
-          <span className="ms" style={{ color: "var(--accent)", fontSize: 18 }}>groups</span>
-        </button>
-        {days.map((day) => (
-          <button
-            key={day.key}
-            className={`pill tt-day${day.key === dayKey ? " on" : ""}`}
-            onClick={() => onSelectDay(day.key)}
-          >
-            {day.weekdayShort} {dayOfMonth(day.startMs, tz)}
-          </button>
-        ))}
+      <div className="tt-top-row">
+        <h1 className="poster">Timetable</h1>
+        <ViewSwitch active="timetable" />
       </div>
+      {days.length > 0 && (
+        <div className="tt-days">
+          {days.map((day) => (
+            <button
+              key={day.key}
+              className={`pill tt-day${day.key === dayKey ? " on" : ""}`}
+              onClick={() => onSelectDay(day.key)}
+            >
+              {day.weekdayShort} {dayOfMonth(day.startMs, tz)}
+            </button>
+          ))}
+        </div>
+      )}
     </header>
   );
 }

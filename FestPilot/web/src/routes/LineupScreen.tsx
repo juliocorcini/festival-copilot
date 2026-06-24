@@ -4,17 +4,17 @@
  * even if it plays multiple days.
  */
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useFavorites } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
+import { festivalDataState } from "../domain/dataState";
 import { uniqueActs, type Act } from "../domain/lineup";
 import { daysForWeekends, initials, type DayInfo } from "../lib/festival";
 import { stageColor } from "../lib/format";
-import { ErrorState, LoadingState } from "../ui/states";
+import { EmptyState, ErrorState, LoadingState } from "../ui/states";
+import { ViewSwitch } from "../ui/ViewSwitch";
 
 export function LineupScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
-  const navigate = useNavigate();
   const festivalId = lineup?.festival.id;
   const favorites = useFavorites(festivalId);
 
@@ -43,6 +43,19 @@ export function LineupScreen(): JSX.Element {
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !lineup) return <ErrorState message={error ?? "Could not load."} onRetry={reload} />;
+
+  const dataState = festivalDataState(lineup.hasLineup, lineup.hasTimetable);
+  if (dataState === "nothing") {
+    return (
+      <div className="screen" style={{ paddingTop: "calc(10px + var(--safe-top))" }}>
+        <EmptyState
+          icon="event_busy"
+          title="No lineup announced yet"
+          message="This festival hasn't revealed its artists. Check back soon — you'll pick favorites here the moment it does."
+        />
+      </div>
+    );
+  }
 
   const favoriteActs = filtered.filter((a) => favorites.isFavorite(a.actKey));
   const otherActs = favOnly ? [] : filtered.filter((a) => !favorites.isFavorite(a.actKey));
@@ -77,28 +90,29 @@ export function LineupScreen(): JSX.Element {
 
   return (
     <div className="screen" style={{ paddingTop: "calc(10px + var(--safe-top))" }}>
+      {dataState === "timetable" && (
+        <div className="lineup-switch-row">
+          <ViewSwitch active="lineup" />
+        </div>
+      )}
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            className="ava"
-            style={{ width: 32, height: 32, background: "var(--glass)", border: "1px solid var(--border)" }}
-            aria-label="Back to Timetable"
-            onClick={() => navigate("/timetable")}
-          >
-            <span className="ms" style={{ color: "var(--accent)", fontSize: 18 }}>calendar_month</span>
-          </button>
-          <div>
-            <div className="eyebrow" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--muted)", fontWeight: 700 }}>
-              {lineup.festival.name.toUpperCase()}
-            </div>
-            <h1 className="poster" style={{ fontSize: 26, fontWeight: 700, margin: "2px 0 0" }}>Lineup</h1>
+        <div>
+          <div className="eyebrow" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--muted)", fontWeight: 700 }}>
+            {lineup.festival.name.toUpperCase()}
           </div>
+          <h1 className="poster" style={{ fontSize: 26, fontWeight: 700, margin: "2px 0 0" }}>Lineup</h1>
         </div>
         <div className="fav-count">
           <div className="n">{favorites.count}</div>
           <div className="l">favorites</div>
         </div>
       </header>
+      {dataState === "lineup_only" && (
+        <div className="lineup-note">
+          <span className="ms" aria-hidden="true">schedule</span>
+          <span>The full timetable isn't out yet — favorite who you want to see and we'll build your plan the moment it drops.</span>
+        </div>
+      )}
 
       <div className="glass lineup-search">
         <span className="ms">search</span>

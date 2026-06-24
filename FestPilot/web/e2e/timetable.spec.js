@@ -44,4 +44,19 @@ test.describe("Phase 2 — timetable grid", () => {
     const after = await page.locator(".tt-content").evaluate((el) => el.getBoundingClientRect().width);
     expect(after).toBeGreaterThan(before);
   });
+
+  // DEC-049: the Lineup is discoverable in ≤1 tap from the Timetable via the segmented switch.
+  test("reaches the Lineup in one tap via the Timetable⇄Lineup switch", async ({ page }) => {
+    await page.goto("/timetable");
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
+
+    await page.locator(".view-switch .vs-seg", { hasText: "Lineup" }).click();
+
+    await expect(page).toHaveURL(/\/lineup$/);
+    await expect(page.locator(".poster", { hasText: "Lineup" })).toBeVisible();
+    // And back to the Timetable in one tap.
+    await page.locator(".view-switch .vs-seg", { hasText: "Timetable" }).click();
+    await expect(page).toHaveURL(/\/timetable$/);
+  });
 });
