@@ -18,6 +18,18 @@ export interface WeekendDto {
   endDate: string | null;
 }
 
+// Festival suggestions (DEC-055). Captured from onboarding without a login; deduped + counted so
+// the admin inbox (R11) can rank demand.
+export interface FestivalSuggestionDto {
+  id: string;
+  name: string;
+  count: number;
+  status: string;
+  suggestedBy: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+}
+
 export interface StageDto {
   id: string;
   sourceStageId: string;

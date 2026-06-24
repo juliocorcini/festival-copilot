@@ -5,6 +5,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PerformanceDto } from "../../data/types";
+import { api } from "../../data/api";
 import { useFavorites, useOnboarding } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
 import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
@@ -175,6 +176,20 @@ function dayTag(act: Act, days: DayInfo[]): string {
 }
 
 function StepFestival({ name, onNext }: { name: string; onNext: () => void }): JSX.Element {
+  const [suggesting, setSuggesting] = useState(false);
+  const [value, setValue] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const submit = (): void => {
+    const trimmed = value.trim();
+    if (trimmed.length < 2 || state === "sending") return;
+    setState("sending");
+    api
+      .suggestFestival(trimmed)
+      .then(() => setState("sent"))
+      .catch(() => setState("error"));
+  };
+
   return (
     <>
       <div className="ob-body">
@@ -193,15 +208,48 @@ function StepFestival({ name, onNext }: { name: string; onNext: () => void }): J
             </span>
             <span className="ms check">check_circle</span>
           </button>
-          <button className="opt" disabled>
-            <span className="opt-ico" style={{ background: "rgba(255,255,255,.05)" }}>
-              <span className="ms" style={{ color: "var(--muted)" }}>more_horiz</span>
-            </span>
-            <span className="opt-main">
-              <span className="opt-title" style={{ fontSize: 15 }}>More festivals</span>
-              <span className="opt-sub">Coming soon</span>
-            </span>
-          </button>
+
+          {!suggesting ? (
+            <button className="opt" onClick={() => setSuggesting(true)}>
+              <span className="opt-ico" style={{ background: "rgba(255,255,255,.05)" }}>
+                <span className="ms" style={{ color: "var(--muted)" }}>add</span>
+              </span>
+              <span className="opt-main">
+                <span className="opt-title" style={{ fontSize: 15 }}>Suggest a festival</span>
+                <span className="opt-sub">Tell us which one to add next</span>
+              </span>
+            </button>
+          ) : state === "sent" ? (
+            <div className="ob-suggest-done">
+              <span className="ms">check_circle</span>
+              <span>Thanks! We'll look into <b>{value.trim()}</b>.</span>
+            </div>
+          ) : (
+            <div className="ob-suggest">
+              <input
+                className="ob-suggest-input"
+                value={value}
+                onChange={(e) => {
+                  setValue(e.target.value);
+                  if (state === "error") setState("idle");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+                placeholder="Festival name…"
+                aria-label="Festival name"
+                maxLength={80}
+                autoFocus
+              />
+              <button
+                className="ob-suggest-send"
+                type="button"
+                disabled={value.trim().length < 2 || state === "sending"}
+                onClick={submit}
+              >
+                {state === "sending" ? "Sending…" : "Send"}
+              </button>
+              {state === "error" && <div className="ob-suggest-err">Couldn't send — try again.</div>}
+            </div>
+          )}
         </div>
       </div>
       <div className="ob-foot">

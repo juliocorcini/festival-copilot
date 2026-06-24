@@ -146,6 +146,15 @@ export const api = {
     return getJson<LineupDto>(`/api/festivals/${festivalId}/lineup${qs}`, signal);
   },
 
+  /** Suggest a festival we don't cover yet (DEC-055). No login; the anon token rides for analytics. */
+  suggestFestival(name: string, signal?: AbortSignal): Promise<{ ok: boolean; count: number }> {
+    return authedJson<{ ok: boolean; count: number }>("/api/festival-suggestions", {
+      method: "POST",
+      body: { name },
+      signal,
+    });
+  },
+
   async listStages(festivalId: string, signal?: AbortSignal): Promise<StageDto[]> {
     const data = await getJson<{ stages: StageDto[] }>(`/api/festivals/${festivalId}/stages`, signal);
     return data.stages;

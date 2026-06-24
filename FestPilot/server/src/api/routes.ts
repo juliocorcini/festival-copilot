@@ -4,6 +4,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env } from "../env";
 import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
+import { suggestFestival } from "./festivalSuggestions";
+import { getUserFromRequest } from "../auth";
 import { me } from "./me";
 import { groups } from "./groups-routes";
 import { presence } from "./presence-routes";
@@ -27,6 +29,23 @@ api.route("/presence", presence);
 api.get("/festivals", async (c) => {
   const festivals = await listFestivals(c.env.DB);
   return c.json({ festivals });
+});
+
+// Suggest a festival (DEC-055). Public — no login required. An optional anon identity is recorded
+// for frequency analytics; the name is deduped + counted for the admin inbox (R11).
+api.post("/festival-suggestions", async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { name?: unknown } | null;
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  if (name.length < 2 || name.length > 80) {
+    return c.json({ error: "name must be 2–80 characters" }, 400);
+  }
+  const identity = getUserFromRequest(c.req.raw);
+  const result = await suggestFestival(
+    c.env.DB,
+    { name, suggestedBy: identity?.firebaseUid ?? null },
+    new Date().toISOString()
+  );
+  return c.json({ ok: true, count: result.count });
 });
 
 api.get("/festivals/:id/lineup", async (c) => {

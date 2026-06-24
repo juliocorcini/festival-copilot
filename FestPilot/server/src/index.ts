@@ -7,6 +7,7 @@ import type { Context } from "hono";
 import type { Env } from "./env";
 import { api } from "./api/routes";
 import { upsertFestivalMap, type FestivalMapInput } from "./api/repo";
+import { listFestivalSuggestions } from "./api/festivalSuggestions";
 import { runScheduledIngest } from "./ingest/ingest";
 import { purgeExpiredPresence } from "./api/presence";
 import { purgeExpiredMeetingPoints } from "./api/meetingPoints";
@@ -46,6 +47,14 @@ app.post("/admin/festivals/:id/map", async (c) => {
   }
   await upsertFestivalMap(c.env.DB, festivalId, body, new Date().toISOString());
   return c.json({ ok: true, festivalId, revision: body.revision ?? 1 });
+});
+
+// Festival suggestions inbox (DEC-055, R11.3). Guarded; most-requested first.
+app.get("/admin/festival-suggestions", async (c) => {
+  const denied = adminUnauthorized(c);
+  if (denied) return denied;
+  const suggestions = await listFestivalSuggestions(c.env.DB);
+  return c.json({ suggestions });
 });
 
 export default {
