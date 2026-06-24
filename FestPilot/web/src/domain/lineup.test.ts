@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { PerformanceDto, StageDto } from "../data/types";
-import { actKey, actLabel, favoriteSets, toPlannableSets, uniqueActs } from "./lineup";
+import { actKey, actLabel, favoriteSets, nearbySets, toPlannableSets, uniqueActs } from "./lineup";
 
 const stages: StageDto[] = [
   { id: "stage-main", sourceStageId: "1", name: "MAINSTAGE", sortOrder: 0 },
@@ -84,5 +84,23 @@ describe("favoriteSets", () => {
     const b = perf({ id: "p-b", artists: [{ id: "a-b", name: "B", imageUrl: null }] });
     const result = favoriteSets([a, b], stages, new Set(["a-b"]));
     expect(result.map((s) => s.id)).toEqual(["p-b"]);
+  });
+});
+
+describe("nearbySets", () => {
+  const near = perf({ id: "p-near", artists: [{ id: "a-near", name: "Near", imageUrl: null }], startAtUtc: "2026-07-18T18:30:00.000Z", endAtUtc: "2026-07-18T19:30:00.000Z" });
+  const far = perf({ id: "p-far", artists: [{ id: "a-far", name: "Far", imageUrl: null }], startAtUtc: "2026-07-18T23:00:00.000Z", endAtUtc: "2026-07-18T23:30:00.000Z" });
+  const inWindow = perf({ id: "p-in", artists: [{ id: "a-in", name: "In", imageUrl: null }] }); // 18:00–19:00
+
+  it("returns only acts overlapping the window, excluding given keys, sorted by start", () => {
+    const window = { startMs: Date.parse("2026-07-18T18:00:00Z"), endMs: Date.parse("2026-07-18T19:00:00Z") };
+    const result = nearbySets([far, near, inWindow], stages, window, { excludeActKeys: new Set(["a-in"]) });
+    expect(result.map((s) => s.id)).toEqual(["p-near"]); // far is outside; in-window act excluded
+  });
+
+  it("filters by day when requested", () => {
+    const window = { startMs: Date.parse("2026-07-18T18:00:00Z"), endMs: Date.parse("2026-07-18T20:00:00Z") };
+    const otherDay = perf({ id: "p-d2", day: "D2", artists: [{ id: "a-d2", name: "D2", imageUrl: null }] });
+    expect(nearbySets([inWindow, otherDay], stages, window, { dayKey: "D1" }).map((s) => s.id)).toEqual(["p-in"]);
   });
 });

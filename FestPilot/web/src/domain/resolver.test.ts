@@ -5,6 +5,8 @@ import {
   pickEarliestEnd,
   pickFirst,
   pickOption,
+  pickSet,
+  previewRemainingClashes,
   resolvePlan,
   startResolver,
   type PickStrategy,
@@ -68,6 +70,48 @@ describe("resolvePlan — concrete scenarios", () => {
     expect(final.decision).toBeNull();
     expect(final.locked.map((s) => s.setId)).toEqual(["short", "t1"]);
     expect(hasNoOverlaps(final.locked)).toBe(true);
+  });
+
+  it("pickSet locks an added nearby act and respects the gate", () => {
+    const favorites = [set("c1a", 0, 60), set("c1b", 30, 90)];
+    const start = startResolver(favorites);
+    // An act not in the cluster, playing right after the clash window — lockable.
+    const added = set("added", 95, 140, "s2");
+    const snap = pickSet(start, added);
+    expect(snap.locked.map((s) => s.setId)).toEqual(["added"]);
+    // The original clash members start before 'added' ends? No — they start at 0/30 < lockedEnd(140),
+    // so committing to 'added' drops them.
+    expect(snap.dropped.map((s) => s.id).sort()).toEqual(["c1a", "c1b"]);
+    expect(hasNoOverlaps(snap.locked)).toBe(true);
+
+    // A set that starts before the gate is rejected (no-op) to preserve the invariant.
+    const locked = pickOption(start, "c1a");
+    expect(pickSet(locked, set("tooEarly", 0, 20))).toBe(locked);
+  });
+
+  it("pickOption with a cut records a partial set and frees a later overlapping favorite", () => {
+    // long 0–180 clashes with short 0–60; t 90–150 starts inside long's full run.
+    const favorites = [set("long", 0, 180), set("short", 0, 60), set("t", 90, 150)];
+    const start = startResolver(favorites);
+    // Leave 'long' early at minute 80 → its end no longer blocks t (starts 90).
+    const cut = 80 * MIN;
+    const snap = pickOption(start, "long", cut);
+    const longSlot = snap.locked.find((s) => s.setId === "long")!;
+    expect(longSlot.cutMs).toBe(cut);
+    expect(snap.locked.map((s) => s.setId)).toEqual(["long", "t"]);
+    expect(hasNoOverlaps(snap.locked.map((s) => ({ startMs: s.startMs, endMs: longSlot === s ? s.cutMs! : s.endMs })))).toBe(true);
+  });
+
+  it("previewRemainingClashes lists upcoming clash windows (current first)", () => {
+    const favorites = [
+      set("c1a", 0, 60), set("c1b", 30, 90),
+      set("solo", 100, 150),
+      set("c2a", 200, 260), set("c2b", 230, 290), set("c2c", 240, 300),
+    ];
+    const windows = previewRemainingClashes(startResolver(favorites));
+    expect(windows).toHaveLength(2);
+    expect(windows[0]).toMatchObject({ startMs: 0, optionCount: 2 });
+    expect(windows[1]).toMatchObject({ startMs: 200 * MIN, optionCount: 3 });
   });
 
   it("auto-locks singles between clashes and exposes a second decision", () => {

@@ -72,13 +72,22 @@ export function TimetableScreen(): JSX.Element {
       <TimetableHeader days={days} dayKey={dayKey} tz={tz} onSelectDay={setSelectedDay} onLineup={openLineup} />
 
       <div className="tt-controls">
-        <button className="pill tt-toggle" onClick={() => setZoom((z) => (z === "2h" ? "1h" : "2h"))}>
-          <span className="ms" style={{ fontSize: 15 }}>zoom_in</span>
-          {zoom} view
-        </button>
-        <button className={`pill tt-toggle${onlyFavs ? " on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>
-          <span className="ms" style={{ fontSize: 15 }}>favorite</span>
-          Only my favs
+        <div className="tt-controls-left">
+          <button className="pill tt-toggle" onClick={() => setZoom((z) => (z === "2h" ? "1h" : "2h"))}>
+            <span className="ms" style={{ fontSize: 15 }}>zoom_in</span>
+            {zoom} view
+          </button>
+          <button className={`pill tt-toggle${onlyFavs ? " on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>
+            <span className="ms" style={{ fontSize: 15 }}>favorite</span>
+            Only my favs
+          </button>
+        </div>
+        <button
+          className="pill tt-lockin"
+          onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
+        >
+          <span className="ms" style={{ fontSize: 15 }}>lock</span>
+          Lock in
         </button>
       </div>
 

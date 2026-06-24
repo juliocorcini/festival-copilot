@@ -120,18 +120,66 @@ export function startResolver(favorites: PlannableSet[]): ResolverSnapshot {
   return advance({ locked: [], dropped: [], lockedEnd: -Infinity, pool: valid, decisionsResolved: 0 });
 }
 
-/** Lock the chosen option for the current clash, then auto-advance to the next decision. */
-export function pickOption(snapshot: ResolverSnapshot, setId: string): ResolverSnapshot {
-  if (!snapshot.decision) return snapshot;
-  const chosen = snapshot.decision.options.find((o) => o.id === setId);
-  if (!chosen) return snapshot;
+/** Lock a chosen set (optionally cut early for a partial set, DEC-018), then auto-advance. */
+function lockAndAdvance(snapshot: ResolverSnapshot, chosen: PlannableSet, cutMs: number | null): ResolverSnapshot {
+  const slot = toSlot(chosen);
+  // A partial set keeps the gate at the early-leave time, freeing later overlapping favorites.
+  const consumedEnd = cutMs != null && cutMs > chosen.startMs && cutMs < chosen.endMs ? cutMs : chosen.endMs;
   return advance({
-    locked: [...snapshot.locked, toSlot(chosen)],
+    locked: [...snapshot.locked, { ...slot, cutMs: cutMs != null && cutMs < chosen.endMs ? cutMs : null }],
     dropped: [...snapshot.dropped],
-    lockedEnd: chosen.endMs,
+    lockedEnd: consumedEnd,
     pool: snapshot.pool.filter((s) => s.id !== chosen.id),
     decisionsResolved: snapshot.decisionsResolved + 1,
   });
+}
+
+/** Lock the chosen option for the current clash, then auto-advance to the next decision. */
+export function pickOption(snapshot: ResolverSnapshot, setId: string, cutMs: number | null = null): ResolverSnapshot {
+  if (!snapshot.decision) return snapshot;
+  const chosen = snapshot.decision.options.find((o) => o.id === setId);
+  if (!chosen) return snapshot;
+  return lockAndAdvance(snapshot, chosen, cutMs);
+}
+
+/**
+ * Lock an arbitrary set (e.g. an act added from the "around this time" search) that respects the
+ * gate (starts at/after the last locked end). Used when the chosen set is not one of the cluster's
+ * auto-detected options. No-op if it would break the zero-overlap invariant.
+ */
+export function pickSet(snapshot: ResolverSnapshot, set: PlannableSet, cutMs: number | null = null): ResolverSnapshot {
+  if (!isValid(set) || set.startMs < snapshot.lockedEnd) return snapshot;
+  return lockAndAdvance(snapshot, set, cutMs);
+}
+
+export interface ClashWindow {
+  startMs: number;
+  endMs: number;
+  optionCount: number;
+}
+
+/**
+ * The remaining clash windows (current first) under the earliest-end preview strategy — powers the
+ * "all clashes" overview. It's a preview: the actual count can shrink as longer picks absorb later
+ * clashes, but it never undercounts what the user still has to decide.
+ */
+export function previewRemainingClashes(snapshot: ResolverSnapshot): ClashWindow[] {
+  const windows: ClashWindow[] = [];
+  let end = snapshot.lockedEnd;
+  let remaining = snapshot.pool.filter((s) => s.startMs >= end).sort(byStart);
+  let guard = 0;
+  while (remaining.length > 0 && guard++ < 10_000) {
+    remaining = remaining.filter((s) => s.startMs >= end);
+    if (remaining.length === 0) break;
+    const cluster = clusterByOverlap(remaining)[0]!;
+    if (cluster.length > 1) {
+      windows.push({ startMs: cluster[0]!.startMs, endMs: Math.max(...cluster.map((c) => c.endMs)), optionCount: cluster.length });
+    }
+    const choose = cluster.reduce((a, b) => (b.endMs < a.endMs ? b : a));
+    end = choose.endMs;
+    remaining = remaining.filter((s) => s.id !== choose.id);
+  }
+  return windows;
 }
 
 export type PickStrategy = (decision: ClashDecision) => PlannableSet;

@@ -97,3 +97,24 @@ export function favoriteSets(
 ): PlannableSet[] {
   return toPlannableSets(performances, stages).filter((set) => favoriteKeys.has(set.actKey));
 }
+
+/**
+ * Sets that play around a time window (for "add an artist around this time", #12c). A set qualifies
+ * if it overlaps the window; excluded act keys (already in the clash / already chosen) are removed.
+ * Sorted by start so the closest-starting options come first.
+ */
+export function nearbySets(
+  performances: PerformanceDto[],
+  stages: StageDto[],
+  window: { startMs: number; endMs: number },
+  options: { excludeActKeys?: ReadonlySet<string>; dayKey?: string | null } = {}
+): PlannableSet[] {
+  const exclude = options.excludeActKeys ?? new Set<string>();
+  return toPlannableSets(performances, stages)
+    .filter((set) => {
+      if (options.dayKey && set.day !== options.dayKey) return false;
+      if (exclude.has(set.actKey)) return false;
+      return set.startMs < window.endMs && set.endMs > window.startMs;
+    })
+    .sort((a, b) => a.startMs - b.startMs);
+}
