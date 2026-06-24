@@ -54,8 +54,8 @@ export function SquadPlanScreen(): JSX.Element {
         </div>
         <h1 className="poster">Squad plan</h1>
       </div>
-      <button className="ava ghost-ava" aria-label="Refresh" onClick={reload}>
-        <span className="ms" style={{ color: "var(--accent)" }}>auto_awesome</span>
+      <button className="ava ghost-ava" aria-label="Refresh squad plan" onClick={reload}>
+        <span className="ms" style={{ color: "var(--accent)" }}>refresh</span>
       </button>
     </header>
   );

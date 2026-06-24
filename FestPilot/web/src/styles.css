@@ -128,6 +128,19 @@ a { color: inherit; text-decoration: none; }
   border: 0; cursor: pointer;
 }
 
+/* Header avatar → profile menu (R9.6). A small dropdown under the avatar; a transparent scrim
+   closes it on outside tap. */
+.ava-menu-wrap { position: relative; flex-shrink: 0; }
+.menu-scrim { position: fixed; inset: 0; z-index: 40; }
+.ava-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 41; min-width: 184px;
+  display: flex; flex-direction: column; padding: 6px; gap: 2px;
+  background: rgba(28, 24, 18, 0.96); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); backdrop-filter: blur(12px); }
+.ava-menu-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 0; border-radius: 10px;
+  background: none; color: var(--ink); font-weight: 600; font-size: 14px; text-align: left; cursor: pointer; }
+.ava-menu-item .ms { font-size: 19px; color: var(--muted); }
+.ava-menu-item:hover, .ava-menu-item:focus-visible { background: rgba(255, 255, 255, 0.06); }
+
 /* routed content area */
 .scr {
   position: relative;
