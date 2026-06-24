@@ -40,7 +40,7 @@ function perf(over: Partial<PerformanceDto>): PerformanceDto {
 }
 
 const lineup: LineupDto = {
-  festival: { id: "tml", name: "Tomorrowland", slug: "tml", timezone: "Europe/Brussels", revision: 1 },
+  festival: { id: "tml", name: "Tomorrowland", slug: "tml", timezone: "Europe/Brussels", revision: 1, withTimetable: true },
   weekends: [
     { id: "w1", name: "Weekend 1", startDate: "2026-07-17", endDate: "2026-07-19" },
     { id: "w2", name: "Weekend 2", startDate: "2026-07-24", endDate: "2026-07-26" },
@@ -51,6 +51,8 @@ const lineup: LineupDto = {
     perf({ id: "p1", day: "d1", weekendId: "w1", startAtUtc: "2026-07-17T18:00:00.000Z" }),
     perf({ id: "p3", day: "d3", weekendId: "w2", startAtUtc: "2026-07-24T16:00:00.000Z" }),
   ],
+  hasLineup: true,
+  hasTimetable: true,
 };
 
 describe("daysForWeekends", () => {

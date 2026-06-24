@@ -3,10 +3,12 @@ import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/re
 import type { LineupDto } from "./types";
 
 const lineup: LineupDto = {
-  festival: { id: "f1", name: "Tomorrowland", slug: "tml", timezone: "Europe/Brussels", revision: 1 },
+  festival: { id: "f1", name: "Tomorrowland", slug: "tml", timezone: "Europe/Brussels", revision: 1, withTimetable: true },
   weekends: [{ id: "w1", name: "Weekend 1", startDate: null, endDate: null }],
   stages: [{ id: "s1", sourceStageId: "S1", name: "MAINSTAGE", sortOrder: 0 }],
   performances: [],
+  hasLineup: true,
+  hasTimetable: true,
 };
 
 // Factory is hoisted above the consts, so it must be self-contained — resolved values are set in beforeEach.

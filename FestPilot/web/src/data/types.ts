@@ -9,6 +9,8 @@ export interface FestivalDto {
   slug: string;
   timezone: string;
   revision: number;
+  /** Source data-state (DEC-052): the clock-by-clock timetable is published (vs lineup-only). */
+  withTimetable: boolean;
 }
 
 export interface WeekendDto {
@@ -50,6 +52,10 @@ export interface LineupDto {
   weekends: WeekendDto[];
   stages: StageDto[];
   performances: PerformanceDto[];
+  /** DEC-052 data-state: at least one real (non-placeholder) act is announced. */
+  hasLineup: boolean;
+  /** DEC-052 data-state: the timetable is published AND scheduled sets exist. */
+  hasTimetable: boolean;
 }
 
 export interface AffineDoc {

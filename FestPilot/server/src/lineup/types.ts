@@ -80,6 +80,8 @@ export interface NormalizedLineup {
   event: string;
   uuid: string;
   timezone: string;
+  /** Source `config.withTimetable`: the clock-by-clock timetable is published (vs lineup-only). */
+  withTimetable: boolean;
   weekends: Weekend[];
   stages: Stage[];
   performances: Performance[];

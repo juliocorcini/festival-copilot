@@ -101,6 +101,7 @@ export function buildNormalizedLineup(input: {
     event: input.event,
     uuid: input.uuid,
     timezone: TOMORROWLAND_TZ,
+    withTimetable: input.config.config.withTimetable === true,
     weekends: normalizeWeekends(input.config),
     stages: normalizeStages(input.stages),
     performances,

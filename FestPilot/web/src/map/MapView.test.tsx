@@ -5,7 +5,7 @@ import type { LineupDto } from "../data/types";
 
 // A tiny, time-independent lineup: the MAINSTAGE set spans 2020→2030 so "now" is always inside it.
 const lineup: LineupDto = {
-  festival: { id: "f1", name: "Tomorrowland", slug: "tml", timezone: "Europe/Brussels", revision: 1 },
+  festival: { id: "f1", name: "Tomorrowland", slug: "tml", timezone: "Europe/Brussels", revision: 1, withTimetable: true },
   weekends: [{ id: "w1", name: "Weekend 1", startDate: null, endDate: null }],
   stages: [
     { id: "s1", sourceStageId: "S1", name: "MAINSTAGE", sortOrder: 0 },
@@ -18,6 +18,8 @@ const lineup: LineupDto = {
       isPlaceholder: false, artists: [{ id: "a1", name: "Big Act", imageUrl: null }],
     },
   ],
+  hasLineup: true,
+  hasTimetable: true,
 };
 
 vi.mock("../data/api", () => {

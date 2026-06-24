@@ -12,7 +12,9 @@ import { buildFixturePayload, FixtureLineupFetcher } from "./fixtures";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const schemaSql = fs.readFileSync(path.join(here, "..", "migrations", "0001_init.sql"), "utf-8");
+const schemaSql = ["0001_init.sql", "0008_festival_with_timetable.sql"]
+  .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
+  .join("\n");
 
 const festival = {
   name: "Tomorrowland Belgium 2026",
@@ -87,10 +89,14 @@ describe("D1 integration (real migration applied via sql.js)", () => {
     // Read API serves what we ingested.
     const festivals = await listFestivals(makeD1(db));
     expect(festivals[0]!.revision).toBe(1);
+    // Data-state (DEC-052): the TL fixture has withTimetable=true + scheduled real acts.
+    expect(festivals[0]!.withTimetable).toBe(true);
     const lineup = await getLineup(makeD1(db), run1.festivalId);
     expect(lineup!.performances.length).toBe(active);
     expect(lineup!.stages.length).toBeGreaterThan(5);
     expect(lineup!.performances.some((p) => p.artists.length > 0)).toBe(true);
+    expect(lineup!.hasLineup).toBe(true);
+    expect(lineup!.hasTimetable).toBe(true);
 
     // Idempotent re-run of the identical payload changes nothing.
     const run2 = await ingestFixture(store);

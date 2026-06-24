@@ -221,6 +221,13 @@ export class D1LineupStore implements LineupStore {
 
     const stmts: D1PreparedStatement[] = [];
 
+    // 1.5) Persist the source data-state flag (DEC-052): is the clock-by-clock timetable published?
+    stmts.push(
+      db
+        .prepare("UPDATE festival SET with_timetable = ? WHERE id = ?")
+        .bind(lineup.withTimetable ? 1 : 0, festivalId)
+    );
+
     // 2) Mark every performance inactive; present ones are reactivated by upsert below.
     stmts.push(
       db.prepare("UPDATE performance SET active = 0 WHERE festival_id = ?").bind(festivalId)

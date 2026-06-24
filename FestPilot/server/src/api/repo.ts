@@ -16,36 +16,48 @@ export interface LineupQuery {
   day?: string; // festival day label, e.g. "SATURDAY"
 }
 
+interface FestivalRow {
+  id: string;
+  name: string;
+  slug: string;
+  timezone: string;
+  revision: number;
+  with_timetable: number;
+}
+
+const toFestivalDto = (f: FestivalRow): FestivalDto => ({
+  id: f.id,
+  name: f.name,
+  slug: f.slug,
+  timezone: f.timezone,
+  revision: f.revision,
+  withTimetable: f.with_timetable === 1,
+});
+
 export async function listFestivals(db: D1Database): Promise<FestivalDto[]> {
   const res = await db
     .prepare(
-      `SELECT f.id, f.name, f.slug, f.timezone, COALESCE(r.revision, 0) AS revision
+      `SELECT f.id, f.name, f.slug, f.timezone, f.with_timetable, COALESCE(r.revision, 0) AS revision
          FROM festival f
          LEFT JOIN lineup_revision r ON r.festival_id = f.id
         ORDER BY f.created_at_utc`
     )
-    .all<{ id: string; name: string; slug: string; timezone: string; revision: number }>();
-  return (res.results ?? []).map((f) => ({
-    id: f.id,
-    name: f.name,
-    slug: f.slug,
-    timezone: f.timezone,
-    revision: f.revision,
-  }));
+    .all<FestivalRow>();
+  return (res.results ?? []).map(toFestivalDto);
 }
 
 async function getFestival(db: D1Database, festivalId: string): Promise<FestivalDto | null> {
   const f = await db
     .prepare(
-      `SELECT f.id, f.name, f.slug, f.timezone, COALESCE(r.revision, 0) AS revision
+      `SELECT f.id, f.name, f.slug, f.timezone, f.with_timetable, COALESCE(r.revision, 0) AS revision
          FROM festival f
          LEFT JOIN lineup_revision r ON r.festival_id = f.id
         WHERE f.id = ?`
     )
     .bind(festivalId)
-    .first<{ id: string; name: string; slug: string; timezone: string; revision: number }>();
+    .first<FestivalRow>();
   if (!f) return null;
-  return { id: f.id, name: f.name, slug: f.slug, timezone: f.timezone, revision: f.revision };
+  return toFestivalDto(f);
 }
 
 export async function listStages(db: D1Database, festivalId: string): Promise<StageDto[]> {
@@ -133,7 +145,7 @@ export async function getLineup(
 
   const weekendNameById = new Map(weekends.map((w) => [w.id, w.name]));
 
-  let performances: PerformanceDto[] = (perfRes.results ?? []).map((p) => ({
+  const allPerformances: PerformanceDto[] = (perfRes.results ?? []).map((p) => ({
     id: p.id,
     sourcePerformanceId: p.source_performance_id,
     name: p.name,
@@ -147,6 +159,14 @@ export async function getLineup(
     artists: artistsByPerf.get(p.id) ?? [],
   }));
 
+  // Data-state (DEC-052) is derived from the FULL set, never the filtered slice: a real act is
+  // announced (hasLineup), and the timetable is published with at least one scheduled set
+  // (hasTimetable). `withTimetable=false` means lineup-only even when rows carry placeholder times.
+  const hasLineup = allPerformances.some((p) => !p.isPlaceholder && p.artists.length > 0);
+  const hasTimetable =
+    festival.withTimetable && allPerformances.some((p) => !p.isPlaceholder && p.startAtUtc !== null);
+
+  let performances = allPerformances;
   if (query.weekend) {
     performances = performances.filter((p) => weekendNameById.get(p.weekendId ?? "") === query.weekend);
   }
@@ -154,7 +174,7 @@ export async function getLineup(
     performances = performances.filter((p) => p.day === query.day);
   }
 
-  return { festival, weekends, stages, performances };
+  return { festival, weekends, stages, performances, hasLineup, hasTimetable };
 }
 
 // ---------------------------------------------------------------------------
