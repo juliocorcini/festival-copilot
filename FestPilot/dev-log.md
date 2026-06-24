@@ -12,9 +12,10 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R2 (P0 map) CLOSED ✅** — R2.1 pan-clamp · R2.2 vector stage overlay + de-baked base (DEC-050) ·
-  R2.3 real coarse presence + out-of-venue (DEC-051/058) · R2.4 zoomable meeting picker. Next: **R3 (P0 perf)**.
-- **Tests now:** typecheck clean · **server 122 + web 189 unit** pass · e2e map + meeting-points green · build OK · **app v0.8.2 (deployed Production)**.
+- **Gate:** **R3 (P0 perf) CLOSED ✅** — R3.1 shared lineup cache (stale-while-revalidate via `useSyncExternalStore`):
+  one in-memory entry, concurrent mounts share one fetch, tab switch served from memory (no refetch/reparse).
+  Next: **R4 (P0 nav/data-states)**.
+- **Tests now:** typecheck clean · **server 122 + web 194 unit** pass · e2e map + meeting-points green · build OK · **app v0.8.2 (deployed Production)**.
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -23,7 +24,7 @@
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
 - [x] **R1** (P0 data/logic) — festival-day blocks (DEC-048) · clash anchor-overlap (headline) · artist photo re-ingest (DEC-061). **CLOSED 2026-06-24.**
 - [x] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom. **CLOSED 2026-06-24 (v0.8.2).**
-- [ ] **R3** (P0 perf) — shared lineup cache (<300 ms tab switch).
+- [x] **R3** (P0 perf) — shared lineup cache (stale-while-revalidate; instant tab switch). **CLOSED 2026-06-24.**
 - [ ] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days · suggest-a-festival (DEC-055).
 - [ ] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere.
 - [ ] **R6** (P1 now/next) — plan-then-favorites, never arbitrary.
@@ -34,6 +35,23 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R3 GATE CLOSED ✅ (2026-06-24) — deployed + live.** Single milestone (R3.1) — perf only, no user-facing copy, so
+  **no version bump** (per orchestrator R3 close = "deploy; dev-log"). Cumulative **server 122 + web 194 unit** green,
+  typecheck + build clean, e2e map + meeting-points still green. **Deployed:** Pages → Production `master`
+  (https://6f2701f1.festpilot.pages.dev → alias `festpilot.pages.dev`). Worker untouched (web-only change), no redeploy. → R4.
+- **R3.1 ✅ (2026-06-24) — shared lineup cache, instant tab switches (review §18.1, §6 perf).** Every screen's
+  `useLineup` refetched **and reparsed** the whole festival lineup on each mount (~3 s per tab switch). New
+  `data/lineupCache.ts` is a tiny **stale-while-revalidate** store keyed by the `(weekend, day)` query — in V1 every
+  consumer requests the full lineup, so there's a single entry. Concurrent mounts **share one in-flight request**; a
+  stale entry (>5 min) refreshes in the **background without dropping** what's on screen; a failed revalidation **keeps
+  the stale lineup** instead of blanking to an error. `useLineup` now reads it via **`useSyncExternalStore`** (stable
+  snapshot) and only kicks a fetch/revalidate per query — same `{status, lineup, error, reload}` shape, **zero consumer
+  changes**. The SW network-first `/api` cache stays the offline layer; this only removes the redundant in-session
+  fetch/parse. Considered caching the map `transform.json` too (re-fetched per Map mount) but it's a few KB already on
+  the browser+SW HTTP cache — not a clear win, left as-is (orchestrator: don't over-engineer). **Tests +5**
+  (`lineupCache`: shared single fetch across two consumers · switched-to tab served from memory with no 2nd call ·
+  `reload` refetches · cold error · stale kept on failed revalidate); `MapView.test` resets the cache per test.
+  **web 194 unit · typecheck · build OK.** → R3 gate close.
 - **R2 GATE CLOSED ✅ (2026-06-24) — deployed + live.** Cumulative **server 122 + web 189 unit** green, **e2e map +
   meeting-points** green, typecheck + build clean. Golden-path holds (onboarding → favorites → lock-in → My Plan;
   map; squad meeting create). Bumped **v0.8.1 → v0.8.2** (`changelog.ts` single source + `package.json`) with a
