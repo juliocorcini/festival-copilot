@@ -154,3 +154,21 @@ export interface SquadPlanDataDto {
   /** Owner-pinned performance ids for the day (method=owner override). */
   overrides: string[];
 }
+
+// Group board (Pillar 3a, Gate 4.4 — UC-39, DEC-013). A lightweight list of pinned notes /
+// announcements; explicitly NOT real-time chat. Authors edit/remove their own; the owner can
+// remove any (moderation) and pin/unpin. Fanned out via the GroupRoom DO ("board" topic).
+export interface BoardNoteDto {
+  id: string;
+  authorUserId: string;
+  authorName: string | null;
+  authorColor: string | null;
+  /** The caller wrote this note (can edit + remove). */
+  isMine: boolean;
+  body: string;
+  /** Pinned notes float to the top of the board. */
+  pinned: boolean;
+  createdAtUtc: string;
+  /** Set when the note was edited (drives the "· edited" hint). */
+  updatedAtUtc: string | null;
+}

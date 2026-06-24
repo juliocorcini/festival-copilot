@@ -25,6 +25,7 @@ import {
   unshareMyPlan,
   type SharedSlotInput,
 } from "./squadPlan";
+import { editNote, listNotes, MAX_NOTE_LENGTH, postNote, removeNote, setPinned } from "./board";
 
 export const groups = new Hono<{ Bindings: Env }>();
 
@@ -212,6 +213,59 @@ groups.delete("/:id/plan/override", async (c) => {
   if (!day || !performanceId) return c.json({ error: "day and performanceId are required" }, 400);
   await clearOverride(c.env.DB, m.group.id, day, performanceId);
   await notifyGroup(c.env, m.group.id, "plan");
+  return c.json({ ok: true });
+});
+
+// --- Group board (Gate 4.4, UC-39, DEC-013). Lightweight pinned notes; NOT chat. Member-gated. ---
+
+// The board — pinned notes first, newest-first.
+groups.get("/:id/board", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const notes = await listNotes(c.env.DB, m.group.id, m.user.id);
+  return c.json({ notes });
+});
+
+// Post a note. Body: { body }. Trimmed + capped; empty is rejected.
+groups.post("/:id/board", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const text = readString(body.body, MAX_NOTE_LENGTH);
+  if (!text) return c.json({ error: "body is required" }, 400);
+  const note = await postNote(c.env.DB, m.group.id, m.user.id, text, new Date().toISOString());
+  await notifyGroup(c.env, m.group.id, "board");
+  return c.json({ note }, 201);
+});
+
+// Edit a note's body (author only) or pin/unpin it (owner only). Body: { body? , pinned? }.
+groups.put("/:id/board/:noteId", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const noteId = c.req.param("noteId");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  let changed = false;
+  if (typeof body.pinned === "boolean") {
+    if (m.group.role !== "owner") return c.json({ error: "owner only" }, 403);
+    changed = (await setPinned(c.env.DB, m.group.id, noteId, body.pinned)) || changed;
+  }
+  if (body.body !== undefined) {
+    const text = readString(body.body, MAX_NOTE_LENGTH);
+    if (!text) return c.json({ error: "body is required" }, 400);
+    changed = (await editNote(c.env.DB, m.group.id, noteId, m.user.id, text, new Date().toISOString())) || changed;
+  }
+  if (!changed) return c.json({ error: "not found" }, 404);
+  await notifyGroup(c.env, m.group.id, "board");
+  return c.json({ ok: true });
+});
+
+// Remove a note — author removes own; owner removes any.
+groups.delete("/:id/board/:noteId", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const ok = await removeNote(c.env.DB, m.group.id, c.req.param("noteId"), m.user.id, m.group.role === "owner");
+  if (!ok) return c.json({ error: "not found" }, 404);
+  await notifyGroup(c.env, m.group.id, "board");
   return c.json({ ok: true });
 });
 

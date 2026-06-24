@@ -60,7 +60,8 @@ class ShimStatement {
 
   async run(): Promise<{ success: boolean; meta: Record<string, unknown> }> {
     this.db.run(this.sql, this.args);
-    return { success: true, meta: {} };
+    // Mirror D1's `meta.changes` (rows affected by the last write) so repos that branch on it work.
+    return { success: true, meta: { changes: this.db.getRowsModified() } };
   }
 
   /** Used by batch(); sql.js is synchronous. */

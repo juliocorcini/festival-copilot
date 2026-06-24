@@ -100,6 +100,17 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
           <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>
 
+        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/board`)}>
+          <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #8B5CF6, #6366F1)" }}>
+            <span className="ms">push_pin</span>
+          </div>
+          <div className="squad-plan-main">
+            <div className="squad-plan-title">Squad board</div>
+            <div className="squad-plan-sub">Pinned notes, meet points, shout-outs</div>
+          </div>
+          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+        </button>
+
         <section className="glass members-card">
           <div className="members-head">
             <span className="label">Members</span>

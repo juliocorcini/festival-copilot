@@ -5,6 +5,7 @@
  * caching on top (network-first for /api, see public/sw.js).
  */
 import type {
+  BoardNoteDto,
   FestivalDto,
   FestivalMapDto,
   GroupDto,
@@ -232,6 +233,42 @@ export const api = {
     return authedJson<{ ok: boolean }>(`/api/groups/${id}/plan/override`, {
       method: "DELETE",
       body: { day, performanceId },
+      signal,
+    }).then(() => undefined);
+  },
+
+  // Group board (Gate 4.4 — UC-39). Lightweight pinned notes; not chat.
+  getBoard(id: string, signal?: AbortSignal): Promise<BoardNoteDto[]> {
+    return authedJson<{ notes: BoardNoteDto[] }>(`/api/groups/${id}/board`, { signal }).then((d) => d.notes);
+  },
+
+  postNote(id: string, body: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ note: BoardNoteDto }>(`/api/groups/${id}/board`, {
+      method: "POST",
+      body: { body },
+      signal,
+    }).then(() => undefined);
+  },
+
+  editNote(id: string, noteId: string, body: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/board/${noteId}`, {
+      method: "PUT",
+      body: { body },
+      signal,
+    }).then(() => undefined);
+  },
+
+  pinNote(id: string, noteId: string, pinned: boolean, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/board/${noteId}`, {
+      method: "PUT",
+      body: { pinned },
+      signal,
+    }).then(() => undefined);
+  },
+
+  deleteNote(id: string, noteId: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/board/${noteId}`, {
+      method: "DELETE",
       signal,
     }).then(() => undefined);
   },

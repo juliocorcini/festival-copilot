@@ -7,8 +7,8 @@
 ## Current State
 - 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 core + PHASE 4 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P4 in progress** — **G4.1 identity ✅ · G4.2 groups ✅ · G4.3 shared timetable ✅** — next: G4.4
-  (group board: pinned notes post/edit/remove over the DO).
+- Active Phase / Gate: **P4 COMPLETE** — **G4.1 identity ✅ · G4.2 groups ✅ · G4.3 shared timetable ✅ · G4.4 board ✅** —
+  next: **Phase 5** (live presence + where-is-everyone).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
 - **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
@@ -46,6 +46,17 @@
   revert). Shared `squadUi.tsx` (avatar stack, status pill, method label). **55 server + 95 web unit + 12 e2e green**
   (new `squad-plan` spec: share→overview→block→override, 4 screenshots). Worker live (migration 0005 remote + routes);
   Pages https://282aabd7.festpilot.pages.dev. Web `0.2.0`→`0.3.0`.
+- **P4 G4.4 group board ✅ (this session):** lightweight **pinned notes — NOT chat** (UC-39, DEC-013, DEC-045). Reused the
+  pre-existing `group_board_note` table (**no new migration**). Server `api/board.ts`: `listNotes` (pinned-first then
+  newest-first), `postNote`, `editNote` (**author-only**, stamps `updated_at_utc`), `setPinned` (**owner-only**),
+  `removeNote` (**author or owner**); body cap 500. 4 member-gated routes (`GET/POST /:id/board`,
+  `PUT/DELETE /:id/board/:noteId`), each `notifyGroup(...,"board")` → DO fan-out (reuses G4.2 WS+focus). Web:
+  `data/board.ts` (`useBoard` reusing `useGroupLive`), `api` board methods, `types.ts BoardNoteDto`. Screen
+  **SquadBoardScreen** (`/squad/:id/board`, entered from a new group-home card #23.7): glass note cards (avatar + author +
+  relative time + body), amber **PINNED** flag, inline edit box, bottom composer (no wireframe existed → designed to the
+  squad DNA). `d1-shim` upgraded to return `meta.changes` (`getRowsModified()`). **61 server + 95 web unit + 13 e2e green**
+  (new `squad-board` spec: post→edit→pin→remove, 2 screenshots; per-test 120s budget for the live-API round-trips). Worker
+  live (board routes deployed + smoke-validated last session); Pages https://25c7fe2e.festpilot.pages.dev.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the

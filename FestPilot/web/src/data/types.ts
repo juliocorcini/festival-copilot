@@ -149,3 +149,16 @@ export interface SquadPlanDataDto {
   members: SquadMemberShareDto[];
   overrides: string[];
 }
+
+// Group board (Gate 4.4 — UC-39, DEC-013). Lightweight pinned notes; not chat.
+export interface BoardNoteDto {
+  id: string;
+  authorUserId: string;
+  authorName: string | null;
+  authorColor: string | null;
+  isMine: boolean;
+  body: string;
+  pinned: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}

@@ -488,3 +488,28 @@
 - **Detail**: migration `0005_group_shared_plan.sql`; `server/src/api/squadPlan.ts` (+ routes in `groups-routes.ts`);
   `web/src/domain/squadPlan.ts` (+ tests), `web/src/data/squadPlan.ts`, `web/src/routes/squad/{ShareMyPlan,SquadPlan,
   SquadBlock,SquadOverride}Screen.tsx`, `web/src/routes/squad/squadUi.tsx`; orchestrator §13 Phase 4 G4.3.
+
+### DEC-045 — Group board is lightweight pinned notes (NOT chat); author-edits, owner-moderates; over the DO
+- **Date**: 2026-06-23 (build, Phase 4 G4.4)
+- **Status**: APPROVED (executor decision, implements UC-39 / DEC-013)
+- **Decision**: The squad board is a **flat list of short pinned notes / announcements — explicitly NOT a real-time
+  chat** (UC-39, DEC-013). The pre-existing `group_board_note` table (`0001_init.sql`: id, group_id, author_user_id,
+  body, pinned, created_at_utc, updated_at_utc) is reused **as-is — no new migration**. Repo `server/src/api/board.ts`:
+  `listNotes` (ordered **pinned-first then newest-first**), `postNote`, `editNote` (**author-only**, stamps
+  `updated_at_utc` → drives the "· edited" hint), `setPinned` (**owner-only** moderation), `removeNote` (**author or
+  owner**); body capped at `MAX_NOTE_LENGTH = 500`. Four member-gated routes (`GET/POST /:id/board`,
+  `PUT/DELETE /:id/board/:noteId`) each call `notifyGroup(...,"board")` so the **GroupRoom DO** fans the change out and
+  clients re-fetch (reusing the G4.2 WS+focus contract — DEC-043). No wireframe existed, so the screen
+  (`SquadBoardScreen` at `/squad/:id/board`, entered from a new card on the group home #23.7) was designed consistent
+  with the squad DNA: glass note cards (avatar + author + relative time + body), an amber "PINNED" flag, an inline
+  edit box, and a bottom composer.
+- **Why (brain-consistent)**: V1 deliberately ships a board, **not chat** (scope discipline, DEC-013) — it covers
+  meet-points / can't-miss shout-outs / after-plans without the moderation + presence cost of chat. Permissions mirror
+  the rest of Phase 4 (author owns their content; owner moderates). Reusing the DO fan-out keeps freshness consistent
+  with groups + shared plan; pure repo functions stay unit-testable offline (6 board tests via the sql.js D1 shim).
+- **Trade-off**: no per-note reactions / threads / read-receipts (not needed at friends-scale V1); board is best-effort
+  realtime (correctness still comes from refetch-on-focus, never the socket). The `d1-shim` was upgraded to return
+  `meta.changes` (via `getRowsModified()`) so author/owner-gated writes are testable exactly as on real D1.
+- **Detail**: `server/src/api/board.ts` (+ `dto.ts BoardNoteDto`, routes in `groups-routes.ts`), `server/test/board.test.ts`;
+  `web/src/data/{types,api,board}.ts`, `web/src/routes/squad/SquadBoardScreen.tsx`, entry card in `SquadScreen.tsx`;
+  `web/e2e/squad-board.spec.js`; orchestrator §13 Phase 4 G4.4.

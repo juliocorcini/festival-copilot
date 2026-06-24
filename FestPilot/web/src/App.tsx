@@ -19,6 +19,7 @@ import { ShareMyPlanScreen } from "./routes/squad/ShareMyPlanScreen";
 import { SquadPlanScreen } from "./routes/squad/SquadPlanScreen";
 import { SquadBlockScreen } from "./routes/squad/SquadBlockScreen";
 import { SquadOverrideScreen } from "./routes/squad/SquadOverrideScreen";
+import { SquadBoardScreen } from "./routes/squad/SquadBoardScreen";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
@@ -46,6 +47,7 @@ export function App(): JSX.Element {
             <Route path="squad/create" element={<CreateSquadScreen />} />
             <Route path="squad/invite/:id" element={<InviteScreen />} />
             <Route path="squad/:id/share" element={<ShareMyPlanScreen />} />
+            <Route path="squad/:id/board" element={<SquadBoardScreen />} />
             <Route path="squad/:id/plan" element={<SquadPlanScreen />} />
             <Route path="squad/:id/plan/:perfId" element={<SquadBlockScreen />} />
             <Route path="squad/:id/plan/:perfId/override" element={<SquadOverrideScreen />} />
