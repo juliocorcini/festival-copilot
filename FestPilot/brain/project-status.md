@@ -1,6 +1,14 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-23
+> Last updated: 2026-06-24 (review-remediation pass active)
+
+## Review-Remediation Pass (2026-06-24) — ACTIVE
+
+V1 is built and live; this pass hardens it against the live-app review (orchestrator
+`documents/2026-06-24-v1-review-remediation-orchestrator.md`, gates R0→R11, P0 first). Live execution state is
+`FestPilot/dev-log.md`. **Done so far: R0 (setup) ✅ · R1 (P0 data/logic) ✅ CLOSED** — festival-day derived as a
+contiguous midnight-crossing block (DEC-048), Lock-in clashes now offer only true overlaps of the anchor (the
+headline bug), artist photos re-ingested + live (DEC-061); app **v0.8.1**, deployed. **Next: R2 (P0 map).**
 
 ## How we build from here (the orchestrator)
 

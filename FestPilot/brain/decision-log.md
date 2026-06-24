@@ -582,7 +582,15 @@
 
 ### DEC-048 — The "festival day" is a derived contiguous block, not the source `day` field nor the civil date
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
+- **Status**: APPROVED (Julio 2026-06-24) · **IMPLEMENTED 2026-06-24 (R1.1, commit `24142e7`)**
+- **Implementation note (R1.1)**: the block's stable `festivalDayId` is the **plurality of the block's source
+  `day` labels** (not the first set's label) so it stays equal to the persisted day key — `planKey` =
+  `${festivalId}:${dayKey}` and onboarding `dayKeys` therefore survive the regrouping untouched (favorites are
+  festival-scoped, unaffected). Display labels come from the block's first-set start time in festival tz. This was
+  necessary because live W1 carries 2 mis-tagged strays (an artist tagged FRIDAY playing Sat 15:30; another
+  FRIDAY playing Sun 12:00) — the gap-split re-homes them by time and plurality outvotes the bad label. Routed
+  `daysForWeekends`, `buildTimetable` (block membership) and onboarding act day-grouping through it; Now & Next
+  is unchanged (per-day slots keyed by the same stable id).
 - **Decision**: Day grouping is computed by a pure `assignFestivalDays(performances, gapHours = 3)` (new,
   `web/src/domain/festivalDay.ts`): sort by start, split into a new festival day only when there is a **real gap
   (≥ `gapHours` with no set on any stage)**; each block gets a stable `festivalDayId` + a label taken from the
@@ -796,7 +804,7 @@
 
 ### DEC-061 — Artist photos are already in the CDN performances JSON (`artists[].image`); re-ingest + render — the ⏳ is resolved
 - **Date**: 2026-06-24 (review-remediation r2, verified from the live HAR)
-- **Status**: PROPOSED (review-remediation pass; resolves the ⏳ in DEC-052 / orchestrator R1.3)
+- **Status**: VERIFIED · **IMPLEMENTED 2026-06-24 (R1.3, commit `7218378`)** — resolves the ⏳ in DEC-052 / orchestrator R1.3
 - **Finding (VERIFIED 2026-06-24)**: the live CDN performances JSON
   (`artist-lineup-cdn.tomorrowland.com/TL26BE-W{1,2}-{uuid}.json`) **already carries the artist photo** inline:
   `{"id":"1536127184","name":"BassBrain","image":"https://artist-lineup-cdn.tomorrowland.com/233262902-Presspic Bassbrain - 4.jpg"}`.

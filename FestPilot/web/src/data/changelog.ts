@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.8.0";
+export const APP_VERSION = "0.8.1";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.8.1",
+    date: "2026-06-24",
+    title: "Sharper days & honest clashes",
+    icon: "schedule",
+    whatsNew: [
+      "Festival days are smarter: a 1 AM set now stays on the night it belongs to, and the timetable runs the whole night across midnight instead of stopping at 12.",
+      "Late-night or oddly-labeled sets land on the right day — no more stray act showing up under the wrong one.",
+      "Lock in only asks about acts that truly overlap: resolving your 4 PM slot won't offer a 9 PM act anymore, so every choice actually makes sense.",
+    ],
+    howToTest: [
+      "Timetable → pick a day that runs past midnight: its early-morning sets show and the time axis crosses 00:00.",
+      "Lock in a day with back-to-back overlaps → each step lists only the acts clashing at that time; the locked plan still has zero conflicts.",
+    ],
+  },
   {
     version: "0.8.0",
     date: "2026-06-24",

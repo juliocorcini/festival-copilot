@@ -12,14 +12,15 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** R1 in progress — **R1.1 ✅ · R1.2 ✅ · R1.3 code ✅** → gate-close R1 next (live re-ingest + deploy + bump).
-- **Baseline (2026-06-24, pre-change):** typecheck clean · **server 121 + web 147 unit** pass · build OK
-  (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121). Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
+- **Gate:** **R1 ✅ CLOSED (2026-06-24)** — R1.1 + R1.2 + R1.3 shipped, deployed, photos live. → **R2 (P0 map) next.**
+- **Tests now:** typecheck clean · **server 122 + web 161 unit** pass · build OK · **app v0.8.1**.
+- **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
+  Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
 
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
-- [ ] **R1** (P0 data/logic) — festival-day blocks (DEC-048) · clash anchor-overlap (headline) · artist photo re-ingest (DEC-061).
+- [x] **R1** (P0 data/logic) — festival-day blocks (DEC-048) · clash anchor-overlap (headline) · artist photo re-ingest (DEC-061). **CLOSED 2026-06-24.**
 - [ ] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom.
 - [ ] **R3** (P0 perf) — shared lineup cache (<300 ms tab switch).
 - [ ] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days · suggest-a-festival (DEC-055).
@@ -32,6 +33,13 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R1 GATE CLOSED ✅ (2026-06-24) — deployed + photos live.** Cumulative **server 122 + web 161 unit** green,
+  typecheck + build clean. Golden-path smoke (onboarding day-select → favorites → lock-in → My Plan) holds.
+  Bumped app **v0.8.0 → v0.8.1** (`changelog.ts`, single source) with a user-facing "Sharper days & honest
+  clashes" note + how-to-test. **Deployed:** Pages → Production `master` (web 0.8.1) and confirmed live;
+  **Worker had no R1 changes** (festival-day, clash and photo *pipeline* logic are all web/already-deployed —
+  R1.3 needed only a re-ingest, which the live cron already ran: the API serves W1 artist photos). Brain sync:
+  DEC-048 + DEC-061 marked IMPLEMENTED with the plurality-id note; dev-log + project-status updated. → R2 map.
 - **R1.3 ✅ code (2026-06-24) — artist photos pipeline verified + regression test (DEC-061).** Confirmed the
   full path already carries the CDN photo end to end — `normalize.ts` keeps `a.image` → `store.ts` upserts
   `artist.image_url` with `ON CONFLICT(source_artist_id) DO UPDATE SET image_url = excluded.image_url` (so a
