@@ -7,9 +7,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  isSuggestionStatus,
   listFestivalSuggestions,
   normalizeSuggestionName,
   suggestFestival,
+  updateSuggestionStatus,
 } from "../src/api/festivalSuggestions";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
@@ -74,5 +76,29 @@ describe("suggestFestival (DEC-055)", () => {
     await suggestFestival(db, { name: "Wacken", suggestedBy: "anon:abc" }, "2026-06-24T10:00:00Z");
     const list = await listFestivalSuggestions(db);
     expect(list[0].suggestedBy).toBe("anon:abc");
+  });
+});
+
+describe("updateSuggestionStatus (R11.3)", () => {
+  it("validates the allowed statuses", () => {
+    expect(isSuggestionStatus("planned")).toBe(true);
+    expect(isSuggestionStatus("live")).toBe(true);
+    expect(isSuggestionStatus("garbage")).toBe(false);
+    expect(isSuggestionStatus(42)).toBe(false);
+  });
+
+  it("moves a suggestion to a new status", async () => {
+    const db = await freshDb();
+    await suggestFestival(db, { name: "Dekmantel", suggestedBy: null }, "2026-06-24T10:00:00Z");
+    const id = (await listFestivalSuggestions(db))[0].id;
+
+    const ok = await updateSuggestionStatus(db, id, "planned", "2026-06-24T12:00:00Z");
+    expect(ok).toBe(true);
+    expect((await listFestivalSuggestions(db))[0].status).toBe("planned");
+  });
+
+  it("returns false for an unknown id", async () => {
+    const db = await freshDb();
+    expect(await updateSuggestionStatus(db, "missing", "live", "2026-06-24T12:00:00Z")).toBe(false);
   });
 });

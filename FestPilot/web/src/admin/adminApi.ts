@@ -113,3 +113,54 @@ export interface AdminOverview {
 
 export const fetchAdminOverview = (signal?: AbortSignal): Promise<AdminOverview> =>
   adminGet<AdminOverview>("/overview", signal);
+
+// R11.1b — Lineup & timetable dashboard.
+export interface LineupSourceInfo {
+  event: string;
+  uuid: string;
+  sourcePageUrl: string;
+  lastSeenUtc: string;
+}
+export interface LineupStageRow {
+  id: string;
+  name: string;
+  total: number;
+  scheduled: number;
+  countsByDay: Record<string, number>;
+  firstStartUtc: string | null;
+  lastStartUtc: string | null;
+}
+export interface LineupDashboard {
+  festival: { id: string; name: string; slug: string; timezone: string; withTimetable: boolean };
+  source: LineupSourceInfo | null;
+  days: string[];
+  stages: LineupStageRow[];
+  needsEndTime: number;
+  totals: { sets: number; scheduled: number; stages: number };
+}
+
+export const fetchLineupDashboard = (festivalId: string, signal?: AbortSignal): Promise<LineupDashboard> =>
+  adminGet<LineupDashboard>(`/festivals/${festivalId}/lineup`, signal);
+
+export interface IngestResult {
+  status?: string;
+  changes?: number;
+  [k: string]: unknown;
+}
+export const reimportLineup = (): Promise<IngestResult> => adminSend<IngestResult>("/ingest", "POST");
+
+// R11.3 — Festival suggestions inbox.
+export type SuggestionStatus = "new" | "planned" | "live" | "declined";
+export interface FestivalSuggestion {
+  id: string;
+  name: string;
+  count: number;
+  status: string;
+  suggestedBy: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+}
+export const fetchSuggestions = (signal?: AbortSignal): Promise<{ suggestions: FestivalSuggestion[] }> =>
+  adminGet<{ suggestions: FestivalSuggestion[] }>("/festival-suggestions", signal);
+export const setSuggestionStatus = (id: string, status: SuggestionStatus): Promise<{ ok: boolean }> =>
+  adminSend<{ ok: boolean }>(`/festival-suggestions/${id}`, "PATCH", { status });

@@ -12,10 +12,7 @@ interface NavSection {
 const NAV: NavSection[] = [
   { to: "/admin", end: true, icon: "dashboard", label: "Festivals" },
   { to: "/admin/lineup", icon: "queue_music", label: "Lineup & timetable" },
-  { to: "/admin/data-source", icon: "cloud_sync", label: "Data sources" },
   { to: "/admin/suggestions", icon: "inbox", label: "Suggestions" },
-  { to: "/admin/usage", icon: "monitoring", label: "Usage & runway" },
-  { to: "/admin/test-console", icon: "smart_toy", label: "Test console" },
 ];
 
 /** Amber-Glass desktop shell for the admin back-office (R11.0; wireframe 30-amber-admin.html). */

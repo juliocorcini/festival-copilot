@@ -5,8 +5,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env } from "../env";
-import { getAdminOverview } from "./adminRepo";
-import { listFestivalSuggestions } from "./festivalSuggestions";
+import { getAdminOverview, getLineupDashboard } from "./adminRepo";
+import {
+  isSuggestionStatus,
+  listFestivalSuggestions,
+  updateSuggestionStatus,
+} from "./festivalSuggestions";
 import { upsertFestivalMap, type FestivalMapInput } from "./repo";
 import { runScheduledIngest } from "../ingest/ingest";
 
@@ -33,10 +37,28 @@ admin.get("/overview", async (c) => {
   return c.json(overview);
 });
 
+// R11.1b — Lineup & timetable dashboard: documented source + per-stage health for one festival.
+admin.get("/festivals/:id/lineup", async (c) => {
+  const dashboard = await getLineupDashboard(c.env.DB, c.req.param("id"));
+  if (!dashboard) return c.json({ error: "festival not found" }, 404);
+  return c.json(dashboard);
+});
+
 // R11.3 — Festival-suggestions inbox (DEC-055): most-requested first.
 admin.get("/festival-suggestions", async (c) => {
   const suggestions = await listFestivalSuggestions(c.env.DB);
   return c.json({ suggestions });
+});
+
+// R11.3 — move a suggestion through new → planned → live / declined.
+admin.patch("/festival-suggestions/:id", async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { status?: unknown } | null;
+  if (!isSuggestionStatus(body?.status)) {
+    return c.json({ error: "invalid status" }, 400);
+  }
+  const ok = await updateSuggestionStatus(c.env.DB, c.req.param("id"), body.status, new Date().toISOString());
+  if (!ok) return c.json({ error: "suggestion not found" }, 404);
+  return c.json({ ok: true, status: body.status });
 });
 
 // Manual lineup ingestion trigger for dev/ops (also the dashboard "Re-import" action, R11.1b).

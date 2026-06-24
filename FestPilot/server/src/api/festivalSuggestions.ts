@@ -43,6 +43,28 @@ export async function suggestFestival(
   return { count: (before?.count ?? 0) + 1, created: !before };
 }
 
+/** The statuses an operator can move a suggestion through (R11.3). */
+export const SUGGESTION_STATUSES = ["new", "planned", "live", "declined"] as const;
+export type SuggestionStatus = (typeof SUGGESTION_STATUSES)[number];
+
+export function isSuggestionStatus(v: unknown): v is SuggestionStatus {
+  return typeof v === "string" && (SUGGESTION_STATUSES as readonly string[]).includes(v);
+}
+
+/** Move a suggestion to a new status. Returns false when the id doesn't exist. */
+export async function updateSuggestionStatus(
+  db: D1Database,
+  id: string,
+  status: SuggestionStatus,
+  nowIso: string
+): Promise<boolean> {
+  const res = await db
+    .prepare(`UPDATE festival_suggestion SET status = ?, updated_at_utc = ? WHERE id = ?`)
+    .bind(status, nowIso, id)
+    .run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
 /** The admin inbox view: most-requested first. */
 export async function listFestivalSuggestions(db: D1Database): Promise<FestivalSuggestionDto[]> {
   const res = await db

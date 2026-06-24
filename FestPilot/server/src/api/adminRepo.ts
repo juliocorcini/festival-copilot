@@ -81,3 +81,136 @@ export async function getAdminOverview(db: D1Database): Promise<AdminOverview> {
     festivals: rows,
   };
 }
+
+// ---------------------------------------------------------------------------
+// R11.1b — Lineup & timetable dashboard: the documented capture source + per-stage
+// health (counts per day, first/last set, scheduled-vs-announced) for one festival.
+// ---------------------------------------------------------------------------
+
+export interface LineupSourceInfo {
+  event: string;
+  uuid: string;
+  sourcePageUrl: string;
+  lastSeenUtc: string;
+}
+
+export interface LineupStageRow {
+  id: string;
+  name: string;
+  total: number;
+  scheduled: number;
+  countsByDay: Record<string, number>;
+  firstStartUtc: string | null;
+  lastStartUtc: string | null;
+}
+
+export interface LineupDashboard {
+  festival: { id: string; name: string; slug: string; timezone: string; withTimetable: boolean };
+  source: LineupSourceInfo | null;
+  days: string[];
+  stages: LineupStageRow[];
+  needsEndTime: number;
+  totals: { sets: number; scheduled: number; stages: number };
+}
+
+interface DayCountRow {
+  stage_id: string | null;
+  day: string | null;
+  sets: number;
+  scheduled: number;
+  first_start: string | null;
+  last_start: string | null;
+}
+
+export async function getLineupDashboard(
+  db: D1Database,
+  festivalId: string
+): Promise<LineupDashboard | null> {
+  const festival = await db
+    .prepare(`SELECT id, name, slug, timezone, with_timetable FROM festival WHERE id = ?`)
+    .bind(festivalId)
+    .first<{ id: string; name: string; slug: string; timezone: string; with_timetable: number }>();
+  if (!festival) return null;
+
+  const [stages, counts, ends, source] = await Promise.all([
+    db
+      .prepare(`SELECT id, name FROM stage WHERE festival_id = ? ORDER BY sort_order, name`)
+      .bind(festivalId)
+      .all<{ id: string; name: string }>(),
+    db
+      .prepare(
+        `SELECT stage_id, day,
+                COUNT(*) AS sets,
+                SUM(CASE WHEN start_at_utc IS NOT NULL THEN 1 ELSE 0 END) AS scheduled,
+                MIN(start_at_utc) AS first_start,
+                MAX(start_at_utc) AS last_start
+           FROM performance
+          WHERE festival_id = ? AND active = 1 AND is_placeholder = 0
+          GROUP BY stage_id, day`
+      )
+      .bind(festivalId)
+      .all<DayCountRow>(),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM performance
+          WHERE festival_id = ? AND active = 1 AND is_placeholder = 0
+            AND start_at_utc IS NOT NULL AND end_at_utc IS NULL`
+      )
+      .bind(festivalId)
+      .first<{ c: number }>(),
+    db
+      .prepare(
+        `SELECT event, uuid, source_page_url, last_seen_at_utc
+           FROM lineup_source WHERE festival_id = ? AND active = 1
+          ORDER BY last_seen_at_utc DESC LIMIT 1`
+      )
+      .bind(festivalId)
+      .first<{ event: string; uuid: string; source_page_url: string; last_seen_at_utc: string }>(),
+  ]);
+
+  // Order the day labels by their earliest set (a festival day can cross midnight; null days drop out).
+  const dayFirst = new Map<string, string>();
+  for (const r of counts.results ?? []) {
+    if (!r.day || !r.first_start) continue;
+    const prev = dayFirst.get(r.day);
+    if (!prev || r.first_start < prev) dayFirst.set(r.day, r.first_start);
+  }
+  const days = [...dayFirst.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([d]) => d);
+
+  const byStage = new Map<string, LineupStageRow>();
+  for (const s of stages.results ?? []) {
+    byStage.set(s.id, { id: s.id, name: s.name, total: 0, scheduled: 0, countsByDay: {}, firstStartUtc: null, lastStartUtc: null });
+  }
+  for (const r of counts.results ?? []) {
+    if (!r.stage_id) continue;
+    const row = byStage.get(r.stage_id);
+    if (!row) continue;
+    row.total += r.sets;
+    row.scheduled += r.scheduled;
+    if (r.day) row.countsByDay[r.day] = (row.countsByDay[r.day] ?? 0) + r.sets;
+    if (r.first_start && (!row.firstStartUtc || r.first_start < row.firstStartUtc)) row.firstStartUtc = r.first_start;
+    if (r.last_start && (!row.lastStartUtc || r.last_start > row.lastStartUtc)) row.lastStartUtc = r.last_start;
+  }
+  const stageRows = [...byStage.values()];
+
+  return {
+    festival: {
+      id: festival.id,
+      name: festival.name,
+      slug: festival.slug,
+      timezone: festival.timezone,
+      withTimetable: festival.with_timetable === 1,
+    },
+    source: source
+      ? { event: source.event, uuid: source.uuid, sourcePageUrl: source.source_page_url, lastSeenUtc: source.last_seen_at_utc }
+      : null,
+    days,
+    stages: stageRows,
+    needsEndTime: ends?.c ?? 0,
+    totals: {
+      sets: stageRows.reduce((n, r) => n + r.total, 0),
+      scheduled: stageRows.reduce((n, r) => n + r.scheduled, 0),
+      stages: stageRows.length,
+    },
+  };
+}

@@ -39,6 +39,8 @@ import { AboutScreen } from "./routes/settings/AboutScreen";
 import { AdminGate } from "./admin/AdminGate";
 import { AdminLayout } from "./admin/AdminLayout";
 import { AdminFestivalsScreen } from "./admin/AdminFestivalsScreen";
+import { AdminLineupScreen } from "./admin/AdminLineupScreen";
+import { AdminSuggestionsScreen } from "./admin/AdminSuggestionsScreen";
 
 export function App(): JSX.Element {
   return (
@@ -89,6 +91,8 @@ export function App(): JSX.Element {
         <Route path="/admin" element={<AdminGate />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminFestivalsScreen />} />
+            <Route path="lineup" element={<AdminLineupScreen />} />
+            <Route path="suggestions" element={<AdminSuggestionsScreen />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
