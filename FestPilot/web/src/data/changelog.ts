@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.11.0";
+export const APP_VERSION = "0.12.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,24 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.12.0",
+    date: "2026-06-24",
+    title: "Your language, installable, always fresh",
+    icon: "translate",
+    whatsNew: [
+      "FestPilot speaks your language: switch between English and Português in Settings → Appearance and the whole app follows instantly.",
+      "Install it like a real app — one tap on Android and desktop, clear step-by-step on iPhone — so it lives on your home screen and opens full-screen.",
+      "Always up to date: an honest 'Check for updates' that tells you when a new version is ready and reloads straight into it.",
+      "Little touches that make it feel like an app, not a web page: text no longer selects as you tap and drag, and names on coloured avatars stay crisp and readable.",
+    ],
+    howToTest: [
+      "Settings → Appearance → Language → Português: the tabs, settings and prompts change immediately (English is the default).",
+      "Settings → Offline & install → 'Install app' (Android/desktop shows the prompt; iPhone shows the Share → Add to Home Screen steps); an installed app is detected.",
+      "Settings → Offline & install → 'Check for updates' → after a new deploy it offers to reload into the new version.",
+      "Settings → About → see the build date and working links to Privacy and Offline; try selecting text anywhere (it won't) — but typing in inputs still works.",
+    ],
+  },
   {
     version: "0.11.0",
     date: "2026-06-24",
