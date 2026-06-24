@@ -11,6 +11,9 @@ import { useIdentity } from "../../data/identity";
 import { useLineup } from "../../data/useLineup";
 import { isValidEmail } from "../../lib/validate";
 import { cardDragStyle, swipeOutcome, type SwipeOutcome } from "../../domain/swipe";
+import { ArtistPhoto } from "../../ui/ArtistPhoto";
+import { PHOTO_WIDTH } from "../../lib/photo";
+import type { ReactNode } from "react";
 import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
 import { uniqueActs, type Act } from "../../domain/lineup";
 import { daysForWeekends, weekendDates, type DayInfo } from "../../lib/festival";
@@ -35,6 +38,8 @@ export function OnboardingScreen(): JSX.Element {
   // Undo last swipe: remember the index we were at and whether THAT swipe newly favorited the act
   // (so undo only un-favorites picks this swipe created, never pre-existing favorites).
   const [swipeHistory, setSwipeHistory] = useState<{ index: number; favoritedActKey: string | null }[]>([]);
+  // How to pick favorites (R5.2): the swipe deck, or a 2-col photo grid. Both write the same store.
+  const [pickMode, setPickMode] = useState<"swipe" | "grid">("swipe");
 
   const weekends = lineup?.weekends ?? [];
   const effectiveWeekend = weekendChoice ?? weekends[0]?.id ?? null;
@@ -112,6 +117,29 @@ export function OnboardingScreen(): JSX.Element {
   const next = (): void => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   const back = (): void => setStep((s) => Math.max(s - 1, 1));
 
+  const pickToggle: ReactNode = (
+    <div className="pick-toggle" role="tablist" aria-label="How do you want to pick?">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={pickMode === "swipe"}
+        className={`pt-seg${pickMode === "swipe" ? " on" : ""}`}
+        onClick={() => setPickMode("swipe")}
+      >
+        <span className="ms">style</span> Swipe
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={pickMode === "grid"}
+        className={`pt-seg${pickMode === "grid" ? " on" : ""}`}
+        onClick={() => setPickMode("grid")}
+      >
+        <span className="ms">grid_view</span> Grid
+      </button>
+    </div>
+  );
+
   const toggleDay = (key: string): void => {
     const base = selectedDays ?? new Set(days.map((d) => d.key));
     const nextSet = new Set(base);
@@ -169,20 +197,33 @@ export function OnboardingScreen(): JSX.Element {
       {step === 3 && (
         <StepDays days={days} isSelected={(k) => activeDayKeys.has(k)} onToggle={toggleDay} onNext={next} />
       )}
-      {step === 4 && (
-        <StepSwipe
-          act={currentAct}
-          index={swipeIndex}
-          total={acts.length}
-          favoritesCount={favorites.count}
-          stageName={currentAct ? stageNameFor(lineup, currentAct) : ""}
-          dayTag={currentAct ? dayTag(currentAct, days) : ""}
-          canUndo={swipeHistory.length > 0}
-          onUndo={undoSwipe}
-          onSwipe={swipe}
-          onFinish={finish}
-        />
-      )}
+      {step === 4 &&
+        (pickMode === "grid" ? (
+          <StepGrid
+            acts={acts}
+            favoritesCount={favorites.count}
+            isFavorite={favorites.isFavorite}
+            onToggle={favorites.toggle}
+            stageNameOf={(a) => stageNameFor(lineup, a)}
+            dayTagOf={(a) => dayTag(a, days)}
+            onFinish={finish}
+            modeToggle={pickToggle}
+          />
+        ) : (
+          <StepSwipe
+            act={currentAct}
+            index={swipeIndex}
+            total={acts.length}
+            favoritesCount={favorites.count}
+            stageName={currentAct ? stageNameFor(lineup, currentAct) : ""}
+            dayTag={currentAct ? dayTag(currentAct, days) : ""}
+            canUndo={swipeHistory.length > 0}
+            onUndo={undoSwipe}
+            onSwipe={swipe}
+            onFinish={finish}
+            modeToggle={pickToggle}
+          />
+        ))}
     </div>
   );
 }
@@ -439,6 +480,7 @@ function StepSwipe({
   onUndo,
   onSwipe,
   onFinish,
+  modeToggle,
 }: {
   act: Act | undefined;
   index: number;
@@ -450,6 +492,7 @@ function StepSwipe({
   onUndo: () => void;
   onSwipe: (keep: boolean) => void;
   onFinish: () => void;
+  modeToggle: ReactNode;
 }): JSX.Element {
   const progress = total > 0 ? Math.min(100, Math.round(((index) / total) * 100)) : 100;
 
@@ -495,8 +538,9 @@ function StepSwipe({
   if (!act) {
     return (
       <>
-        <div className="ob-body" style={{ justifyContent: "center" }}>
-          <div className="state">
+        <div className="ob-body">
+          {modeToggle}
+          <div className="state" style={{ margin: "auto 0" }}>
             <span className="ms">celebration</span>
             <h2>That's everyone!</h2>
             <p>{favoritesCount} favorite{favoritesCount === 1 ? "" : "s"} saved. You can always add more from the Lineup.</p>
@@ -520,6 +564,7 @@ function StepSwipe({
   return (
     <>
       <div className="ob-body">
+        {modeToggle}
         <div className="swipe-head">
           <div className="count">{Math.min(index + 1, total)} of {total}</div>
           <div className="swipe-bar"><div style={{ width: `${progress}%` }} /></div>
@@ -573,6 +618,83 @@ function StepSwipe({
       <div className="swipe-actions">
         <button className="nah" onClick={() => onSwipe(false)}>Nah</button>
         <button className="yes" onClick={() => onSwipe(true)}>I'd see this!</button>
+      </div>
+    </>
+  );
+}
+
+function StepGrid({
+  acts,
+  favoritesCount,
+  isFavorite,
+  onToggle,
+  stageNameOf,
+  dayTagOf,
+  onFinish,
+  modeToggle,
+}: {
+  acts: Act[];
+  favoritesCount: number;
+  isFavorite: (actKey: string) => boolean;
+  onToggle: (actKey: string) => void;
+  stageNameOf: (act: Act) => string;
+  dayTagOf: (act: Act) => string;
+  onFinish: () => void;
+  modeToggle: ReactNode;
+}): JSX.Element {
+  return (
+    <>
+      <div className="ob-body ob-grid-body">
+        {modeToggle}
+        <div className="swipe-q">
+          <div className="q">Tap everyone you'd want to see</div>
+          <div className="hint">
+            {favoritesCount} saved · clashes are solved later in Lock in
+          </div>
+        </div>
+        <div className="ob-grid">
+          {acts.map((act) => {
+            const on = isFavorite(act.actKey);
+            const stage = stageNameOf(act);
+            const day = dayTagOf(act);
+            return (
+              <button
+                key={act.actKey}
+                type="button"
+                className={`gcard${on ? " on" : ""}`}
+                onClick={() => onToggle(act.actKey)}
+                aria-pressed={on}
+                aria-label={`${on ? "Remove" : "Add"} ${act.label}`}
+              >
+                <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.grid} className="gcard-photo" />
+                <span className="gcard-heart ms" aria-hidden="true">{on ? "favorite" : "favorite_border"}</span>
+                <span className="gcard-meta">
+                  <span className="gcard-name">{act.label}</span>
+                  {(stage || day) && (
+                    <span className="gcard-sub">
+                      {stage && (
+                        <>
+                          <span className="dot" style={{ background: stageColor(stage) }} /> {stage}
+                        </>
+                      )}
+                      {stage && day ? " · " : ""}
+                      {day}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+          {acts.length === 0 && (
+            <div className="state" style={{ gridColumn: "1 / -1" }}>
+              <span className="ms">search_off</span>
+              <p>No artists match these days yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="ob-foot">
+        <button className="btn btn-primary" onClick={onFinish}>See my plan</button>
       </div>
     </>
   );

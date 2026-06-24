@@ -66,4 +66,34 @@ test.describe("Phase 2 — onboarding + lineup favorites", () => {
     await page.locator(".art-row .heart-btn.on").first().click();
     await expect(page.locator(".fav-count .n")).toHaveText(String(before - 1));
   });
+
+  // R5.2: the "Grid" pick mode is an alternative to the swipe deck and writes the same favorites.
+  test("picks favorites via the grid mode and they reach the Lineup", async ({ page }) => {
+    await page.goto("/");
+    await page.addStyleTag({ content: FREEZE });
+
+    await page.locator("#ob-name").fill("Julio", { timeout: 20_000 });
+    await page.getByRole("button", { name: "Let's go" }).click();
+    await page.getByRole("button", { name: "Continue" }).click(); // festival
+    await page.locator(".opt").first().click(); // weekend
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Start picking artists" }).click();
+
+    // Switch swipe → grid and tap two acts.
+    await expect(page.locator(".art-card")).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("tab", { name: "Grid" }).click();
+    const cards = page.locator(".gcard");
+    await expect(cards.first()).toBeVisible();
+    await cards.nth(0).click();
+    await cards.nth(1).click();
+    await expect(page.locator(".gcard.on")).toHaveCount(2);
+    await page.screenshot({ path: "e2e/screenshots/phase2-onboarding-grid.png" });
+
+    await page.getByRole("button", { name: "See my plan" }).click();
+    await expect(page.locator(".appbar h1")).toHaveText("Now & Next", { timeout: 20_000 });
+
+    await page.goto("/lineup");
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page.locator(".fav-count .n")).toHaveText("2", { timeout: 20_000 });
+  });
 });
