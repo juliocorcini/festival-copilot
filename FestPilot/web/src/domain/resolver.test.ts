@@ -54,8 +54,9 @@ describe("resolvePlan — concrete scenarios", () => {
     // long[0–180] bridges short[0–60] and the t1/t2 pair → one chained cluster of four.
     const favorites = [set("long", 0, 180), set("short", 0, 60), set("t1", 120, 200), set("t2", 130, 190)];
     const start = startResolver(favorites);
-    // Sorted by start then end: short (ends 60) precedes long (ends 180); both start at 0.
-    expect(start.decision!.options.map((o) => o.id)).toEqual(["short", "long", "t1", "t2"]);
+    // Anchor = short (0–60). Options are short + only its true overlaps: long (0–180) overlaps it;
+    // t1/t2 (start 120/130) do NOT overlap 0–60, so they are NOT offered here (anchor-overlap, not chain).
+    expect(start.decision!.options.map((o) => o.id)).toEqual(["short", "long"]);
 
     // Picking the long set (ends 180) absorbs t1/t2 — they start before 180 and are dropped.
     const viaLong = pickOption(start, "long");
@@ -112,6 +113,59 @@ describe("resolvePlan — concrete scenarios", () => {
     expect(windows).toHaveLength(2);
     expect(windows[0]).toMatchObject({ startMs: 0, optionCount: 2 });
     expect(windows[1]).toMatchObject({ startMs: 200 * MIN, optionCount: 3 });
+  });
+
+  it("offers only acts overlapping the 16:00 anchor, not a transitive chain (the Lock-in headline bug)", () => {
+    // Julio's scenario: three early non-clashing favorites, then a 16:00–22:00 spread that chains
+    // transitively (16:00∩16:30, 16:30∩17:15, 17:15∩18:00) but where 16:00 does NOT overlap 21:00.
+    const favorites = [
+      set("f12", 720, 780), // 12:00–13:00
+      set("f13", 780, 840), // 13:00–14:00
+      set("f1430", 870, 930), // 14:30–15:30
+      set("a16", 960, 1020), // 16:00–17:00
+      set("b1630", 990, 1050), // 16:30–17:30 (overlaps a16)
+      set("c1715", 1035, 1095), // 17:15–18:15 (overlaps b1630, NOT a16)
+      set("d18", 1080, 1140), // 18:00–19:00 (overlaps c1715)
+      set("e21", 1260, 1320), // 21:00–22:00 (alone)
+    ];
+    let snap = startResolver(favorites);
+    // The three early singles auto-lock; the first decision is the 16:00 anchor with only its overlaps.
+    expect(snap.locked.map((s) => s.setId)).toEqual(["f12", "f13", "f1430"]);
+    expect(snap.decision!.startMs).toBe(960 * MIN);
+    expect(snap.decision!.options.map((o) => o.id)).toEqual(["a16", "b1630"]);
+    expect(snap.decision!.options.map((o) => o.id)).not.toContain("c1715");
+    expect(snap.decision!.options.map((o) => o.id)).not.toContain("e21");
+
+    // Pick 16:00 → the next decision is the next real overlap in chronological order (17:15 ∩ 18:00).
+    snap = pickOption(snap, "a16");
+    expect(snap.decision!.startMs).toBe(1035 * MIN);
+    expect(snap.decision!.options.map((o) => o.id)).toEqual(["c1715", "d18"]);
+
+    // Pick 17:15 → 18:00 is consumed; the lone 21:00 set auto-locks and resolution completes.
+    snap = pickOption(snap, "c1715");
+    expect(snap.decision).toBeNull();
+    expect(snap.locked.map((s) => s.setId)).toEqual(["f12", "f13", "f1430", "a16", "c1715", "e21"]);
+    expect(hasNoOverlaps(snap.locked)).toBe(true);
+  });
+
+  it("previewRemainingClashes counts anchor-overlap decisions and matches decisionsTotal", () => {
+    const favorites = [
+      set("f12", 720, 780),
+      set("f13", 780, 840),
+      set("f1430", 870, 930),
+      set("a16", 960, 1020),
+      set("b1630", 990, 1050),
+      set("c1715", 1035, 1095),
+      set("d18", 1080, 1140),
+      set("e21", 1260, 1320),
+    ];
+    const start = startResolver(favorites);
+    const windows = previewRemainingClashes(start);
+    // Two real decisions on the earliest-end walk: the 16:00 pair and the 17:15 pair.
+    expect(windows.map((w) => w.startMs)).toEqual([960 * MIN, 1035 * MIN]);
+    expect(windows.map((w) => w.optionCount)).toEqual([2, 2]);
+    // The progress denominator agrees with the preview count.
+    expect(start.decisionsTotal).toBe(windows.length);
   });
 
   it("auto-locks singles between clashes and exposes a second decision", () => {

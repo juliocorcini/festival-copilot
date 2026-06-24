@@ -35,6 +35,23 @@ export function clusterByOverlap(sets: PlannableSet[]): PlannableSet[][] {
   return clusters;
 }
 
+/**
+ * The clash anchored at the earliest unresolved set (start ≥ `fromEnd`): that anchor plus only the
+ * sets that genuinely overlap it — no transitive chaining. So a decision at 16:00 offers only acts
+ * overlapping 16:00, never a distant 21:00 act reachable through a chain (the Lock-in headline bug).
+ * Options are returned sorted by start (the anchor first); `null` when nothing remains at/after `fromEnd`.
+ */
+export function clashAt(sets: PlannableSet[], fromEnd: number): PlannableSet[] | null {
+  let anchor: PlannableSet | null = null;
+  for (const set of sets) {
+    if (set.startMs < fromEnd) continue;
+    if (anchor === null || byStart(set, anchor) < 0) anchor = set;
+  }
+  if (anchor === null) return null;
+  const a = anchor;
+  return sets.filter((s) => s.startMs >= fromEnd && (s.id === a.id || overlaps(a, s))).sort(byStart);
+}
+
 /** True iff a chronologically-sorted slot list has zero overlaps (the plan invariant, DEC-017). */
 export function hasNoOverlaps(slots: { startMs: number; endMs: number }[]): boolean {
   const sorted = [...slots].sort((a, b) => a.startMs - b.startMs);

@@ -12,7 +12,7 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** R0 ✅ baseline green → starting R1.
+- **Gate:** R1 in progress — **R1.1 ✅** (festival-day blocks) · **R1.2 ✅** (clash anchor-overlap) → next **R1.3** artist photo re-ingest.
 - **Baseline (2026-06-24, pre-change):** typecheck clean · **server 121 + web 147 unit** pass · build OK
   (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121). Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -32,6 +32,31 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R1.2 ✅ (2026-06-24) — Lock-in clash = anchor-overlap, not transitive chain (headline bug).** New
+  `intervals.ts → clashAt(sets, fromEnd)`: anchors on the earliest unresolved set and returns it plus
+  **only its true overlaps** (`overlaps(anchor, x)`), sorted by start — no transitive chaining. Used in
+  `resolver.advance` (the surfaced `decision.options`), `countRemainingClashes` and
+  `previewRemainingClashes` so the progress count matches the actual walk. **The gate is untouched** (a
+  pick still consumes the timeline to its end), so the zero-overlap property test (300 seeds × 3
+  strategies) stays green. `LockInScreen` needed **no change** — it already reads `decision.startMs`
+  (now the anchor's start, "16:00") and `decision.options` (now anchor-overlap only). `clusterByOverlap`
+  is kept (still unit-tested) but no longer used by the resolver. Tests +5: `clashAt` (3, incl. the
+  A∩B,B∩C,A∌C non-chain case), Julio's 12/13/14:30 + 16–22 spread (each decision anchor-overlap only;
+  16:00 never offers 21:00; next decision is the next real overlap), preview count == decisionsTotal.
+  Updated the gate test's transitive expectation (`["short","long","t1","t2"]` → `["short","long"]`).
+  **161 web unit pass · typecheck · build OK.** Next: R1.3 artist photo re-ingest (DEC-061).
+- **R1.1 ✅ (2026-06-24) — festival-day blocks (DEC-048), commit `24142e7`.** New pure `domain/festivalDay.ts`:
+  `assignFestivalDays(perfs, gapHours=3)` sorts by start and splits into contiguous blocks on a ≥3h all-stage gap
+  (running **max-end**, so a long set's tail holds the night together); window = first-start..max-end so it crosses
+  midnight; block `id` = **plurality** of the block's source `day` labels. Plurality (not the first set's label) was
+  the key call: live W1 has 2 mis-tagged strays out of 408 ("Not My Type" tagged FRIDAY but plays Sat 15:30; "Poleen"
+  FRIDAY but plays Sun 12:00) — plurality outvotes them and the gap-split re-homes them by time, while the id stays
+  `FRIDAY`/`SATURDAY`/`SUNDAY` so persisted `planKey`/onboarding `dayKeys` are untouched (verified: favorites are
+  festival-scoped, plans are `${festivalId}:${dayKey}`). Routed `daysForWeekends` (chips, same-id merge for W1+W2),
+  `buildTimetable` (block **membership**, not raw label), and onboarding act day-grouping (`uniqueActs` gained an
+  optional `dayOf`) through it; Now & Next needs no change (per-day slots keyed by the same stable id). Tests +7
+  (midnight cross, 3h boundary, multi-stage tail, plurality re-homes stray, timetable midnight window). **156 web
+  unit pass · typecheck · build OK.** Next: R1.2 clash anchor-overlap.
 - **R0 ✅ (2026-06-24):** confirmed baseline green on the untouched tree (server 121 + web 147; typecheck/build clean);
   verified DEC-048→DEC-061 present in `decision-log.md`; seeded this section. Next: R1.1 festival-day blocks.
 

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { byStart, clusterByOverlap, hasNoOverlaps, overlaps } from "./intervals";
+import { byStart, clashAt, clusterByOverlap, hasNoOverlaps, overlaps } from "./intervals";
 import type { PlannableSet } from "./types";
 
 function set(id: string, startMin: number, endMin: number): PlannableSet {
@@ -45,6 +45,24 @@ describe("clusterByOverlap", () => {
     const clusters = clusterByOverlap([set("A", 0, 40), set("B", 30, 70), set("C", 60, 100)]);
     expect(clusters).toHaveLength(1);
     expect(clusters[0]).toHaveLength(3);
+  });
+});
+
+describe("clashAt", () => {
+  it("returns the anchor plus only its true overlaps, not a transitive chain", () => {
+    // A∩B, B∩C, A∌C. clusterByOverlap chains all three; clashAt at the anchor offers only A,B.
+    const options = clashAt([set("A", 0, 40), set("B", 30, 70), set("C", 60, 100)], -Infinity)!;
+    expect(options.map((s) => s.id)).toEqual(["A", "B"]);
+  });
+
+  it("anchors on the earliest set at/after fromEnd and ignores earlier ones", () => {
+    const sets = [set("early", 0, 60), set("x", 100, 160), set("y", 130, 200)];
+    expect(clashAt(sets, 90)!.map((s) => s.id)).toEqual(["x", "y"]);
+  });
+
+  it("is a single-element list when the anchor overlaps nothing, and null when empty", () => {
+    expect(clashAt([set("solo", 0, 60), set("later", 120, 180)], -Infinity)!.map((s) => s.id)).toEqual(["solo"]);
+    expect(clashAt([set("a", 0, 60)], 9999)).toBeNull();
   });
 });
 

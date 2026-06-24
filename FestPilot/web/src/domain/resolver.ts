@@ -7,7 +7,7 @@
  * dropped. Clashes (chain-overlap clusters of 2+ favorites) surface in time order; singles
  * auto-lock. The next clash only appears after the current pick ends — the "gate".
  */
-import { byStart, clusterByOverlap } from "./intervals";
+import { clashAt } from "./intervals";
 import type { ClashDecision, PlannableSet, PlanSlot } from "./types";
 
 export interface ResolverSnapshot {
@@ -41,14 +41,14 @@ function isValid(set: PlannableSet): boolean {
 /** Count clashes remaining under a max-remaining (earliest-end) strategy — for the progress bar. */
 function countRemainingClashes(pool: PlannableSet[], fromEnd: number): number {
   let end = fromEnd;
-  let remaining = pool.filter((s) => s.startMs >= end).sort(byStart);
+  let remaining = [...pool];
   let count = 0;
-  while (remaining.length > 0) {
-    remaining = remaining.filter((s) => s.startMs >= end);
-    if (remaining.length === 0) break;
-    const cluster = clusterByOverlap(remaining)[0]!;
-    if (cluster.length > 1) count++;
-    const choose = cluster.reduce((a, b) => (b.endMs < a.endMs ? b : a));
+  let guard = 0;
+  for (;;) {
+    const options = clashAt(remaining, end);
+    if (options === null || guard++ > 10_000) break;
+    if (options.length > 1) count++;
+    const choose = options.reduce((a, b) => (b.endMs < a.endMs ? b : a));
     end = choose.endMs;
     remaining = remaining.filter((s) => s.id !== choose.id);
   }
@@ -88,20 +88,23 @@ function advance(base: Base): ResolverSnapshot {
       };
     }
 
-    const cluster = clusterByOverlap(available)[0]!;
-    if (cluster.length === 1) {
-      const single = cluster[0]!;
+    // The decision is the clash anchored at the earliest available set — only its true overlaps,
+    // never a transitive chain. The gate below still consumes the timeline, so zero-overlap holds.
+    const options = clashAt(available, lockedEnd)!; // available is non-empty here
+    if (options.length === 1) {
+      const single = options[0]!;
       locked.push(toSlot(single));
       lockedEnd = single.endMs;
       pool = available.filter((s) => s.id !== single.id);
       continue;
     }
 
+    const anchor = options[0]!;
     const decision: ClashDecision = {
       index: base.decisionsResolved,
-      startMs: cluster[0]!.startMs,
-      endMs: Math.max(...cluster.map((c) => c.endMs)),
-      options: [...cluster].sort(byStart),
+      startMs: anchor.startMs,
+      endMs: Math.max(...options.map((o) => o.endMs)),
+      options,
     };
     return {
       locked,
@@ -166,16 +169,15 @@ export interface ClashWindow {
 export function previewRemainingClashes(snapshot: ResolverSnapshot): ClashWindow[] {
   const windows: ClashWindow[] = [];
   let end = snapshot.lockedEnd;
-  let remaining = snapshot.pool.filter((s) => s.startMs >= end).sort(byStart);
+  let remaining = [...snapshot.pool];
   let guard = 0;
-  while (remaining.length > 0 && guard++ < 10_000) {
-    remaining = remaining.filter((s) => s.startMs >= end);
-    if (remaining.length === 0) break;
-    const cluster = clusterByOverlap(remaining)[0]!;
-    if (cluster.length > 1) {
-      windows.push({ startMs: cluster[0]!.startMs, endMs: Math.max(...cluster.map((c) => c.endMs)), optionCount: cluster.length });
+  for (;;) {
+    const options = clashAt(remaining, end);
+    if (options === null || guard++ > 10_000) break;
+    if (options.length > 1) {
+      windows.push({ startMs: options[0]!.startMs, endMs: Math.max(...options.map((o) => o.endMs)), optionCount: options.length });
     }
-    const choose = cluster.reduce((a, b) => (b.endMs < a.endMs ? b : a));
+    const choose = options.reduce((a, b) => (b.endMs < a.endMs ? b : a));
     end = choose.endMs;
     remaining = remaining.filter((s) => s.id !== choose.id);
   }
