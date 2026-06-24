@@ -14,12 +14,17 @@ LINEUP_PAGE_URL = "https://belgium.tomorrowland.com/en/line-up/?page=timetable"
 FESTIVAL_NAME = "Tomorrowland Belgium 2026"
 FESTIVAL_SLUG = "tomorrowland-belgium-2026"
 FESTIVAL_TIMEZONE = "Europe/Brussels"
+# Saved source ref (documented fallback chain, research §6). The page is resolved FIRST every
+# run; these are used ONLY if it's unreachable (WAF 403 on Worker egress). A changed uuid is
+# still detected whenever the page is reachable (DEC-009). Confirmed by the ingestion spike.
+LINEUP_EVENT = "TL26BE"
+LINEUP_UUID = "9205196e-3eef-45c0-a82e-72aa1bb3cf8f"
 
-# D1: run `npm run db:create` once and paste the returned database_id below.
+# D1: created 2026-06-23 (region WEUR) via `npm run db:create`.
 [[d1_databases]]
 binding = "DB"
 database_name = "festpilot"
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "e6753623-2b4e-41ce-9725-4bd417966cfa"
 migrations_dir = "migrations"
 
 # ADMIN_TOKEN is a secret (guards POST /admin/ingest). Set with:

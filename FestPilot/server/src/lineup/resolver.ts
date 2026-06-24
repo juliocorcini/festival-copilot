@@ -64,6 +64,17 @@ export function cdnUrls(ref: LineupSourceRef, base: string = DEFAULT_CDN_BASE) {
 }
 
 /**
+ * Browser-like headers. The official page sits behind a WAF that 403s requests with no
+ * User-Agent (verified: same URL returns 200 with a browser UA). The CDN reuses these too.
+ */
+export const BROWSER_HEADERS: Record<string, string> = {
+  "user-agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "accept-language": "en-US,en;q=0.9",
+};
+
+/**
  * Live resolution (production): fetch the page, parse __NEXT_DATA__, return the ref.
  * This is the exact production entry point used by the Worker ingestion.
  */
@@ -71,7 +82,7 @@ export async function resolveSourceRefLive(
   pageUrl: string = DEFAULT_LINEUP_PAGE,
   fetchImpl: typeof fetch = fetch
 ): Promise<LineupSourceRef> {
-  const res = await fetchImpl(pageUrl, { headers: { accept: "text/html" } });
+  const res = await fetchImpl(pageUrl, { headers: BROWSER_HEADERS });
   if (!res.ok) throw new Error(`Lineup page returned ${res.status}`);
   return extractSourceRefFromHtml(await res.text());
 }

@@ -134,12 +134,14 @@ export async function ingest(deps: IngestDeps): Promise<IngestResult> {
 /** Build production dependencies (D1 + live HTTP fetch) and run one ingestion. */
 export async function runScheduledIngest(
   env: Env,
-  fetcher: LineupFetcher = new HttpLineupFetcher(),
+  fetcher?: LineupFetcher,
   idFactory: IdFactory = ulid
 ): Promise<IngestResult> {
   const store = new D1LineupStore(env.DB, idFactory);
+  const fallbackRef =
+    env.LINEUP_EVENT && env.LINEUP_UUID ? { event: env.LINEUP_EVENT, uuid: env.LINEUP_UUID } : null;
   return ingest({
-    fetcher,
+    fetcher: fetcher ?? new HttpLineupFetcher(fetch, undefined, fallbackRef),
     store,
     pageUrl: env.LINEUP_PAGE_URL,
     festival: {

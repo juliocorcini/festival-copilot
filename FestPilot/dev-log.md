@@ -5,23 +5,33 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD STARTED (2026-06-23).** Executing the orchestrator autonomously from P0. Design pass + brain are done
-  (all 59 screens locked, prototypes `23`–`30`; refs `2026-06-23-screen-catalog.md` + `-design-system.md`).
-- Active Phase / Gate: **P0 G0.4 — point web at API + LIVE bring-up** (G0.1✅ G0.2✅ G0.3✅). Order: P0 (raster
-  map → D1 → deploy Worker+Pages → live lineup API) → P1 shell → P2 … per the screen-complete §13.
-- **G0.2 ✅**: map base now **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). Render pixel-faithful. 3 asset tests green.
-- **G0.3 ✅**: migration `0002_festival_map.sql` + `GET /api/festivals/:id/map` (static keys → URLs + affine) +
-  guarded `POST /admin/festivals/:id/map`. No R2 (DEC-038). Server tests **29 pass / 0 fail**.
-- **DEC-040 (this session):** V1 map ships as a **pre-rendered raster base** (WebP) + live vector overlay; the
-  ~20 MB inline-relief SVG is dropped from shipped assets (the `<img>`-loaded SVG can't fetch external relief; raster
-  is small, identical, needs no network). R2 stays out (DEC-038). This satisfies orchestrator P0.2/P0.3 intent.
-- Last green test run: 2026-06-23 — server **25 pass / 0 fail** on Node 22 (web tests land in P1/P2)
-- typecheck: clean (server + web). build: server dry-run OK; web build pending raster swap.
-- Live: D1 **not created** · Worker **not deployed** · Pages **not connected** · R2 **NOT used in V1** (DEC-038 Q1)
-- Credentials: Cloudflare token **saved + verified** (D1/Pages/Workers). Firebase: deferred (DEC-038 Q3).
-- Confidence: 80% (clean baseline, all context loaded).
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 COMPLETE + LIVE.**
+  Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
+- Active Phase / Gate: **P1 — App shell + nav + service worker + typed API client + raw lineup read** (next).
+  Phase 0: G0.1✅ G0.2✅ G0.3✅ **G0.4✅ (live)**.
+- **🌎 LIVE URLs (test on phone):** App → **https://festpilot.pages.dev** · API → **https://festpilot.trippilot.workers.dev**
+  (`/api/festivals`, `/api/festivals/:id/lineup`, `/api/festivals/:id/stages`, `/api/festivals/:id/map`).
+- **Live festival id:** `01KVVF5VERH4AB28NAM6NM65VD` (Tomorrowland Belgium 2026) — **813 performances**, 15 stages,
+  2 weekends (W1/W2), all UTC instants correct. `festival_map` row published (affine + 10 georeferenced stages).
+- **G0.4 ✅ (live bring-up):** D1 `festpilot` created + migrated (remote); Worker deployed (cron `0 */6 * * *`);
+  live lineup ingest **status=updated, 813 changes**; Pages project `festpilot` created + `dist` deployed.
+  Fixed two live issues: WAF **403** on the page (→ added `BROWSER_HEADERS`) and Workers **Illegal invocation**
+  (→ call `fetch` via a local ref). Added a documented **saved-ref fallback** (`LINEUP_EVENT`/`UUID`, page tried first).
+- **G0.2 ✅**: map base **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). **G0.3 ✅**: `festival_map` + map API.
+- **DEC-040:** V1 map ships as a pre-rendered raster base (WebP) + live vector overlay; the ~20 MB inline-relief SVG
+  is dropped from shipped assets. R2 stays out (DEC-038).
+- Last green test run: 2026-06-23 — **server 32 pass / 0 fail** (+3 fallback), **web 3 pass** (vitest), **1 Playwright**
+  visual smoke pass (screenshot `web/e2e/screenshots/phase0-map.png` — map renders with overlay + controls). All Node 22.
+- typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages**.
+- Live: D1 **created+migrated** · Worker **deployed+ingesting** · Pages **deployed** · R2 **NOT used** (DEC-038 Q1).
+- Credentials: Cloudflare token **saved + verified**. Firebase: deferred (DEC-038 Q3).
+- Confidence: 90% (Phase 0 verified end-to-end in production).
 
 ## Completed (most recent first)
+- [x] **P0 G0.4** — LIVE bring-up: D1 created+migrated (remote), Worker deployed (cron), **live ingest 813 perfs**
+  (fixed WAF 403 via browser headers + Workers illegal-invocation via local `fetch` ref + saved-ref fallback),
+  `festival_map` published, **Pages deployed** (festpilot.pages.dev). Playwright mobile visual smoke green (+screenshot).
+  Server **32 tests**, web **3 vitest + 1 e2e**. commit pending.
 - [x] **P0 G0.3** — map data API: `festival_map` table (migration 0002) + `GET /api/festivals/:id/map` +
   guarded admin upsert; static asset keys → URLs (no R2, DEC-038); 4 sql.js tests (29 total).
 - [x] **P0 G0.2** — slim the map (DEC-040): `rasterize-base.ts` (resvg+sharp) → WebP base; dropped the 20 MB SVGs;

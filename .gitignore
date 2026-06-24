@@ -47,6 +47,9 @@ playwright-report/
 test-results/
 blob-report/
 .playwright/
+FestPilot/web/e2e/.output/
+# ...but keep milestone visual smoke screenshots (tracked as a record of each gate)
+!FestPilot/web/e2e/screenshots/
 
 # Temporary
 tmp/
