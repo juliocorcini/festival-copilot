@@ -299,6 +299,12 @@ export interface ArtOptions {
   title: string;
   subtitle: string;
   attribution: string;
+  /**
+   * Bake the stage medallions + name labels into the art. Default true (poster/admin use).
+   * The app sets this false (DEC-050) so stages render as a crisp, tappable vector overlay
+   * instead of pixelating inside the raster base.
+   */
+  stageMarkers?: boolean;
 }
 
 export function buildArtSvg(scene: Scene, opts: ArtOptions, P: Palette = TWILIGHT): string {
@@ -311,13 +317,15 @@ export function buildArtSvg(scene: Scene, opts: ArtOptions, P: Palette = TWILIGH
   const roads = linesPath(lines.road);
   const paths = linesPath(lines.path);
 
-  const stageSvg = stages
-    .map((s) => {
-      const x = scene.affine.a * s.lng + scene.affine.b * s.lat + scene.affine.c;
-      const y = scene.affine.d * s.lng + scene.affine.e * s.lat + scene.affine.f;
-      return stageMarker(x, y, s.name, s.matched, P);
-    })
-    .join("\n");
+  const stageSvg = opts.stageMarkers === false
+    ? ""
+    : stages
+        .map((s) => {
+          const x = scene.affine.a * s.lng + scene.affine.b * s.lat + scene.affine.c;
+          const y = scene.affine.d * s.lng + scene.affine.e * s.lat + scene.affine.f;
+          return stageMarker(x, y, s.name, s.matched, P);
+        })
+        .join("\n");
 
   const fullRect = `M0,0H${w}V${h}H0Z`;
   const inner = `

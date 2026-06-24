@@ -342,6 +342,34 @@ a { color: inherit; text-decoration: none; }
 
 .map-msg { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 14px; }
 
+/* interactive vector stage overlay (DEC-050) — crisp + tappable, never baked into the base */
+.stage-pin { pointer-events: auto; cursor: pointer; }
+.stage-pin-shadow { fill: rgba(0, 0, 0, 0.45); }
+.stage-pin-disc { stroke: #08070a; stroke-width: 2; }
+.stage-pin.is-open .stage-pin-disc { stroke: var(--accent); stroke-width: 2.8; }
+.stage-pin-star { fill: #08070a; opacity: 0.9; }
+.stage-pin-live { fill: var(--s-core); stroke: #08070a; stroke-width: 1; }
+.stage-pin-name { font-size: 10.5px; }
+
+.stage-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+  background: var(--scrim); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line); border-radius: 18px 18px 0 0;
+  padding: 14px 16px 18px; box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.9);
+  animation: sheet-up 0.18s ease;
+}
+@keyframes sheet-up { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.stage-sheet-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.stage-sheet-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4); }
+.stage-sheet-head h3 { margin: 0; font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 16px; color: var(--accent2); }
+.stage-sheet-close { margin-left: auto; appearance: none; border: 0; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 6px; }
+.stage-sheet-now, .stage-sheet-next { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.stage-sheet-next { margin-top: 8px; }
+.stage-sheet-now b, .stage-sheet-next b { font-weight: 600; }
+.stage-sheet-now em, .stage-sheet-next em { font-style: normal; color: var(--accent2); font-size: 12px; margin-left: auto; }
+.stage-sheet-now .muted { color: var(--muted); }
+.stage-sheet-next .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
 /* =============================================================================
    Onboarding flow (#17) — festival → weekend → days → swipe favorites
    ============================================================================= */

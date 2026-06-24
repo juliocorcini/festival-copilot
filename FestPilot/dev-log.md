@@ -12,8 +12,8 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R2 (P0 map) in progress** — R2.1 ✅ pan-clamp + safe-area fit. Next: R2.2 vector stage overlay.
-- **Tests now:** typecheck clean · **server 122 + web 168 unit** pass · build OK · **app v0.8.1**.
+- **Gate:** **R2 (P0 map) in progress** — R2.1 ✅ pan-clamp · R2.2 ✅ vector stage overlay + de-baked base. Next: R2.3 real presence + out-of-venue.
+- **Tests now:** typecheck clean · **server 122 + web 178 unit** pass · build OK · **app v0.8.1**.
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -33,6 +33,19 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R2.2 ✅ (2026-06-24) — interactive vector stage overlay + de-baked base (DEC-050, §6 #5).** The base raster
+  baked the 10 stage medallions + names → they pixelated at zoom and weren't tappable. Added a `stageMarkers`
+  toggle through the map-art engine (`draw.ts` ArtOptions → `generate.ts` GenerateOptions → `run.ts`
+  `NO_STAGE_MARKERS`), regenerated De Schorre **offline** (cached OSM, no Overpass) into a **label-free** SVG, and
+  re-rasterized to WebP (resvg+sharp, Node 22) → shipped `web/public/maps/*.webp` (night 420 KB / day 388 KB).
+  Verified 0 `<text class="stage-label">` baked. `MapView` now draws stages as a crisp vector overlay from
+  `transform.stages` via `geoToSvg`: amber medallion (per-stage `stageColor`), star, screen-stable label
+  (`pinScale = min(1/scale, 1.6)` so it never balloons zoomed-out), a live-dot when a set is on, and **tap → a
+  stage info sheet** with now-playing + next (pure `domain/stageProgramme.ts` over `useLineup`'s sets, formatted
+  with `timeInZone`). Tap-vs-pan guarded by comparing the click point to the pointer-down point. Tests +10:
+  `stageProgramme` (7 — live/next/gap/exclusive-end/per-stage), `MapView` render (3 — pins are overlay nodes not
+  the base, tap opens the sheet with now-playing, drag doesn't). **web 178 unit · typecheck · build · spike
+  typecheck OK.** Next: R2.3 real coarse presence on the map + out-of-venue state (DEC-051).
 - **R2.1 ✅ (2026-06-24) — pan clamp + safe-area fit (§6 #4/#6).** New pure `map/panClamp.ts`
   (`fitScale`/`fitView`/`clampPan`): the scaled world must always cover the viewport's **safe rect**
   (viewport minus the in-canvas chrome insets), with a 40px cosmetic bleed; under-sized worlds centre

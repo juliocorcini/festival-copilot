@@ -23,6 +23,8 @@ export interface GenerateOptions {
   fontFiles?: string[];
   refresh?: boolean;
   log?: (m: string) => void;
+  /** Bake stage medallions/labels into the base. Default true; the app base sets it false (DEC-050). */
+  bakeStageMarkers?: boolean;
 }
 export interface GenerateResult {
   scene: Scene;
@@ -61,6 +63,7 @@ export function generateMap(input: MapInput, outDir: string, opts: GenerateOptio
     title: input.title,
     subtitle: input.subtitle ?? "",
     attribution,
+    stageMarkers: opts.bakeStageMarkers !== false,
   };
 
   const rasterize = (svg: string, file: string): void => {

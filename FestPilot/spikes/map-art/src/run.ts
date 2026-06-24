@@ -30,6 +30,8 @@ function main(): void {
   const res = generateMap(input, OUT, {
     fontFiles,
     refresh: !!process.env["REFRESH"],
+    // The app ships a label-free base (DEC-050): stages are a crisp, tappable vector overlay.
+    bakeStageMarkers: !process.env["NO_STAGE_MARKERS"],
     log: (m) => console.log(m),
   });
   console.log(`\n  wrote ${res.files.length} files to out/:\n    ${res.files.join("\n    ")}\n`);
