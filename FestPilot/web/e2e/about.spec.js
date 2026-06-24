@@ -41,17 +41,22 @@ test.describe("About & what's new", () => {
     await page.goto("/settings/about");
     await page.addStyleTag({ content: FREEZE });
 
+    // Identity (decoupled from any specific release so the changelog can grow freely).
     await expect(page.getByRole("heading", { name: "FestPilot" })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("Created by")).toBeVisible();
+    await expect(page.getByText("Created by")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("Julio Corcini").first()).toBeVisible();
-    await expect(page.getByText("What's new")).toBeVisible();
-    await expect(page.getByText("Meeting points come alive")).toBeVisible();
-    await expect(page.getByText("Current", { exact: true })).toBeVisible();
+    await expect(page.locator(".about-section-label", { hasText: "What's new" })).toBeVisible();
+
+    // A multi-release history, with exactly one "Current" pill on the newest entry.
+    await expect(page.locator(".changelog-item")).not.toHaveCount(0, { timeout: 10_000 });
+    expect(await page.locator(".changelog-item").count()).toBeGreaterThan(3);
+    await expect(page.locator(".changelog-current")).toHaveCount(1);
     await page.screenshot({ path: "e2e/screenshots/phase-about.png", fullPage: true });
 
-    // The maker's "How to test" block expands.
-    await page.getByText("How to test").first().click();
-    await expect(page.getByText(/mark "On my way"/).first()).toBeVisible();
+    // The maker's "How to test" block expands to reveal its checklist.
+    const firstTest = page.locator(".changelog-test").first();
+    await firstTest.getByText("How to test").click();
+    await expect(firstTest.locator(".changelog-testlist li").first()).toBeVisible({ timeout: 10_000 });
     await page.screenshot({ path: "e2e/screenshots/phase-about-test.png" });
   });
 });

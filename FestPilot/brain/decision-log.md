@@ -1,6 +1,6 @@
 # FestPilot — Decision Log
 
-> Last updated: 2026-06-23 (Initial set DEC-001→DEC-020 from the product-definition session; **2026-06-23 discovery-council session** advanced DEC-003/004/013/015 to APPROVED and added DEC-021/DEC-022 — see `documents/2026-06-23-discovery-councils-and-decisions.md`; the **/phases session** added DEC-023 (V1 cut line) and the **/council** added DEC-024 (auth) — see `implementation-phases.md`; the **2026-06-23 UI prototype-review** added DEC-025→DEC-029 (visual identity + Timetable/Onboarding/Lock in specs) — see `documents/2026-06-23-ui-decisions-locked.md` — and **DEC-030** (map rendering), **DEC-031** (map asset pipeline: OSM + AI art, not satellite tracing), **DEC-032** (Lineup/Timetable nav), and **DEC-033** (map *beauty* pipeline: stylized cartography + LiDAR relief now, AI-paint & 3D as upgrades), and **DEC-034** (map *generator* productized into a one-call engine + admin map-editor workflow) — see `documents/2026-06-23-realtime-map-technical-plan.md` §8/§10/§11; and **DEC-035** (V1 path-to-launch decisions: PWA→Capacitor, all-6 phases, WebSocket presence, auth providers, TML-only) — see `documents/2026-06-23-path-to-launch.md`; and **DEC-036** (adopt the V1 implementation orchestrator as the execution source of truth + git on `master`) — see `documents/2026-06-23-v1-implementation-orchestrator.md`; and **DEC-037** (V1 runs entirely on free tiers — Durable Objects are free on the Workers Free plan, direct Pages upload, token-based deploy); **DEC-038** (operator intake — no R2, both weekends, Firebase deferred, PWA-only, squad cap 50); **DEC-039** (design-pass answers + Android-only native, no Apple/iOS); **DEC-040** (V1 map = pre-rendered raster base + live overlay, drop the 20 MB inline-relief SVG). APPROVED = decided direction. PROPOSED/PENDING = not yet confirmed. Next new id = DEC-041.)
+> Last updated: 2026-06-24 (Initial set DEC-001→DEC-020 from the product-definition session; **2026-06-23 discovery-council session** advanced DEC-003/004/013/015 to APPROVED and added DEC-021/DEC-022 — see `documents/2026-06-23-discovery-councils-and-decisions.md`; the **/phases session** added DEC-023 (V1 cut line) and the **/council** added DEC-024 (auth) — see `implementation-phases.md`; the **2026-06-23 UI prototype-review** added DEC-025→DEC-029 (visual identity + Timetable/Onboarding/Lock in specs) — see `documents/2026-06-23-ui-decisions-locked.md` — and **DEC-030** (map rendering), **DEC-031** (map asset pipeline: OSM + AI art, not satellite tracing), **DEC-032** (Lineup/Timetable nav), and **DEC-033** (map *beauty* pipeline: stylized cartography + LiDAR relief now, AI-paint & 3D as upgrades), and **DEC-034** (map *generator* productized into a one-call engine + admin map-editor workflow) — see `documents/2026-06-23-realtime-map-technical-plan.md` §8/§10/§11; and **DEC-035** (V1 path-to-launch decisions: PWA→Capacitor, all-6 phases, WebSocket presence, auth providers, TML-only) — see `documents/2026-06-23-path-to-launch.md`; and **DEC-036** (adopt the V1 implementation orchestrator as the execution source of truth + git on `master`) — see `documents/2026-06-23-v1-implementation-orchestrator.md`; and **DEC-037** (V1 runs entirely on free tiers — Durable Objects are free on the Workers Free plan, direct Pages upload, token-based deploy); **DEC-038** (operator intake — no R2, both weekends, Firebase deferred, PWA-only, squad cap 50); **DEC-039** (design-pass answers + Android-only native, no Apple/iOS); **DEC-040** (V1 map = pre-rendered raster base + live overlay, drop the 20 MB inline-relief SVG); the **2026-06-23 build** added **DEC-041→DEC-047** (Phases 3–6 executor decisions); and the **2026-06-24 review-remediation pass** added **DEC-048→DEC-055** (all PROPOSED — Julio's hands-on-review direction; see `documents/2026-06-24-v1-review-remediation-orchestrator.md` §7). APPROVED = decided direction. PROPOSED/PENDING = not yet confirmed. Next new id = DEC-056.)
 
 ## Format
 
@@ -570,3 +570,108 @@
 - **Detail**: schema `meeting_point` already in `0001_init.sql`; `server/src/api/meetingPoints.ts` (+ routes); web
   meeting-point create screens (proto `26` #1/#2); orchestrator §13 Phase 6 G6.1; supersedes the "R2 photo" wording of
   Phase 6 P6.1 (intent preserved, photo deferred per DEC-038).
+
+---
+
+> **DEC-048 → DEC-055 — V1 review-remediation pass (2026-06-24).** Eight decisions opened by Julio's hands-on
+> walkthrough of the live app, normalized into `documents/2026-06-24-v1-review-remediation-orchestrator.md` (§7).
+> All **PROPOSED** (= Julio's review direction, adopted by the executor to proceed; not yet firm-confirmed). Each
+> notes what it refines/supersedes. The remediation orchestrator is the execution doc that implements them.
+
+### DEC-048 — The "festival day" is a derived contiguous block, not the source `day` field nor the civil date
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: Day grouping is computed by a pure `assignFestivalDays(performances, gapHours = 3)` (new,
+  `web/src/domain/festivalDay.ts`): sort by start, split into a new festival day only when there is a **real gap
+  (≥ `gapHours` with no set on any stage)**; each block gets a stable `festivalDayId` + a label taken from the
+  block's first set (festival tz). This `festivalDayId` is the **single source of truth** for day grouping across
+  onboarding, timetable, My Plan and Now/Next. User-facing labels stay "Friday, Jul 24" etc.
+- **Why**: the review found **post-midnight sets landing on the wrong calendar day** (a Friday-night 00:30 set
+  shown under Saturday) because grouping used the source's `performance.day` / civil date. A festival night is a
+  continuous block that crosses midnight; the block is the correct unit.
+- **Refines**: the day handling in `server/src/lineup/normalize.ts` + `web/src/lib/festival.ts`
+  (`daysForWeekends`) and `web/src/domain/timetable.ts`.
+- **Detail**: review §7 → orchestrator §6 row 2 + gate R1.1.
+
+### DEC-049 — Lineup is made discoverable without breaking DEC-032 (Timetable stays full-height)
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: Keep DEC-032 (no tall top toggle stealing Timetable grid height). Add a **compact, explicit**
+  Timetable⇄Lineup switch (a single minimal-height labeled control, not a tall segmented bar) **and open Lineup
+  by default when there is no timetable yet.** Clear empty states for "no lineup yet" and "timetable not released".
+- **Why**: the review found Lineup "too hidden" (behind one header icon) and that festivals often publish a
+  **lineup before a timetable** — the app must be useful in that phase.
+- **Refines**: DEC-032 (Lineup/Timetable nav) — keeps its height rule, adds discoverability + a default.
+- **Detail**: review §6 → orchestrator §6 row 10 + gate R4.2; screens `15e` (Timetable), `22`/`LineupScreen`.
+
+### DEC-050 — Map renders all stages/labels/pins as a crisp interactive vector overlay; base zoom is capped honestly
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: Stage medallions + names (and all pins/markers) render as a **vector overlay** from
+  `transform.stages` via `geoToSvg` — screen-stable scaling, **tappable → stage info sheet** — and are **never
+  baked into the raster base**. Regenerate the base **without** baked labels (the `spikes/map-art` engine already
+  keeps the overlay separate). Cap `MAX_SCALE` to the base's sharp range; evaluate a higher-res raster and/or the
+  vector deep-zoom base as an upgrade.
+- **Why**: the review found stage names **pixelating**, **looking baked-in**, and **not clickable** — a direct
+  violation of the "live overlay is always a separate layer" non-negotiable.
+- **Refines/enforces**: enforces DEC-030/DEC-034 (overlay separation, interactive map); refines DEC-040's raster
+  trade-off (V1 keeps the raster *base* but de-bakes labels and adds the interactive vector layer the review needs).
+- **Detail**: review §11 → orchestrator §6 rows 4–6 + gate R2.
+
+### DEC-051 — Outside the festival bbox, the map shows an honest state, never a black screen
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: Detect an out-of-venue GPS fix; show "You're outside the festival — precise location works inside
+  the venue" while still letting the user pan/zoom the festival map. **Optional** upgrade: a real OSM basemap
+  behind a translucent venue overlay.
+- **Why**: the review found that using precise location **outside** the venue produced a black screen (the fix
+  lands off-canvas with unbounded pan + mock presence).
+- **Relates**: complements the R2 pan-clamp + real-presence fixes; consistent with DEC-030 offline-first.
+- **Detail**: review §11/§15 → orchestrator §6 row 7 + gate R2.3.
+
+### DEC-052 — Festival data-state model: no-lineup / lineup-without-timetable / full-timetable, with dynamic updates
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: The API surfaces `hasLineup` / `hasTimetable` (derived from `withTimetable` + performance
+  presence); every screen **degrades gracefully** across the three states. Data may update over time (add days
+  like **The Gathering**, add artists, add times) — ingestion is already idempotent; the client **re-prompts the
+  user to revisit favorites** when new artists/days appear, keeps existing favorites/plans valid, and prompts an
+  adjustment when a prior choice becomes invalid (never silently drops it).
+- **Why**: the review requires the app to work before a lineup exists, with a lineup but no timetable, and after
+  late data changes — the current client assumes a full, fixed timetable.
+- **Detail**: review §2/§6/§20 → orchestrator §6 row 11 + gate R4.1/R4.3; also drives the artist-photo source (R1.3).
+
+### DEC-053 — Profile/avatar photo is deferred (rides the DEC-038 R2 block); initials + color ship now
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: Squad profile/avatar stays **initials + chosen color** for V1 (already shipped). **Photo upload
+  ships only when R2 (or an equivalent blob store) is enabled** — the same deferral and the same flip condition as
+  the meeting-point photo (DEC-047). The custom-emoji request (a separate ask) **does** ship now (no blob needed).
+- **Why**: the review asks for an avatar photo, but a photo needs a runtime blob home and **R2 is OUT for V1**
+  (DEC-038, account `code 10042`). Honest default: don't ship a dead "add photo" control on a blocked feature.
+- **Refines**: parallels DEC-047 (photo-deferred-by-R2); the *intent* (a recognizable avatar) is met by
+  initials + color now.
+- **Detail**: review §12.3 → orchestrator §6 row 16 + gate R9.3.
+
+### DEC-054 — Joining a squad auto-shares the member's plan + favorites by default (one-time confirm + Settings opt-out)
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: On **first join**, a one-time "Share your plan with the squad?" sheet that **defaults to ON**
+  (shares plan + favorites), with a **Settings opt-out** — instead of the hidden, manual opt-in. The squad value
+  (shared plan / build-the-group-plan) is therefore visible by default, not buried in an action.
+- **Why**: the review's product view is that sharing "should happen naturally when you join"; the current
+  opt-in (DEC-044) hides the core value.
+- **Refines**: DEC-044 (squad plan sharing) — flips the default from manual opt-in to on-by-default-with-opt-out.
+  Presence/exact-location sharing is **unchanged** (still explicit, coarse-only — DEC-046/047).
+- **Detail**: review §13 → orchestrator §6 row 16 + gate R9.4; `ShareMyPlanScreen` + join flow.
+
+### DEC-055 — Capture user-suggested festivals for admin review (no login required)
+- **Date**: 2026-06-24 (review-remediation)
+- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Decision**: A guarded `POST /api/festival-suggestions` + a D1 table (`name`, `suggested_by` nullable,
+  `created_at_utc`, `count`, `status` ∈ new/reviewing/planned/added/rejected) with **dedupe-by-name count**, plus
+  an admin list route; a **discreet** "Suggest a festival" affordance on the festival-pick onboarding step. No
+  full login required.
+- **Why**: the review wants users who don't find their festival to suggest one, and the operator to see
+  suggestions + frequency.
+- **Detail**: review §1 → orchestrator §6 row 19 + gate R4.4 (new migration; `OnboardingScreen` StepFestival).

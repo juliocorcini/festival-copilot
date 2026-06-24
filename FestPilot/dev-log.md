@@ -5,10 +5,10 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-24).** Executing the orchestrator autonomously. **PHASE 0 + 1 + 2 + 4 + 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + G6.2 ✅ + G6.3 ✅ → PHASE 6 COMPLETE.**
-  Design pass + brain are done (59 screens locked, prototypes `23`–`30`). About screen + changelog shipped (single-source `APP_VERSION`).
-- Active Phase / Gate: **PHASE 6 COMPLETE** — G6.1 "come to me" ✅ + G6.2 lifecycle ✅ + **G6.3 compass nav + "I'm lost" safety ✅** (deploy pending this session).
-  Post-build V1.x follow-ups requested by Julio: **undo / "what did I give up"** (clash + onboarding swipe), **rich group split viz**, **share my plan as branded image/link**.
+- 🔨 **BUILD IN PROGRESS (2026-06-24).** Executing the orchestrator autonomously. **PHASE 0 + 1 + 2 + 4 + 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + G6.2 ✅ + G6.3 ✅ → PHASE 6 COMPLETE.** **V1.x follow-ups (undo / split / share) ✅ + LIVE.**
+  Design pass + brain are done (59 screens locked, prototypes `23`–`30`). About screen + changelog shipped (single-source `APP_VERSION`, now `0.8.0`).
+- Active Phase / Gate: **PHASE 6 COMPLETE + V1.x polish COMPLETE.** G6.1 "come to me" ✅ + G6.2 lifecycle ✅ + **G6.3 compass nav + "I'm lost" safety ✅** (live).
+  **V1.x follow-ups requested by Julio — ALL DONE & LIVE this session:** ✅ **undo / "what did I give up"** (clash resolver + onboarding swipe), ✅ **rich group split view** (#24.5), ✅ **share my plan as branded image/link** (canvas poster, Web Share files / save / copy).
   P5 ✅ (presence pipeline + G5.1 consent + G5.2 roster/coarse map + G5.3 ping/sharing-picker/privacy; precise exact-dot rides this Phase-6 channel per DEC-046).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
@@ -166,6 +166,26 @@
   calling** (anon V1 has no numbers) — the squad broadcast is the channel; **nearest help degrades** until POIs are
   mapped. **121 server + 136 web unit + e2e green** (new `safety` spec: menu→share+alert[`isSafety:true`]→active→I'm
   okay, + compass distance/ETA; 3 screenshots). **No migration.** Web `0.6.0`→`0.7.0`.
+- **V1.x follow-ups ✅ (this session) — undo / split / share (web-only, no server/migration):** the three SHOULD
+  items from product-spec §"V1.x". **(1) Undo / "what did I give up"** — `LockInScreen` keeps a snapshot stack: every
+  pick pushes the prior `ResolverSnapshot` + the dropped clash options, surfacing a `GiveUpBanner` ("Locked X · you
+  gave up Y, Z +N · Undo") on the resolving screen, an always-reachable `Undo` in the bar, and an undo affordance on
+  the celebration (resets the save-guard so re-completion re-saves). `OnboardingScreen` swipe now records
+  `{index, favoritedActKey}` and an **Undo** steps back, un-favoriting **only** the act that swipe created.
+  **(2) Rich split view (#24.5)** — pure `domain/squadPlan.ts` `stageEntriesForBlock` (winner first, then each
+  non-winner pick by headcount, the entry with YOU flagged; **+3 unit tests**); new **`SquadSplitScreen`**
+  (`/squad/:id/plan/:perfId/split`) renders per-stage cards (color bar, count, act, avatar stack, "· you" highlight),
+  "the squad splits here" framing, an undecided footnote, and a **"Set a meet-up after"** CTA → `/squad/:id/meet`;
+  entry is a "See who's where" link in the block detail's split section. **(3) Share my plan as branded image/link** —
+  dependency-free **canvas poster** `lib/planPoster.ts` (`buildPosterRows` pure **+5 tests**; `drawPlanPoster` Amber-Glass
+  poster in **Story 9:16 / Square 1:1**: FESTPILOT wordmark, auto-shrink festival headline, day, "N sets · 0 clashes",
+  per-set rows w/ stage dots, "Make yours" pill + url) + `lib/stageColorHex` (canvas can't resolve CSS vars).
+  `lib/share.ts` gains `sharePlanImage` (Web Share **files** → Stories/WhatsApp), `downloadBlob`, `copyPlanText`,
+  link-footer in `formatPlanText` (**+3 tests**). **`SharePlanSheet`** (live preview + format toggle + Share / Save /
+  Copy) wired into **My Plan** header + the **Lock-in celebration** (replacing the old text-only share). **147 web unit
+  + e2e green**: onboarding-undo + lockin give-up-undo + share-poster (Story→Square→Save) assertions, new `squad-split`
+  spec (two overlapping picks → block → "See who's where" → 2 stage cards, live Worker), `about` spec made
+  changelog-content-agnostic. Web `0.7.0`→`0.8.0`; new `0.8.0` changelog entry. **Pages-only deploy.**
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the

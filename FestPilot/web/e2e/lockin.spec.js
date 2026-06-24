@@ -53,6 +53,23 @@ test.describe("Phase 2 — lock-in clash resolver → my plan", () => {
       await page.screenshot({ path: "e2e/screenshots/phase2-lockin-clash.png" });
     }
 
+    // Undo / "what did I give up": locking a pick surfaces the give-up banner; undo steps back.
+    if (await page.locator(".lk-clash-title").count()) {
+      await page.locator(".lk-lock").click();
+      await page.waitForTimeout(120);
+      if (await page.locator(".lk-clash-title").count()) {
+        await expect(page.locator(".lk-giveup")).toBeVisible({ timeout: 10_000 });
+        await page.screenshot({ path: "e2e/screenshots/phase2-lockin-giveup.png" });
+        await page.locator(".lk-giveup-undo").click();
+        await expect(page.locator(".lk-giveup")).toHaveCount(0);
+      } else {
+        // A single clash resolved straight to the celebration — undo lives there.
+        await expect(page.locator(".lk-celebrate-undo")).toBeVisible({ timeout: 10_000 });
+        await page.locator(".lk-celebrate-undo").click();
+        await expect(page.locator(".lk-clash-title")).toBeVisible();
+      }
+    }
+
     // Resolve every clash by locking the pre-selected option until the celebration appears.
     let guard = 0;
     while ((await page.locator(".lk-clash-title").count()) > 0 && guard++ < 40) {
@@ -72,5 +89,15 @@ test.describe("Phase 2 — lock-in clash resolver → my plan", () => {
     await expect(page.locator(".plan-tl")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".plan-card").first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase2-myplan.png" });
+
+    // Share my plan as a branded image: open the sheet, the poster previews, formats toggle, save.
+    await page.locator(".ava-sm[aria-label='Share plan']").click();
+    await expect(page.locator(".share-sheet")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".share-canvas")).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/phase2-share-poster.png" });
+    await page.locator(".share-format button", { hasText: "Square" }).click();
+    await expect(page.locator(".share-canvas.square")).toBeVisible();
+    await page.locator(".share-actions .btn-ghost", { hasText: "Save" }).click();
+    await expect(page.locator(".share-note")).toHaveText("Saved to your device", { timeout: 15_000 });
   });
 });

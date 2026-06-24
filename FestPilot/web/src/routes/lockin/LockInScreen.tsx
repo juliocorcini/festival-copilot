@@ -21,8 +21,8 @@ import {
 import type { PlannableSet, PlanSlot } from "../../domain/types";
 import { daysForWeekends, initials } from "../../lib/festival";
 import { dayLabel, stageColor, timeInZone } from "../../lib/format";
-import { sharePlan } from "../../lib/share";
 import { EmptyState, ErrorState, LoadingState } from "../../ui/states";
+import { SharePlanSheet } from "../share/SharePlanSheet";
 import type { TravelMatrix } from "../../domain/types";
 
 export function LockInScreen(): JSX.Element {
@@ -47,6 +47,11 @@ export function LockInScreen(): JSX.Element {
   const [added, setAdded] = useState<PlannableSet[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showClashes, setShowClashes] = useState(false);
+  // Undo / "what did I give up": each entry is the snapshot BEFORE a pick, plus the picked label and
+  // the clashing alternatives that pick dropped. `giveUp` drives the after-pick banner.
+  const [history, setHistory] = useState<{ snapshot: ResolverSnapshot; picked: string; gaveUp: string[] }[]>([]);
+  const [giveUp, setGiveUp] = useState<{ picked: string; gaveUp: string[] } | null>(null);
+  const [showShare, setShowShare] = useState(false);
   const startedFor = useRef<string | null>(null);
   const savedFor = useRef<string | null>(null);
 
@@ -61,6 +66,8 @@ export function LockInScreen(): JSX.Element {
     setSnapshot(startResolver(dayFavorites));
     setAdded([]);
     setSelectedId(null);
+    setHistory([]);
+    setGiveUp(null);
     // favorites.keys read intentionally fresh (not a dep) so adds don't restart the flow.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineup, dayKey, weekendIds]);
@@ -70,6 +77,20 @@ export function LockInScreen(): JSX.Element {
     setSelectedId(null);
     setAdded([]);
   }, [decisionIndex]);
+
+  // Step back to the snapshot before the last pick. Re-opening a resolved plan re-saves on the next
+  // completion, so clear the "saved" guard. Defined before the early returns so the celebration
+  // screen can offer undo too.
+  const undo = (): void => {
+    if (history.length === 0) return;
+    const prev = history[history.length - 1]!;
+    const before = history[history.length - 2];
+    savedFor.current = null;
+    setSnapshot(prev.snapshot);
+    setGiveUp(before ? { picked: before.picked, gaveUp: before.gaveUp } : null);
+    setHistory((h) => h.slice(0, -1));
+  };
+  const canUndo = history.length > 0;
 
   // Persist the resolved plan once it completes.
   useEffect(() => {
@@ -111,13 +132,26 @@ export function LockInScreen(): JSX.Element {
 
   if (!snapshot.decision) {
     return (
-      <Celebration
-        slots={snapshot.locked}
-        dayName={dayName}
-        tz={tz}
-        onView={() => navigate(`/plan${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`, { replace: true })}
-        onShare={() => sharePlan(dayName, snapshot.locked, tz)}
-      />
+      <>
+        <Celebration
+          slots={snapshot.locked}
+          dayName={dayName}
+          tz={tz}
+          giveUp={giveUp}
+          onUndo={canUndo ? undo : undefined}
+          onView={() => navigate(`/plan${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`, { replace: true })}
+          onShare={() => setShowShare(true)}
+        />
+        {showShare && (
+          <SharePlanSheet
+            festivalName={lineup.festival.name}
+            dayName={dayName}
+            slots={snapshot.locked}
+            timeZone={tz}
+            onClose={() => setShowShare(false)}
+          />
+        )}
+      </>
     );
   }
 
@@ -130,9 +164,12 @@ export function LockInScreen(): JSX.Element {
 
   const lockIn = (cutMs: number | null = null): void => {
     if (!selected) return;
+    const dropped = options.filter((o) => o.id !== selected.id).map((o) => o.label);
     const next = decision.options.some((o) => o.id === selected.id)
       ? pickOption(snapshot, selected.id, cutMs)
       : pickSet(snapshot, selected, cutMs);
+    setHistory((h) => [...h, { snapshot, picked: selected.label, gaveUp: dropped }]);
+    setGiveUp({ picked: selected.label, gaveUp: dropped });
     setSnapshot(next);
   };
 
@@ -153,13 +190,22 @@ export function LockInScreen(): JSX.Element {
   return (
     <div className="lockin">
       <div className="lk-bar">
-        <button className="lk-link" onClick={() => setShowClashes(true)}>
-          <span className="ms" style={{ fontSize: 16 }}>list</span> All clashes
-        </button>
+        <div className="lk-bar-left">
+          <button className="lk-link" onClick={() => setShowClashes(true)}>
+            <span className="ms" style={{ fontSize: 16 }}>list</span> All clashes
+          </button>
+          {canUndo && (
+            <button className="lk-link lk-undo" onClick={undo}>
+              <span className="ms" style={{ fontSize: 16 }}>undo</span> Undo
+            </button>
+          )}
+        </div>
         <button className="lk-close" aria-label="Close" onClick={() => navigate(-1)}>
           <span className="ms" style={{ fontSize: 18 }}>close</span>
         </button>
       </div>
+
+      {giveUp && <GiveUpBanner giveUp={giveUp} onUndo={undo} onDismiss={() => setGiveUp(null)} />}
 
       <div className="lk-progress">
         <div className="lk-progress-head">
@@ -267,16 +313,53 @@ function asSlot(set: PlannableSet): PlanSlot {
   };
 }
 
+/** Short "you gave up X (+N)" summary for the after-pick banner. */
+function gaveUpText(gaveUp: string[]): string {
+  if (gaveUp.length === 0) return "";
+  if (gaveUp.length === 1) return gaveUp[0]!;
+  if (gaveUp.length === 2) return `${gaveUp[0]} & ${gaveUp[1]}`;
+  return `${gaveUp[0]}, ${gaveUp[1]} +${gaveUp.length - 2}`;
+}
+
+function GiveUpBanner({
+  giveUp,
+  onUndo,
+  onDismiss,
+}: {
+  giveUp: { picked: string; gaveUp: string[] };
+  onUndo: () => void;
+  onDismiss: () => void;
+}): JSX.Element {
+  const dropped = gaveUpText(giveUp.gaveUp);
+  return (
+    <div className="lk-giveup glass" role="status">
+      <span className="ms lk-giveup-ico">history</span>
+      <div className="lk-giveup-main">
+        <div className="lk-giveup-title">Locked {giveUp.picked}</div>
+        {dropped && <div className="lk-giveup-sub">You gave up {dropped}</div>}
+      </div>
+      <button className="lk-giveup-undo" onClick={onUndo}>
+        <span className="ms" style={{ fontSize: 15 }}>undo</span> Undo
+      </button>
+      <button className="ms lk-giveup-x" aria-label="Dismiss" onClick={onDismiss}>close</button>
+    </div>
+  );
+}
+
 function Celebration({
   slots,
   dayName,
   tz,
+  giveUp,
+  onUndo,
   onView,
   onShare,
 }: {
   slots: PlanSlot[];
   dayName: string;
   tz: string;
+  giveUp: { picked: string; gaveUp: string[] } | null;
+  onUndo?: () => void;
   onView: () => void;
   onShare: () => void;
 }): JSX.Element {
@@ -291,6 +374,13 @@ function Celebration({
       <div className="celebrate-sub">
         Your plan is set. {slots.length} artist{slots.length === 1 ? "" : "s"}, 0 conflicts.
       </div>
+
+      {onUndo && (
+        <button className="lk-celebrate-undo" onClick={onUndo}>
+          <span className="ms" style={{ fontSize: 15 }}>undo</span>
+          {giveUp ? `Undo — bring back ${gaveUpText(giveUp.gaveUp) || giveUp.picked}` : "Undo last pick"}
+        </button>
+      )}
 
       <div className="glass celebrate-card">
         <div className="label">{dayName}</div>

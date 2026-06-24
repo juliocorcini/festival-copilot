@@ -27,6 +27,15 @@ test.describe("Phase 2 — onboarding + lineup favorites", () => {
     // Step 4 — swipe a few favorites.
     await expect(page.locator(".art-card")).toBeVisible({ timeout: 20_000 });
     await page.screenshot({ path: "e2e/screenshots/phase2-onboarding-swipe.png" });
+
+    // Undo a swipe: the counter advances on a swipe and steps back on undo (DEC: V1.x).
+    const counter = page.locator(".swipe-head .count");
+    const firstCount = await counter.textContent();
+    await page.locator(".swipe-actions .yes").click();
+    await expect(counter).not.toHaveText(firstCount ?? "");
+    await page.locator(".swipe-undo.sm").click();
+    await expect(counter).toHaveText(firstCount ?? "");
+
     for (let i = 0; i < 5; i++) await page.locator(".swipe-actions .yes").click();
 
     // Finish → app shell.

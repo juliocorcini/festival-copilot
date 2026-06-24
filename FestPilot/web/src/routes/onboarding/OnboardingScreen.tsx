@@ -24,6 +24,9 @@ export function OnboardingScreen(): JSX.Element {
   const [weekendChoice, setWeekendChoice] = useState<string | "both" | null>(null);
   const [selectedDays, setSelectedDays] = useState<Set<string> | null>(null);
   const [swipeIndex, setSwipeIndex] = useState(0);
+  // Undo last swipe: remember the index we were at and whether THAT swipe newly favorited the act
+  // (so undo only un-favorites picks this swipe created, never pre-existing favorites).
+  const [swipeHistory, setSwipeHistory] = useState<{ index: number; favoritedActKey: string | null }[]>([]);
 
   const weekends = lineup?.weekends ?? [];
   const effectiveWeekend = weekendChoice ?? weekends[0]?.id ?? null;
@@ -69,8 +72,20 @@ export function OnboardingScreen(): JSX.Element {
 
   const currentAct = acts[swipeIndex];
   const swipe = (keep: boolean): void => {
-    if (keep && currentAct && !favorites.isFavorite(currentAct.actKey)) favorites.toggle(currentAct.actKey);
+    let favoritedActKey: string | null = null;
+    if (keep && currentAct && !favorites.isFavorite(currentAct.actKey)) {
+      favorites.toggle(currentAct.actKey);
+      favoritedActKey = currentAct.actKey;
+    }
+    setSwipeHistory((h) => [...h, { index: swipeIndex, favoritedActKey }]);
     setSwipeIndex((i) => i + 1);
+  };
+  const undoSwipe = (): void => {
+    if (swipeHistory.length === 0) return;
+    const last = swipeHistory[swipeHistory.length - 1]!;
+    if (last.favoritedActKey && favorites.isFavorite(last.favoritedActKey)) favorites.toggle(last.favoritedActKey);
+    setSwipeIndex(last.index);
+    setSwipeHistory((h) => h.slice(0, -1));
   };
 
   return (
@@ -112,6 +127,8 @@ export function OnboardingScreen(): JSX.Element {
           favoritesCount={favorites.count}
           stageName={currentAct ? stageNameFor(lineup, currentAct) : ""}
           dayTag={currentAct ? dayTag(currentAct, days) : ""}
+          canUndo={swipeHistory.length > 0}
+          onUndo={undoSwipe}
           onSwipe={swipe}
           onFinish={finish}
         />
@@ -261,6 +278,8 @@ function StepSwipe({
   favoritesCount,
   stageName,
   dayTag: dayTagText,
+  canUndo,
+  onUndo,
   onSwipe,
   onFinish,
 }: {
@@ -270,6 +289,8 @@ function StepSwipe({
   favoritesCount: number;
   stageName: string;
   dayTag: string;
+  canUndo: boolean;
+  onUndo: () => void;
   onSwipe: (keep: boolean) => void;
   onFinish: () => void;
 }): JSX.Element {
@@ -283,6 +304,11 @@ function StepSwipe({
             <span className="ms">celebration</span>
             <h2>That's everyone!</h2>
             <p>{favoritesCount} favorite{favoritesCount === 1 ? "" : "s"} saved. You can always add more from the Lineup.</p>
+            {canUndo && (
+              <button className="swipe-undo" onClick={onUndo}>
+                <span className="ms" style={{ fontSize: 16 }}>undo</span> Back to last artist
+              </button>
+            )}
           </div>
         </div>
         <div className="ob-foot">
@@ -298,6 +324,14 @@ function StepSwipe({
         <div className="swipe-head">
           <div className="count">{Math.min(index + 1, total)} of {total}</div>
           <div className="swipe-bar"><div style={{ width: `${progress}%` }} /></div>
+          <button
+            className="swipe-undo sm"
+            onClick={onUndo}
+            disabled={!canUndo}
+            aria-label="Undo last swipe"
+          >
+            <span className="ms" style={{ fontSize: 15 }}>undo</span> Undo
+          </button>
         </div>
         <div className="swipe-q">
           <div className="q">Would you see this set?</div>

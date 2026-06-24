@@ -376,7 +376,7 @@ a { color: inherit; text-decoration: none; }
 .opt.sel .check { opacity: 1; }
 
 /* swipe card (step 4) */
-.swipe-head { text-align: center; padding: 2px 0 6px; flex-shrink: 0; }
+.swipe-head { position: relative; text-align: center; padding: 2px 0 6px; flex-shrink: 0; }
 .swipe-head .count { font-size: 12px; color: var(--muted); font-weight: 600; }
 .swipe-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 8px; }
 .swipe-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.25s ease; }
@@ -399,6 +399,13 @@ a { color: inherit; text-decoration: none; }
   padding: 14px; font-size: 15px; font-weight: 700; color: var(--muted); cursor: pointer; }
 .swipe-actions .yes { flex: 2; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg);
   border: 0; border-radius: 16px; padding: 14px; font-size: 15px; font-weight: 800; cursor: pointer; }
+.swipe-undo { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 700;
+  background: var(--glass); border: 1px solid var(--border); color: var(--ink); border-radius: 999px;
+  padding: 9px 16px; font-size: 13px; margin-top: 16px; }
+.swipe-undo:active { transform: scale(0.97); }
+.swipe-undo.sm { position: absolute; top: -2px; right: 0; margin-top: 0; padding: 5px 11px; font-size: 12px;
+  color: var(--accent); background: rgba(245, 166, 35, 0.12); border-color: rgba(245, 166, 35, 0.32); }
+.swipe-undo:disabled { opacity: 0; pointer-events: none; }
 
 /* =============================================================================
    Lineup screen (#22) — people, separate from Timetable (DEC-026/028)
@@ -525,14 +532,31 @@ a { color: inherit; text-decoration: none; }
 .addpill { margin-left: auto; appearance: none; background: none; cursor: pointer; font-size: 12px; font-weight: 800;
   color: var(--accent); border: 1px solid rgba(245, 166, 35, 0.4); border-radius: 999px; padding: 5px 12px; flex-shrink: 0; }
 
+/* ── Share my plan as image (#13/#21, DEC-029) ───────────────────────────────── */
+.share-sheet { align-items: stretch; }
+.share-preview { display: flex; justify-content: center; padding: 10px 20px 4px; min-height: 0; overflow: hidden; }
+.share-canvas { border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 18px 50px -18px rgba(0, 0, 0, 0.7);
+  width: auto; display: block; background: var(--bg); }
+.share-canvas.story { height: 46vh; max-height: 420px; }
+.share-canvas.square { height: 40vh; max-height: 340px; }
+.share-format { align-self: center; margin: 12px 0 4px; flex-shrink: 0; }
+.share-format button { display: inline-flex; align-items: center; gap: 6px; }
+.share-actions { display: flex; flex-direction: column; gap: 10px; padding: 10px 20px 4px; flex-shrink: 0; }
+.share-actions .btn { width: 100%; }
+.share-actions-row { display: flex; gap: 10px; }
+.share-actions-row .btn { flex: 1; }
+.share-note { text-align: center; font-size: 12px; color: var(--muted); padding: 8px 20px calc(20px + var(--safe-bottom)); margin: 0; min-height: 18px; }
+
 @keyframes fp-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fp-sheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 /* ── Lock in (#12c, DEC-017/018/029) ─────────────────────────────────────────── */
 .lockin { position: relative; height: 100%; display: flex; flex-direction: column; min-height: 0; }
 .lk-bar { display: flex; align-items: center; justify-content: space-between; padding: calc(10px + var(--safe-top)) 20px 4px; flex-shrink: 0; }
+.lk-bar-left { display: flex; align-items: center; gap: 16px; }
 .lk-link, .lk-close { appearance: none; background: none; border: 0; cursor: pointer; color: var(--muted);
   display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+.lk-undo { color: var(--accent); }
 .lk-progress { padding: 4px 22px 2px; flex-shrink: 0; }
 .lk-progress-head { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; color: var(--muted); font-weight: 600; }
 .lk-clash-head { text-align: center; padding: 16px 18px 12px; flex-shrink: 0; }
@@ -560,6 +584,22 @@ a { color: inherit; text-decoration: none; }
 .lk-note { padding: 10px 10px 0; font-size: 11px; font-style: italic; color: var(--muted); line-height: 1.45; }
 .lk-clash-row-title { font-size: 14px; font-weight: 700; }
 .lk-add-name { font-size: 14px; font-weight: 700; }
+/* ── Undo / "what did I give up" (DEC: V1.x) ─────────────────────────────────── */
+.lk-giveup { display: flex; align-items: center; gap: 11px; margin: 8px 18px 0; padding: 10px 12px; border-radius: 16px;
+  animation: giveup-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes giveup-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.lk-giveup-ico { color: var(--accent); font-size: 20px; flex-shrink: 0; }
+.lk-giveup-main { flex: 1; min-width: 0; }
+.lk-giveup-title { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-giveup-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-giveup-undo { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer; font-weight: 700;
+  font-size: 12px; padding: 6px 12px; border-radius: 999px; color: var(--accent);
+  background: rgba(245, 166, 35, 0.14); border: 1px solid rgba(245, 166, 35, 0.4); }
+.lk-giveup-x { flex-shrink: 0; cursor: pointer; background: none; border: 0; padding: 2px; color: var(--muted); font-size: 18px; }
+.lk-celebrate-undo { display: inline-flex; align-items: center; gap: 7px; margin-top: 20px; cursor: pointer; font-weight: 600;
+  font-size: 13px; padding: 9px 16px; border-radius: 999px; color: var(--ink);
+  background: var(--glass); border: 1px solid var(--border); max-width: 100%; }
+.lk-celebrate-undo .ms { color: var(--accent); }
 
 /* ── Celebration (#13, DEC-029) ──────────────────────────────────────────────── */
 .celebrate { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
@@ -823,7 +863,10 @@ a { color: inherit; text-decoration: none; }
 .block-pick-name { font-size: 20px; font-weight: 700; line-height: 1; }
 .block-pick-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .block-pick-avatars { margin-top: 14px; }
-.block-split-label { margin-top: 4px; }
+.block-split-head { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 4px; }
+.block-split-label { margin-top: 0; }
+.block-split-view { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; background: none; border: 0;
+  color: var(--accent); font-weight: 700; font-size: 12px; padding: 0 0 2px; }
 .block-split { display: flex; flex-direction: column; gap: 8px; }
 .block-split-row { display: flex; align-items: center; gap: 10px; padding: 12px 13px; }
 .block-split-row.mine { border-color: rgba(245, 166, 35, 0.4); }
@@ -843,6 +886,26 @@ a { color: inherit; text-decoration: none; }
 .block-actions-row { display: flex; gap: 10px; }
 .block-actions-row .btn { flex: 1; }
 .block-actions-note { font-size: 11px; text-align: center; color: var(--muted); margin: 2px 0 0; }
+
+/* ── Rich split view (#24.5) ─────────────────────────────────────────────────── */
+.squad-split { padding-top: 4px; }
+.split-day { margin-bottom: 8px; }
+.split-title { font-size: 27px; font-weight: 700; line-height: 1.04; }
+.split-emoji { -webkit-text-fill-color: initial; }
+.split-sub { font-size: 12.5px; color: var(--muted); margin: 10px 0 18px; line-height: 1.5; max-width: 30ch; }
+.split-cards { display: flex; flex-direction: column; gap: 12px; }
+.split-card { overflow: hidden; }
+.split-card.mine { border-color: rgba(245, 166, 35, 0.45); box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.2); }
+.split-card-bar { height: 6px; width: 100%; }
+.split-card-body { padding: 14px 15px 15px; }
+.split-card-top { display: flex; align-items: center; justify-content: space-between; }
+.split-stage { font-size: 14px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; }
+.split-you { color: var(--accent); }
+.split-count { font-size: 15px; font-weight: 800; }
+.split-act { font-size: 12px; color: var(--muted); margin: 3px 0 12px; }
+.split-undecided { display: flex; align-items: center; gap: 7px; justify-content: center; margin: 18px 0 0;
+  font-size: 12px; color: var(--muted); }
+.split-actions { padding-top: 14px; }
 
 /* Owner override (#24.4) */
 .override-head { display: flex; align-items: center; justify-content: space-between; }

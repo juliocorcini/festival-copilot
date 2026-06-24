@@ -18,6 +18,7 @@ import { JoinScreen } from "./routes/squad/JoinScreen";
 import { ShareMyPlanScreen } from "./routes/squad/ShareMyPlanScreen";
 import { SquadPlanScreen } from "./routes/squad/SquadPlanScreen";
 import { SquadBlockScreen } from "./routes/squad/SquadBlockScreen";
+import { SquadSplitScreen } from "./routes/squad/SquadSplitScreen";
 import { SquadOverrideScreen } from "./routes/squad/SquadOverrideScreen";
 import { SquadBoardScreen } from "./routes/squad/SquadBoardScreen";
 import { PresenceConsentScreen } from "./routes/presence/PresenceConsentScreen";
@@ -61,6 +62,7 @@ export function App(): JSX.Element {
             <Route path="squad/:id/board" element={<SquadBoardScreen />} />
             <Route path="squad/:id/plan" element={<SquadPlanScreen />} />
             <Route path="squad/:id/plan/:perfId" element={<SquadBlockScreen />} />
+            <Route path="squad/:id/plan/:perfId/split" element={<SquadSplitScreen />} />
             <Route path="squad/:id/plan/:perfId/override" element={<SquadOverrideScreen />} />
             <Route path="squad/:id/location" element={<PresenceConsentScreen />} />
             <Route path="squad/:id/where" element={<WhereScreen />} />

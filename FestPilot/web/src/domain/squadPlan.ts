@@ -73,6 +73,31 @@ export interface SquadPlan {
   enoughToBuild: boolean;
 }
 
+/** One stage in the rich split view (#24.5): a set and the members at it, the winner flagged. */
+export interface StageEntry {
+  set: PlannableSet;
+  members: SquadMember[];
+  isWinner: boolean;
+  isYou: boolean;
+}
+
+/**
+ * The squad's spread for a block as stage entries: the winner first, then each non-winner pick by
+ * headcount. Empty stages are dropped; the entry holding YOU is flagged. Pure — drives #24.5.
+ */
+export function stageEntriesForBlock(block: SquadBlock): StageEntry[] {
+  const entries: StageEntry[] = [
+    { set: block.set, members: block.going, isWinner: true, isYou: block.going.some((m) => m.isYou) },
+    ...block.split.map((g) => ({
+      set: g.set,
+      members: g.members,
+      isWinner: false,
+      isYou: g.members.some((m) => m.isYou),
+    })),
+  ];
+  return entries.filter((e) => e.members.length > 0);
+}
+
 export interface BuildSquadPlanInput {
   /** Plannable sets for the chosen day (from toPlannableSets, already day-filtered). */
   sets: PlannableSet[];

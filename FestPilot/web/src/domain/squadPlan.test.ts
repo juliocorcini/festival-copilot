@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildSquadPlan, type SquadMember } from "./squadPlan";
+import { buildSquadPlan, stageEntriesForBlock, type SquadMember } from "./squadPlan";
 import type { PlannableSet } from "./types";
 
 const MIN = 60_000;
@@ -226,5 +226,52 @@ describe("buildSquadPlan — full night ordering + empty state", () => {
     expect(plan.enoughToBuild).toBe(false);
     expect(plan.sharedCount).toBe(0);
     expect(plan.memberCount).toBe(2);
+  });
+});
+
+describe("stageEntriesForBlock — rich split view (#24.5)", () => {
+  const sets = [set("A", 0, 60, "actA", "MAINSTAGE"), set("B", 0, 60, "actB", "CORE"), set("C", 0, 60, "actC", "FREEDOM")];
+
+  it("lists the winner first, then each split set by headcount, flagging the one with you", () => {
+    const members = [
+      member("o", "owner", ["A"]),
+      member("a", "member", ["A"]),
+      member("b", "member", ["A"]),
+      member("c", "member", ["B"]),
+      member("d", "member", ["B"]),
+      member("me", "member", ["C"], { isYou: true }),
+    ];
+    const plan = buildSquadPlan({ sets, members, overrides: [], meId: "me" });
+    const entries = stageEntriesForBlock(plan.blocks[0]!);
+
+    expect(entries.map((e) => e.set.id)).toEqual(["A", "B", "C"]); // winner, then by size
+    expect(entries[0]!.isWinner).toBe(true);
+    expect(entries[0]!.members.map((m) => m.userId).sort()).toEqual(["a", "b", "o"]);
+    expect(entries[1]!.members.map((m) => m.userId).sort()).toEqual(["c", "d"]);
+    const yours = entries.find((e) => e.isYou)!;
+    expect(yours.set.id).toBe("C");
+    expect(yours.isWinner).toBe(false);
+  });
+
+  it("returns a single winner entry when the squad is together (no split)", () => {
+    const members = [member("o", "owner", ["A"]), member("a", "member", ["A"]), member("b", "member", ["A"])];
+    const plan = buildSquadPlan({ sets, members, overrides: [], meId: "o" });
+    const entries = stageEntriesForBlock(plan.blocks[0]!);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.isWinner).toBe(true);
+    expect(entries[0]!.members).toHaveLength(3);
+  });
+
+  it("drops empty stages and never lists a member twice", () => {
+    const members = [
+      member("o", "owner", ["A"]),
+      member("a", "member", ["A"]),
+      member("me", "member", ["B"], { isYou: true }),
+    ];
+    const plan = buildSquadPlan({ sets, members, overrides: [], meId: "me" });
+    const entries = stageEntriesForBlock(plan.blocks[0]!);
+    const ids = entries.flatMap((e) => e.members.map((m) => m.userId));
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(entries.every((e) => e.members.length > 0)).toBe(true);
   });
 });

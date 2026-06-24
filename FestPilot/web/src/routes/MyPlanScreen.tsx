@@ -12,9 +12,9 @@ import { useLineup } from "../data/useLineup";
 import { buildPlanTimeline, type PlanGapItem, type PlanSetItem } from "../domain/plan";
 import { daysForWeekends } from "../lib/festival";
 import { stageColor, timeInZone } from "../lib/format";
-import { sharePlan } from "../lib/share";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
+import { SharePlanSheet } from "./share/SharePlanSheet";
 
 export function MyPlanScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
@@ -25,6 +25,7 @@ export function MyPlanScreen(): JSX.Element {
   const tz = lineup?.festival.timezone ?? "UTC";
 
   const [now, setNow] = useState(() => Date.now());
+  const [showShare, setShowShare] = useState(false);
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(id);
@@ -67,11 +68,7 @@ export function MyPlanScreen(): JSX.Element {
         title={title}
         right={
           hasPlan ? (
-            <button
-              className="ava-sm"
-              aria-label="Share plan"
-              onClick={() => void sharePlan(title, plan.plan!.slots, tz)}
-            >
+            <button className="ava-sm" aria-label="Share plan" onClick={() => setShowShare(true)}>
               <span className="ms" style={{ color: "var(--accent)", fontSize: 19 }}>ios_share</span>
             </button>
           ) : undefined
@@ -129,6 +126,16 @@ export function MyPlanScreen(): JSX.Element {
             </div>
           </div>
         </div>
+      )}
+
+      {showShare && hasPlan && plan.plan && (
+        <SharePlanSheet
+          festivalName={lineup.festival.name}
+          dayName={title}
+          slots={plan.plan.slots}
+          timeZone={tz}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </>
   );

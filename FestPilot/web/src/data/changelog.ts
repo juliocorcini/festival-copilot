@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.7.0";
+export const APP_VERSION = "0.8.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.8.0",
+    date: "2026-06-24",
+    title: "Undo, share & the squad split",
+    icon: "auto_awesome",
+    whatsNew: [
+      "Changed your mind locking in? Undo any clash pick and see exactly what you gave up — then bring it back in a tap.",
+      "On the swipe screen, an Undo button takes you back to the last artist.",
+      "Share your day as a gorgeous, on-brand image — made for an Instagram story or WhatsApp — pick a Story or Square format, save it, or copy it as a link.",
+      "When the squad spreads across stages, a new split view shows who's where at a glance, with a one-tap \"meet up after\".",
+    ],
+    howToTest: [
+      "Lock in → make a pick → the \"You gave up …\" bar + Undo appear (also on the celebration). Onboarding swipe → Undo.",
+      "My Plan (or the Lock-in celebration) → Share → toggle Story/Square → Share image / Save / Copy link.",
+      "Squad plan → open a contested block → \"See who's where\" → per-stage cards + \"Set a meet-up after\".",
+    ],
+  },
   {
     version: "0.7.0",
     date: "2026-06-24",

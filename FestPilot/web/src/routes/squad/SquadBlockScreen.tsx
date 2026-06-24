@@ -113,7 +113,16 @@ export function SquadBlockScreen(): JSX.Element {
 
         {block.split.length > 0 && (
           <>
-            <div className="label block-split-label">The split</div>
+            <div className="block-split-head">
+              <div className="label block-split-label">The split</div>
+              <button
+                className="block-split-view"
+                onClick={() => navigate(`/squad/${id}/plan/${perfId}/split?day=${encodeURIComponent(day ?? "")}`)}
+              >
+                See who's where
+                <span className="ms" style={{ fontSize: 15 }}>arrow_forward</span>
+              </button>
+            </div>
             <div className="block-split">
               {block.split.map((g) => {
                 const mine = block.yourLock?.id === g.set.id;

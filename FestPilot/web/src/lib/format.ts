@@ -41,10 +41,14 @@ export function stageColor(stageName: string | null | undefined): string {
   return STAGE_PALETTE[hash % STAGE_PALETTE.length]!;
 }
 
+/** The deterministic stage color as a concrete hex — for surfaces that can't resolve CSS vars (canvas). */
+export function stageColorHex(stageName: string | null | undefined): string {
+  return TOKEN_HEX[stageColor(stageName)] ?? TOKEN_HEX["var(--muted)"]!;
+}
+
 /** The same deterministic stage color as `"r, g, b"`, for `rgba(var(--c), a)` recipes (timetable cards). */
 export function stageColorRgb(stageName: string | null | undefined): string {
-  const hex = TOKEN_HEX[stageColor(stageName)] ?? TOKEN_HEX["var(--muted)"]!;
-  const n = parseInt(hex.slice(1), 16);
+  const n = parseInt(stageColorHex(stageName).slice(1), 16);
   return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
 }
 
