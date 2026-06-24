@@ -601,10 +601,14 @@ a { color: inherit; text-decoration: none; }
 
 /* ── Timetable (#15e, DEC-027): TML-style horizontal grid ─────────────────── */
 .tt-screen { height: 100%; display: flex; flex-direction: column; min-height: 0; }
-.tt-top { display: flex; flex-direction: column; gap: 8px; padding: 6px 18px 8px; flex-shrink: 0; }
+/* Compact top bar (R7.4 / DEC-032): smaller title, single non-wrapping day row and tight paddings so
+   the controls never steal grid height. */
+.tt-top { display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 6px; flex-shrink: 0; }
 .tt-top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.tt-top h1 { margin: 0; font-size: 26px; font-weight: 700; line-height: 1; }
-.tt-days { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tt-top h1 { margin: 0; font-size: 21px; font-weight: 700; line-height: 1; }
+.tt-days { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.tt-days::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.tt-day { flex: none; }
 .ava-sm { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   background: var(--glass); border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; padding: 0; }
 
@@ -618,8 +622,8 @@ a { color: inherit; text-decoration: none; }
 .vs-seg.on { background: var(--accent); color: var(--bg); }
 .pill.on { background: var(--accent); color: var(--bg); border-color: transparent; }
 .tt-day { cursor: pointer; background: var(--glass); color: var(--ink); }
-.tt-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 18px 10px; flex-shrink: 0; }
-.tt-controls-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tt-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 16px 8px; flex-shrink: 0; }
+.tt-controls-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
 .tt-toggle { cursor: pointer; background: var(--glass); color: var(--ink); }
 .tt-lockin { cursor: pointer; font-weight: 800; color: var(--bg); border-color: transparent;
   background: linear-gradient(135deg, var(--accent), var(--accent2)); }
@@ -635,7 +639,12 @@ a { color: inherit; text-decoration: none; }
   font-size: 10px; font-weight: 700; color: var(--muted); white-space: nowrap; }
 .tt-content .time-row .t.now { color: var(--accent); }
 
-.tt-content .stage { position: relative; margin-bottom: 10px; }
+.tt-content .stage { position: relative; z-index: 1; margin-bottom: 10px; }
+
+/* Discreet time gridlines (R7.2): hour lines + fainter :30 lines, behind the cards. */
+.tt-content .tt-grid { position: absolute; top: 30px; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
+.tt-content .tt-grid .gl { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.06); }
+.tt-content .tt-grid .gl.half { background: rgba(255, 255, 255, 0.028); }
 .tt-content .stage-name { position: sticky; left: 10px; z-index: 25; display: inline-flex; align-items: center; gap: 6px;
   margin-bottom: 5px; padding: 3px 10px 3px 8px; border-radius: 999px;
   background: rgba(20, 17, 12, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -644,19 +653,21 @@ a { color: inherit; text-decoration: none; }
 .tt-content .stage-name .pin { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .tt-content .track { position: relative; width: 100%; height: 64px; }
 
-.tt-content .set { position: absolute; top: 0; bottom: 0; border-radius: 13px; padding-right: 44px;
+/* Card recipe (R7.1): ONE thin stage-color line at the top (a real top border, so it never doubles
+   with the card outline) and no bottom colored line. The 3px right inset (R7.3) keeps back-to-back
+   sets from gluing together while real gaps stay proportional. */
+.tt-content .set { position: absolute; top: 0; bottom: 0; border-radius: 12px; padding-right: 44px;
   background:
-    linear-gradient(to bottom, rgba(var(--c), 0.9) 0, rgba(var(--c), 0.9) 1.5px, transparent 1.5px),
     radial-gradient(130% 80% at 0% 0%, rgba(255, 255, 255, 0.1), transparent 46%),
     rgba(22, 19, 14, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-top: 2px solid rgb(var(--c));
+  box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .tt-content .set.fav { color: #1a1205;
   background:
-    linear-gradient(to bottom, rgba(var(--c), 0.7) 0, rgba(var(--c), 0.7) 1.5px, transparent 1.5px),
     radial-gradient(130% 80% at 0% 0%, rgba(255, 255, 255, 0.28), transparent 46%),
     linear-gradient(135deg, rgba(255, 216, 128, 0.96), rgba(245, 166, 35, 0.84));
-  border: 1px solid rgba(255, 222, 150, 0.9);
+  border: 1px solid rgba(255, 222, 150, 0.9); border-top: 2px solid rgb(var(--c));
   box-shadow: 0 0 16px rgba(245, 166, 35, 0.3), 0 8px 16px -12px rgba(0, 0, 0, 0.7); }
 
 .tt-content .set-inner { position: sticky; left: 0; display: inline-flex; align-items: center; gap: 9px; height: 100%;

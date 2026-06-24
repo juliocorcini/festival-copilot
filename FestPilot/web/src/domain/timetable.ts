@@ -35,12 +35,21 @@ export interface HourMark {
   leftPct: number;
 }
 
+/** A background grid line (R7.2). `half` is true for the :30 lines, which render fainter than hours. */
+export interface GridLine {
+  ms: number;
+  leftPct: number;
+  half: boolean;
+}
+
 export interface TimetableModel {
   windowStartMs: number;
   windowEndMs: number;
   totalMs: number;
   totalHours: number;
   hourMarks: HourMark[];
+  /** Hour + half-hour positions for discreet background gridlines (R7.2). */
+  gridLines: GridLine[];
   stages: TimetableStage[];
   isEmpty: boolean;
 }
@@ -110,7 +119,7 @@ export function buildTimetable(input: BuildTimetableInput): TimetableModel {
   const sets = toPlannableSets(scoped, stages).filter((set) => (dayMembers ? dayMembers.has(set.id) : true));
 
   if (sets.length === 0) {
-    return { windowStartMs: 0, windowEndMs: 0, totalMs: 0, totalHours: 0, hourMarks: [], stages: [], isEmpty: true };
+    return { windowStartMs: 0, windowEndMs: 0, totalMs: 0, totalHours: 0, hourMarks: [], gridLines: [], stages: [], isEmpty: true };
   }
 
   let minStart = Number.POSITIVE_INFINITY;
@@ -128,6 +137,14 @@ export function buildTimetable(input: BuildTimetableInput): TimetableModel {
   const hourMarks: HourMark[] = [];
   for (let t = windowStartMs; t <= windowEndMs; t += HOUR_MS) {
     hourMarks.push({ ms: t, leftPct: pct(t) });
+  }
+
+  // Half-hour grid (R7.2): one line every 30 min; even steps from the (hour-snapped) window start are
+  // whole hours, odd steps are the fainter :30 lines.
+  const HALF_MS = HOUR_MS / 2;
+  const gridLines: GridLine[] = [];
+  for (let t = windowStartMs, i = 0; t <= windowEndMs; t += HALF_MS, i += 1) {
+    gridLines.push({ ms: t, leftPct: pct(t), half: i % 2 === 1 });
   }
 
   const sortOrderById = new Map(stages.map((stage) => [stage.id, stage.sortOrder]));
@@ -171,6 +188,7 @@ export function buildTimetable(input: BuildTimetableInput): TimetableModel {
     totalMs,
     totalHours: totalMs / HOUR_MS,
     hourMarks,
+    gridLines,
     stages: stagesOut,
     isEmpty: false,
   };

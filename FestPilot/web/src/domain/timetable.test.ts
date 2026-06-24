@@ -52,6 +52,13 @@ describe("buildTimetable", () => {
     expect(model.hourMarks.map((h) => h.leftPct)).toEqual([0, 25, 50, 75, 100]);
   });
 
+  it("emits hour + half-hour gridlines, with :30 lines flagged `half` (R7.2)", () => {
+    // 4-hour window → a line every 30 min: 0,12.5,…,100; odd steps are the fainter :30 lines.
+    expect(model.gridLines.map((g) => g.leftPct)).toEqual([0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100]);
+    expect(model.gridLines.map((g) => g.half)).toEqual([false, true, false, true, false, true, false, true, false]);
+    expect(model.gridLines.filter((g) => g.half)).toHaveLength(4);
+  });
+
   it("orders stages by sortOrder and positions sets as time percentages", () => {
     expect(model.stages.map((s) => s.name)).toEqual(["MAINSTAGE", "FREEDOM"]);
     const main = model.stages[0]!;

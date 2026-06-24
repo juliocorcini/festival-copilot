@@ -32,6 +32,7 @@ export function TimetableScreen(): JSX.Element {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [zoom, setZoom] = useState<Zoom>("2h");
   const [onlyFavs, setOnlyFavs] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -110,6 +111,15 @@ export function TimetableScreen(): JSX.Element {
             <span className="ms" style={{ fontSize: 15 }}>favorite</span>
             Only my favs
           </button>
+          <button
+            className={`pill tt-toggle${showGrid ? " on" : ""}`}
+            onClick={() => setShowGrid((v) => !v)}
+            aria-pressed={showGrid}
+            aria-label="Toggle time gridlines"
+          >
+            <span className="ms" style={{ fontSize: 15 }}>grid_on</span>
+            Grid
+          </button>
         </div>
         <button
           className="pill tt-lockin"
@@ -140,6 +150,14 @@ export function TimetableScreen(): JSX.Element {
               })}
             </div>
 
+            {showGrid && (
+              <div className="tt-grid" aria-hidden="true">
+                {model.gridLines.map((line) => (
+                  <span key={line.ms} className={`gl${line.half ? " half" : ""}`} style={{ left: `${line.leftPct}%` }} />
+                ))}
+              </div>
+            )}
+
             {nowVisible && <div className="now-line" style={{ left: `${nowPct}%` }} />}
 
             {model.stages.map((stage) => {
@@ -156,7 +174,8 @@ export function TimetableScreen(): JSX.Element {
                     {stage.sets.map((set) => {
                       const cardStyle = {
                         left: `${set.leftPct}%`,
-                        width: `${set.widthPct}%`,
+                        // R7.3: a hairline inset so back-to-back sets (endMs == nextStartMs) never glue.
+                        width: `calc(${set.widthPct}% - 3px)`,
                         "--c": stageColorRgb(stage.name),
                       } as CSSProperties;
                       return (

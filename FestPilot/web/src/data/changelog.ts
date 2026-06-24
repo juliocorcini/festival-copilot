@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.10.1";
+export const APP_VERSION = "0.10.2";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.10.2",
+    date: "2026-06-24",
+    title: "A cleaner, easier-to-read timetable",
+    icon: "calendar_view_week",
+    whatsNew: [
+      "Cleaner set cards: a single slim stage-colour line on top, the artist photo, and the heart neatly centred.",
+      "Discreet hour and half-hour gridlines make set times easier to read at a glance (toggle them with the Grid button).",
+      "Back-to-back sets no longer look glued together, and the controls up top are more compact so you see more of the grid.",
+    ],
+    howToTest: [
+      "Open the Timetable: cards now show one thin colour line on top (not two) and a small gap between touching sets.",
+      "Tap 'Grid' to show/hide the faint time lines behind the cards.",
+    ],
+  },
   {
     version: "0.10.1",
     date: "2026-06-24",

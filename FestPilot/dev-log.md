@@ -12,12 +12,12 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R6 (P1 Now & Next) CLOSED ✅.** Home is now sourced, never arbitrary: locked **My Plan** for the active
-  day first (rich LEAVE-IN hero), else the user's **favorites in chronological order** (now/next/later), else an honest
-  empty state ("Pick the acts you can't miss" → lineup). New pure `chronoNowNext` (DEC-022). Next: **R7 (P1 Timetable polish)**.
-- **Tests now:** typecheck clean · **server 136 + web 226 unit** pass · **e2e green** (onboarding swipe+grid, timetable,
-  squad, **now R6: empty + favorited-act-appears**) · build OK · **app v0.10.1 (deployed Production, `index-CaczvcIx.js`)**
-  · Worker unchanged from R5 (`555c03b9`; R6 is frontend-only).
+- **Gate:** **R7 (P1 Timetable polish) CLOSED ✅.** Card recipe = one thin top stage-color line (no doubled/bottom line),
+  centered heart, photos; discreet hour + **half-hour gridlines** (toggle, default on); a 3px inset so back-to-back sets
+  don't glue; compact top bar (smaller title, single non-wrapping day row, tight paddings). Next: **R8 (P1 My Plan editable)**.
+- **Tests now:** typecheck clean · **server 136 + web 227 unit** pass · **e2e green** (onboarding swipe+grid, timetable
+  favorite/only-favs/zoom + Lineup switch, squad, now R6) · build OK · **app v0.10.2 (deployed Production, `index-D6WOW1aw.js`)**
+  · Worker unchanged from R5 (`555c03b9`; R6+R7 are frontend-only).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0010** applied.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -30,13 +30,24 @@
 - [x] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days + revisit-favorites · suggest-a-festival (DEC-055). **CLOSED 2026-06-24 (v0.9.0). ← all P0 (R0–R4) done.**
 - [x] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere (DEC-061). **CLOSED 2026-06-24 (v0.10.0).**
 - [x] **R6** (P1 now/next) — plan-then-favorites, never arbitrary (DEC-022). **CLOSED 2026-06-24 (v0.10.1).**
-- [ ] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar.
+- [x] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar. **CLOSED 2026-06-24 (v0.10.2).**
 - [ ] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap.
 - [ ] **R9** (P1 squad) — multiple squads · honest copy · avatar on R2 + custom emoji (DEC-059) · auto-share (DEC-054) · real mini-map · meeting photo · AI-icon/J-menu.
 - [ ] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select.
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R7 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.10.2, frontend-only).** Timetable & Lineup polish (review §5/§10),
+  all in `TimetableScreen.tsx` + `styles.css` (+ pure `domain/timetable.ts`): **R7.1 card recipe** — replaced the
+  gradient top-line-under-a-white-border (which read as a doubled line) with a single **2px stage-color top border** and
+  a subtle full outline; no bottom colored line; heart stays vertically centered; photos already render (R5.4).
+  **R7.2 gridlines** — `buildTimetable` now emits `gridLines` (a line every 30 min; odd steps flagged `half`), rendered
+  as a discreet `.tt-grid` behind the cards with a **Grid** toggle (default on); +1 unit asserts the half-hour marks/positions.
+  **R7.3 touching-card gap** — card width is `calc(widthPct% − 3px)` so back-to-back sets (`endMs == nextStartMs`) never
+  glue while real gaps stay proportional. **R7.4 compact top bar (DEC-032)** — smaller title, a single **non-wrapping**
+  day row (horizontal scroll), tighter paddings so controls don't steal grid height. **server 136 + web 227 unit · e2e
+  green** (timetable favorite→gold, only-favs, zoom, Lineup switch all still pass) · typecheck + build OK. **Deployed:**
+  Pages → Production `master` (`festpilot.pages.dev` serves `index-D6WOW1aw.js`); Worker untouched. → **R8 (P1 My Plan editable)**.
 - **R6 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.10.1, frontend-only).** Now & Next is **sourced, never arbitrary**
   (review §4 / DEC-022). New pure **`chronoNowNext`** (`domain/nowNext.ts`): orders any `HomeSet[]` by absolute start and
   returns `{live, hero, next, later}`. `NowScreen` now picks the hero in strict priority — (1) the active day's **locked

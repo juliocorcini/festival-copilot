@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) CLOSED**, app v0.10.1)
+> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) + R7 (timetable polish) CLOSED**, app v0.10.2)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -25,7 +25,11 @@ DEC-061). App **v0.10.0**, deployed to Production; Worker redeployed (identity m
 Plan** first (rich NOW + live LEAVE-IN hero), else the user's **favorites in chronological order** (now/next/later via the
 new pure `chronoNowNext`), else an **honest empty state** that points to the lineup. App **v0.10.1**, deployed to
 Production (frontend-only; Worker unchanged).
-**Next: R7 (P1 Timetable & Lineup polish — card recipe, hour gridlines, touching-card margin, compact top bar).**
+**R7 (P1 Timetable & Lineup polish) ✅ CLOSED:** set cards now use **one thin top stage-color line** (no doubled/bottom
+line), centered heart and photos; discreet hour + **half-hour gridlines** with a Grid toggle (pure `gridLines` in
+`domain/timetable.ts`); a small inset so **back-to-back sets** don't glue; and a **compact top bar** (smaller title,
+single non-wrapping day row) so controls don't steal grid height. App **v0.10.2**, deployed to Production (frontend-only).
+**Next: R8 (P1 My Plan editable — context menu swap/remove/add, recompute zero-overlap).**
 
 ## How we build from here (the orchestrator)
 
