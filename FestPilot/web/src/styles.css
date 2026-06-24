@@ -58,6 +58,17 @@ body {
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  /* App-feel: text isn't selectable and long-press doesn't pop the iOS callout menu (R10.4).
+     Inputs/textareas and an opt-in .selectable are re-enabled just below. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Re-enable selection where it's genuinely useful: form fields and copyable values. */
+input, textarea, [contenteditable="true"], .selectable {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
 }
 button { font-family: inherit; }
 a { color: inherit; text-decoration: none; }
@@ -1482,6 +1493,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .about-name { font-size: 28px; font-weight: 700; }
 .about-tagline { font-size: 13px; color: var(--muted); max-width: 260px; }
 .about-version { margin-top: 6px; color: var(--accent2); border-color: rgba(245, 166, 35, 0.4); background: rgba(245, 166, 35, 0.12); }
+.about-build { margin-top: 8px; font-size: 11px; color: var(--muted); }
 .about-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .about-blurb { font-size: 13px; line-height: 1.5; color: var(--ink); }
 .about-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--border); }

@@ -83,7 +83,10 @@ const SEED = (arg) => {
   );
 };
 
-test.use({ geolocation: { latitude: 51.0915, longitude: 4.013 }, permissions: ["geolocation"] });
+// Block the service worker: it does network-first on /api and would shadow the page.route
+// stubs below (SW-originated fetches bypass Playwright routing), hitting the preview server
+// with no API and 404ing the presence poll. The SW itself is covered by registerSW unit tests.
+test.use({ serviceWorkers: "block", geolocation: { latitude: 51.0915, longitude: 4.013 }, permissions: ["geolocation"] });
 
 test.describe("Phase 5 — live presence", () => {
   test.setTimeout(90_000);

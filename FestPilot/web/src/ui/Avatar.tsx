@@ -4,6 +4,7 @@
  * profile) shows photos consistently and degrades to initials identically.
  */
 import { initialsOf } from "../data/identity";
+import { readableInkOn } from "../lib/contrast";
 
 const FALLBACK_COLOR = "#6B7280";
 
@@ -44,7 +45,7 @@ export function Avatar({ url, color, name, size = 36, ring = false, className }:
         height: size,
         fontSize: Math.round(size * 0.36),
         background: `linear-gradient(135deg, ${dot}, ${dot}cc)`,
-        color: "#0F0D09",
+        color: readableInkOn(dot),
         boxShadow: ringShadow,
       }}
     >

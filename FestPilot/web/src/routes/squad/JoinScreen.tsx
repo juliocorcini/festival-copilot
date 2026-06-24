@@ -13,6 +13,7 @@ import { StackHeader } from "../../app/StackHeader";
 import { autoShareOnJoinEnabled } from "../../app/settings";
 import { api, ApiError } from "../../data/api";
 import { initialsOf, useIdentity } from "../../data/identity";
+import { readableInkOn } from "../../lib/contrast";
 import type { InvitePreviewDto } from "../../data/types";
 
 /** Pull the invite code out of a pasted link or raw code. */
@@ -175,7 +176,7 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
                   height: 40,
                   fontSize: 13,
                   background: `linear-gradient(135deg, ${user?.avatarColor ?? "#F5A623"}, ${user?.avatarColor ?? "#FFD060"}cc)`,
-                  color: "#0F0D09",
+                  color: readableInkOn(user?.avatarColor ?? "#F5A623"),
                 }}
               >
                 {initialsOf(youName)}

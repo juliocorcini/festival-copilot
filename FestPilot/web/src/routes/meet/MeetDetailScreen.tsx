@@ -11,6 +11,7 @@ import { api } from "../../data/api";
 import { useMeetingPoint } from "../../data/meetingPoints";
 import { useGroupPresence } from "../../data/presence";
 import { initialsOf } from "../../data/identity";
+import { readableInkOn } from "../../lib/contrast";
 import type { MeetingPointMemberDto, SettableMeetingStatus } from "../../data/types";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { compressMeetingPhoto } from "../../ui/imageCompress";
@@ -120,7 +121,7 @@ export function MeetDetailScreen(): JSX.Element {
                     background: m.avatarColor
                       ? `linear-gradient(135deg, ${m.avatarColor}, ${m.avatarColor}cc)`
                       : "linear-gradient(135deg, #6B7280, #6B7280cc)",
-                    color: "#0F0D09",
+                    color: readableInkOn(m.avatarColor ?? "#6B7280"),
                   }}
                 >
                   {initialsOf(m.displayName)}

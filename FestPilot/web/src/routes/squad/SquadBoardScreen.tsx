@@ -10,6 +10,7 @@ import { api } from "../../data/api";
 import { useBoard } from "../../data/board";
 import { useGroup } from "../../data/groups";
 import { initialsOf } from "../../data/identity";
+import { readableInkOn } from "../../lib/contrast";
 import type { BoardNoteDto } from "../../data/types";
 import { ErrorState, LoadingState } from "../../ui/states";
 
@@ -139,7 +140,7 @@ function NoteCard({
       <header className="board-note-head">
         <span
           className="ava board-ava"
-          style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: "#0F0D09" }}
+          style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: readableInkOn(color) }}
         >
           {initialsOf(note.authorName)}
         </span>

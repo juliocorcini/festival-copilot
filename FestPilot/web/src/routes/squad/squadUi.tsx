@@ -1,5 +1,6 @@
 /** Shared bits for the squad shared-timetable screens (#24): avatars, status pill, block summary. */
 import { initialsOf } from "../../data/identity";
+import { readableInkOn } from "../../lib/contrast";
 import type { SquadBlock, SquadMember } from "../../domain/squadPlan";
 
 const FALLBACK_COLOR = "#6B7280";
@@ -22,7 +23,7 @@ export function MemberAvatar({
         height: size,
         fontSize: size * 0.36,
         background: `linear-gradient(135deg, ${color}, ${color}cc)`,
-        color: "#0F0D09",
+        color: readableInkOn(color),
         boxShadow: ring ? "0 0 0 2px var(--bg)" : undefined,
       }}
     >

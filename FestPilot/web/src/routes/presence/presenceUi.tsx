@@ -1,5 +1,6 @@
 /** Shared bits for the presence screens (#25): avatar with optional live ring + coarse label text. */
 import { initialsOf } from "../../data/identity";
+import { readableInkOn } from "../../lib/contrast";
 import type { PresenceMemberDto } from "../../data/types";
 
 const FALLBACK_COLOR = "#6B7280";
@@ -24,7 +25,7 @@ export function PresenceAvatar({
         height: size,
         fontSize: size * 0.3,
         background: `linear-gradient(135deg, ${c}, ${c}cc)`,
-        color: "#0F0D09",
+        color: readableInkOn(c),
       }}
     >
       {initialsOf(name)}
