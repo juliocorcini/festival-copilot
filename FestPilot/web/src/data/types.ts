@@ -86,3 +86,13 @@ export interface FestivalMapDto {
   revision: number;
   transform: MapTransformDoc;
 }
+
+// Identity behind the auth seam (DEC-024). Anonymous-first; profile set at first group join.
+export interface UserDto {
+  id: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  avatarColor: string | null;
+  isAnonymous: boolean;
+  provider: string;
+}

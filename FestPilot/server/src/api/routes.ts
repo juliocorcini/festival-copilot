@@ -4,13 +4,17 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env } from "../env";
 import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
+import { me } from "./me";
 
 export const api = new Hono<{ Bindings: Env }>();
 
-// PWA is served from a different origin in dev; allow cross-origin reads.
-api.use("*", cors());
+// PWA is served from a different origin in dev; allow cross-origin reads + the auth header.
+api.use("*", cors({ origin: "*", allowHeaders: ["authorization", "content-type", "accept"] }));
 
 api.get("/health", (c) => c.json({ ok: true, service: "festpilot-api" }));
+
+// Identity (anonymous-first; DEC-024).
+api.route("/me", me);
 
 api.get("/festivals", async (c) => {
   const festivals = await listFestivals(c.env.DB);

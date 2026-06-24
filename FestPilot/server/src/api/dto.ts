@@ -78,3 +78,13 @@ export interface FestivalMapDto {
   revision: number;
   transform: MapTransformDoc;
 }
+
+// Social domain (Pillar 3). The user identity behind the auth seam (DEC-024).
+export interface UserDto {
+  id: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  avatarColor: string | null;
+  isAnonymous: boolean;
+  provider: string;
+}

@@ -422,3 +422,21 @@
 - **Supersedes (timing only)**: the Phase-2 "Backend: POST/DELETE /api/favorites, GET /api/me/favorites" lines — the
   endpoints are **moved to Phase 4**; the *intent* (favorites persist, plan is conflict-free) is fully met locally.
 - **Detail**: `web/src/domain/*` (pure logic + property tests); `web/src/data/localStore.ts`; orchestrator §13 Phase 2.
+
+### DEC-042 — V1 squad identity is anonymous-local; permanent accounts deferred behind the auth seam
+- **Date**: 2026-06-23 (build, Phase 4 G4.1)
+- **Status**: APPROVED (executor decision, consistent with DEC-024/038/039)
+- **Decision**: Groups in V1 run on an **anonymous-local identity**: the client mints a stable `anon.<ulid>` bearer
+  token once; the Worker turns it into an `app_user` (`is_anonymous=1`, `auth_provider='anonymous'`) on first request,
+  **behind a single `getUserFromRequest()` seam** (`server/src/auth.ts`). The DEC-024 rule "a **permanent** account
+  (Google + email-link) is required to create/join a group" is **deferred** to the Firebase integration (DEC-038 put
+  Firebase ⏳): the sign-in screen ships **"Continue as guest"** as the working path and shows Google/email-link as
+  upcoming. **No Apple/iOS** (DEC-039). When Firebase lands, ID-token verification slots into `getUserFromRequest`
+  unchanged for all routes, and anonymous→permanent linking preserves the uid so favorites/plan/squad carry over.
+- **Why**: DEC-038 explicitly deferred Firebase ("anon/local"); the orchestrator (§5/§19) mandates running the **local
+  equivalent** when a credential is absent and marking the live step ⏳ rather than blocking. Anonymous identity is the
+  honest V1 slice and is structurally identical to the Firebase path thanks to the seam. Friends-scale V1 does not need
+  forgery-proof tokens; that hardening arrives with Firebase.
+- **Trade-off**: anon tokens are unverified (a determined user could forge one) — acceptable pre-Firebase at friends
+  scale; flagged ⏳ as a launch-hardening item (Phase 7).
+- **Detail**: `server/src/auth.ts`, `server/src/api/{me,users}.ts`, `web/src/data/{authToken,identity}.ts`; orchestrator §13 Phase 4 G4.1.

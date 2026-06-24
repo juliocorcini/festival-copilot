@@ -4,7 +4,8 @@
  * a live source. Every read is a single GET — the service worker layers offline
  * caching on top (network-first for /api, see public/sw.js).
  */
-import type { FestivalDto, FestivalMapDto, LineupDto, StageDto } from "./types";
+import type { FestivalDto, FestivalMapDto, LineupDto, StageDto, UserDto } from "./types";
+import { authHeader } from "./authToken";
 
 const DEFAULT_API = "https://festpilot.trippilot.workers.dev";
 
@@ -35,6 +36,42 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     throw new ApiError(`Request failed (${res.status})`, res.status, url);
   }
   return (await res.json()) as T;
+}
+
+interface RequestOpts {
+  method?: string;
+  body?: unknown;
+  signal?: AbortSignal;
+}
+
+/** Authenticated JSON request — attaches the bearer token (minting it on first use). */
+async function authedJson<T>(path: string, opts: RequestOpts = {}): Promise<T> {
+  const url = `${API_BASE}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: opts.method ?? "GET",
+      signal: opts.signal,
+      headers: {
+        accept: "application/json",
+        ...(opts.body != null ? { "content-type": "application/json" } : {}),
+        ...authHeader(),
+      },
+      body: opts.body != null ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch {
+    throw new ApiError(`Network error reaching ${path}`, 0, url);
+  }
+  if (!res.ok) {
+    throw new ApiError(`Request failed (${res.status})`, res.status, url);
+  }
+  return (await res.json()) as T;
+}
+
+export interface ProfileInput {
+  displayName?: string;
+  avatarColor?: string;
+  locale?: string;
 }
 
 export interface LineupQuery {
@@ -71,5 +108,16 @@ export const api = {
 
   getMap(festivalId: string, signal?: AbortSignal): Promise<FestivalMapDto> {
     return getJson<FestivalMapDto>(`/api/festivals/${festivalId}/map`, signal);
+  },
+
+  // Identity (anonymous-first; DEC-024). GET ensures + returns the caller's user.
+  getMe(signal?: AbortSignal): Promise<UserDto> {
+    return authedJson<{ user: UserDto }>("/api/me", { signal }).then((d) => d.user);
+  },
+
+  updateMe(profile: ProfileInput, signal?: AbortSignal): Promise<UserDto> {
+    return authedJson<{ user: UserDto }>("/api/me", { method: "PUT", body: profile, signal }).then(
+      (d) => d.user
+    );
   },
 };

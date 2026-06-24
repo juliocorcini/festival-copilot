@@ -642,3 +642,44 @@ a { color: inherit; text-decoration: none; }
 .route-head { font-size: 20px; line-height: 1; }
 .route-end { background: rgba(224, 86, 59, 0.16); border: 1px solid rgba(224, 86, 59, 0.4); color: #f08a73; border-radius: 12px;
   padding: 10px 12px; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; }
+
+/* =============================================================================
+   Squad / identity (Phase 4 — Groups; #23 batch 1)
+   ============================================================================= */
+.field { width: 100%; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 16px; color: var(--ink); font-size: 15px; font-weight: 600; font-family: inherit; outline: none; }
+.field::placeholder { color: var(--muted); }
+.field:focus { border-color: rgba(245, 166, 35, 0.5); box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.4); }
+
+/* Empty-state hero (#23.1) */
+.squad-empty { flex: 1; display: flex; flex-direction: column; }
+.squad-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 8px; }
+.squad-hero-orb { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 12px;
+  background: radial-gradient(circle at 50% 35%, rgba(245, 166, 35, 0.28), rgba(255, 255, 255, 0.03)); border: 1.5px solid rgba(245, 166, 35, 0.4); }
+.squad-hero-orb .ms { font-size: 46px; color: var(--accent); }
+.squad-hero h2 { margin: 0; font-size: 24px; line-height: 1.1; }
+.squad-hero p { margin: 6px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; max-width: 30ch; }
+.squad-actions { display: flex; flex-direction: column; gap: 10px; padding: 0 18px 18px; }
+.squad-note { font-size: 11px; text-align: center; color: var(--muted); padding-top: 2px; }
+
+/* Ready card (signed in, no group yet) */
+.squad-ready { display: flex; align-items: center; gap: 14px; padding: 16px; }
+.squad-ready .ava { width: 52px; height: 52px; font-size: 18px; }
+.squad-ready-main { flex: 1; min-width: 0; }
+.squad-ready-main h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.squad-ready-main p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+
+/* Sign-in providers (#23.2) */
+.signin-google { background: #fff; color: #1f1f1f; }
+.signin-or { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+.signin-or::before, .signin-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.signin-or span { font-size: 11px; color: var(--muted); font-weight: 700; }
+.btn:disabled .pill { margin-left: auto; }
+
+/* Profile setup (#23.3) */
+.profile-ava-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 8px 0 22px; }
+.profile-ava { width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; font-size: 34px; color: #0f0d09; }
+.dot-picker { display: flex; gap: 12px; margin-top: 6px; }
+.dot-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 0; padding: 0; }
+.dot-swatch.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px currentColor; }

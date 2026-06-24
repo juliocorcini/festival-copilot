@@ -5,10 +5,20 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 in progress.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 core + PHASE 4 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P3 in progress** — G3.2 (travel matrix + coord→stage) ✅ · G3.3 (Now & Next ✅ · stage routing/walking nav B7.4/B7.5 ✅ · **offline contract B6.5 ✅**) — next: POI layer (needs data), admin map-verify, or Phase 4.
-  Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅ (Lock-in + Celebration + My Plan)** — deployed.
+- Active Phase / Gate: **P4 in progress** — **G4.1 identity ✅** — next: G4.2 (groups + GroupRoom DO + invites + members).
+  P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
+  Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
+- **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
+  ships **anonymous-local** (`anon.<ulid>` bearer → `app_user` is_anonymous, DEC-042); Firebase JWT verification slots in
+  later unchanged. `api/users.ts` (`ensureUser` upsert by firebase_uid, idempotent, COALESCE profile edits) + `api/me.ts`
+  (`GET/PUT /api/me`) + migration `0003_app_user_profile.sql` (avatar_color) applied remote. Web: `data/authToken.ts`
+  (token mint + Authorization header + cached user), `data/identity.ts` (`useIdentity`, `initialsOf`, dot palette),
+  `api.getMe/updateMe`. Screens: **Sign-in** (#23.2 guest primary, Google/email-link "Soon", no Apple) + **Profile**
+  (#23.3 name + initials avatar + dot color) + **Squad** rebuilt (empty hero #23.1 → ready state). 7 server + 5 web unit
+  tests + a `squad` Playwright flow (empty→guest→profile→ready, 3 screenshots). Worker redeployed; Pages
+  https://218bfb60.festpilot.pages.dev.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the
@@ -70,13 +80,14 @@
 - **G0.2 ✅**: map base **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). **G0.3 ✅**: `festival_map` + map API.
 - **DEC-040:** V1 map ships as a pre-rendered raster base (WebP) + live vector overlay; the ~20 MB inline-relief SVG
   is dropped from shipped assets. R2 stays out (DEC-038).
-- Last green test run: 2026-06-23 — **server 32 pass**, **web 57 vitest** (domain: intervals/resolver/partialSet/lineup/
-  timetable/**plan** + festival + localStore + api client + SW reg + map assets), **5 Playwright** e2e (phase0-map + phase1 shell
-  + phase2 onboarding→lineup-favorites + phase2 timetable grid + **phase2 lock-in→celebrate→my-plan**). Screenshots in
-  `web/e2e/screenshots/` (… + phase2-lockin-clash / phase2-lockin-done / phase2-myplan).
-- typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages (v0.2.0)**.
+- Last green test run: 2026-06-23 — **server 39 pass** (+ auth seam + ensureUser), **web 84 vitest** (domain + data:
+  travel/nowNext/route/offline/**authToken** + api client + SW reg + map assets), **9 Playwright** e2e (phase0-map + phase1
+  shell + phase2 onboarding/timetable/lock-in + phase3 now/route/offline + **phase4 squad identity**). Screenshots in
+  `web/e2e/screenshots/` (… + phase4-squad-empty / phase4-profile / phase4-squad-ready).
+- typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages**.
 - Live: D1 **created+migrated** · Worker **deployed+ingesting** · Pages **deployed** · R2 **NOT used** (DEC-038 Q1).
-- Credentials: Cloudflare token **saved + verified**. Firebase: deferred (DEC-038 Q3).
+- Credentials: Cloudflare token **saved + verified**. Firebase: deferred (DEC-038/042) — V1 squad identity is
+  **anonymous-local** (`anon.<ulid>` behind `getUserFromRequest`); Google/email-link + token verification are ⏳ Firebase.
 - Confidence: 90% (Phase 0 verified end-to-end in production).
 
 ## Completed (most recent first)
