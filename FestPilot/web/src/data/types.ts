@@ -96,3 +96,34 @@ export interface UserDto {
   isAnonymous: boolean;
   provider: string;
 }
+
+// Groups (Pillar 3a — UC-16/17). Mirrors server/src/api/dto.ts.
+export interface GroupDto {
+  id: string;
+  name: string;
+  emoji: string | null;
+  festivalId: string;
+  createdByUserId: string;
+  memberCount: number;
+  role: string | null;
+  inviteToken: string | null;
+}
+
+export interface GroupMemberDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  role: string;
+  isYou: boolean;
+}
+
+export interface InvitePreviewDto {
+  token: string;
+  groupId: string;
+  name: string;
+  emoji: string | null;
+  festivalId: string;
+  memberCount: number;
+  ownerName: string | null;
+  alreadyMember: boolean;
+}

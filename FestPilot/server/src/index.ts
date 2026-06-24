@@ -8,6 +8,7 @@ import type { Env } from "./env";
 import { api } from "./api/routes";
 import { upsertFestivalMap, type FestivalMapInput } from "./api/repo";
 import { runScheduledIngest } from "./ingest/ingest";
+export { GroupRoom } from "./group/room";
 
 const app = new Hono<{ Bindings: Env }>();
 

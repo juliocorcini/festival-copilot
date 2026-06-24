@@ -12,6 +12,9 @@ import { LockInScreen } from "./routes/lockin/LockInScreen";
 import { RouteScreen } from "./routes/RouteScreen";
 import { SignInScreen } from "./routes/squad/SignInScreen";
 import { ProfileScreen } from "./routes/squad/ProfileScreen";
+import { CreateSquadScreen } from "./routes/squad/CreateSquadScreen";
+import { InviteScreen } from "./routes/squad/InviteScreen";
+import { JoinScreen } from "./routes/squad/JoinScreen";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
@@ -36,6 +39,11 @@ export function App(): JSX.Element {
             <Route path="route" element={<RouteScreen />} />
             <Route path="squad/signin" element={<SignInScreen />} />
             <Route path="squad/profile" element={<ProfileScreen />} />
+            <Route path="squad/create" element={<CreateSquadScreen />} />
+            <Route path="squad/invite/:id" element={<InviteScreen />} />
+            <Route path="squad/join" element={<JoinScreen />} />
+            <Route path="squad/join/:token" element={<JoinScreen />} />
+            <Route path="j/:token" element={<JoinScreen />} />
             <Route path="settings" element={<SettingsScreen />} />
             <Route path="settings/appearance" element={<AppearanceScreen />} />
             <Route path="settings/offline" element={<OfflineScreen />} />

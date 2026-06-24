@@ -27,6 +27,16 @@ database_name = "festpilot"
 database_id = "e6753623-2b4e-41ce-9725-4bd417966cfa"
 migrations_dir = "migrations"
 
+# Per-group realtime fan-out (DEC-037). GroupRoom uses the SQLite storage backend — the only
+# Durable Object backend on the Workers Free plan, so this is $0 for V1.
+[[durable_objects.bindings]]
+name = "GROUP_ROOM"
+class_name = "GroupRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GroupRoom"]
+
 # ADMIN_TOKEN is a secret (guards POST /admin/ingest). Set with:
 #   wrangler secret put ADMIN_TOKEN
 # For local dev, put it in .dev.vars (gitignored).

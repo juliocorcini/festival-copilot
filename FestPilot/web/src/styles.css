@@ -683,3 +683,59 @@ a { color: inherit; text-decoration: none; }
 .dot-picker { display: flex; gap: 12px; margin-top: 6px; }
 .dot-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 0; padding: 0; }
 .dot-swatch.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px currentColor; }
+
+/* Shared glass note row (icon + text) reused across create / join / signin. */
+.info-note { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; }
+.info-note > div { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.chip-accent { background: var(--accent); color: var(--bg); border-color: transparent; font-weight: 700; }
+.chip-accent-soft { background: rgba(245, 166, 35, 0.16); color: var(--accent2); border-color: transparent; font-weight: 700; }
+
+/* Create squad (#23.4) — emoji + name row, festival-locked card. */
+.create-name-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.emoji-pick { position: relative; flex-shrink: 0; }
+.emoji-btn { width: 54px; height: 54px; border-radius: 16px; font-size: 26px; display: grid; place-items: center;
+  cursor: pointer; color: var(--ink); }
+.emoji-palette { position: absolute; top: 62px; left: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 4px; padding: 8px; border-radius: 16px; width: 220px; }
+.emoji-opt { background: transparent; border: 0; font-size: 24px; padding: 6px; border-radius: 10px; cursor: pointer; }
+.emoji-opt:hover { background: rgba(255, 255, 255, 0.06); }
+.festival-lock { display: flex; align-items: center; gap: 12px; padding: 15px; margin-top: 6px; }
+.festival-lock-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); }
+.festival-lock-main { flex: 1; min-width: 0; }
+.festival-lock-name { font-size: 16px; font-weight: 700; }
+.festival-lock-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Invite (#23.5) — QR + link + share. */
+.invite-screen { align-items: stretch; }
+.invite-qr-card { display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 14px auto 6px; width: fit-content; }
+.invite-qr { width: 172px; height: 172px; border-radius: 16px; display: block; }
+.invite-qr-hint { margin-top: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
+.invite-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.invite-link-text { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.invite-expiry { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-size: 11px; color: var(--muted); }
+
+/* Join (#23.6) — invite preview. */
+.join-screen { align-items: stretch; }
+.join-owner-ava { width: 56px; height: 56px; font-size: 16px; margin: 0 auto; background: #ff5a36; color: #fff; }
+.join-count { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-top: 18px; }
+.join-as { display: flex; align-items: center; gap: 12px; padding: 13px 14px; margin-top: 12px; }
+
+/* Group home / members (#23.7). */
+.squad-plan-cta { display: flex; align-items: center; gap: 12px; width: 100%; padding: 15px; text-align: left;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)), rgba(20, 17, 12, 0.5);
+  border: 1px solid var(--border); border-radius: 20px; color: var(--ink); cursor: default; }
+.squad-plan-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); }
+.squad-plan-main { flex: 1; min-width: 0; }
+.squad-plan-title { font-weight: 700; font-size: 15px; }
+.squad-plan-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.members-card { padding: 16px; }
+.members-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.members-invite { display: flex; align-items: center; gap: 4px; background: none; border: 0; color: var(--accent); font-weight: 700; font-size: 11px; cursor: pointer; }
+.members-list { display: flex; flex-direction: column; gap: 12px; }
+.member-row { display: flex; align-items: center; gap: 12px; }
+.member-main { flex: 1; min-width: 0; }
+.member-name { font-weight: 700; font-size: 13px; }
+.member-you { color: var(--muted); font-weight: 600; }
+.member-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }

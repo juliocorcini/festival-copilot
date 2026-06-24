@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import type { Env } from "../env";
 import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
 import { me } from "./me";
+import { groups } from "./groups-routes";
 
 export const api = new Hono<{ Bindings: Env }>();
 
@@ -15,6 +16,9 @@ api.get("/health", (c) => c.json({ ok: true, service: "festpilot-api" }));
 
 // Identity (anonymous-first; DEC-024).
 api.route("/me", me);
+
+// Groups (Pillar 3a — UC-16/17). Auth-gated; realtime via the GroupRoom Durable Object.
+api.route("/groups", groups);
 
 api.get("/festivals", async (c) => {
   const festivals = await listFestivals(c.env.DB);

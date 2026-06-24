@@ -4,18 +4,22 @@
  * (an anonymous account that carries over when real accounts land). Google / email-link are shown
  * as upcoming so the screen matches the locked design without faking auth that doesn't exist yet.
  */
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useIdentity } from "../../data/identity";
 import { ErrorState } from "../../ui/states";
 
 export function SignInScreen(): JSX.Element {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = params.get("next") || "/squad";
   const { ensure, loading, error } = useIdentity();
 
   const continueAsGuest = async (): Promise<void> => {
     const user = await ensure();
-    if (user) navigate(user.displayName ? "/squad" : "/squad/profile", { replace: true });
+    if (!user) return;
+    if (user.displayName) navigate(next, { replace: true });
+    else navigate(`/squad/profile?next=${encodeURIComponent(next)}`, { replace: true });
   };
 
   return (

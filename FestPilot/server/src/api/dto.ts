@@ -88,3 +88,37 @@ export interface UserDto {
   isAnonymous: boolean;
   provider: string;
 }
+
+// Groups (Pillar 3a — UC-16/17, DEC-013/038). A squad is festival-scoped; cap 50.
+export interface GroupDto {
+  id: string;
+  name: string;
+  emoji: string | null;
+  festivalId: string;
+  createdByUserId: string;
+  memberCount: number;
+  /** The caller's role in this group ("owner" | "member") — null when not a member. */
+  role: string | null;
+  /** The active invite token (link/QR). Present for members; the link never expires (DEC-038). */
+  inviteToken: string | null;
+}
+
+export interface GroupMemberDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  role: string;
+  isYou: boolean;
+}
+
+// What an invitee sees before joining (the join card #23.6) — resolved from the link token.
+export interface InvitePreviewDto {
+  token: string;
+  groupId: string;
+  name: string;
+  emoji: string | null;
+  festivalId: string;
+  memberCount: number;
+  ownerName: string | null;
+  alreadyMember: boolean;
+}

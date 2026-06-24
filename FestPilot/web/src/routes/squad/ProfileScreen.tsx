@@ -4,12 +4,14 @@
  * upload needs R2 (out for V1, DEC-038), so initials are the shipped path.
  */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { DOT_COLORS, initialsOf, useIdentity } from "../../data/identity";
 
 export function ProfileScreen(): JSX.Element {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = params.get("next") || "/squad";
   const { user, ensure, updateProfile, loading } = useIdentity();
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(DOT_COLORS[0]);
@@ -28,7 +30,7 @@ export function ProfileScreen(): JSX.Element {
   const save = async (): Promise<void> => {
     if (!canSave) return;
     const saved = await updateProfile({ displayName: name.trim(), avatarColor: color });
-    if (saved) navigate("/squad", { replace: true });
+    if (saved) navigate(next, { replace: true });
   };
 
   const initials = initialsOf(name) === "?" ? "JU" : initialsOf(name);

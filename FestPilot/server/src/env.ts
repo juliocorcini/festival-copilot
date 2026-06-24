@@ -2,6 +2,8 @@
 
 export interface Env {
   DB: D1Database;
+  // Per-group realtime fan-out (DEC-037). SQLite-backed Durable Object; see group/room.ts.
+  GROUP_ROOM: DurableObjectNamespace;
   LINEUP_PAGE_URL: string;
   FESTIVAL_NAME: string;
   FESTIVAL_SLUG: string;

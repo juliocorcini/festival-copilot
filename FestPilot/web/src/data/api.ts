@@ -4,14 +4,32 @@
  * a live source. Every read is a single GET — the service worker layers offline
  * caching on top (network-first for /api, see public/sw.js).
  */
-import type { FestivalDto, FestivalMapDto, LineupDto, StageDto, UserDto } from "./types";
-import { authHeader } from "./authToken";
+import type {
+  FestivalDto,
+  FestivalMapDto,
+  GroupDto,
+  GroupMemberDto,
+  InvitePreviewDto,
+  LineupDto,
+  StageDto,
+  UserDto,
+} from "./types";
+import { authHeader, getAuthToken } from "./authToken";
 
 const DEFAULT_API = "https://festpilot.trippilot.workers.dev";
 
 export const API_BASE: string = (
   (import.meta.env.VITE_API_URL as string | undefined) || DEFAULT_API
 ).replace(/\/+$/, "");
+
+/** WebSocket origin for the GroupRoom realtime channel (https -> wss). */
+export const WS_BASE: string = API_BASE.replace(/^http/, "ws");
+
+/** URL for a group's realtime socket. The token rides as a query param because browsers can't
+ *  set headers on a WebSocket handshake; the server accepts `?t=` for the upgrade only. */
+export function groupSocketUrl(groupId: string): string {
+  return `${WS_BASE}/api/groups/${groupId}/socket?t=${encodeURIComponent(getAuthToken())}`;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -74,6 +92,12 @@ export interface ProfileInput {
   locale?: string;
 }
 
+export interface CreateGroupInput {
+  name: string;
+  emoji: string | null;
+  festivalId: string;
+}
+
 export interface LineupQuery {
   weekend?: string;
   day?: string;
@@ -118,6 +142,44 @@ export const api = {
   updateMe(profile: ProfileInput, signal?: AbortSignal): Promise<UserDto> {
     return authedJson<{ user: UserDto }>("/api/me", { method: "PUT", body: profile, signal }).then(
       (d) => d.user
+    );
+  },
+
+  // Groups (Pillar 3a — UC-16/17). All authenticated through the same bearer token.
+  listMyGroups(signal?: AbortSignal): Promise<GroupDto[]> {
+    return authedJson<{ groups: GroupDto[] }>("/api/groups/mine", { signal }).then((d) => d.groups);
+  },
+
+  createGroup(input: CreateGroupInput, signal?: AbortSignal): Promise<GroupDto> {
+    return authedJson<{ group: GroupDto }>("/api/groups", { method: "POST", body: input, signal }).then(
+      (d) => d.group
+    );
+  },
+
+  getGroup(
+    id: string,
+    signal?: AbortSignal
+  ): Promise<{ group: GroupDto; members: GroupMemberDto[] }> {
+    return authedJson<{ group: GroupDto; members: GroupMemberDto[] }>(`/api/groups/${id}`, { signal });
+  },
+
+  getInvite(token: string, signal?: AbortSignal): Promise<InvitePreviewDto> {
+    return authedJson<{ invite: InvitePreviewDto }>(`/api/groups/invite/${token}`, { signal }).then(
+      (d) => d.invite
+    );
+  },
+
+  joinGroup(token: string, signal?: AbortSignal): Promise<GroupDto> {
+    return authedJson<{ group: GroupDto }>("/api/groups/join", {
+      method: "POST",
+      body: { token },
+      signal,
+    }).then((d) => d.group);
+  },
+
+  leaveGroup(id: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${id}/leave`, { method: "POST", signal }).then(
+      () => undefined
     );
   },
 };

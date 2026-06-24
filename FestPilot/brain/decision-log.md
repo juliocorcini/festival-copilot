@@ -440,3 +440,27 @@
 - **Trade-off**: anon tokens are unverified (a determined user could forge one) — acceptable pre-Firebase at friends
   scale; flagged ⏳ as a launch-hardening item (Phase 7).
 - **Detail**: `server/src/auth.ts`, `server/src/api/{me,users}.ts`, `web/src/data/{authToken,identity}.ts`; orchestrator §13 Phase 4 G4.1.
+
+### DEC-043 — Group realtime is a GroupRoom DO "changed-event" fan-out; D1 stays source of truth
+- **Date**: 2026-06-23 (build, Phase 4 G4.2)
+- **Status**: APPROVED (executor decision, consistent with DEC-037/038)
+- **Decision**: Each squad gets one **`GroupRoom` Durable Object** (SQLite backend via `new_sqlite_classes`; free on the
+  Workers Free plan — DEC-037). **D1 is the source of truth** for groups/members/invites; the DO's only job is realtime
+  **fan-out**: after any write the Worker POSTs the DO `/notify`, which broadcasts a tiny `{type:"changed",rev,topic}` to
+  hibernatable WebSocket clients, which then **re-fetch**. Clients also **re-fetch on focus**, so the UI is fully correct
+  even if the socket is down (the socket is a pure enhancement, never a correctness dependency). Implementation choices,
+  all brain-consistent: **(a)** join is capability-based — `POST /api/groups/join {token}` (the token *is* the auth), not
+  the orchestrator's literal `/:id/join`; **(b)** the WS handshake carries the bearer as `?t=` because browsers can't set
+  WS headers (upgrade-only; membership still verified); **(c)** a leaving **owner** hands ownership to the earliest-joined
+  remaining member (no orphan squad); **(d)** invite token = 6-char Crockford, **no expiry** until the event ends
+  (DEC-038); squad **cap 50**; **(e)** group **emoji** added (migration `0004`).
+- **Why**: DEC-037 verified DO+SQLite is $0 on Free and is the intended realtime layer; a thin "changed-event + refetch"
+  model keeps the DO trivial, avoids duplicating state, and is naturally consistent (D1 read-after-write). Focus-refetch
+  guarantees correctness on flaky festival networks (DEC-022 offline-first ethos).
+- **Trade-off / ⏳ hardening (Phase 7)**: WS `?t=` token is fine at friends-scale but should become a **short-lived
+  ticket** with Firebase; **QR _scanning_** (camera) is deferred — the link is the primary path and pasting a code covers
+  the manual case (QR _display_ is shipped, scannable); **deep-link before onboarding** (`/j/:token` for a brand-new user
+  who hasn't picked a festival) currently routes through onboarding first — acceptable for friends V1.
+- **Detail**: `server/src/group/room.ts`, `server/src/api/{groups,groups-routes}.ts`, `server/wrangler.toml` (DO binding +
+  migration v1), `web/src/data/groups.ts`, `web/src/routes/squad/{CreateSquad,Invite,Join}Screen.tsx`,
+  `web/src/routes/SquadScreen.tsx`; orchestrator §13 Phase 4 G4.2.

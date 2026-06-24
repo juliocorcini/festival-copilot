@@ -7,7 +7,8 @@
 ## Current State
 - 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 COMPLETE + LIVE; PHASE 3 core + PHASE 4 in progress.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P4 in progress** — **G4.1 identity ✅** — next: G4.2 (groups + GroupRoom DO + invites + members).
+- Active Phase / Gate: **P4 in progress** — **G4.1 identity ✅ · G4.2 groups ✅** — next: G4.3 (shared timetable: per-set
+  blocks, plurality→favorited→owner, fallback, owner override, never-silent).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
 - **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
@@ -19,6 +20,18 @@
   (#23.3 name + initials avatar + dot color) + **Squad** rebuilt (empty hero #23.1 → ready state). 7 server + 5 web unit
   tests + a `squad` Playwright flow (empty→guest→profile→ready, 3 screenshots). Worker redeployed; Pages
   https://218bfb60.festpilot.pages.dev.
+- **P4 G4.2 groups ✅ (this session):** first **Durable Object** — `GroupRoom` (SQLite backend, `new_sqlite_classes` in
+  `wrangler.toml`; $0 on Free per DEC-037) for realtime **fan-out**: writes POST the DO `/notify` → broadcasts
+  `{changed,rev,topic}` to hibernatable WS clients → they re-fetch (+ focus-refetch fallback). **D1 source of truth.**
+  Server: `api/groups.ts` (create / join-by-token idempotent + **cap 50** / members owner-first / invite preview / leave
+  with **owner-transfer**), `api/groups-routes.ts` (`POST /api/groups`, `GET /mine`, `GET /invite/:token`, `POST /join`,
+  `GET /:id`, `GET /:id/socket` [WS `?t=`], `POST /:id/leave`), migration `0004_app_group_emoji.sql` applied remote.
+  Web: `data/groups.ts` (`useMyGroups`/`useGroup` + WS+focus live), `api` group methods + `qrcode` for a real scannable
+  QR. Screens: **Create** (#23.4 emoji+name, festival locked), **Invite** (#23.5 QR + link + share, no-expiry),
+  **Join** (#23.6 paste-code + invite preview, guest gated through sign-in/profile via `?next`), **Squad** rebuilt to
+  group-home (#23.7 plan CTA + member list + invite + leave). **10 server + 0 new web unit** (covered by repo tests) +
+  `squad` Playwright rewritten: 2 flows (owner empty→create→invite→home; joiner link→guest→join→**members 2**) with 6
+  screenshots. DEC-043. Worker + Pages deployed (https://cd81a5da.festpilot.pages.dev).
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the
@@ -80,10 +93,11 @@
 - **G0.2 ✅**: map base **444 KB / 415 KB WebP** (was 19.8 MB SVG ×2). **G0.3 ✅**: `festival_map` + map API.
 - **DEC-040:** V1 map ships as a pre-rendered raster base (WebP) + live vector overlay; the ~20 MB inline-relief SVG
   is dropped from shipped assets. R2 stays out (DEC-038).
-- Last green test run: 2026-06-23 — **server 39 pass** (+ auth seam + ensureUser), **web 84 vitest** (domain + data:
-  travel/nowNext/route/offline/**authToken** + api client + SW reg + map assets), **9 Playwright** e2e (phase0-map + phase1
-  shell + phase2 onboarding/timetable/lock-in + phase3 now/route/offline + **phase4 squad identity**). Screenshots in
-  `web/e2e/screenshots/` (… + phase4-squad-empty / phase4-profile / phase4-squad-ready).
+- Last green test run: 2026-06-23 — **server 49 pass** (+ auth seam + ensureUser + **10 groups: create/join/cap-50/
+  preview/members/leave-owner-transfer**), **web 84 vitest**, **10 Playwright** e2e (phase0-map + phase1 shell + phase2
+  onboarding/timetable/lock-in + phase3 now/route/offline + **phase4 squad: owner create→invite→home + joiner→members-2**;
+  1 pre-existing shell flake passed on retry). Screenshots in `web/e2e/screenshots/` (… + phase4-create / phase4-invite /
+  phase4-group-home / phase4-join / phase4-group-home-2).
 - typecheck: clean (server + web). build: server deploy OK; **web build OK + deployed to Pages**.
 - Live: D1 **created+migrated** · Worker **deployed+ingesting** · Pages **deployed** · R2 **NOT used** (DEC-038 Q1).
 - Credentials: Cloudflare token **saved + verified**. Firebase: deferred (DEC-038/042) — V1 squad identity is
