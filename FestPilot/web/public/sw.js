@@ -3,9 +3,11 @@
  *  - navigations  -> network-first, fall back to the cached app shell (offline SPA).
  *  - /api reads    -> network-first, fall back to cache (lineup/map readable offline).
  *  - static assets -> cache-first + background refresh (stale-while-revalidate).
- * Bump VERSION to invalidate every cache on the next activate.
+ * VERSION is derived from the `?v=` registration query (APP_VERSION), so each release ships a fresh
+ * worker + cache namespace and the in-app "Check for updates" can detect a genuinely new version.
  */
-const VERSION = "festpilot-v1";
+const SW_VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
+const VERSION = `festpilot-${SW_VERSION}`;
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;
@@ -23,12 +25,14 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      .then(() => self.skipWaiting())
-  );
+  // No skipWaiting here: a new worker parks in `waiting` so the app can offer an honest
+  // "update ready — reload?" prompt. The very first install (no active worker) activates
+  // immediately anyway, so first-load offline still works.
+  event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)));
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
