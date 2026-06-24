@@ -28,9 +28,9 @@ test.describe("Phase 1 — app shell", () => {
     await expect(page.locator(".list-card .lineup-row").first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase1-now.png", fullPage: false });
 
-    // Tab navigation (placeholder screen renders for a not-yet-built tab).
+    // Tab navigation: the Timetable grid (Gate 2.2) renders with its header.
     await page.locator(".nav .navitem", { hasText: "Timetable" }).click();
-    await expect(page.locator(".soon h2")).toHaveText("Timetable");
+    await expect(page.locator(".tt-top h1")).toHaveText("Timetable");
 
     await page.locator(".nav .navitem", { hasText: "Map" }).click();
     await expect(page.locator("img.base")).toBeVisible({ timeout: 15_000 });

@@ -16,6 +16,17 @@ const KNOWN_STAGE_COLORS: Record<string, string> = {
   ELIXIR: "var(--s-elix)",
 };
 
+/** Resolved hex for each design-system stage token, so colors can also be expressed as `r,g,b`. */
+const TOKEN_HEX: Record<string, string> = {
+  "var(--s-main)": "#ff5a36",
+  "var(--s-core)": "#16a34a",
+  "var(--s-free)": "#0ea5e9",
+  "var(--s-cage)": "#f59e0b",
+  "var(--s-elix)": "#7c3aed",
+  "var(--s-rose)": "#ec4899",
+  "var(--muted)": "#9c9080",
+};
+
 /** Deterministic per-stage color: known stages map to brand tokens, the rest hash into the palette. */
 export function stageColor(stageName: string | null | undefined): string {
   if (!stageName) return "var(--muted)";
@@ -28,6 +39,13 @@ export function stageColor(stageName: string | null | undefined): string {
   let hash = 0;
   for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   return STAGE_PALETTE[hash % STAGE_PALETTE.length]!;
+}
+
+/** The same deterministic stage color as `"r, g, b"`, for `rgba(var(--c), a)` recipes (timetable cards). */
+export function stageColorRgb(stageName: string | null | undefined): string {
+  const hex = TOKEN_HEX[stageColor(stageName)] ?? TOKEN_HEX["var(--muted)"]!;
+  const n = parseInt(hex.slice(1), 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
 }
 
 /** "HH:mm" in the festival timezone (handles the UTC→local offset correctly). */
