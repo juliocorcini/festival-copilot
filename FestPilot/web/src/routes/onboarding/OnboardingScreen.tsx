@@ -16,6 +16,7 @@ import { PHOTO_WIDTH } from "../../lib/photo";
 import type { ReactNode } from "react";
 import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
 import { uniqueActs, type Act } from "../../domain/lineup";
+import { dayProgressAt, groupActsByDay, type DayProgress } from "../../domain/onboardingDays";
 import { daysForWeekends, weekendDates, type DayInfo } from "../../lib/festival";
 import { stageColor } from "../../lib/format";
 import { ErrorState, LoadingState } from "../../ui/states";
@@ -75,6 +76,15 @@ export function OnboardingScreen(): JSX.Element {
     });
     return uniqueActs(filtered, { dayOf });
   }, [lineup, weekendIds, activeDayKeys, dayOf]);
+
+  // Per-day grouping (R5.3, DEC-048): order acts into contiguous festival-day blocks so the swipe
+  // deck advances day by day with per-day progress, and the grid shows a section per day. Each act
+  // still appears once, under the earliest day it plays (DEC-026/028).
+  const dayOrder = useMemo(() => days.filter((d) => activeDayKeys.has(d.key)), [days, activeDayKeys]);
+  const { orderedActs, groups } = useMemo(
+    () => groupActsByDay(acts, dayOrder.map((d) => d.key)),
+    [acts, dayOrder]
+  );
 
   // First run: capture a lightweight identity (name required, email optional) before the picker
   // (DEC-060). Persist locally and best-effort sync to the server for admin metrics — never block
@@ -148,7 +158,14 @@ export function OnboardingScreen(): JSX.Element {
     setSelectedDays(nextSet);
   };
 
-  const currentAct = acts[swipeIndex];
+  const currentAct = orderedActs[swipeIndex];
+  const dayProgress = dayProgressAt(groups, swipeIndex);
+  const dayLabel = dayProgress ? dayOrder[dayProgress.dayIndex]?.weekdayLong ?? "" : "";
+  const gridSections = groups.map((g) => ({
+    label: dayOrder[g.dayIndex]?.weekdayLong ?? "More",
+    dateLabel: dayOrder[g.dayIndex]?.dateLabel ?? "",
+    acts: orderedActs.slice(g.start, g.start + g.count),
+  }));
   const swipe = (keep: boolean): void => {
     let favoritedActKey: string | null = null;
     if (keep && currentAct && !favorites.isFavorite(currentAct.actKey)) {
@@ -200,23 +217,23 @@ export function OnboardingScreen(): JSX.Element {
       {step === 4 &&
         (pickMode === "grid" ? (
           <StepGrid
-            acts={acts}
+            sections={gridSections}
             favoritesCount={favorites.count}
             isFavorite={favorites.isFavorite}
             onToggle={favorites.toggle}
             stageNameOf={(a) => stageNameFor(lineup, a)}
-            dayTagOf={(a) => dayTag(a, days)}
             onFinish={finish}
             modeToggle={pickToggle}
           />
         ) : (
           <StepSwipe
             act={currentAct}
-            index={swipeIndex}
-            total={acts.length}
+            total={orderedActs.length}
             favoritesCount={favorites.count}
             stageName={currentAct ? stageNameFor(lineup, currentAct) : ""}
             dayTag={currentAct ? dayTag(currentAct, days) : ""}
+            dayProgress={dayProgress}
+            dayLabel={dayLabel}
             canUndo={swipeHistory.length > 0}
             onUndo={undoSwipe}
             onSwipe={swipe}
@@ -471,11 +488,12 @@ function StepDays({
 
 function StepSwipe({
   act,
-  index,
   total,
   favoritesCount,
   stageName,
   dayTag: dayTagText,
+  dayProgress,
+  dayLabel,
   canUndo,
   onUndo,
   onSwipe,
@@ -483,18 +501,19 @@ function StepSwipe({
   modeToggle,
 }: {
   act: Act | undefined;
-  index: number;
   total: number;
   favoritesCount: number;
   stageName: string;
   dayTag: string;
+  dayProgress: DayProgress | null;
+  dayLabel: string;
   canUndo: boolean;
   onUndo: () => void;
   onSwipe: (keep: boolean) => void;
   onFinish: () => void;
   modeToggle: ReactNode;
 }): JSX.Element {
-  const progress = total > 0 ? Math.min(100, Math.round(((index) / total) * 100)) : 100;
+  const progress = dayProgress?.pct ?? 100;
 
   // Real drag gesture (R5.1): right = keep, left = skip; the buttons stay as an explicit fallback.
   const [dx, setDx] = useState(0);
@@ -566,8 +585,18 @@ function StepSwipe({
       <div className="ob-body">
         {modeToggle}
         <div className="swipe-head">
-          <div className="count">{Math.min(index + 1, total)} of {total}</div>
+          <div className="count">
+            {dayProgress
+              ? `Day ${dayProgress.ordinal} of ${dayProgress.totalDays} · ${dayProgress.pct}%`
+              : `${total} acts`}
+          </div>
           <div className="swipe-bar"><div style={{ width: `${progress}%` }} /></div>
+          {dayProgress && (
+            <div className="swipe-day">
+              {dayLabel ? `${dayLabel} · ` : ""}
+              {Math.min(dayProgress.withinDay + 1, dayProgress.dayCount)} of {dayProgress.dayCount}
+            </div>
+          )}
           <button
             className="swipe-undo sm"
             onClick={onUndo}
@@ -579,7 +608,7 @@ function StepSwipe({
         </div>
         <div className="swipe-q">
           <div className="q">Would you see this set?</div>
-          <div className="hint">Builds your favorites — clashes are solved later in Lock in</div>
+          <div className="hint">You're building favorites, not the final plan — we use these to solve clashes later.</div>
         </div>
         <div className="swipe-stage">
           <div
@@ -624,24 +653,23 @@ function StepSwipe({
 }
 
 function StepGrid({
-  acts,
+  sections,
   favoritesCount,
   isFavorite,
   onToggle,
   stageNameOf,
-  dayTagOf,
   onFinish,
   modeToggle,
 }: {
-  acts: Act[];
+  sections: { label: string; dateLabel: string; acts: Act[] }[];
   favoritesCount: number;
   isFavorite: (actKey: string) => boolean;
   onToggle: (actKey: string) => void;
   stageNameOf: (act: Act) => string;
-  dayTagOf: (act: Act) => string;
   onFinish: () => void;
   modeToggle: ReactNode;
 }): JSX.Element {
+  const total = sections.reduce((n, s) => n + s.acts.length, 0);
   return (
     <>
       <div className="ob-body ob-grid-body">
@@ -649,49 +677,51 @@ function StepGrid({
         <div className="swipe-q">
           <div className="q">Tap everyone you'd want to see</div>
           <div className="hint">
-            {favoritesCount} saved · clashes are solved later in Lock in
+            You're building favorites, not the final plan — we use these to solve clashes later.
+            {favoritesCount > 0 ? ` · ${favoritesCount} saved` : ""}
           </div>
         </div>
-        <div className="ob-grid">
-          {acts.map((act) => {
-            const on = isFavorite(act.actKey);
-            const stage = stageNameOf(act);
-            const day = dayTagOf(act);
-            return (
-              <button
-                key={act.actKey}
-                type="button"
-                className={`gcard${on ? " on" : ""}`}
-                onClick={() => onToggle(act.actKey)}
-                aria-pressed={on}
-                aria-label={`${on ? "Remove" : "Add"} ${act.label}`}
-              >
-                <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.grid} className="gcard-photo" />
-                <span className="gcard-heart ms" aria-hidden="true">{on ? "favorite" : "favorite_border"}</span>
-                <span className="gcard-meta">
-                  <span className="gcard-name">{act.label}</span>
-                  {(stage || day) && (
-                    <span className="gcard-sub">
-                      {stage && (
-                        <>
-                          <span className="dot" style={{ background: stageColor(stage) }} /> {stage}
-                        </>
-                      )}
-                      {stage && day ? " · " : ""}
-                      {day}
-                    </span>
-                  )}
-                </span>
-              </button>
-            );
-          })}
-          {acts.length === 0 && (
-            <div className="state" style={{ gridColumn: "1 / -1" }}>
-              <span className="ms">search_off</span>
-              <p>No artists match these days yet.</p>
+        {sections.map((section, si) => (
+          <section key={`${section.label}-${si}`} className="ob-grid-section">
+            <div className="ob-grid-dayhead">
+              <span className="ob-grid-dayname">{section.label}</span>
+              {section.dateLabel && <span className="ob-grid-daydate">{section.dateLabel}</span>}
             </div>
-          )}
-        </div>
+            <div className="ob-grid">
+              {section.acts.map((act) => {
+                const on = isFavorite(act.actKey);
+                const stage = stageNameOf(act);
+                return (
+                  <button
+                    key={act.actKey}
+                    type="button"
+                    className={`gcard${on ? " on" : ""}`}
+                    onClick={() => onToggle(act.actKey)}
+                    aria-pressed={on}
+                    aria-label={`${on ? "Remove" : "Add"} ${act.label}`}
+                  >
+                    <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.grid} className="gcard-photo" />
+                    <span className="gcard-heart ms" aria-hidden="true">{on ? "favorite" : "favorite_border"}</span>
+                    <span className="gcard-meta">
+                      <span className="gcard-name">{act.label}</span>
+                      {stage && (
+                        <span className="gcard-sub">
+                          <span className="dot" style={{ background: stageColor(stage) }} /> {stage}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+        {total === 0 && (
+          <div className="state">
+            <span className="ms">search_off</span>
+            <p>No artists match these days yet.</p>
+          </div>
+        )}
       </div>
       <div className="ob-foot">
         <button className="btn btn-primary" onClick={onFinish}>See my plan</button>

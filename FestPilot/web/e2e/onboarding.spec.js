@@ -39,8 +39,8 @@ test.describe("Phase 2 — onboarding + lineup favorites", () => {
     await expect(page.locator(".art-card")).toBeVisible({ timeout: 20_000 });
     await page.screenshot({ path: "e2e/screenshots/phase2-onboarding-swipe.png" });
 
-    // Undo a swipe: the counter advances on a swipe and steps back on undo (DEC: V1.x).
-    const counter = page.locator(".swipe-head .count");
+    // Undo a swipe: the per-day counter advances on a swipe and steps back on undo (R5.3).
+    const counter = page.locator(".swipe-head .swipe-day");
     const firstCount = await counter.textContent();
     await page.locator(".swipe-actions .yes").click();
     await expect(counter).not.toHaveText(firstCount ?? "");
