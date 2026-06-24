@@ -33,6 +33,20 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R2.3 ✅ (2026-06-24) — real coarse presence on the map + honest out-of-venue (DEC-051/058, §6 #7/#8).**
+  Retired the **mock** `map/presence.ts` (random people + fake meeting + raw-coord walk) — the map now reads the
+  **real** active squad: `useMyGroups()[0]` → `useGroupPresence`. Friends render as **coarse, stage-anchored
+  pins** via new pure `map/presencePins.ts` (`coarsePresencePins` mirrors the Phase-5 placement: anchor at the
+  resolved stage, fan duplicates, "between A&B" → midpoint, drop ghost/stale/no-fix) — the pin carries **only
+  screen x/y, never a lng/lat** (DEC-058 holds end-to-end). "You" is a precise dot only from the **device's own**
+  fix via new display-only `useDeviceLocation` (permission-gated, **never prompts** just for opening the map, never
+  POSTs). Out-of-venue (`isOutsideVenue(bbox, …, 150 m margin)`): beyond the venue → an honest banner +
+  **"Show festival map"** button (recenters; R2.1 clamp already kills the black void) and we drop the off-canvas
+  me-dot. Friends-sheet rebuilt on the real roster (`PresenceAvatar` + `presenceLine` + `sortRoster`) with honest
+  empty states ("Join a squad…" / "No one's sharing yet") — **never invented friends**. Tests +11:
+  `presencePins` (10 — placement, fan, between, ghost/stale drop, **no-raw-coord** invariant, you-accent;
+  out-of-venue centre/edge/far/margin) and `MapView` (1 — empty state + no mock people; renders under Router).
+  **web 189 unit · typecheck · build OK.** Next: R2.4 zoomable meeting-spot picker + use-my-location.
 - **R2.2 ✅ (2026-06-24) — interactive vector stage overlay + de-baked base (DEC-050, §6 #5).** The base raster
   baked the 10 stage medallions + names → they pixelated at zoom and weren't tappable. Added a `stageMarkers`
   toggle through the map-art engine (`draw.ts` ArtOptions → `generate.ts` GenerateOptions → `run.ts`

@@ -287,19 +287,18 @@ a { color: inherit; text-decoration: none; }
 
 .lbl { font-family: "Oswald", sans-serif; font-weight: 700; paint-order: stroke; stroke: #08070a; stroke-width: 3px; }
 .name { font-size: 12px; fill: var(--ink); }
-.sub { font-size: 9.5px; fill: var(--accent2); font-weight: 500; }
 .me-lbl { fill: var(--me); }
-.friend { fill: var(--friend); stroke: #08070a; stroke-width: 2.4px; }
-.off .friend, .offdot { fill: #6b6657; }
-.off .name { fill: var(--muted); }
 .me { fill: var(--me); stroke: #08070a; stroke-width: 2.4px; }
 .me-acc { fill: var(--me); opacity: 0.22; }
 .pulse { animation: pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes pulse { 0% { r: 8px; opacity: 0.4; } 100% { r: 26px; opacity: 0; } }
-.meet { fill: var(--accent); stroke: var(--bg); stroke-width: 2px; }
-.meet-shadow { fill: rgba(0, 0, 0, 0.35); }
-.meet-dot { fill: var(--bg); }
-.meet-lbl { fill: var(--accent2); font-size: 11px; }
+
+/* Coarse, stage-anchored squad pins (DEC-058): real presence, never a raw coordinate. */
+.pres-disc { stroke: #08070a; stroke-width: 2.2px; }
+.pres-initials { font-family: "Oswald", sans-serif; font-weight: 700; font-size: 8px; }
+.pres-name { font-size: 10px; fill: var(--ink); }
+.pres-pin.is-you .pres-disc { stroke: var(--accent); }
+.pres-ring { fill: var(--ok-ink); opacity: 0.3; }
 
 .topbar {
   position: absolute; top: 0; left: 0; right: 0;
@@ -328,17 +327,31 @@ a { color: inherit; text-decoration: none; }
   max-height: 38vh; overflow: auto;
 }
 .friends-sheet h3 { margin: 2px 0 10px; font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; color: var(--accent2); }
-.friends-sheet ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.friends-sheet li { display: flex; align-items: center; gap: 9px; font-size: 14px; }
-.friends-sheet li.muted { color: var(--muted); }
-.friends-sheet li b { font-weight: 600; }
-.friends-sheet li em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--accent2); }
-.friends-sheet li.muted em { color: var(--muted); }
-.friends-sheet .dot { width: 11px; height: 11px; }
-.friends-sheet .dot.friend { background: var(--friend); }
-.friends-sheet .dot.me { background: var(--me); }
-.friends-sheet .dot.offdot { background: #6b6657; }
+.map-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.map-roster li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.map-roster li.muted { color: var(--muted); }
+.map-roster-main { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.map-roster-main b { font-weight: 600; }
+.map-roster-main .you { color: var(--muted); font-weight: 400; }
+.map-roster-line { font-size: 12px; color: var(--accent2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-roster li.muted .map-roster-line { color: var(--muted); }
+.map-roster li em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--muted); }
+.map-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 6px 0 4px; color: var(--muted); font-size: 14px; }
+.map-empty p { margin: 0; }
 .src { margin: 10px 0 0; font-size: 10px; color: var(--muted); }
+
+/* Out-of-venue honest state (DEC-051): never a black void — a clear way back to the festival map. */
+.map-outside {
+  position: absolute; left: 12px; right: 12px;
+  top: calc(max(12px, var(--safe-top)) + 56px);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 14px;
+}
+.map-outside .ms { font-size: 22px; color: var(--accent); }
+.map-outside-main { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.map-outside-main strong { font-size: 14px; }
+.map-outside-main span { font-size: 12px; color: var(--muted); }
+.map-outside .btn { margin-left: auto; white-space: nowrap; flex-shrink: 0; }
 
 .map-msg { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 14px; }
 

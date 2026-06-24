@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import type { LineupDto } from "../data/types";
 
 // A tiny, time-independent lineup: the MAINSTAGE set spans 2020→2030 so "now" is always inside it.
@@ -25,9 +26,13 @@ vi.mock("../data/api", () => {
   }
   return {
     ApiError,
+    groupSocketUrl: vi.fn(() => "ws://test/socket"),
     api: {
       listFestivals: vi.fn().mockResolvedValue([lineup.festival]),
       getLineup: vi.fn().mockResolvedValue(lineup),
+      // No squad: the map must fall back to an honest empty state, never invented friends.
+      listMyGroups: vi.fn().mockResolvedValue([]),
+      getGroupPresence: vi.fn().mockResolvedValue(null),
     },
   };
 });
@@ -57,7 +62,7 @@ afterEach(() => {
 describe("MapView — interactive vector stage overlay (DEC-050 / R2.2)", () => {
   it("renders one tappable overlay node per stage, inside the SVG overlay (not the base)", async () => {
     const { MapView } = await import("./MapView");
-    render(<MapView />);
+    render(<MemoryRouter><MapView /></MemoryRouter>);
 
     const main = await screen.findByRole("button", { name: /^MAINSTAGE/ });
     // The marker is a vector overlay node — inside <svg class="overlay">, not the raster <img>.
@@ -75,7 +80,7 @@ describe("MapView — interactive vector stage overlay (DEC-050 / R2.2)", () => 
 
   it("opens the stage info sheet on tap, with now-playing from the lineup", async () => {
     const { MapView } = await import("./MapView");
-    render(<MapView />);
+    render(<MemoryRouter><MapView /></MemoryRouter>);
 
     const main = await screen.findByRole("button", { name: /^MAINSTAGE/ });
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -89,11 +94,28 @@ describe("MapView — interactive vector stage overlay (DEC-050 / R2.2)", () => 
 
   it("does not open the sheet when the gesture is a drag, not a tap", async () => {
     const { MapView } = await import("./MapView");
-    render(<MapView />);
+    render(<MemoryRouter><MapView /></MemoryRouter>);
 
     const main = await screen.findByRole("button", { name: /^MAINSTAGE/ });
     fireEvent.pointerDown(main, { clientX: 10, clientY: 10 });
     fireEvent.click(main, { clientX: 80, clientY: 90 }); // released far → pan, not tap
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("MapView — real presence + out-of-venue (DEC-051 / R2.3)", () => {
+  it("shows an honest empty state and never invented friends when not in a squad", async () => {
+    const { MapView } = await import("./MapView");
+    render(<MemoryRouter><MapView /></MemoryRouter>);
+
+    // Wait for the map to load (stage overlay present), then assert the squad sheet is honestly empty.
+    await screen.findByRole("button", { name: /^MAINSTAGE/ });
+    expect(screen.getByText(/join a squad to see where everyone is/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /find your squad/i })).toBeInTheDocument();
+
+    // None of the retired mock people may appear anywhere.
+    for (const ghost of ["Andy", "Bea", "Cris"]) {
+      expect(screen.queryByText(ghost)).toBeNull();
+    }
   });
 });

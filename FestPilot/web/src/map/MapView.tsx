@@ -7,14 +7,19 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
-import { coarseLabel, geoToSvg, type MapTransform, type StageGeo } from "./transform";
+import { useNavigate } from "react-router-dom";
+import { geoToSvg, type MapTransform, type StageGeo } from "./transform";
 import { useAppearance } from "../app/settings";
 import { usePanZoom } from "./usePanZoom";
 import { NO_INSETS, type Insets } from "./panClamp";
-import { usePresence } from "./presence";
+import { coarsePresencePins, isOutsideVenue } from "./presencePins";
+import { useDeviceLocation } from "./useDeviceLocation";
+import { useMyGroups } from "../data/groups";
+import { useGroupPresence } from "../data/presence";
 import { useLineup } from "../data/useLineup";
 import { toPlannableSets } from "../domain/lineup";
 import { setsAtStage, stageProgrammeAt } from "../domain/stageProgramme";
+import { PresenceAvatar, ago, presenceLine, sortRoster } from "../routes/presence/presenceUi";
 import { stageColor, timeInZone } from "../lib/format";
 
 interface Props {
@@ -55,10 +60,20 @@ function useMeasuredInsets(top: HTMLElement | null, bottom: HTMLElement | null):
 }
 
 export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.Element {
+  const navigate = useNavigate();
   const [t, setT] = useState<MapTransform | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { mode, setMode, palette } = useAppearance();
   const { lineup } = useLineup();
+
+  // Real coarse presence (DEC-058): the active squad's roster — never invented friends. The map tab
+  // isn't squad-scoped, so V1 follows the first squad (R9 adds a switcher); no squad ⇒ honest empty.
+  const { groups } = useMyGroups();
+  const activeGroup = groups[0] ?? null;
+  const { presence } = useGroupPresence(activeGroup?.id);
+  const roster = useMemo(() => sortRoster(presence?.members ?? []), [presence]);
+  // Display-only device fix for the "you are here" dot + the out-of-venue decision (DEC-051).
+  const device = useDeviceLocation();
 
   useEffect(() => {
     let alive = true;
@@ -82,7 +97,6 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const [sheetEl, setSheetEl] = useState<HTMLElement | null>(null);
   const insets = useMeasuredInsets(topEl, sheetEl);
   const { ref, view, recenter, handlers } = usePanZoom(cw, ch, insets);
-  const { people, meeting } = usePresence(t?.stages ?? []);
 
   const sets = useMemo(
     () => (lineup ? toPlannableSets(lineup.performances, lineup.stages) : []),
@@ -106,9 +120,6 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const inv = 1 / view.scale; // keep markers a constant screen size at any zoom
   const pinScale = Math.min(inv, 1.6); // …but don't let them balloon when zoomed all the way out
 
-  const friends = useMemo(() => people.filter((p) => p.kind === "friend"), [people]);
-  const me = people.find((p) => p.kind === "me") ?? null;
-
   if (error) return <div className="map-msg">Could not load the map: {error}</div>;
   if (!t) return <div className="map-msg">Loading map…</div>;
 
@@ -117,6 +128,13 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.webp`;
   const openProgramme = openStage ? stageProgrammeAt(sets, openStage.name, nowMs) : null;
   const openAtStage = openStage ? setsAtStage(sets, openStage.name) : [];
+
+  // Out-of-venue (DEC-051): a device fix beyond the bbox can't sit on the art → show an honest state
+  // and a "show festival map" button instead of a black void; only then is "me" a precise dot.
+  const outside = device.coords ? isOutsideVenue(t.bbox, device.coords.lng, device.coords.lat) : false;
+  const hasPreciseMe = !!device.coords && !outside;
+  // Coarse, stage-anchored squad pins — never a raw coordinate. Drop "you" when the precise dot is shown.
+  const pins = coarsePresencePins(t, hasPreciseMe ? roster.filter((m) => !m.isYou) : roster);
 
   return (
     <div className="map">
@@ -153,37 +171,28 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
               );
             })}
 
-            {meeting && (() => {
-              const [x, y] = geoToSvg(t.affine, meeting.lng, meeting.lat);
-              return (
-                <g transform={`translate(${x},${y}) scale(${inv})`}>
-                  <path className="meet-shadow" d="M0,2 L9,-14 A10,10 0 1 0 -9,-14 Z" />
-                  <path className="meet" d="M0,0 L8,-15 A9,9 0 1 0 -8,-15 Z" />
-                  <circle cx="0" cy="-17" r="4" className="meet-dot" />
-                  <text y="14" textAnchor="middle" className="lbl meet-lbl">{meeting.label}</text>
-                </g>
-              );
-            })()}
+            {pins.map((p) => (
+              <g
+                key={p.id}
+                transform={`translate(${p.x},${p.y}) scale(${pinScale})`}
+                className={`pres-pin${p.live ? " is-live" : ""}${p.isYou ? " is-you" : ""}`}
+              >
+                {p.live && <circle className="pres-ring pulse" r="9" />}
+                <circle className="pres-disc" r="8.5" style={{ fill: p.color }} />
+                <text className="pres-initials" y="3" textAnchor="middle" style={{ fill: p.darkText ? "#0F0D09" : "#fff" }}>
+                  {p.initials}
+                </text>
+                <text className="lbl name pres-name" y="-12" textAnchor="middle">{p.name}</text>
+              </g>
+            ))}
 
-            {friends.map((p) => {
-              const [x, y] = geoToSvg(t.affine, p.lng, p.lat);
-              const where = p.sharing ? coarseLabel(t.stages, p.lng, p.lat) : "location off";
+            {hasPreciseMe && (() => {
+              const [x, y] = geoToSvg(t.affine, device.coords!.lng, device.coords!.lat);
               return (
-                <g key={p.id} transform={`translate(${x},${y}) scale(${inv})`} className={p.sharing ? "" : "off"}>
-                  <circle r="7.5" className="friend" />
-                  <text y="-12" textAnchor="middle" className="lbl name">{p.name}</text>
-                  <text y="20" textAnchor="middle" className="lbl sub">{where}</text>
-                </g>
-              );
-            })}
-
-            {me && (() => {
-              const [x, y] = geoToSvg(t.affine, me.lng, me.lat);
-              return (
-                <g transform={`translate(${x},${y}) scale(${inv})`}>
+                <g transform={`translate(${x},${y}) scale(${pinScale})`}>
                   <circle className="me-acc pulse" r="9" />
-                  <circle className="me" r="7" />
-                  <text y="-13" textAnchor="middle" className="lbl name me-lbl">You</text>
+                  <circle className="me" r="6.5" />
+                  <text y="-12" textAnchor="middle" className="lbl name me-lbl">You</text>
                 </g>
               );
             })()}
@@ -206,6 +215,17 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
       </header>
 
       <button className="recenter" onClick={recenter} title="Recenter">⤢</button>
+
+      {outside && (
+        <div className="map-outside glass" role="status">
+          <span className="ms" aria-hidden="true">location_off</span>
+          <div className="map-outside-main">
+            <strong>You're outside the festival</strong>
+            <span>Precise location works inside the venue.</span>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={recenter}>Show festival map</button>
+        </div>
+      )}
 
       {openStage && (
         <section className="stage-sheet" role="dialog" aria-label={`${openStage.name} info`}>
@@ -236,16 +256,31 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
       )}
 
       <section className="friends-sheet" ref={setSheetEl}>
-        <h3>Your group</h3>
-        <ul>
-          {me && <li className="me-row"><span className="dot me" /> <b>You</b><em>{coarseLabel(t.stages, me.lng, me.lat)}</em></li>}
-          {friends.map((p) => (
-            <li key={p.id} className={p.sharing ? "" : "muted"}>
-              <span className={`dot ${p.sharing ? "friend" : "offdot"}`} /> <b>{p.name}</b>
-              <em>{p.sharing ? coarseLabel(t.stages, p.lng, p.lat) : "location off"}</em>
-            </li>
-          ))}
-        </ul>
+        <h3>{activeGroup?.name ?? "Your squad"}</h3>
+        {!activeGroup ? (
+          <div className="map-empty">
+            <p>Join a squad to see where everyone is.</p>
+            <button className="btn btn-primary btn-sm" onClick={() => navigate("/squad")}>Find your squad</button>
+          </div>
+        ) : roster.length === 0 ? (
+          <div className="map-empty"><p>No one's sharing their location yet.</p></div>
+        ) : (
+          <ul className="map-roster">
+            {roster.map((m) => {
+              const line = presenceLine(m);
+              return (
+                <li key={m.userId} className={line.muted ? "muted" : ""}>
+                  <PresenceAvatar name={m.displayName} color={m.avatarColor} live={m.live} size={32} />
+                  <div className="map-roster-main">
+                    <b>{m.displayName ?? "Guest"}{m.isYou && <span className="you"> · you</span>}</b>
+                    <span className="map-roster-line">{line.text}{line.sub ? ` · ${line.sub}` : ""}</span>
+                  </div>
+                  {!line.muted && m.presence && <em>{ago(m.presence.ageSeconds)}</em>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         <p className="src">{t.source}</p>
       </section>
     </div>
