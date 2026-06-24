@@ -1,6 +1,6 @@
 # FestPilot — Decision Log
 
-> Last updated: 2026-06-24 (Initial set DEC-001→DEC-020 from the product-definition session; **2026-06-23 discovery-council session** advanced DEC-003/004/013/015 to APPROVED and added DEC-021/DEC-022 — see `documents/2026-06-23-discovery-councils-and-decisions.md`; the **/phases session** added DEC-023 (V1 cut line) and the **/council** added DEC-024 (auth) — see `implementation-phases.md`; the **2026-06-23 UI prototype-review** added DEC-025→DEC-029 (visual identity + Timetable/Onboarding/Lock in specs) — see `documents/2026-06-23-ui-decisions-locked.md` — and **DEC-030** (map rendering), **DEC-031** (map asset pipeline: OSM + AI art, not satellite tracing), **DEC-032** (Lineup/Timetable nav), and **DEC-033** (map *beauty* pipeline: stylized cartography + LiDAR relief now, AI-paint & 3D as upgrades), and **DEC-034** (map *generator* productized into a one-call engine + admin map-editor workflow) — see `documents/2026-06-23-realtime-map-technical-plan.md` §8/§10/§11; and **DEC-035** (V1 path-to-launch decisions: PWA→Capacitor, all-6 phases, WebSocket presence, auth providers, TML-only) — see `documents/2026-06-23-path-to-launch.md`; and **DEC-036** (adopt the V1 implementation orchestrator as the execution source of truth + git on `master`) — see `documents/2026-06-23-v1-implementation-orchestrator.md`; and **DEC-037** (V1 runs entirely on free tiers — Durable Objects are free on the Workers Free plan, direct Pages upload, token-based deploy); **DEC-038** (operator intake — no R2, both weekends, Firebase deferred, PWA-only, squad cap 50); **DEC-039** (design-pass answers + Android-only native, no Apple/iOS); **DEC-040** (V1 map = pre-rendered raster base + live overlay, drop the 20 MB inline-relief SVG); the **2026-06-23 build** added **DEC-041→DEC-047** (Phases 3–6 executor decisions); and the **2026-06-24 review-remediation pass** added **DEC-048→DEC-055** (all PROPOSED — Julio's hands-on-review direction; see `documents/2026-06-24-v1-review-remediation-orchestrator.md` §7). APPROVED = decided direction. PROPOSED/PENDING = not yet confirmed. Next new id = DEC-056.)
+> Last updated: 2026-06-24 (Initial set DEC-001→DEC-020 from the product-definition session; **2026-06-23 discovery-council session** advanced DEC-003/004/013/015 to APPROVED and added DEC-021/DEC-022 — see `documents/2026-06-23-discovery-councils-and-decisions.md`; the **/phases session** added DEC-023 (V1 cut line) and the **/council** added DEC-024 (auth) — see `implementation-phases.md`; the **2026-06-23 UI prototype-review** added DEC-025→DEC-029 (visual identity + Timetable/Onboarding/Lock in specs) — see `documents/2026-06-23-ui-decisions-locked.md` — and **DEC-030** (map rendering), **DEC-031** (map asset pipeline: OSM + AI art, not satellite tracing), **DEC-032** (Lineup/Timetable nav), and **DEC-033** (map *beauty* pipeline: stylized cartography + LiDAR relief now, AI-paint & 3D as upgrades), and **DEC-034** (map *generator* productized into a one-call engine + admin map-editor workflow) — see `documents/2026-06-23-realtime-map-technical-plan.md` §8/§10/§11; and **DEC-035** (V1 path-to-launch decisions: PWA→Capacitor, all-6 phases, WebSocket presence, auth providers, TML-only) — see `documents/2026-06-23-path-to-launch.md`; and **DEC-036** (adopt the V1 implementation orchestrator as the execution source of truth + git on `master`) — see `documents/2026-06-23-v1-implementation-orchestrator.md`; and **DEC-037** (V1 runs entirely on free tiers — Durable Objects are free on the Workers Free plan, direct Pages upload, token-based deploy); **DEC-038** (operator intake — no R2, both weekends, Firebase deferred, PWA-only, squad cap 50); **DEC-039** (design-pass answers + Android-only native, no Apple/iOS); **DEC-040** (V1 map = pre-rendered raster base + live overlay, drop the 20 MB inline-relief SVG); the **2026-06-23 build** added **DEC-041→DEC-047** (Phases 3–6 executor decisions); and the **2026-06-24 review-remediation pass** added **DEC-048→DEC-055** (Julio reviewed 2026-06-24: DEC-048/049/050/051/052/054/055 APPROVED, DEC-053 SUPERSEDED by DEC-059; see `documents/2026-06-24-v1-review-remediation-orchestrator.md` §7), and its **round-2 follow-up + 4 inline councils** added **DEC-056→DEC-061** (autonomy hardening, admin back-office, presence guard-rail revision, avatar storage, onboarding identity, artist-photo source). APPROVED = decided direction. PROPOSED/PENDING = not yet confirmed. Next new id = DEC-062.)
 
 ## Format
 
@@ -575,12 +575,14 @@
 
 > **DEC-048 → DEC-055 — V1 review-remediation pass (2026-06-24).** Eight decisions opened by Julio's hands-on
 > walkthrough of the live app, normalized into `documents/2026-06-24-v1-review-remediation-orchestrator.md` (§7).
-> All **PROPOSED** (= Julio's review direction, adopted by the executor to proceed; not yet firm-confirmed). Each
-> notes what it refines/supersedes. The remediation orchestrator is the execution doc that implements them.
+> **Julio reviewed them on 2026-06-24 (inline "ok" on the orchestrator §7): DEC-048/049/050/052/054/055 →
+> APPROVED; DEC-051 → APPROVED with an added "button to the festival map" requirement; DEC-053 → SUPERSEDED by
+> DEC-059.** Each notes what it refines/supersedes. The remediation orchestrator is the execution doc that
+> implements them.
 
 ### DEC-048 — The "festival day" is a derived contiguous block, not the source `day` field nor the civil date
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
 - **Decision**: Day grouping is computed by a pure `assignFestivalDays(performances, gapHours = 3)` (new,
   `web/src/domain/festivalDay.ts`): sort by start, split into a new festival day only when there is a **real gap
   (≥ `gapHours` with no set on any stage)**; each block gets a stable `festivalDayId` + a label taken from the
@@ -595,7 +597,7 @@
 
 ### DEC-049 — Lineup is made discoverable without breaking DEC-032 (Timetable stays full-height)
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
 - **Decision**: Keep DEC-032 (no tall top toggle stealing Timetable grid height). Add a **compact, explicit**
   Timetable⇄Lineup switch (a single minimal-height labeled control, not a tall segmented bar) **and open Lineup
   by default when there is no timetable yet.** Clear empty states for "no lineup yet" and "timetable not released".
@@ -606,7 +608,7 @@
 
 ### DEC-050 — Map renders all stages/labels/pins as a crisp interactive vector overlay; base zoom is capped honestly
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
 - **Decision**: Stage medallions + names (and all pins/markers) render as a **vector overlay** from
   `transform.stages` via `geoToSvg` — screen-stable scaling, **tappable → stage info sheet** — and are **never
   baked into the raster base**. Regenerate the base **without** baked labels (the `spikes/map-art` engine already
@@ -620,10 +622,11 @@
 
 ### DEC-051 — Outside the festival bbox, the map shows an honest state, never a black screen
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24 with an added requirement — see Decision)
 - **Decision**: Detect an out-of-venue GPS fix; show "You're outside the festival — precise location works inside
-  the venue" while still letting the user pan/zoom the festival map. **Optional** upgrade: a real OSM basemap
-  behind a translucent venue overlay.
+  the venue" while still letting the user pan/zoom the festival map. **Julio's requirement: always render a button
+  that takes the user to the festival (event) map**, so the screen is *never just black*. **Optional/better** (do
+  if not too complex): a real OSM basemap behind a translucent venue overlay.
 - **Why**: the review found that using precise location **outside** the venue produced a black screen (the fix
   lands off-canvas with unbounded pan + mock presence).
 - **Relates**: complements the R2 pan-clamp + real-presence fixes; consistent with DEC-030 offline-first.
@@ -631,7 +634,7 @@
 
 ### DEC-052 — Festival data-state model: no-lineup / lineup-without-timetable / full-timetable, with dynamic updates
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
 - **Decision**: The API surfaces `hasLineup` / `hasTimetable` (derived from `withTimetable` + performance
   presence); every screen **degrades gracefully** across the three states. Data may update over time (add days
   like **The Gathering**, add artists, add times) — ingestion is already idempotent; the client **re-prompts the
@@ -643,10 +646,14 @@
 
 ### DEC-053 — Profile/avatar photo is deferred (rides the DEC-038 R2 block); initials + color ship now
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
-- **Decision**: Squad profile/avatar stays **initials + chosen color** for V1 (already shipped). **Photo upload
-  ships only when R2 (or an equivalent blob store) is enabled** — the same deferral and the same flip condition as
-  the meeting-point photo (DEC-047). The custom-emoji request (a separate ask) **does** ship now (no blob needed).
+- **Status**: ⛔ SUPERSEDED by DEC-059 (2026-06-24 — Julio wants the photo to actually ship; a storage path was found)
+- **Superseded-by**: **DEC-059** — avatar/profile photo ships via a storage adapter (default **R2 + budget alert +
+  app-enforced quota**; no-card fallback **Cloudinary free**). The "initials-only until R2" deferral below no longer
+  applies; initials + color remain only as the placeholder when no photo is set.
+- **Decision (obsolete, kept for history)**: Squad profile/avatar stays **initials + chosen color** for V1 (already
+  shipped). **Photo upload ships only when R2 (or an equivalent blob store) is enabled** — the same deferral and the
+  same flip condition as the meeting-point photo (DEC-047). The custom-emoji request (a separate ask) **does** ship
+  now (no blob needed).
 - **Why**: the review asks for an avatar photo, but a photo needs a runtime blob home and **R2 is OUT for V1**
   (DEC-038, account `code 10042`). Honest default: don't ship a dead "add photo" control on a blocked feature.
 - **Refines**: parallels DEC-047 (photo-deferred-by-R2); the *intent* (a recognizable avatar) is met by
@@ -655,7 +662,7 @@
 
 ### DEC-054 — Joining a squad auto-shares the member's plan + favorites by default (one-time confirm + Settings opt-out)
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
 - **Decision**: On **first join**, a one-time "Share your plan with the squad?" sheet that **defaults to ON**
   (shares plan + favorites), with a **Settings opt-out** — instead of the hidden, manual opt-in. The squad value
   (shared plan / build-the-group-plan) is therefore visible by default, not buried in an action.
@@ -667,7 +674,7 @@
 
 ### DEC-055 — Capture user-suggested festivals for admin review (no login required)
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: PROPOSED (review-remediation pass; awaiting Julio's confirm)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
 - **Decision**: A guarded `POST /api/festival-suggestions` + a D1 table (`name`, `suggested_by` nullable,
   `created_at_utc`, `count`, `status` ∈ new/reviewing/planned/added/rejected) with **dedupe-by-name count**, plus
   an admin list route; a **discreet** "Suggest a festival" affordance on the festival-pick onboarding step. No
@@ -675,3 +682,129 @@
 - **Why**: the review wants users who don't find their festival to suggest one, and the operator to see
   suggestions + frequency.
 - **Detail**: review §1 → orchestrator §6 row 19 + gate R4.4 (new migration; `OnboardingScreen` StepFestival).
+
+---
+
+> **DEC-056 → DEC-061 — 2026-06-24 review-remediation, round 2 (Julio's follow-up + 4 inline councils).** Added to the
+> remediation orchestrator. All **PROPOSED**. DEC-058/059/060 carry an inline-council synthesis; DEC-061 is a verified
+> technical fact; DEC-056/057 are scope/contract hardening.
+
+### DEC-056 — Autonomy hardening: the implementer NEVER stops to ask permission to advance; ambiguity → council-on-the-spot
+- **Date**: 2026-06-24 (review-remediation r2)
+- **Status**: PROPOSED (review-remediation pass)
+- **Context**: In the prior pass the agent ended a turn with an `AskQuestion` asking whether it could **proceed to the
+  next milestone**. Julio works asynchronously (often asleep while the agent runs) — a mid-build "may I continue?"
+  **stalls the entire pipeline for hours**. This is the single worst failure mode for this project's velocity model.
+- **Decision**: The remediation orchestrator's autonomy contract is hardened: (1) **NEVER** pause, stop, or fire an
+  `AskQuestion` to ask permission to **start/continue the next fix, milestone, gate, or phase** — chain straight into
+  the next unit until the §12 Stop Criteria are all TRUE or context genuinely runs out. The terminal `AskQuestion`
+  (per `always-end-with-askquestion`) is **only** allowed at the *real* hand-off (all work done, or a hard
+  credential/cost blocker, or context exhausted) — never between units of work. (2) When a genuine ambiguity appears
+  that the brain doesn't resolve, the agent **runs the inline council on the spot, takes the result, writes a
+  `DEC-NNN` (PROPOSED), and continues** — it does **not** stop to ask Julio. (3) In doubt, the agent **reads the
+  brain** (everything is answerable there, or there + a council) rather than guessing or stopping.
+- **Why**: asynchronous operation is the whole point of the orchestrator + velocity standard; a blocking question
+  defeats it. Council-on-the-spot preserves decision quality without a human round-trip.
+- **Also reinforced (ops)**: `nvm use 22` before any wrangler/build; git **pager-safe** always (`--no-pager`, commit
+  with `-m`/HEREDOC, never `-i`/interactive); Cloudflare **Pages deploy targets the production branch `master`** (not
+  a preview) — see DEC-037.
+- **Detail**: orchestrator §1 rules 2–3 + §9 + §12; supersedes the "pick + write DEC + continue" phrasing of the prior
+  ambiguity rule with "council-on-the-spot + DEC + continue".
+
+### DEC-057 — The Admin back-office is in V1 scope: build the screens + protected routes, plus new operator areas
+- **Date**: 2026-06-24 (review-remediation r2)
+- **Status**: PROPOSED (review-remediation pass)
+- **Context**: Admin today = undocumented Worker endpoints behind `x-admin-token` (no UI). The design pass already
+  produced a desktop admin wireframe (`brain/wireframes/directions/30-amber-admin.html`) with 6 screens: Festivals
+  overview, Lineup & timetable dashboard, Map editor (drag pins → generate), Georeference/verify, POI editor,
+  Travel-time matrix (DEC-034/039 Q-I). Julio wants the admin actually built, plus areas the wireframe doesn't cover.
+- **Decision**: Build a real **admin back-office** (`admin.festpilot.app` or a guarded route group), protected by an
+  **admin auth** (token now; proper admin login later), implementing the 6 wireframed screens **and** these new areas:
+  (a) **Data-source registry per festival** — for each festival, record *where the data comes from* and how it's
+  captured (resolve event+uuid from the official page → CDN JSON, per DEC-009), with a manual-add/edit path for
+  festivals without a clean source; future: AI-assisted lineup/timetable reading to pre-fill on create/edit.
+  (b) **Festival suggestions inbox** (DEC-055) — list + frequency + status. (c) **Usage metrics** — who's using the
+  app (name + optional email + country + last-seen, from DEC-060), plus app-usage metrics. (d) **Quota / cost runway**
+  — how many requests/ops consumed vs the free-tier ceiling per service (Workers, D1, DO, R2…), and an **estimated
+  runway** ("at the current rate, service X hits the free limit in ~N days") using current averages. (e) **Live test
+  command console** (see DEC-057-note below).
+- **Live test console (council 4 synthesis)**: an operator panel to **inject synthetic test users at chosen map
+  positions in real time** (drag a pin → the test user's coarse/exact presence updates → Julio's client, in the same
+  test group, sees it live), reusing `POST /api/presence` + the `GroupRoom` DO fan-out. Guard-rails: gated by
+  `x-admin-token`; **operates only on users flagged `is_test=1`, never real users**; scoped to a test festival/group;
+  test entities visually marked; a **purge-test-data** action. This is also the sanctioned way to populate the map for
+  testing — satisfying "no mock-as-real" (real data, OR clearly-flagged admin-injected test data, OR honest empty).
+- **Why**: onboarding new festivals, observing real usage, staying inside free tiers, and live-testing every feature
+  are all operator-critical and currently impossible without a UI. The map editor is already designed; the rest reuses
+  existing endpoints.
+- **Detail**: wireframe `30-amber-admin.html`; orchestrator new gate **R11 (Admin)**; metrics/quotas need light D1
+  tables + Cloudflare Observability (GraphQL Analytics) reads.
+
+### DEC-058 — Presence guard-rail revised: coarse by default, exact coordinates allowed where a feature truly needs them
+- **Date**: 2026-06-24 (review-remediation r2, inline `/assess` council)
+- **Status**: PROPOSED (review-remediation pass; refines DEC-046/047, does not revoke them)
+- **Council synthesis**: coarse stays the **default** and the group feed **never carries `lat/lng`**; but exact
+  coordinates **may** be used for features that genuinely need them (precise "come to me", point-to-point nav, true
+  distance to stage/POI), **always via an explicit, time-boxed (TTL) share** over the existing exact channel — never a
+  silent broadening of the coarse feed, and **never continuous background tracking**. **No feature is dropped merely to
+  stay coarse.** Weightiest lens = Architect (reuse the one explicit+expiring exact channel; the invariant that matters
+  is "coarse DTOs carry no raw coords", not "coords forbidden").
+- **Decision**: replace the absolute "exact coords leave a device ONLY via meeting point/safety" with: **"coarse by
+  default; exact coordinates are permitted for features that require them, always via explicit + expiring sharing; the
+  coarse feed never carries raw coords; no continuous background location; and we don't block a feature just to remain
+  coarse."** Keep honest consent copy; keep server-side hard-expiry.
+- **Flip**: revert to strict coarse-only if an app-store/GDPR requirement demands it.
+- **Detail**: orchestrator §3 non-negotiable (presence) + §6 map rows; refines DEC-007/008/014/015/046/047.
+
+### DEC-059 — Avatar/profile photo storage: R2 (CONFIRMED — card on file); budget alert + app-enforced quota; Cloudinary no-card fallback retired
+- **Date**: 2026-06-24 (review-remediation r2, inline `/council`)
+- **Status**: PROPOSED → **R2 CONFIRMED 2026-06-24 (Julio added a card on file)**; supersedes DEC-053
+- **Council synthesis**: avatars are few and tiny (~50–150 KB after client compression; ~10k users ≈ 1 GB → **$0** on
+  R2's permanent free tier, egress always free). The real risk Julio fears ("conta gigante") is a tail risk, since
+  **Cloudflare has no hard spend cap** (only budget alerts). The effective limiter is therefore an **app-enforced
+  quota**, not the provider. Weightiest lens = Cost + Architect (R2 is the native Cloudflare fit; adding a vendor trades
+  a tiny tail risk for permanent architectural debt).
+- **Decision**: **Default** — enable **R2** (Julio adds a card) + a **budget alert (~$1)** + an **app-enforced hard
+  quota**: client-side compress to ~150 KB, **one avatar per user**, a global object-count ceiling, and the Worker
+  **rejects writes above a configured budget**. This delivers the "limiter" Julio wants while staying native
+  (egress-free, Worker binding). **Fallback (if Julio refuses any card)** — **Cloudinary free** (no card, natural hard
+  cap, built-in resize) behind a thin storage adapter, swappable to R2 later. Either way, the meeting-point photo
+  (DEC-047) unblocks via the same store.
+- **Why**: makes the avatar (and meeting-point) photo real without a meaningful bill, honoring both "make it work" and
+  "cap the risk". The adapter keeps the provider swappable.
+- **Detail**: supersedes DEC-053; relates DEC-038/047; orchestrator gate R9.3 + the storage-adapter note.
+- **Update (2026-06-24, card added)**: Julio enabled R2 with a **card on file** → **R2 is the confirmed live path**;
+  the **Cloudinary "no-card" fallback is retired** (the storage adapter keeps the provider swappable). Provision:
+  `wrangler r2 bucket create festpilot-media` + Worker binding `MEDIA` (`[[r2_buckets]]`); the account-scoped operator
+  token `festival-disk-05e9` is for the CLI/deploy step only, **never** stored in code. The orchestrator was updated to
+  match (§4 baseline, §7 DEC-053/DEC-059, gates R9.3 avatar + R9.5 meeting photo, §11 problem table). Also unblocks the
+  meeting-point photo (DEC-047) via the same store.
+
+### DEC-060 — Lightweight identity at onboarding: ask name (required) + email (optional) up front; prefill on real sign-in
+- **Date**: 2026-06-24 (review-remediation r2, inline `/council`)
+- **Status**: PROPOSED (review-remediation pass; refines DEC-024/041)
+- **Council synthesis**: name is light and has immediate product value (real name on squad cards/map); email is PII and
+  must stay optional with honest microcopy; never collect a password here; country comes free from `CF-IPCountry`.
+  Weightiest lens = User-Advocate.
+- **Decision**: at first run, ask **name (required, light)** + **email (optional, with a clear value prop — "to save
+  your plan & get alerts")**, stored locally + sent to the server for metrics (device id + name + optional email +
+  country). **No password at this step.** When the user later creates a real (non-social) account, **prefill name +
+  email and ask only for the password.** Email is one-tap skippable; minimal storage; covered by PRIVACY.md.
+- **Flip**: if activation drops, make name optional too.
+- **Detail**: refines DEC-024 (anonymous-first) + DEC-041 (local-first); orchestrator gate R5 (onboarding) + R10
+  (settings/auth prefill) + the metrics tie-in feeds DEC-057(c).
+
+### DEC-061 — Artist photos are already in the CDN performances JSON (`artists[].image`); re-ingest + render — the ⏳ is resolved
+- **Date**: 2026-06-24 (review-remediation r2, verified from the live HAR)
+- **Status**: PROPOSED (review-remediation pass; resolves the ⏳ in DEC-052 / orchestrator R1.3)
+- **Finding (VERIFIED 2026-06-24)**: the live CDN performances JSON
+  (`artist-lineup-cdn.tomorrowland.com/TL26BE-W{1,2}-{uuid}.json`) **already carries the artist photo** inline:
+  `{"id":"1536127184","name":"BassBrain","image":"https://artist-lineup-cdn.tomorrowland.com/233262902-Presspic Bassbrain - 4.jpg"}`.
+  Artists without a photo simply omit `image` (e.g. "Leenders", "More to be announced"). The local spike fixtures are
+  **stale** (captured before the field existed). Our pipeline already maps `a.image` (`normalize.ts` → `store.ts`
+  `image_url` → `repo.ts` `imageUrl`).
+- **Decision**: the photo source is **not** a separate endpoint — it's the existing performances JSON. The fix is to
+  **re-ingest** (live data now carries `image`) and **render `imageUrl`** everywhere with the CDN resizer
+  (`?width=` — e.g. 160/320/520 by surface); URL-encode the path (it contains spaces). Update a test fixture to include
+  an artist with `image`. No new scraper, consistent with DEC-009.
+- **Detail**: supersedes the "resolve a separate photo source" half of DEC-052; orchestrator §6 row 1 + gate R1.3 + R5.4.

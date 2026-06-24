@@ -4,6 +4,39 @@
 > then the current gate in `brain/documents/2026-06-23-v1-implementation-orchestrator.md` and its §3 non-negotiables.
 > Seeded 2026-06-23.
 
+---
+
+## Review-Remediation Pass (2026-06-24) — ACTIVE
+
+> Execution truth: `brain/documents/2026-06-24-v1-review-remediation-orchestrator.md`. Order: R0→R11 (P0 first,
+> then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
+
+### Current State (this pass)
+- **Gate:** R0 ✅ baseline green → starting R1.
+- **Baseline (2026-06-24, pre-change):** typecheck clean · **server 121 + web 147 unit** pass · build OK
+  (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121). Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
+- Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
+
+### Gate checklist
+- [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
+- [ ] **R1** (P0 data/logic) — festival-day blocks (DEC-048) · clash anchor-overlap (headline) · artist photo re-ingest (DEC-061).
+- [ ] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom.
+- [ ] **R3** (P0 perf) — shared lineup cache (<300 ms tab switch).
+- [ ] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days · suggest-a-festival (DEC-055).
+- [ ] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere.
+- [ ] **R6** (P1 now/next) — plan-then-favorites, never arbitrary.
+- [ ] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar.
+- [ ] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap.
+- [ ] **R9** (P1 squad) — multiple squads · honest copy · avatar on R2 + custom emoji (DEC-059) · auto-share (DEC-054) · real mini-map · meeting photo · AI-icon/J-menu.
+- [ ] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select.
+- [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
+
+### Pass log (most recent first)
+- **R0 ✅ (2026-06-24):** confirmed baseline green on the untouched tree (server 121 + web 147; typecheck/build clean);
+  verified DEC-048→DEC-061 present in `decision-log.md`; seeded this section. Next: R1.1 festival-day blocks.
+
+---
+
 ## Current State
 - 🔨 **BUILD IN PROGRESS (2026-06-24).** Executing the orchestrator autonomously. **PHASE 0 + 1 + 2 + 4 + 5 COMPLETE + LIVE; PHASE 3 core done; PHASE 6 G6.1 ✅ + G6.2 ✅ + G6.3 ✅ → PHASE 6 COMPLETE.** **V1.x follow-ups (undo / split / share) ✅ + LIVE.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`). About screen + changelog shipped (single-source `APP_VERSION`, now `0.8.0`).
