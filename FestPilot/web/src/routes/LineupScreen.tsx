@@ -8,11 +8,12 @@ import { useFavorites } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { festivalDataState } from "../domain/dataState";
 import { uniqueActs, type Act } from "../domain/lineup";
-import { daysForWeekends, initials, type DayInfo } from "../lib/festival";
-import { stageColor } from "../lib/format";
+import { daysForWeekends, type DayInfo } from "../lib/festival";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
+import { ArtistPhoto } from "../ui/ArtistPhoto";
+import { PHOTO_WIDTH } from "../lib/photo";
 
 export function LineupScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
@@ -69,10 +70,9 @@ export function LineupScreen(): JSX.Element {
 
   const renderRow = (act: Act): JSX.Element => {
     const on = favorites.isFavorite(act.actKey);
-    const color = stageColor(stageName.get(act.stageIds[0] ?? ""));
     return (
       <div className="art-row" key={act.actKey}>
-        <div className="avatar-sq" style={{ color }}>{initials(act.label)}</div>
+        <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.list} className="art-photo" />
         <div className="art-info">
           <div className="nm">{act.label}</div>
           <div className="mt">{meta(act)}</div>

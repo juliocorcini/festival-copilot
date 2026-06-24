@@ -10,11 +10,14 @@ import { useFavorites, useOnboarding } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { buildTimetable } from "../domain/timetable";
 import { festivalDataState } from "../domain/dataState";
-import { daysForWeekends, initials, type DayInfo } from "../lib/festival";
+import { imageByActKey } from "../domain/lineup";
+import { daysForWeekends, type DayInfo } from "../lib/festival";
 import { stageColor, stageColorRgb, timeInZone } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
+import { ArtistPhoto } from "../ui/ArtistPhoto";
+import { PHOTO_WIDTH } from "../lib/photo";
 
 type Zoom = "2h" | "1h";
 const PIXELS_PER_HOUR: Record<Zoom, number> = { "2h": 180, "1h": 360 };
@@ -52,6 +55,8 @@ export function TimetableScreen(): JSX.Element {
       timeZone: tz,
     });
   }, [lineup, favorites.keys, dayKey, weekendIds, tz]);
+
+  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
 
   // Data-state (DEC-052): a lineup-only festival defaults straight to the Lineup (no dead timetable);
   // a not-yet-announced festival shows an honest empty state on both views.
@@ -157,7 +162,12 @@ export function TimetableScreen(): JSX.Element {
                       return (
                         <div key={set.id} className={`set${set.isFav ? " fav" : ""}`} style={cardStyle}>
                           <div className="set-inner">
-                            <div className="photo">{initials(set.label)}</div>
+                            <ArtistPhoto
+                              src={photoByKey.get(set.actKey) ?? null}
+                              name={set.label}
+                              width={PHOTO_WIDTH.list}
+                              className="photo"
+                            />
                             <div className="info">
                               <div className="name">{set.label}</div>
                               <div className="meta">

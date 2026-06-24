@@ -17,10 +17,12 @@ import { useDeviceLocation } from "./useDeviceLocation";
 import { useMyGroups } from "../data/groups";
 import { useGroupPresence } from "../data/presence";
 import { useLineup } from "../data/useLineup";
-import { toPlannableSets } from "../domain/lineup";
+import { imageByActKey, toPlannableSets } from "../domain/lineup";
 import { setsAtStage, stageProgrammeAt } from "../domain/stageProgramme";
 import { PresenceAvatar, ago, presenceLine, sortRoster } from "../routes/presence/presenceUi";
 import { stageColor, timeInZone } from "../lib/format";
+import { ArtistPhoto } from "../ui/ArtistPhoto";
+import { PHOTO_WIDTH } from "../lib/photo";
 
 interface Props {
   festivalId?: string;
@@ -102,6 +104,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
     () => (lineup ? toPlannableSets(lineup.performances, lineup.stages) : []),
     [lineup],
   );
+  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
   const timeZone = lineup?.festival.timezone ?? "UTC";
 
   const [openStage, setOpenStage] = useState<StageGeo | null>(null);
@@ -237,6 +240,12 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
           <div className="stage-sheet-now">
             {openProgramme?.now ? (
               <>
+                <ArtistPhoto
+                  src={photoByKey.get(openProgramme.now.actKey) ?? null}
+                  name={openProgramme.now.label}
+                  width={PHOTO_WIDTH.list}
+                  className="stage-sheet-photo"
+                />
                 <span className="pill pill-live">● now</span>
                 <b>{openProgramme.now.label}</b>
                 <em>{hhmm(openProgramme.now.startMs, timeZone)}–{hhmm(openProgramme.now.endMs, timeZone)}</em>
@@ -247,6 +256,12 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
           </div>
           {openProgramme?.next && (
             <div className="stage-sheet-next">
+              <ArtistPhoto
+                src={photoByKey.get(openProgramme.next.actKey) ?? null}
+                name={openProgramme.next.label}
+                width={PHOTO_WIDTH.avatar}
+                className="stage-sheet-photo sm"
+              />
               <span className="label">Next</span>
               <b>{openProgramme.next.label}</b>
               <em>{hhmm(openProgramme.next.startMs, timeZone)}</em>

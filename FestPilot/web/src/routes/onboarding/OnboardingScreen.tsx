@@ -619,7 +619,9 @@ function StepSwipe({
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
+            <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.card} className="art-card-photo" />
             <div className="art-glow" />
+            <div className="art-card-scrim" />
             <span className="swipe-stamp keep" style={{ opacity: drag.keepOpacity }} aria-hidden="true">Keep</span>
             <span className="swipe-stamp skip" style={{ opacity: drag.skipOpacity }} aria-hidden="true">Skip</span>
             <div className="art-inner">

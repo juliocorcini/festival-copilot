@@ -13,8 +13,11 @@ import { useLineup } from "../data/useLineup";
 import { useOnboarding, usePlan } from "../data/localStore";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { buildNowNext } from "../domain/nowNext";
+import { imageByActKey } from "../domain/lineup";
 import { daysForWeekends } from "../lib/festival";
 import { dayLabel, daysUntil, stageColor, timeInZone } from "../lib/format";
+import { ArtistPhoto } from "../ui/ArtistPhoto";
+import { PHOTO_WIDTH } from "../lib/photo";
 import type { PerformanceDto } from "../data/types";
 import type { PlanSlot } from "../domain/types";
 
@@ -70,6 +73,8 @@ export function NowScreen(): JSX.Element {
     [plan.plan, travel, now]
   );
 
+  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
+
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !model) {
     return (
@@ -98,8 +103,8 @@ export function NowScreen(): JSX.Element {
       <>
         <AppHeader eyebrow={eyebrow} title="Now & Next" />
         <div className="screen">
-          <PlanHero nn={nowNext} tz={tz} dayKey={activeDay?.key ?? null} />
-          {nowNext.later.length > 0 && <LaterList rows={nowNext.later.slice(0, 6)} tz={tz} />}
+          <PlanHero nn={nowNext} tz={tz} dayKey={activeDay?.key ?? null} photoByKey={photoByKey} />
+          {nowNext.later.length > 0 && <LaterList rows={nowNext.later.slice(0, 6)} tz={tz} photoByKey={photoByKey} />}
           <p className="src" style={{ textAlign: "center" }}>
             From your locked plan · {model.totalCount} sets in the lineup
           </p>
@@ -116,6 +121,12 @@ export function NowScreen(): JSX.Element {
       <div className="screen">
         <section className="glass accent now-hero">
           <div className="blob" />
+          <ArtistPhoto
+            src={hero.artists[0]?.imageUrl ?? null}
+            name={performanceName(hero)}
+            width={PHOTO_WIDTH.card}
+            className="now-hero-photo"
+          />
           <div className="now-tag" style={{ color: model.isLive ? "var(--ok-ink)" : "var(--accent2)" }}>
             {model.isLive ? <span className="live" /> : <span className="ms" style={{ fontSize: 14 }}>schedule</span>}
             {model.isLive ? "NOW" : "NEXT UP"}
@@ -167,6 +178,12 @@ export function NowScreen(): JSX.Element {
             {model.later.map((p) => (
               <div key={p.id} className="lineup-row">
                 <span className="t">{timeInZone(p.startAtUtc, tz)}</span>
+                <ArtistPhoto
+                  src={p.artists[0]?.imageUrl ?? null}
+                  name={performanceName(p)}
+                  width={PHOTO_WIDTH.avatar}
+                  className="row-photo"
+                />
                 <span className="dot" style={{ background: stageColor(model.stageName(p.stageId)) }} />
                 <span className="n">{performanceName(p)}</span>
                 <span className="s">{model.stageName(p.stageId)}</span>
@@ -183,13 +200,29 @@ export function NowScreen(): JSX.Element {
   );
 }
 
-function PlanHero({ nn, tz, dayKey }: { nn: NonNullable<ReturnType<typeof buildNowNext>>; tz: string; dayKey: string | null }): JSX.Element {
+function PlanHero({
+  nn,
+  tz,
+  dayKey,
+  photoByKey,
+}: {
+  nn: NonNullable<ReturnType<typeof buildNowNext>>;
+  tz: string;
+  dayKey: string | null;
+  photoByKey: Map<string, string | null>;
+}): JSX.Element {
   const navigate = useNavigate();
   const live = nn.live!;
   const leave = nn.leaveInMinutes;
   return (
     <section className="glass accent now-hero">
       <div className="blob" />
+      <ArtistPhoto
+        src={photoByKey.get(live.actKey) ?? null}
+        name={live.label}
+        width={PHOTO_WIDTH.card}
+        className="now-hero-photo"
+      />
       <div className="now-tag" style={{ color: "var(--ok-ink)" }}>
         <span className="live" />
         NOW
@@ -248,13 +281,27 @@ function PlanHero({ nn, tz, dayKey }: { nn: NonNullable<ReturnType<typeof buildN
   );
 }
 
-function LaterList({ rows, tz }: { rows: PlanSlot[]; tz: string }): JSX.Element {
+function LaterList({
+  rows,
+  tz,
+  photoByKey,
+}: {
+  rows: PlanSlot[];
+  tz: string;
+  photoByKey: Map<string, string | null>;
+}): JSX.Element {
   return (
     <section className="glass list-card">
       <span className="label">Later tonight</span>
       {rows.map((slot) => (
         <div key={slot.setId} className="lineup-row">
           <span className="t">{timeInZone(new Date(slot.startMs).toISOString(), tz)}</span>
+          <ArtistPhoto
+            src={photoByKey.get(slot.actKey) ?? null}
+            name={slot.label}
+            width={PHOTO_WIDTH.avatar}
+            className="row-photo"
+          />
           <span className="dot" style={{ background: stageColor(slot.stageName) }} />
           <span className="n">{slot.label}</span>
           <span className="s">{slot.stageName}</span>

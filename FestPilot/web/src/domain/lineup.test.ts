@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { PerformanceDto, StageDto } from "../data/types";
-import { actKey, actLabel, favoriteSets, nearbySets, toPlannableSets, uniqueActs } from "./lineup";
+import { actKey, actLabel, favoriteSets, imageByActKey, nearbySets, toPlannableSets, uniqueActs } from "./lineup";
 
 const stages: StageDto[] = [
   { id: "stage-main", sourceStageId: "1", name: "MAINSTAGE", sortOrder: 0 },
@@ -24,6 +24,20 @@ function perf(over: Partial<PerformanceDto>): PerformanceDto {
     ...over,
   };
 }
+
+describe("imageByActKey (R5.4 / DEC-061)", () => {
+  it("maps actKey → first available photo, upgrading a null first sighting", () => {
+    const noPhoto = perf({ id: "p-1", day: "D1", artists: [{ id: "a-x", name: "X", imageUrl: null }] });
+    const withPhoto = perf({ id: "p-2", day: "D2", artists: [{ id: "a-x", name: "X", imageUrl: "https://cdn/x.jpg" }] });
+    const map = imageByActKey([noPhoto, withPhoto]);
+    expect(map.get("a-x")).toBe("https://cdn/x.jpg");
+  });
+
+  it("keeps null when an act never has a photo", () => {
+    const map = imageByActKey([perf({ artists: [{ id: "a-y", name: "Y", imageUrl: null }] })]);
+    expect(map.get("a-y")).toBeNull();
+  });
+});
 
 describe("act identity", () => {
   it("keys by the first artist id and dedups an act playing multiple days", () => {

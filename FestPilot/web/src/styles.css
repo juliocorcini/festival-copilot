@@ -262,6 +262,14 @@ a { color: inherit; text-decoration: none; }
 .lineup-row .n { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lineup-row .s { color: var(--muted); font-size: 11px; }
 .lineup-row.past { opacity: 0.5; }
+/* Artist photos in Now/Next (R5.4): a floated hero thumbnail + small row avatars. */
+.now-hero .now-hero-photo { float: right; width: 62px; height: 62px; border-radius: 16px; margin: 0 0 8px 12px;
+  overflow: hidden; border: 1px solid var(--border); position: relative; z-index: 1; }
+.now-hero .now-hero-photo.artphoto-ph { font-size: 22px; }
+.now-hero .now-foot { clear: both; }
+.lineup-row .row-photo { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; overflow: hidden;
+  border: 1px solid var(--border); }
+.lineup-row .row-photo.artphoto-ph { font-size: 11px; }
 
 .live { width: 8px; height: 8px; border-radius: 50%; background: var(--ok-ink); box-shadow: 0 0 8px var(--ok-ink); display: inline-block; }
 
@@ -382,6 +390,9 @@ a { color: inherit; text-decoration: none; }
 .stage-sheet-now em, .stage-sheet-next em { font-style: normal; color: var(--accent2); font-size: 12px; margin-left: auto; }
 .stage-sheet-now .muted { color: var(--muted); }
 .stage-sheet-next .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.stage-sheet .stage-sheet-photo { width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border); }
+.stage-sheet .stage-sheet-photo.sm { width: 30px; height: 30px; }
+.stage-sheet .stage-sheet-photo.artphoto-ph { font-size: 13px; }
 
 /* =============================================================================
    Onboarding flow (#17) — festival → weekend → days → swipe favorites
@@ -450,9 +461,14 @@ a { color: inherit; text-decoration: none; }
 .art-card { width: 100%; border-radius: 26px; position: relative; overflow: hidden; aspect-ratio: 4 / 5;
   background: linear-gradient(160deg, #221b12, #2c2216); border: 1px solid var(--border);
   box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6); }
-.art-card .art-glow { position: absolute; inset: 0; opacity: 0.25;
+.art-card .art-glow { position: absolute; inset: 0; z-index: 1; opacity: 0.25;
   background: radial-gradient(circle at 60% 25%, rgba(245, 166, 35, 0.4), transparent 60%); }
-.art-card .art-inner { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+/* Full-bleed artist photo behind the swipe card (R5.4), with a scrim so the text stays legible. */
+.art-card .art-card-photo { position: absolute; inset: 0; z-index: 0; }
+.art-card .art-card-photo.artphoto-ph { font-size: 64px; }
+.art-card .art-card-scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82) 6%, rgba(0, 0, 0, 0.12) 46%, rgba(0, 0, 0, 0.5) 100%); }
+.art-card .art-inner { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
 .art-card .art-stage { font-size: 12px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; }
 .art-card .art-day { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.4); }
 .art-card .art-name { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700;
@@ -515,7 +531,7 @@ a { color: inherit; text-decoration: none; }
 .gcard:active { transform: scale(0.985); }
 .gcard.on { border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
-.gcard-photo { width: 100%; aspect-ratio: 1 / 1; }
+.gcard-photo { width: 100%; height: auto; aspect-ratio: 1 / 1; }
 .gcard .artphoto-ph { font-size: 30px; }
 .gcard-heart { position: absolute; top: 8px; right: 8px; z-index: 2; font-size: 22px; color: #fff;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7)); }
@@ -568,6 +584,9 @@ a { color: inherit; text-decoration: none; }
 .art-row + .art-row { border-top: 1px solid rgba(255, 255, 255, 0.05); }
 .avatar-sq { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; display: grid; place-items: center;
   font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #3a3224, #241f16); border: 1px solid var(--border); }
+/* Shared list/row photo (R5.4): a 44px square that matches .avatar-sq footprint. */
+.art-photo { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border); }
+.art-photo.artphoto-ph { font-size: 14px; }
 .art-row .art-info { flex: 1; min-width: 0; }
 .art-row .art-info .nm { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700; font-size: 16px;
   line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -794,7 +813,11 @@ a { color: inherit; text-decoration: none; }
 .plan-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px; }
 .plan-card.done { opacity: 0.6; }
 .plan-card.now { border-color: rgba(245, 166, 35, 0.5); box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.35); }
-.plan-card-main { min-width: 0; }
+.plan-card-main { flex: 1; min-width: 0; }
+.plan-card .plan-photo { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; overflow: hidden;
+  border: 1px solid var(--border); }
+.plan-card .plan-photo.artphoto-ph { font-size: 15px; }
+.plan-card.done .plan-photo { filter: grayscale(0.4); }
 .plan-when { font-size: 11px; font-weight: 700; color: var(--muted); }
 .plan-when.now { color: var(--accent); }
 .plan-name { margin-top: 2px; font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

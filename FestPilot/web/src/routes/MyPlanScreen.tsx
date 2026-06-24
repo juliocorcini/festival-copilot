@@ -10,10 +10,13 @@ import { AppHeader } from "../app/AppHeader";
 import { useOnboarding, usePlan } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { buildPlanTimeline, type PlanGapItem, type PlanSetItem } from "../domain/plan";
+import { imageByActKey } from "../domain/lineup";
 import { daysForWeekends } from "../lib/festival";
 import { stageColor, timeInZone } from "../lib/format";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
+import { ArtistPhoto } from "../ui/ArtistPhoto";
+import { PHOTO_WIDTH } from "../lib/photo";
 import { SharePlanSheet } from "./share/SharePlanSheet";
 
 export function MyPlanScreen(): JSX.Element {
@@ -46,6 +49,8 @@ export function MyPlanScreen(): JSX.Element {
     () => buildPlanTimeline(plan.plan?.slots ?? [], travel, now),
     [plan.plan?.slots, travel, now]
   );
+
+  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !lineup) {
@@ -113,7 +118,13 @@ export function MyPlanScreen(): JSX.Element {
             <div className="plan-tl-line" />
             {timeline.items.map((item, index) =>
               item.kind === "set" ? (
-                <PlanSetRow key={item.slot.setId} item={item} tz={tz} onNavigate={() => navigate(routeHref(dayKey))} />
+                <PlanSetRow
+                  key={item.slot.setId}
+                  item={item}
+                  tz={tz}
+                  photoUrl={photoByKey.get(item.slot.actKey) ?? null}
+                  onNavigate={() => navigate(routeHref(dayKey))}
+                />
               ) : (
                 <PlanGapRow key={`gap-${index}`} item={item} onRoute={() => navigate(routeHref(dayKey))} />
               )
@@ -141,7 +152,17 @@ export function MyPlanScreen(): JSX.Element {
   );
 }
 
-function PlanSetRow({ item, tz, onNavigate }: { item: PlanSetItem; tz: string; onNavigate: () => void }): JSX.Element {
+function PlanSetRow({
+  item,
+  tz,
+  photoUrl,
+  onNavigate,
+}: {
+  item: PlanSetItem;
+  tz: string;
+  photoUrl: string | null;
+  onNavigate: () => void;
+}): JSX.Element {
   const { slot, status, endMs } = item;
   const start = timeInZone(new Date(slot.startMs).toISOString(), tz);
   const end = timeInZone(new Date(endMs).toISOString(), tz);
@@ -150,6 +171,7 @@ function PlanSetRow({ item, tz, onNavigate }: { item: PlanSetItem; tz: string; o
     <div className="plan-row">
       <span className={`plan-dot ${status}`} />
       <div className={`glass plan-card ${status}`}>
+        <ArtistPhoto src={photoUrl} name={slot.label} width={PHOTO_WIDTH.list} className="plan-photo" />
         <div className="plan-card-main">
           <div className={`plan-when ${status}`}>
             {status === "now" ? "NOW · " : ""}

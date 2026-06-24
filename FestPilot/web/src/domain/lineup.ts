@@ -34,6 +34,19 @@ function stageNameMap(stages: StageDto[]): Map<string, string> {
 }
 
 /**
+ * actKey → first available artist photo (DEC-061), for surfaces that render by `actKey`/`PlanSlot`
+ * (timetable, My Plan, Now/Next, stage sheet) instead of carrying the image through every shape.
+ */
+export function imageByActKey(performances: PerformanceDto[]): Map<string, string | null> {
+  const map = new Map<string, string | null>();
+  for (const performance of performances) {
+    const key = actKey(performance);
+    if (!map.get(key)) map.set(key, performance.artists[0]?.imageUrl ?? null);
+  }
+  return map;
+}
+
+/**
  * Unique acts for browsing/onboarding (placeholders excluded), sorted alphabetically.
  * `dayOf` resolves the day an act plays (defaults to the source label); onboarding passes the derived
  * festival-day id (DEC-048) so the day filter and day tag match the timetable's blocks.
