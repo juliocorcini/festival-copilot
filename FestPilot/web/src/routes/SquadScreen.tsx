@@ -15,13 +15,37 @@ import type { GroupDto, MeetingPointDto } from "../data/types";
 import { LoadingState } from "../ui/states";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
+/** Remembers the last squad the user was looking at, so a multi-squad user lands back where they left. */
+const ACTIVE_GROUP_KEY = "fp.activeGroup.v1";
+function readActiveGroup(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_GROUP_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function SquadScreen(): JSX.Element {
   const { hasProfile } = useIdentity();
   const { groups, status, reload } = useMyGroups();
+  const [activeId, setActiveId] = useState<string | null>(readActiveGroup);
 
   if (status === "loading") return <LoadingState rows={3} />;
   if (groups.length === 0) return <EmptySquad hasProfile={hasProfile} />;
-  return <GroupHome group={groups[0]!} onChanged={reload} />;
+
+  // The active squad is the remembered one if it still exists, else the first. Every sub-feature
+  // (plan, presence, meeting points, board) keys off `group.id`, so switching isolates the data.
+  const active = groups.find((g) => g.id === activeId) ?? groups[0]!;
+  const select = (id: string): void => {
+    setActiveId(id);
+    try {
+      localStorage.setItem(ACTIVE_GROUP_KEY, id);
+    } catch {
+      /* private mode — in-memory only */
+    }
+  };
+
+  return <GroupHome key={active.id} group={active} groups={groups} onSelect={select} onChanged={reload} />;
 }
 
 function EmptySquad({ hasProfile }: { hasProfile: boolean }): JSX.Element {
@@ -43,8 +67,8 @@ function EmptySquad({ hasProfile }: { hasProfile: boolean }): JSX.Element {
             better together
           </h2>
           <p>
-            Create a squad, build a shared plan, and find each other on the map — even when the
-            signal dies and the battery's at 12%.
+            Create a squad, build one shared plan, and keep everyone on the same page — who's at
+            which stage, and where to meet up.
           </p>
         </div>
         <div className="squad-actions">
@@ -63,7 +87,17 @@ function EmptySquad({ hasProfile }: { hasProfile: boolean }): JSX.Element {
   );
 }
 
-function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => void }): JSX.Element {
+function GroupHome({
+  group,
+  groups,
+  onSelect,
+  onChanged,
+}: {
+  group: GroupDto;
+  groups: GroupDto[];
+  onSelect: (id: string) => void;
+  onChanged: () => void;
+}): JSX.Element {
   const navigate = useNavigate();
   const { members } = useGroup(group.id);
   const { points } = useMeetingPoints(group.id);
@@ -97,6 +131,27 @@ function GroupHome({ group, onChanged }: { group: GroupDto; onChanged: () => voi
         }
       />
       <div className="screen">
+        {groups.length > 1 && (
+          <div className="squad-switcher" role="tablist" aria-label="Your squads">
+            {groups.map((g) => (
+              <button
+                key={g.id}
+                role="tab"
+                aria-selected={g.id === group.id}
+                className={`squad-tab${g.id === group.id ? " on" : ""}`}
+                onClick={() => onSelect(g.id)}
+              >
+                <span className="squad-tab-glyph">{g.emoji ?? "🎪"}</span>
+                <span className="squad-tab-name">{g.name}</span>
+                <span className="squad-tab-count">{g.memberCount}</span>
+              </button>
+            ))}
+            <button className="squad-tab squad-tab-add" onClick={() => navigate("/squad/create")} aria-label="New squad">
+              <span className="ms">add</span>
+            </button>
+          </div>
+        )}
+
         {hasSos && (
           <button className="glass safety-home-banner" onClick={() => navigate(`/squad/${group.id}/safety`)}>
             <span className="safety-home-pulse">
