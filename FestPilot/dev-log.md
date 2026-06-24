@@ -12,23 +12,30 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R9 (P1 Squad) CLOSED ✅ — deployed + live (v0.11.0).** The whole squad cluster: **R9.1** multiple squads +
-  switcher · **R9.2** honest hero copy · **R9.3** avatar photo on R2 (DEC-059) + custom emoji · **R9.4** auto-share
-  plan+favorites on join (DEC-054) + Settings opt-out · **R9.5** real venue mini-map + richer meeting card + meeting-point
-  photo on R2 (DEC-047) + squad-home density · **R9.6** AI icon → real action + J → profile menu. Next: **R10 (P1
-  Settings/polish)**.
-- **Media on R2 (DEC-059/047):** bucket `festpilot-media` bound as **`MEDIA`**; one storage adapter `server/src/media/store.ts`
-  (`putImage`/`getImage`/`deleteImage`, allowlist jpeg/png/webp, immutable cache). The **app** enforces the quota via pure
-  `checkMediaQuota` over a D1 **`media_object`** ledger (per-object cap, global object-count + total-byte budget,
-  overwrite-aware). Avatar: `POST/DELETE /api/media/avatar`, versioned key `avatars/<userId>-<ts>.<ext>`. Meeting photo:
-  `POST /api/media/meeting/:id/photo` (creator-only), key `meetings/<mpId>-<ts>.<ext>`. Served at `GET /media/*`. Client
-  compresses (`ui/imageCompress.ts`: avatar ≤512px ~150 KB; meeting ≤1280px ~400 KB); `ui/Avatar.tsx` = photo-or-initials.
-- **Tests now:** typecheck clean · **server 153 + web 240 unit** pass · **e2e 29/29 green** (full suite, incl. squad/meet/
-  presence) · build OK. Worker **Version `b5f9ce0d`** (R2 + media routes + photoUrl). Pages Production serves
-  **`index-CCNjzyCU.js`** (v0.11.0).
+- **Gate:** **R10 (P1 Settings/polish) CLOSED ✅ — deployed + live (v0.12.0).** **R10.1** i18n EN/PT live switch (persisted) ·
+  **R10.2** PWA install prompt + honest SW update check · **R10.3** About build date + Privacy/Offline links + data-source
+  credit · **R10.4** global no-text-select feel + WCAG dark-on-dark avatar contrast. **All P0 + P1 (R0–R10) now done.**
+  Next + last: **R11 (Admin back-office, DEC-057)**.
+- **i18n (R10.1):** `web/src/i18n/index.ts` — **EN is the source of truth**, **PT a partial overlay**, `translate()` is pure
+  with EN fallback, `useT()` is the reactive hook (re-renders on the persisted appearance-store language). Wired through
+  nav + Settings + Appearance + Offline copy. EN strings kept byte-identical so e2e copy assertions hold.
+- **PWA (R10.2):** `web/src/app/pwaInstall.ts` captures `beforeinstallprompt`, detects iOS Safari + installed (standalone),
+  exposes `useInstallPrompt()`. `registerSW.ts` registers **`/sw.js?v=<APP_VERSION>`** (version-stamped → real update
+  detection) with `checkForUpdate()` / `applyUpdate()`; `public/sw.js` reads the version from the query, **drops
+  `skipWaiting` on install** (a new worker waits so we can prompt) and honours a `SKIP_WAITING` message on user reload.
+  `OfflineScreen` drives install + honest "update ready → reload" UI.
+- **Polish (R10.3/R10.4):** About shows the build date (latest changelog) + working Privacy/Offline links + data-source
+  credit. Global `user-select:none` + `-webkit-touch-callout:none` on `body`; `input`/`textarea`/`[contenteditable]`/
+  `.selectable` re-enable selection. New `web/src/lib/contrast.ts` `readableInkOn()` (relative-luminance AA pick) applied to
+  **every initial-avatar** (Avatar, presence, squad board/join, meeting detail) so ink never drops below AA on dark colors.
+- **Tests now:** typecheck clean · **server 153 + web 256 unit** pass · **e2e 30/30 green** (full suite; added `a11y.spec`,
+  i18n + contrast unit tests) · build OK. **Regression fixed:** `presence.spec` now blocks the SW (its network-first `/api`
+  shadowed the `page.route` stubs and 404'd the poll); SW stays covered by `registerSW` unit tests.
+- **Worker unchanged (R10 is frontend-only):** still **Version `b5f9ce0d`** (R2 + media routes + photoUrl). Pages Production
+  serves **`index-COu_AK2r.js`** (v0.12.0).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0011** applied. R2 bucket `festpilot-media` live.
-- Live URLs: app https://festpilot.pages.dev (v0.11.0) · API https://festpilot.trippilot.workers.dev (Worker `b5f9ce0d`, R2 bound).
+- Live URLs: app https://festpilot.pages.dev (v0.12.0) · API https://festpilot.trippilot.workers.dev (Worker `b5f9ce0d`, R2 bound).
 
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
@@ -41,10 +48,41 @@
 - [x] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar. **CLOSED 2026-06-24 (v0.10.2).**
 - [x] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap. **CLOSED 2026-06-24 (v0.10.3).**
 - [x] **R9** (P1 squad) — multiple squads · honest copy · AI-icon/J-menu · auto-share (DEC-054) · avatar on R2 + custom emoji (DEC-059) · real mini-map · richer meeting card + meeting photo on R2 (DEC-047) · squad-home density. **CLOSED 2026-06-24 (v0.11.0).**
-- [ ] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select.
+- [x] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select. **CLOSED 2026-06-24 (v0.12.0). ← all P1 (R5–R10) done.**
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R10 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.12.0). All P0 + P1 (R0–R10) done.** Four polish slices:
+  **R10.1 i18n EN/PT.** New `web/src/i18n/index.ts`: `EN` dictionary is the source of truth, `PT` a partial overlay,
+  `interpolate()` for `{var}` substitution, `translate(key, lang, vars)` is **pure with EN fallback**, `useT()` subscribes to
+  the persisted appearance-store language so the switch **actually changes the app live**. Wired through `BottomNav`,
+  `SettingsScreen`, `AppearanceScreen`, `OfflineScreen`. EN copy kept byte-identical so existing e2e text assertions hold.
+  Tests: new `i18n.test.ts` (EN default · PT override · EN fallback · interpolation · end-to-end contract).
+  **R10.2 PWA install + honest SW update.** New `web/src/app/pwaInstall.ts`: `initInstallCapture()` stashes
+  `beforeinstallprompt` (called from `main.tsx`), `isIOS()` detects iOS Safari, `useInstallPrompt()` exposes
+  installed/installable/iOS/unavailable + a real `prompt()`. Rewrote `registerSW.ts` to register a **version-stamped**
+  `/sw.js?v=<APP_VERSION>` (so a new release is a byte-different SW → genuine update) with `checkForUpdate()` (reports
+  waiting worker) and `applyUpdate()` (posts `SKIP_WAITING`, reloads on `controllerchange`). `public/sw.js` now derives its
+  cache version from the `?v=` query, **removed `self.skipWaiting()` from install** (new worker waits so we can prompt), and
+  added a `message` handler for `SKIP_WAITING`. `OfflineScreen` drives the install button (with the iOS step list) + an
+  honest "update ready → reload" / "you're on the latest" state. Tests: `registerSW.test.ts` extended (version-stamped URL ·
+  unsupported · updated · current · first-install · `applyUpdate` posts SKIP_WAITING).
+  **R10.3 About.** Build date sourced from the latest changelog entry; honest in-app links to **Privacy** and **Offline**
+  settings (both reachable routes) + a data-source credit line.
+  **R10.4 no-select + contrast.** Global `user-select:none` / `-webkit-user-select:none` / `-webkit-touch-callout:none` on
+  `body`, with `input`/`textarea`/`[contenteditable]`/`.selectable` re-enabling text selection (app-feel without breaking
+  typing). New `web/src/lib/contrast.ts`: `parseHex` · `relativeLuminance` · `contrastRatio` · **`readableInkOn(bg)`** picks
+  dark/light ink by WCAG luminance; applied to **every initial-avatar** (`Avatar`, `presenceUi`, `squadUi`, `JoinScreen`,
+  `SquadBoardScreen`, `MeetDetailScreen`) so e.g. white ink replaces near-black on violet `#7C3AED`. Tests: `contrast.test.ts`
+  (luminance · ratio · ink choice across colors · malformed input) + e2e `a11y.spec.js` (body blocks selection, the
+  onboarding name input keeps it). **Regression caught + fixed:** the new SW's network-first `/api` shadowed Playwright's
+  `page.route` stubs in `presence.spec` (SW-originated fetches bypass routing → preview 404 → presence poll errored);
+  added `test.use({ serviceWorkers: "block" })` to that spec (same precedent as `about.spec`), SW behaviour stays covered by
+  the `registerSW` unit tests. **Gate:** **server 153 + web 256 unit · full e2e 30/30 green · typecheck + build OK.**
+  **Deployed:** Worker **unchanged** (`b5f9ce0d`, R10 is frontend-only); Pages → Production `master`
+  (`festpilot.pages.dev` serves **`index-COu_AK2r.js`**, v0.12.0). Version bump 0.11.0 → **0.12.0** + "Your language,
+  installable, always fresh" changelog entry (also re-stamps the SW URL so existing installs get the update prompt).
+  → **R11 (Admin back-office, DEC-057) — the final gate.**
 - **R9 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.11.0).** Closes the **R9.5** slice and the whole P1 Squad cluster.
   **R9.5 — real mini-map + richer meeting card + meeting photo on R2 (DEC-047) + squad-home density.** *Meeting photo
   (backend):* `meeting_point.photo_url` already existed; surfaced it as `MeetingPointDto.photoUrl` (server + web types,

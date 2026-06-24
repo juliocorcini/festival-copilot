@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) + R7 (timetable polish) + R8 (My Plan editable) + R9 (Squad) CLOSED**, app v0.11.0)
+> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + ALL P1 (R5–R10) CLOSED**; only R11 Admin remains, app v0.12.0)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -40,7 +40,16 @@ a **real venue mini-map** on "Where's the squad" (day/night base + squad plotted
 **richer meeting cards** with a creator attribution + an optional **meeting-spot photo on R2** (DEC-047); and a denser squad
 home (live count + avatar stack). One R2 media adapter + a D1 `media_object` quota ledger backs both photo kinds; client-side
 compression keeps uploads small. App **v0.11.0**, deployed to Production; Worker redeployed (R2 binding + media routes + `photoUrl`).
-**Next: R10 (P1 Settings/polish — i18n EN/PT, PWA install, check-updates, About, contrast + no-select).**
+**R10 (P1 Settings/polish) ✅ CLOSED — ALL P1 DONE:** a real **i18n** layer (`web/src/i18n`) with **EN as the source of truth**
+and **PT as an overlay**, a pure `translate()` with EN fallback and a reactive `useT()` so the **language switch changes the
+app live** (persisted); a genuine **PWA install** (captures `beforeinstallprompt`, iOS Add-to-Home steps, installed-state
+detection) and an **honest update check** — the SW is registered version-stamped (`/sw.js?v=<APP_VERSION>`), no longer
+`skipWaiting`s on install, and the Offline screen surfaces a real "update ready → reload"; an **About** screen with a build
+date + reachable Privacy/Offline links + data-source credit; and an app-feel pass — global **no-text-selection**
+(`-webkit-touch-callout` off, inputs exempt) + a WCAG **`readableInkOn()`** contrast helper applied to every initial-avatar
+so ink never falls below AA on dark colours. App **v0.12.0**, deployed to Production (frontend-only; Worker unchanged at
+`b5f9ce0d`). **Next: R11 (Admin back-office, DEC-057) — the final gate** (auth+shell · festivals/map/POI · data-source
+registry · suggestions inbox · usage metrics + runway · live test console).
 
 ## How we build from here (the orchestrator)
 
