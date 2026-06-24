@@ -12,8 +12,8 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R1 ✅ CLOSED (2026-06-24)** — R1.1 + R1.2 + R1.3 shipped, deployed, photos live. → **R2 (P0 map) next.**
-- **Tests now:** typecheck clean · **server 122 + web 161 unit** pass · build OK · **app v0.8.1**.
+- **Gate:** **R2 (P0 map) in progress** — R2.1 ✅ pan-clamp + safe-area fit. Next: R2.2 vector stage overlay.
+- **Tests now:** typecheck clean · **server 122 + web 168 unit** pass · build OK · **app v0.8.1**.
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -33,6 +33,16 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R2.1 ✅ (2026-06-24) — pan clamp + safe-area fit (§6 #4/#6).** New pure `map/panClamp.ts`
+  (`fitScale`/`fitView`/`clampPan`): the scaled world must always cover the viewport's **safe rect**
+  (viewport minus the in-canvas chrome insets), with a 40px cosmetic bleed; under-sized worlds centre
+  instead of pinning. `usePanZoom` now takes `insets`, clamps every pan/zoom through `clampPan`, fits via
+  `fitView`, and re-clamps (not re-fits) on geometry/viewport changes once the user has moved (ResizeObserver)
+  so a growing sheet never strands the art nor yanks zoom. `MapView` measures the topbar + friends-sheet
+  heights (callback refs + ResizeObserver) and feeds them as insets, so the initial view frames the venue in
+  the visible area and the bottom sheet never hides it. **AC:** can't drag into the void; venue framed; bottom
+  bar clear. Tests +7 (`panClamp`: fit + cover invariant across 3 sizes × 4 scales, centre, insets, bleed).
+  **web 168 unit pass · typecheck OK.** Next: R2.2 interactive vector stage overlay (DEC-050).
 - **R1 GATE CLOSED ✅ (2026-06-24) — deployed + photos live.** Cumulative **server 122 + web 161 unit** green,
   typecheck + build clean. Golden-path smoke (onboarding day-select → favorites → lock-in → My Plan) holds.
   Bumped app **v0.8.0 → v0.8.1** (`changelog.ts`, single source) with a user-facing "Sharper days & honest

@@ -7,10 +7,31 @@ import { useEffect, useMemo, useState } from "react";
 import { coarseLabel, geoToSvg, type MapTransform } from "./transform";
 import { useAppearance } from "../app/settings";
 import { usePanZoom } from "./usePanZoom";
+import { NO_INSETS, type Insets } from "./panClamp";
 import { usePresence } from "./presence";
 
 interface Props {
   festivalId?: string;
+}
+
+/**
+ * Measure the in-canvas chrome (top bar + bottom sheet) so the pan/zoom can treat the
+ * viewport minus that chrome as the safe rect (R2.1, §6 #6). Callback refs let us re-measure
+ * when the elements mount and a ResizeObserver tracks the sheet growing with the roster.
+ */
+function useMeasuredInsets(top: HTMLElement | null, bottom: HTMLElement | null): Insets {
+  const [insets, setInsets] = useState<Insets>(NO_INSETS);
+  useEffect(() => {
+    const measure = (): void =>
+      setInsets({ top: top?.offsetHeight ?? 0, right: 0, bottom: bottom?.offsetHeight ?? 0, left: 0 });
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    if (top) ro.observe(top);
+    if (bottom) ro.observe(bottom);
+    return () => ro.disconnect();
+  }, [top, bottom]);
+  return insets;
 }
 
 export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.Element {
@@ -29,7 +50,10 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
 
   const cw = t?.canvas.width ?? 1000;
   const ch = t?.canvas.height ?? 1000;
-  const { ref, view, recenter, handlers } = usePanZoom(cw, ch);
+  const [topEl, setTopEl] = useState<HTMLElement | null>(null);
+  const [sheetEl, setSheetEl] = useState<HTMLElement | null>(null);
+  const insets = useMeasuredInsets(topEl, sheetEl);
+  const { ref, view, recenter, handlers } = usePanZoom(cw, ch, insets);
   const { people, meeting } = usePresence(t?.stages ?? []);
 
   const inv = 1 / view.scale; // keep markers a constant screen size at any zoom
@@ -94,7 +118,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
         </div>
       </div>
 
-      <header className="topbar">
+      <header className="topbar" ref={setTopEl}>
         <div className="title">
           <strong>{t.venue}</strong>
           <span>{t.stages.length} stages · live</span>
@@ -110,7 +134,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
 
       <button className="recenter" onClick={recenter} title="Recenter">⤢</button>
 
-      <section className="friends-sheet">
+      <section className="friends-sheet" ref={setSheetEl}>
         <h3>Your group</h3>
         <ul>
           {me && <li className="me-row"><span className="dot me" /> <b>You</b><em>{coarseLabel(t.stages, me.lng, me.lat)}</em></li>}

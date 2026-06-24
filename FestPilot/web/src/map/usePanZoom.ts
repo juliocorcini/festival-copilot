@@ -2,41 +2,87 @@
  * Pan/zoom for the map: pointer drag, wheel zoom (desktop), and two-finger pinch
  * (mobile). The map art is a single transformed "world" layer, so the base image
  * and the live overlay stay perfectly aligned at any zoom.
+ *
+ * Pan is clamped so the scaled world always covers the viewport's *safe rect* (the
+ * viewport minus the in-canvas chrome `insets`) — you can no longer drag into the
+ * black void (R2.1, §6 #4), and the initial fit frames the venue inside the visible
+ * area rather than behind the top bar / bottom sheet (§6 #6). The geometry lives in
+ * the pure, unit-tested `panClamp` module.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
+import { clampPan, fitScale, fitView, NO_INSETS, type Insets, type View } from "./panClamp";
 
-export interface View { x: number; y: number; scale: number; }
+export type { View };
 
 const MAX_SCALE = 12;
+/** Cosmetic overscroll tolerated at an edge before the clamp bites (px). */
+const BLEED = 40;
 
-export function usePanZoom(contentW: number, contentH: number) {
+export function usePanZoom(contentW: number, contentH: number, insets: Insets = NO_INSETS) {
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View>({ x: 0, y: 0, scale: 1 });
   const fit = useRef(1);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchDist = useRef<number | null>(null);
+  const userMoved = useRef(false);
 
-  const clamp = useCallback((s: number) => Math.max(fit.current * 0.9, Math.min(s, MAX_SCALE)), []);
+  // Live geometry refs the pan/zoom math reads without re-subscribing listeners.
+  const world = useRef({ w: contentW, h: contentH });
+  world.current = { w: contentW, h: contentH };
+  const insetsRef = useRef(insets);
+  insetsRef.current = insets;
+  const vp = useRef({ w: 0, h: 0 });
+
+  const clampScale = useCallback((s: number) => Math.max(fit.current * 0.9, Math.min(s, MAX_SCALE)), []);
+
+  const settle = useCallback(
+    (v: View): View => clampPan(v, world.current, vp.current, insetsRef.current, BLEED),
+    [],
+  );
 
   const zoomAround = useCallback((cx: number, cy: number, factor: number) => {
+    userMoved.current = true;
     setView((v) => {
-      const ns = clamp(v.scale * factor);
+      const ns = clampScale(v.scale * factor);
       const k = ns / v.scale;
-      return { scale: ns, x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k };
+      return settle({ scale: ns, x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k });
     });
-  }, [clamp]);
+  }, [clampScale, settle]);
 
   const recenter = useCallback(() => {
     const el = ref.current;
     if (!el || !contentW || !contentH) return;
-    const vw = el.clientWidth, vh = el.clientHeight;
-    const s = Math.min(vw / contentW, vh / contentH);
-    fit.current = s;
-    setView({ scale: s, x: (vw - contentW * s) / 2, y: (vh - contentH * s) / 2 });
+    vp.current = { w: el.clientWidth, h: el.clientHeight };
+    fit.current = fitScale(world.current, vp.current, insetsRef.current);
+    userMoved.current = false;
+    setView(fitView(world.current, vp.current, insetsRef.current));
   }, [contentW, contentH]);
 
-  useEffect(() => { recenter(); }, [recenter]);
+  // Mount + geometry changes: refit while untouched, otherwise just re-clamp the current view so
+  // a growing bottom sheet or a rotate never strands the art off-screen but also never yanks zoom.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !contentW || !contentH) return;
+    vp.current = { w: el.clientWidth, h: el.clientHeight };
+    fit.current = fitScale(world.current, vp.current, insetsRef.current);
+    if (userMoved.current) setView((v) => settle(v));
+    else recenter();
+  }, [contentW, contentH, insets.top, insets.right, insets.bottom, insets.left, recenter, settle]);
+
+  // Keep the view valid when the viewport itself resizes (rotate, split-view, keyboard).
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      vp.current = { w: el.clientWidth, h: el.clientHeight };
+      fit.current = fitScale(world.current, vp.current, insetsRef.current);
+      if (userMoved.current) setView((v) => settle(v));
+      else recenter();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [recenter, settle]);
 
   // Native wheel listener so we can preventDefault (React's onWheel is passive).
   useEffect(() => {
@@ -61,7 +107,8 @@ export function usePanZoom(contentW: number, contentH: number) {
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const pts = [...pointers.current.values()];
     if (pts.length === 1) {
-      setView((v) => ({ ...v, x: v.x + (e.clientX - prev.x), y: v.y + (e.clientY - prev.y) }));
+      userMoved.current = true;
+      setView((v) => settle({ ...v, x: v.x + (e.clientX - prev.x), y: v.y + (e.clientY - prev.y) }));
     } else if (pts.length === 2) {
       const [a, b] = pts as [{ x: number; y: number }, { x: number; y: number }];
       const dist = Math.hypot(a.x - b.x, a.y - b.y);
