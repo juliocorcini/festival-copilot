@@ -51,7 +51,10 @@ const transform = {
   source: "OpenStreetMap contributors (ODbL)",
 };
 
-beforeEach(() => {
+beforeEach(async () => {
+  // The lineup now lives in a shared module cache (R3) — start each test cold so renders refetch.
+  const { __resetLineupCache } = await import("../data/lineupCache");
+  __resetLineupCache();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(transform) }));
 });
 afterEach(() => {

@@ -1,13 +1,21 @@
 /**
- * Loads the active festival + its lineup in one hook. The festival list rarely
- * changes, so we take the first festival (V1 is single-festival — DEC-038) and
- * fetch its lineup. Returns a small state machine the screens render against.
+ * Loads the active festival + its lineup, served from the shared in-memory cache (R3) so every
+ * screen reads the same data without refetching on each mount — tab switches are instant. V1 is
+ * single-festival (DEC-038); consumers ask for the full lineup, so they all share one cache entry.
+ * Returns the same small state machine the screens already render against.
  */
-import { useCallback, useEffect, useState } from "react";
-import { api, ApiError, type LineupQuery } from "./api";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+import type { LineupQuery } from "./api";
+import {
+  ensureLineup,
+  getLineupSnapshot,
+  reloadLineup,
+  subscribeLineup,
+  type LineupStatus,
+} from "./lineupCache";
 import type { LineupDto } from "./types";
 
-export type LineupStatus = "loading" | "ready" | "error";
+export type { LineupStatus };
 
 export interface LineupState {
   status: LineupStatus;
@@ -17,42 +25,18 @@ export interface LineupState {
 }
 
 export function useLineup(query: LineupQuery = {}): LineupState {
-  const [status, setStatus] = useState<LineupStatus>("loading");
-  const [lineup, setLineup] = useState<LineupDto | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [nonce, setNonce] = useState(0);
-
   const weekend = query.weekend;
   const day = query.day;
 
+  const subscribe = useCallback((cb: () => void) => subscribeLineup({ weekend, day }, cb), [weekend, day]);
+  const snapshot = useSyncExternalStore(subscribe, () => getLineupSnapshot({ weekend, day }));
+
+  // Kick the fetch (or a background revalidation) once per mount/query — deduped inside the cache.
   useEffect(() => {
-    const controller = new AbortController();
-    let alive = true;
-    setStatus("loading");
-    setError(null);
+    ensureLineup({ weekend, day });
+  }, [weekend, day]);
 
-    (async () => {
-      try {
-        const festivals = await api.listFestivals(controller.signal);
-        const festival = festivals[0];
-        if (!festival) throw new ApiError("No festival published yet", 404, "/api/festivals");
-        const data = await api.getLineup(festival.id, { weekend, day }, controller.signal);
-        if (!alive) return;
-        setLineup(data);
-        setStatus("ready");
-      } catch (err) {
-        if (!alive || controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : String(err));
-        setStatus("error");
-      }
-    })();
+  const reload = useCallback(() => reloadLineup({ weekend, day }), [weekend, day]);
 
-    return () => {
-      alive = false;
-      controller.abort();
-    };
-  }, [weekend, day, nonce]);
-
-  const reload = useCallback(() => setNonce((n) => n + 1), []);
-  return { status, lineup, error, reload };
+  return { status: snapshot.status, lineup: snapshot.lineup, error: snapshot.error, reload };
 }
