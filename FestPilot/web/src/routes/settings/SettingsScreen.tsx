@@ -1,28 +1,33 @@
 import { useNavigate } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useAppearance, useAutoShareOnJoin, useLanguage } from "../../app/settings";
+import { useT } from "../../i18n";
 import { APP_VERSION } from "../../data/changelog";
 
-const APPEARANCE_LABEL: Record<string, string> = { auto: "Auto", day: "Day", night: "Night" };
+const APPEARANCE_KEY = { auto: "appearance.auto", day: "appearance.day", night: "appearance.night" } as const;
 const LANGUAGE_LABEL: Record<string, string> = { en: "English", pt: "Português" };
 
 export function SettingsScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { mode } = useAppearance();
   const { language } = useLanguage();
   const { autoShare, setAutoShare } = useAutoShareOnJoin();
 
   return (
     <>
-      <StackHeader title="Settings" backTo="/" />
+      <StackHeader title={t("settings.title")} backTo="/" />
       <div className="screen">
         <section className="glass" style={{ overflow: "hidden" }}>
           <button className="row" style={rowButton} onClick={() => navigate("/settings/appearance")}>
             <span className="ms">palette</span>
             <span className="row-main">
-              <span className="row-title">Appearance &amp; language</span>
+              <span className="row-title">{t("settings.appearanceLang")}</span>
               <span className="row-sub">
-                {APPEARANCE_LABEL[mode]} · {LANGUAGE_LABEL[language]}
+                {t("settings.appearanceLangSub", {
+                  appearance: t(APPEARANCE_KEY[mode]),
+                  language: LANGUAGE_LABEL[language],
+                })}
               </span>
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
@@ -30,8 +35,8 @@ export function SettingsScreen(): JSX.Element {
           <button className="row" style={rowButton} onClick={() => navigate("/settings/offline")}>
             <span className="ms">cloud_done</span>
             <span className="row-main">
-              <span className="row-title">Offline &amp; data</span>
-              <span className="row-sub">Cached for offline use on site</span>
+              <span className="row-title">{t("settings.offline")}</span>
+              <span className="row-sub">{t("settings.offlineSub")}</span>
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
           </button>
@@ -41,16 +46,16 @@ export function SettingsScreen(): JSX.Element {
           <div className="row">
             <span className="ms">notifications</span>
             <span className="row-main">
-              <span className="row-title">Notifications</span>
-              <span className="row-sub">Set alerts coming in a later phase</span>
+              <span className="row-title">{t("settings.notifications")}</span>
+              <span className="row-sub">{t("settings.notificationsSub")}</span>
             </span>
-            <span className="pill">Soon</span>
+            <span className="pill">{t("settings.soon")}</span>
           </div>
           <button className="row" style={rowButton} onClick={() => navigate("/settings/privacy")}>
             <span className="ms">share_location</span>
             <span className="row-main">
-              <span className="row-title">Location &amp; privacy</span>
-              <span className="row-sub">Master switch · default mode · pause all</span>
+              <span className="row-title">{t("settings.privacy")}</span>
+              <span className="row-sub">{t("settings.privacySub")}</span>
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
           </button>
@@ -63,8 +68,8 @@ export function SettingsScreen(): JSX.Element {
           >
             <span className="ms">ios_share</span>
             <span className="row-main">
-              <span className="row-title">Auto-share plan when I join a squad</span>
-              <span className="row-sub">Offer to share your plan + favorites on join (DEC-054)</span>
+              <span className="row-title">{t("settings.autoShare")}</span>
+              <span className="row-sub">{t("settings.autoShareSub")}</span>
             </span>
             <span className={`toggle${autoShare ? " on" : ""}`} aria-hidden="true" />
           </button>
@@ -74,8 +79,8 @@ export function SettingsScreen(): JSX.Element {
           <button className="row" style={rowButton} onClick={() => navigate("/settings/about")}>
             <span className="ms">info</span>
             <span className="row-main">
-              <span className="row-title">About &amp; what's new</span>
-              <span className="row-sub">Version, the story, and the update history</span>
+              <span className="row-title">{t("settings.about")}</span>
+              <span className="row-sub">{t("settings.aboutSub")}</span>
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
           </button>
