@@ -2,7 +2,7 @@
  * Onboarding (#17): festival → weekend → days → swipe favorites. Selections persist locally
  * (DEC-041). Favoriting is by act/person (DEC-026/028) and an act shown once even across days.
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PerformanceDto } from "../../data/types";
 import { api } from "../../data/api";
@@ -10,6 +10,7 @@ import { useFavorites, useOnboarding, useProfile } from "../../data/localStore";
 import { useIdentity } from "../../data/identity";
 import { useLineup } from "../../data/useLineup";
 import { isValidEmail } from "../../lib/validate";
+import { cardDragStyle, swipeOutcome, type SwipeOutcome } from "../../domain/swipe";
 import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
 import { uniqueActs, type Act } from "../../domain/lineup";
 import { daysForWeekends, weekendDates, type DayInfo } from "../../lib/festival";
@@ -452,6 +453,45 @@ function StepSwipe({
 }): JSX.Element {
   const progress = total > 0 ? Math.min(100, Math.round(((index) / total) * 100)) : 100;
 
+  // Real drag gesture (R5.1): right = keep, left = skip; the buttons stay as an explicit fallback.
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [flyOut, setFlyOut] = useState<SwipeOutcome>(null);
+  const [hasDragged, setHasDragged] = useState(false);
+  const startX = useRef(0);
+  const committing = useRef(false);
+
+  const commit = (outcome: Exclude<SwipeOutcome, null>): void => {
+    if (committing.current) return;
+    committing.current = true;
+    setFlyOut(outcome);
+    window.setTimeout(() => {
+      onSwipe(outcome === "keep");
+      setDx(0);
+      setFlyOut(null);
+      committing.current = false;
+    }, 190);
+  };
+
+  const onPointerDown = (e: ReactPointerEvent): void => {
+    if (committing.current) return;
+    setHasDragged(true);
+    setDragging(true);
+    startX.current = e.clientX;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: ReactPointerEvent): void => {
+    if (!dragging) return;
+    setDx(e.clientX - startX.current);
+  };
+  const onPointerUp = (): void => {
+    if (!dragging) return;
+    setDragging(false);
+    const outcome = swipeOutcome(dx);
+    if (outcome) commit(outcome);
+    else setDx(0);
+  };
+
   if (!act) {
     return (
       <>
@@ -474,6 +514,9 @@ function StepSwipe({
     );
   }
 
+  const drag = cardDragStyle(dx);
+  const cardClass = `art-card${dragging ? " dragging" : ""}${flyOut ? ` flying-${flyOut}` : ""}`;
+
   return (
     <>
       <div className="ob-body">
@@ -493,9 +536,18 @@ function StepSwipe({
           <div className="q">Would you see this set?</div>
           <div className="hint">Builds your favorites — clashes are solved later in Lock in</div>
         </div>
-        <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-          <div className="art-card">
+        <div className="swipe-stage">
+          <div
+            className={cardClass}
+            style={flyOut ? undefined : { transform: dx ? drag.transform : undefined }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
             <div className="art-glow" />
+            <span className="swipe-stamp keep" style={{ opacity: drag.keepOpacity }} aria-hidden="true">Keep</span>
+            <span className="swipe-stamp skip" style={{ opacity: drag.skipOpacity }} aria-hidden="true">Skip</span>
             <div className="art-inner">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span className="art-stage">
@@ -511,6 +563,11 @@ function StepSwipe({
               </div>
             </div>
           </div>
+          {!hasDragged && (
+            <div className="swipe-cue" aria-hidden="true">
+              <span className="ms">swipe</span> Swipe right to keep · left to skip
+            </div>
+          )}
         </div>
       </div>
       <div className="swipe-actions">
