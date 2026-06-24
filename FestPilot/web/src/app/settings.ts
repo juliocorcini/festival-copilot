@@ -9,7 +9,7 @@ export type AppearanceMode = "auto" | "day" | "night";
 export type Palette = "day" | "night";
 export type Language = "en" | "pt";
 
-const KEYS = { appearance: "fp.appearance", language: "fp.language" } as const;
+const KEYS = { appearance: "fp.appearance", language: "fp.language", autoShare: "fp.autoShareOnJoin" } as const;
 const SETTING_EVENT = "fp:setting";
 
 function read(key: string, fallback: string): string {
@@ -73,4 +73,15 @@ export function useAppearance(): {
 export function useLanguage(): { language: Language; setLanguage: (language: Language) => void } {
   const [language, setLanguage] = useSetting(KEYS.language, "en");
   return { language: language as Language, setLanguage: (l) => setLanguage(l) };
+}
+
+/** Auto-share plan + favorites on join (DEC-054) — default ON, with this Settings opt-out. */
+export function useAutoShareOnJoin(): { autoShare: boolean; setAutoShare: (on: boolean) => void } {
+  const [value, set] = useSetting(KEYS.autoShare, "1");
+  return { autoShare: value !== "0", setAutoShare: (on) => set(on ? "1" : "0") };
+}
+
+/** Non-React read of the auto-share-on-join preference (the join handler). Default ON (DEC-054). */
+export function autoShareOnJoinEnabled(): boolean {
+  return read(KEYS.autoShare, "1") !== "0";
 }

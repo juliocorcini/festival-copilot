@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
+import { autoShareOnJoinEnabled } from "../../app/settings";
 import { api, ApiError } from "../../data/api";
 import { initialsOf, useIdentity } from "../../data/identity";
 import type { InvitePreviewDto } from "../../data/types";
@@ -106,8 +107,10 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
     setJoining(true);
     setJoinError(null);
     try {
-      await api.joinGroup(token);
-      navigate("/squad", { replace: true });
+      const joined = await api.joinGroup(token);
+      // Auto-share on join (DEC-054): land on the share confirm (toggles default ON) unless the user
+      // opted out in Settings, in which case go straight to the squad home.
+      navigate(autoShareOnJoinEnabled() ? `/squad/${joined.id}/share?joined=1` : "/squad", { replace: true });
     } catch (err) {
       setJoining(false);
       setJoinError(

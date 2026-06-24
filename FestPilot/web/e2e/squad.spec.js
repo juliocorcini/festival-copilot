@@ -126,6 +126,11 @@ test.describe("Phase 4 — squad (Gate 4.1 identity + Gate 4.2 groups)", () => {
     await page.screenshot({ path: "e2e/screenshots/phase4-join.png" });
     await page.getByRole("button", { name: "Join squad" }).click();
 
+    // Auto-share confirm on join (R9.4, DEC-054): the share screen appears (toggles default ON);
+    // a guest with no plan yet taps "Not now" to continue to the group home.
+    await expect(page.locator(".share-intro h1")).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("button", { name: "Not now" }).click();
+
     // Group home now shows two people.
     await expect(page.getByText(/FAM JUNTOS · 2 people/)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Andy", { exact: false })).toBeVisible();

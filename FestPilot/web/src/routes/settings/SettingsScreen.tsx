@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
-import { useAppearance, useLanguage } from "../../app/settings";
+import { useAppearance, useAutoShareOnJoin, useLanguage } from "../../app/settings";
 import { APP_VERSION } from "../../data/changelog";
 
 const APPEARANCE_LABEL: Record<string, string> = { auto: "Auto", day: "Day", night: "Night" };
@@ -10,6 +10,7 @@ export function SettingsScreen(): JSX.Element {
   const navigate = useNavigate();
   const { mode } = useAppearance();
   const { language } = useLanguage();
+  const { autoShare, setAutoShare } = useAutoShareOnJoin();
 
   return (
     <>
@@ -52,6 +53,20 @@ export function SettingsScreen(): JSX.Element {
               <span className="row-sub">Master switch · default mode · pause all</span>
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
+          </button>
+          <button
+            className="row"
+            style={rowButton}
+            role="switch"
+            aria-checked={autoShare}
+            onClick={() => setAutoShare(!autoShare)}
+          >
+            <span className="ms">ios_share</span>
+            <span className="row-main">
+              <span className="row-title">Auto-share plan when I join a squad</span>
+              <span className="row-sub">Offer to share your plan + favorites on join (DEC-054)</span>
+            </span>
+            <span className={`toggle${autoShare ? " on" : ""}`} aria-hidden="true" />
           </button>
         </section>
 

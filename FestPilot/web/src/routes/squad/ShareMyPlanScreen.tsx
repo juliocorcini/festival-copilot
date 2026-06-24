@@ -4,7 +4,7 @@
  * have a locked plan for in one action, then routes into the squad plan.
  */
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { api, type ShareSlotInput } from "../../data/api";
 import { useGroup } from "../../data/groups";
@@ -24,6 +24,9 @@ function slotToShare(slot: PlanSlot): ShareSlotInput {
 export function ShareMyPlanScreen(): JSX.Element {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [params] = useSearchParams();
+  // Reached as the one-time auto-share confirm right after joining (DEC-054, R9.4).
+  const justJoined = params.get("joined") === "1";
   const { group, status } = useGroup(id);
   const lineup = useLineup();
   const festivalId = group?.festivalId;
@@ -85,7 +88,7 @@ export function ShareMyPlanScreen(): JSX.Element {
 
   return (
     <>
-      <StackHeader title="Share my plan" backTo="/squad" />
+      <StackHeader title={justJoined ? "You're in!" : "Share my plan"} backTo="/squad" />
       <div className="screen share-plan">
         <div className="share-intro">
           <h1 className="poster">
@@ -95,8 +98,9 @@ export function ShareMyPlanScreen(): JSX.Element {
             {group.name}
           </h1>
           <p>
-            The squad sees your locked picks so the group plan can form. Your raw favorites stay
-            private unless used as a fallback.
+            {justJoined
+              ? "Welcome to the squad! Sharing your plan + favorites lets everyone build the group timetable. You can change this anytime in Settings."
+              : "The squad sees your locked picks so the group plan can form. Your raw favorites stay private unless used as a fallback."}
           </p>
         </div>
 
@@ -153,6 +157,11 @@ export function ShareMyPlanScreen(): JSX.Element {
           <span className="ms">ios_share</span>
           {busy ? "Sharing…" : "Share with squad"}
         </button>
+        {justJoined && (
+          <button className="btn btn-ghost" onClick={() => navigate("/squad", { replace: true })}>
+            Not now
+          </button>
+        )}
       </div>
     </>
   );
