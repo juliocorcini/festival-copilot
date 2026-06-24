@@ -4,11 +4,13 @@
  * place exact coordinates leave the device in V1. Quick-pick (my spot / a stage) or tap the map to
  * drop a pin; the spot is auto-labelled by its nearest landmark. Photo is deferred (DEC-047, no R2).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useAppearance } from "../../app/settings";
 import { coarseLabel, geoToSvg, svgToGeo, type MapTransform } from "../../map/transform";
+import { usePanZoom } from "../../map/usePanZoom";
 import type { StageDto } from "../../data/types";
 import { StagePickSheet } from "../presence/StagePickSheet";
 
@@ -70,6 +72,14 @@ export function MeetSpotScreen(): JSX.Element {
     [t]
   );
 
+  // Reuse the fixed pan/zoom (R2.1): the picker is pannable + zoomable so a spot can be dropped
+  // precisely (not just within the ~1000 px base). The base + markers share the transformed world.
+  const cw = t?.canvas.width ?? 1000;
+  const ch = t?.canvas.height ?? 1000;
+  const { ref, view, handlers } = usePanZoom(cw, ch);
+  // Tap-vs-pan: a release far from the press is a pan, not a pin drop.
+  const downPt = useRef<{ x: number; y: number } | null>(null);
+
   const place = (nextLng: number, nextLat: number, acc: number | null, src: Source): void => {
     setLng(nextLng);
     setLat(nextLat);
@@ -105,16 +115,37 @@ export function MeetSpotScreen(): JSX.Element {
   };
 
   const pin = t && lng != null && lat != null ? geoToSvg(t.affine, lng, lat) : null;
-  const cw = t?.canvas.width ?? 1000;
-  const ch = t?.canvas.height ?? 1000;
   const base = `/maps/${MAP_FID}${palette === "day" ? "-day" : ""}.webp`;
 
-  const onMapTap = (e: React.MouseEvent<HTMLDivElement>): void => {
-    if (!t) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const fx = (e.clientX - rect.left) / rect.width;
-    const fy = (e.clientY - rect.top) / rect.height;
-    const g = svgToGeo(t.affine, fx * cw, fy * ch);
+  // World (canvas) point → on-screen px within the viewport, following the live pan/zoom transform.
+  const screenOf = (wx: number, wy: number): { left: string; top: string } => ({
+    left: `${view.x + wx * view.scale}px`,
+    top: `${view.y + wy * view.scale}px`,
+  });
+
+  // Invert a client point back through the pan/zoom transform to a real coordinate.
+  const geoFromClient = (clientX: number, clientY: number): [number, number] | null => {
+    const el = ref.current;
+    if (!el || !t) return null;
+    const r = el.getBoundingClientRect();
+    const wx = (clientX - r.left - view.x) / view.scale;
+    const wy = (clientY - r.top - view.y) / view.scale;
+    return svgToGeo(t.affine, wx, wy);
+  };
+
+  const onPickTap = (e: React.MouseEvent): void => {
+    const d = downPt.current;
+    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) >= 8) return; // it was a pan, not a tap
+    const g = geoFromClient(e.clientX, e.clientY);
+    if (g) place(g[0], g[1], null, "pin");
+  };
+
+  // "Drop pin" resets to the centre of what the user is currently looking at (venue centre at first fit).
+  const dropAtCentre = (): void => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const g = geoFromClient(r.left + r.width / 2, r.top + r.height / 2);
     if (g) place(g[0], g[1], null, "pin");
   };
 
@@ -129,23 +160,27 @@ export function MeetSpotScreen(): JSX.Element {
           </div>
         ) : (
           <div
-            className="meet-map"
+            className="meet-pick-viewport"
+            ref={ref}
             style={{ aspectRatio: `${cw} / ${ch}` }}
-            onClick={onMapTap}
+            {...handlers}
+            onPointerDownCapture={(e) => { downPt.current = { x: e.clientX, y: e.clientY }; }}
+            onClick={onPickTap}
             role="application"
-            aria-label="Tap to drop a meeting pin"
+            aria-label="Drag to pan, pinch or scroll to zoom, tap to drop a meeting pin"
           >
-            <img className="meet-map-base" src={base} width={cw} height={ch} alt="Festival map" draggable={false} />
+            <div
+              className="world"
+              style={{ width: cw, height: ch, transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
+            >
+              <img className="base" src={base} width={cw} height={ch} alt="Festival map" draggable={false} />
+            </div>
             {t?.stages
               .filter((s) => s.matched)
               .map((s) => {
                 const [x, y] = geoToSvg(t.affine, s.lng, s.lat);
                 return (
-                  <span
-                    key={s.name}
-                    className="meet-stage-dot"
-                    style={{ left: `${(x / cw) * 100}%`, top: `${(y / ch) * 100}%` }}
-                  >
+                  <span key={s.name} className="meet-stage-dot" style={screenOf(x, y)}>
                     <i />
                     {s.name}
                   </span>
@@ -153,14 +188,8 @@ export function MeetSpotScreen(): JSX.Element {
               })}
             {pin && (
               <>
-                <span
-                  className="meet-ring"
-                  style={{ left: `${(pin[0] / cw) * 100}%`, top: `${(pin[1] / ch) * 100}%` }}
-                />
-                <span
-                  className="meet-pin"
-                  style={{ left: `${(pin[0] / cw) * 100}%`, top: `${(pin[1] / ch) * 100}%` }}
-                >
+                <span className="meet-ring" style={screenOf(pin[0], pin[1])} />
+                <span className="meet-pin" style={screenOf(pin[0], pin[1])}>
                   <span className="ms">flag</span>
                 </span>
               </>
@@ -169,7 +198,7 @@ export function MeetSpotScreen(): JSX.Element {
         )}
 
         <div className="meet-chips" onClick={(e) => e.stopPropagation()}>
-          <button className={`chip${source === "pin" ? " on" : ""}`} onClick={() => t && place(...recentered(t), null, "pin")}>
+          <button className={`chip${source === "pin" ? " on" : ""}`} onClick={dropAtCentre}>
             <span className="ms" style={{ fontSize: 15 }}>flag</span>
             Drop pin
           </button>
@@ -211,10 +240,4 @@ export function MeetSpotScreen(): JSX.Element {
       )}
     </>
   );
-}
-
-/** Recenter helper for the "Drop pin" reset → returns [lng, lat] of the venue centre. */
-function recentered(t: MapTransform): [number, number] {
-  const c = svgToGeo(t.affine, t.canvas.width / 2, t.canvas.height / 2);
-  return c ?? [0, 0];
 }

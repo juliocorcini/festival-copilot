@@ -33,6 +33,18 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R2.4 ✅ (2026-06-24) — zoomable meeting-spot picker + use-my-location (review §16, §6 #16 map half).**
+  The spot picker (`routes/meet/MeetSpotScreen.tsx`) was a **static** base (fixed ~1000 px, no zoom) so a tap
+  could only land within coarse base resolution. Now it **reuses the R2.1 `usePanZoom`**: drag to pan, wheel/pinch
+  to zoom, and the base + stage dots + pin ride the shared transformed world. Tap-to-drop inverts the live
+  pan/zoom transform (`geoFromClient`) so the pin lands exactly under the finger at any zoom; a release far from
+  the press is treated as a pan, not a drop (8 px guard). "Drop pin" now resets to the current view centre;
+  "My spot" (GPS) and "A stage" quick-picks unchanged. Kept the picker **in-flow with the venue aspect-ratio** so
+  the body keeps its height and the "Use this spot" bar stays below (an absolute-fill viewport regressed the
+  layout — the action bar overlapped the chips and ate the tap; caught by the e2e, fixed). **AC:** zoom while
+  choosing + drop on exact GPS. **Tests:** the meeting Playwright flow passes with zoom enabled, and the map smoke
+  was updated to assert the honest no-squad empty state (R2.3). **e2e map + meeting-points green; web 189 unit ·
+  typecheck · build OK.** → R2 gate close (deploy + release bump).
 - **R2.3 ✅ (2026-06-24) — real coarse presence on the map + honest out-of-venue (DEC-051/058, §6 #7/#8).**
   Retired the **mock** `map/presence.ts` (random people + fake meeting + raw-coord walk) — the map now reads the
   **real** active squad: `useMyGroups()[0]` → `useGroupPresence`. Friends render as **coarse, stage-anchored
