@@ -1,11 +1,28 @@
-import { useEffect, useState } from "react";
+/**
+ * B6.5 offline & data (G3.3 offline contract, DEC-022). Surfaces connectivity + what's actually
+ * cached for no-signal use (lineup, venue map, map art) and a one-tap "Make available offline" that
+ * primes those caches via the service worker. The plan/favorites are local-first (DEC-041), so they
+ * already work offline and aren't listed here.
+ */
+import { useCallback, useEffect, useState } from "react";
 import { StackHeader } from "../../app/StackHeader";
+import { useLineup } from "../../data/useLineup";
+import { getOfflineStatus, primeOffline, type OfflineStatus } from "../../data/offline";
 
-/** B6.5 offline/sync shell. Real per-festival sync state grows in later phases; this
- * surfaces connectivity, install status, and a manual "reload latest" for the cached app. */
+type SaveState = "idle" | "saving" | "saved";
+
 export function OfflineScreen(): JSX.Element {
+  const { lineup } = useLineup();
+  const festivalId = lineup?.festival.id ?? null;
+
   const [online, setOnline] = useState<boolean>(typeof navigator === "undefined" ? true : navigator.onLine);
   const [installed, setInstalled] = useState<boolean>(false);
+  const [status, setStatus] = useState<OfflineStatus | null>(null);
+  const [save, setSave] = useState<SaveState>("idle");
+
+  const refresh = useCallback(() => {
+    void getOfflineStatus(festivalId).then(setStatus);
+  }, [festivalId]);
 
   useEffect(() => {
     const up = (): void => setOnline(true);
@@ -14,7 +31,6 @@ export function OfflineScreen(): JSX.Element {
     window.addEventListener("offline", down);
     const standalone =
       window.matchMedia?.("(display-mode: standalone)").matches ||
-      // iOS Safari
       (navigator as unknown as { standalone?: boolean }).standalone === true;
     setInstalled(Boolean(standalone));
     return () => {
@@ -23,6 +39,19 @@ export function OfflineScreen(): JSX.Element {
     };
   }, []);
 
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const makeOffline = async (): Promise<void> => {
+    if (!festivalId) return;
+    setSave("saving");
+    const next = await primeOffline(festivalId);
+    setStatus(next);
+    setSave("saved");
+    window.setTimeout(() => setSave("idle"), 2400);
+  };
+
   const reload = (): void => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistration().then((reg) => reg?.update()).finally(() => location.reload());
@@ -30,6 +59,8 @@ export function OfflineScreen(): JSX.Element {
       location.reload();
     }
   };
+
+  const allReady = Boolean(status?.lineup && status?.map && status?.art);
 
   return (
     <>
@@ -55,23 +86,60 @@ export function OfflineScreen(): JSX.Element {
               </span>
             </span>
           </div>
-          <div className="row">
-            <span className="ms">map</span>
-            <span className="row-main">
-              <span className="row-title">Map &amp; lineup</span>
-              <span className="row-sub">Cached on first load for use without signal</span>
-            </span>
-            <span className="pill ok">Ready</span>
-          </div>
         </section>
+
+        <section className="glass" style={{ overflow: "hidden" }}>
+          <OfflineRow icon="event_note" title="Lineup" ready={status?.lineup} supported={status?.supported} />
+          <OfflineRow icon="map" title="Venue map" ready={status?.map} supported={status?.supported} />
+          <OfflineRow icon="imagesmode" title="Map artwork" ready={status?.art} supported={status?.supported} />
+        </section>
+
+        {status?.supported === false ? (
+          <p className="src" style={{ textAlign: "center" }}>
+            Offline storage isn’t available in this browser context. Install the app to cache for no-signal use.
+          </p>
+        ) : (
+          <button
+            className={`btn ${allReady ? "btn-ghost" : "btn-primary"}`}
+            disabled={save === "saving" || !festivalId}
+            onClick={() => void makeOffline()}
+          >
+            <span className="ms">{save === "saved" ? "check_circle" : "cloud_download"}</span>
+            {save === "saving" ? "Saving…" : save === "saved" ? "Saved for offline" : allReady ? "Refresh offline data" : "Make available offline"}
+          </button>
+        )}
 
         <button className="btn btn-ghost" onClick={reload}>
           <span className="ms">refresh</span> Check for updates
         </button>
         <p className="src" style={{ textAlign: "center" }}>
-          FestPilot caches the app shell, the venue map, and the lineup so the essentials work on a packed field with no signal.
+          FestPilot caches the app, the venue map and the lineup so the essentials work on a packed field with no signal.
         </p>
       </div>
     </>
+  );
+}
+
+function OfflineRow({
+  icon,
+  title,
+  ready,
+  supported,
+}: {
+  icon: string;
+  title: string;
+  ready: boolean | undefined;
+  supported: boolean | undefined;
+}): JSX.Element {
+  const state = supported === false ? "—" : ready ? "Ready" : "Not saved";
+  return (
+    <div className="row">
+      <span className="ms" style={{ color: ready ? "var(--ok-ink)" : "var(--muted)" }}>{icon}</span>
+      <span className="row-main">
+        <span className="row-title">{title}</span>
+        <span className="row-sub">{ready ? "Available offline" : "Will cache when you save"}</span>
+      </span>
+      <span className={`pill ${ready ? "ok" : ""}`}>{state}</span>
+    </div>
   );
 }
