@@ -616,7 +616,14 @@
 
 ### DEC-050 — Map renders all stages/labels/pins as a crisp interactive vector overlay; base zoom is capped honestly
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7)
+- **Status**: APPROVED (Julio confirmed 2026-06-24, inline "ok" on the orchestrator §7) · **IMPLEMENTED 2026-06-24 (R2.2, commit `9e983de`)**
+- **Implementation note (R2.2)**: added a `stageMarkers` toggle through the `spikes/map-art` engine
+  (`draw.ts`→`generate.ts`→`run.ts` `NO_STAGE_MARKERS`), regenerated De Schorre **offline** into a **label-free**
+  base (re-rasterized to WebP; verified zero baked `stage-label` text). `MapView` draws stages from
+  `transform.stages` via `geoToSvg`: per-stage medallion + star + **screen-stable** label
+  (`pinScale = min(1/scale, 1.6)`), a live-dot when a set is on, and **tap → a stage info sheet** (now-playing +
+  next from pure `domain/stageProgramme.ts` over `useLineup`). `MAX_SCALE` stays 12 but markers no longer pixelate
+  because they're vector; the higher-res/vector deep-zoom base remains a future upgrade.
 - **Decision**: Stage medallions + names (and all pins/markers) render as a **vector overlay** from
   `transform.stages` via `geoToSvg` — screen-stable scaling, **tappable → stage info sheet** — and are **never
   baked into the raster base**. Regenerate the base **without** baked labels (the `spikes/map-art` engine already
@@ -630,7 +637,14 @@
 
 ### DEC-051 — Outside the festival bbox, the map shows an honest state, never a black screen
 - **Date**: 2026-06-24 (review-remediation)
-- **Status**: APPROVED (Julio confirmed 2026-06-24 with an added requirement — see Decision)
+- **Status**: APPROVED (Julio confirmed 2026-06-24 with an added requirement — see Decision) · **IMPLEMENTED 2026-06-24 (R2.3, commit `d941ad5`)**
+- **Implementation note (R2.3)**: pure `map/presencePins.ts#isOutsideVenue(bbox, …, 150 m margin)` decides
+  out-of-venue from a **display-only** device fix (`useDeviceLocation`, permission-gated, never prompts on map
+  open, never POSTs). Outside → an honest banner **+ a "Show festival map" button** (recenters; the R2.1 pan-clamp
+  already removes the black void) and the off-canvas me-dot is dropped. Same gate replaced the **mock** map
+  presence with the real coarse roster (`useMyGroups`→`useGroupPresence`), placed as stage-anchored pins that
+  carry **only screen x/y, never lng/lat** (DEC-058) — honest empty states when there's no squad. The optional OSM
+  basemap was **not** done (kept simple per the decision's "ok if too complicated"); the button requirement is met.
 - **Decision**: Detect an out-of-venue GPS fix; show "You're outside the festival — precise location works inside
   the venue" while still letting the user pan/zoom the festival map. **Julio's requirement: always render a button
   that takes the user to the festival (event) map**, so the screen is *never just black*. **Optional/better** (do

@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.8.1";
+export const APP_VERSION = "0.8.2";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.8.2",
+    date: "2026-06-24",
+    title: "A living stage map",
+    icon: "map",
+    whatsNew: [
+      "The stage map is alive: tap any stage to see who's playing now and what's up next — and the names stay crisp and readable at every zoom level.",
+      "See your real squad on the map, not strangers: friends appear by the stage they're near, plus your own 'you are here' dot.",
+      "Step outside the festival and the map no longer goes blank — it tells you you're out and gives you a button straight back to the venue map.",
+      "Setting a meeting point is precise now: pinch to zoom right in and drop the pin exactly where you mean, or tap 'My spot' to use your location.",
+    ],
+    howToTest: [
+      "Map tab → tap a stage: a sheet shows now-playing + next. Pinch/scroll to zoom — the labels stay sharp, never pixelated.",
+      "With no squad joined, the map shows an honest 'join a squad' state — never random people.",
+      "Squad → Set a meeting point → pinch to zoom and tap to drop the pin precisely; 'My spot' drops it on your GPS.",
+    ],
+  },
   {
     version: "0.8.1",
     date: "2026-06-24",

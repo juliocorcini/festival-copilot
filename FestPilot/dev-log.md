@@ -12,8 +12,9 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R2 (P0 map) in progress** — R2.1 ✅ pan-clamp · R2.2 ✅ vector stage overlay + de-baked base. Next: R2.3 real presence + out-of-venue.
-- **Tests now:** typecheck clean · **server 122 + web 178 unit** pass · build OK · **app v0.8.1**.
+- **Gate:** **R2 (P0 map) CLOSED ✅** — R2.1 pan-clamp · R2.2 vector stage overlay + de-baked base (DEC-050) ·
+  R2.3 real coarse presence + out-of-venue (DEC-051/058) · R2.4 zoomable meeting picker. Next: **R3 (P0 perf)**.
+- **Tests now:** typecheck clean · **server 122 + web 189 unit** pass · e2e map + meeting-points green · build OK · **app v0.8.2 (deployed Production)**.
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -21,7 +22,7 @@
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
 - [x] **R1** (P0 data/logic) — festival-day blocks (DEC-048) · clash anchor-overlap (headline) · artist photo re-ingest (DEC-061). **CLOSED 2026-06-24.**
-- [ ] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom.
+- [x] **R2** (P0 map) — pan clamp + safe-area · interactive vector stage overlay (DEC-050) · real presence + out-of-venue (DEC-051) · meeting picker zoom. **CLOSED 2026-06-24 (v0.8.2).**
 - [ ] **R3** (P0 perf) — shared lineup cache (<300 ms tab switch).
 - [ ] **R4** (P0 nav/data-states) — hasLineup/hasTimetable (DEC-052) · discoverable Lineup (DEC-049) · dynamic days · suggest-a-festival (DEC-055).
 - [ ] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere.
@@ -33,6 +34,13 @@
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R2 GATE CLOSED ✅ (2026-06-24) — deployed + live.** Cumulative **server 122 + web 189 unit** green, **e2e map +
+  meeting-points** green, typecheck + build clean. Golden-path holds (onboarding → favorites → lock-in → My Plan;
+  map; squad meeting create). Bumped **v0.8.1 → v0.8.2** (`changelog.ts` single source + `package.json`) with a
+  user-facing "A living stage map" note. **Deployed:** Pages → Production `master` (web 0.8.2) and confirmed live
+  (`festpilot.pages.dev` serves the new bundle `index-D3h1Kugq.js`). **Worker unchanged this gate** (all R2 work is
+  web: map overlay, presence wiring, picker zoom — no server/API change), so no Worker redeploy. Brain sync:
+  DEC-050 + DEC-051 marked IMPLEMENTED with notes; dev-log + project-status updated. → R3 shared lineup cache.
 - **R2.4 ✅ (2026-06-24) — zoomable meeting-spot picker + use-my-location (review §16, §6 #16 map half).**
   The spot picker (`routes/meet/MeetSpotScreen.tsx`) was a **static** base (fixed ~1000 px, no zoom) so a tap
   could only land within coarse base resolution. Now it **reuses the R2.1 `usePanZoom`**: drag to pan, wheel/pinch

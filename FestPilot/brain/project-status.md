@@ -1,14 +1,18 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active)
+> Last updated: 2026-06-24 (review-remediation pass active — R2 closed)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
 V1 is built and live; this pass hardens it against the live-app review (orchestrator
 `documents/2026-06-24-v1-review-remediation-orchestrator.md`, gates R0→R11, P0 first). Live execution state is
-`FestPilot/dev-log.md`. **Done so far: R0 (setup) ✅ · R1 (P0 data/logic) ✅ CLOSED** — festival-day derived as a
-contiguous midnight-crossing block (DEC-048), Lock-in clashes now offer only true overlaps of the anchor (the
-headline bug), artist photos re-ingested + live (DEC-061); app **v0.8.1**, deployed. **Next: R2 (P0 map).**
+`FestPilot/dev-log.md`. **Done so far: R0 (setup) ✅ · R1 (P0 data/logic) ✅ CLOSED · R2 (P0 map) ✅ CLOSED.**
+R1: festival-day derived as a contiguous midnight-crossing block (DEC-048), Lock-in clashes now offer only true
+overlaps of the anchor (the headline bug), artist photos re-ingested + live (DEC-061). R2: pan-clamp + safe-area
+fit, **interactive vector stage overlay** with a now-playing/next sheet on a **de-baked** label-free base
+(DEC-050), **real coarse squad presence** on the map (no more mock people) with an honest **out-of-venue** state +
+"show festival map" button (DEC-051/058), and a **zoomable** meeting-spot picker. App **v0.8.2**, deployed to
+Production. **Next: R3 (P0 performance — shared lineup cache, <300 ms tab switches).**
 
 ## How we build from here (the orchestrator)
 
