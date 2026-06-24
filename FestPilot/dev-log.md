@@ -12,12 +12,13 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R7 (P1 Timetable polish) CLOSED ✅.** Card recipe = one thin top stage-color line (no doubled/bottom line),
-  centered heart, photos; discreet hour + **half-hour gridlines** (toggle, default on); a 3px inset so back-to-back sets
-  don't glue; compact top bar (smaller title, single non-wrapping day row, tight paddings). Next: **R8 (P1 My Plan editable)**.
-- **Tests now:** typecheck clean · **server 136 + web 227 unit** pass · **e2e green** (onboarding swipe+grid, timetable
-  favorite/only-favs/zoom + Lineup switch, squad, now R6) · build OK · **app v0.10.2 (deployed Production, `index-D6WOW1aw.js`)**
-  · Worker unchanged from R5 (`555c03b9`; R6+R7 are frontend-only).
+- **Gate:** **R8 (P1 My Plan editable) CLOSED ✅.** The locked plan is now editable in place without re-walking Lock-in:
+  tap any set → **Swap / Remove / View on map**; **Add a set** opens a picker that only offers acts that fit. New pure
+  `domain/planEdit.ts` (`removeFromPlan`/`addToPlan`/`swapInPlan`/`setFits`/`fittingAdds`/`fittingSwaps`) keeps the plan
+  **zero-overlap** by construction; walk/break chips recompute after every edit. Next: **R9 (P1 Squad)**.
+- **Tests now:** typecheck clean · **server 136 + web 240 unit** pass · **e2e green** (onboarding swipe+grid, timetable
+  favorite/only-favs/zoom + Lineup switch, squad, now R6, **my-plan remove/add/swap R8**) · build OK · **app v0.10.3
+  (deployed Production, `index-Cp8KCfov.js`)** · Worker unchanged from R5 (`555c03b9`; R6–R8 are frontend-only).
 - **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
   Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0010** applied.
 - Live URLs unchanged: app https://festpilot.pages.dev · API https://festpilot.trippilot.workers.dev.
@@ -31,12 +32,26 @@
 - [x] **R5** (P1 favorites) — identity name+email (DEC-060) · real swipe · grid mode · per-day grouping · artist photos everywhere (DEC-061). **CLOSED 2026-06-24 (v0.10.0).**
 - [x] **R6** (P1 now/next) — plan-then-favorites, never arbitrary (DEC-022). **CLOSED 2026-06-24 (v0.10.1).**
 - [x] **R7** (P1 timetable polish) — card recipe · gridlines · touching-card margin · compact top bar. **CLOSED 2026-06-24 (v0.10.2).**
-- [ ] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap.
+- [x] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap. **CLOSED 2026-06-24 (v0.10.3).**
 - [ ] **R9** (P1 squad) — multiple squads · honest copy · avatar on R2 + custom emoji (DEC-059) · auto-share (DEC-054) · real mini-map · meeting photo · AI-icon/J-menu.
 - [ ] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select.
 - [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
 
 ### Pass log (most recent first)
+- **R8 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.10.3, frontend-only).** My Plan is **editable in place**
+  (review §6 / DEC-017/029/041) without re-running Lock-in. New pure **`domain/planEdit.ts`**: `removeFromPlan` (can never
+  create an overlap), `addToPlan` (chronological insert, rejects an overlap or a duplicate act, returns `null` when it
+  can't fit), `swapInPlan` (replace one set, checked against every *other* slot via `setFits(..., exceptSetId)`), plus
+  `fittingAdds`/`fittingSwaps` to **gate the pickers** so only non-clashing options are ever shown — the **zero-overlap
+  invariant holds by construction**. `MyPlanScreen` wires it up: each `PlanSetRow` is now a button with a `more_vert`
+  kebab → a sheet menu (View on map / Swap set / Remove from plan); **Add a set** and **Swap** reuse one `SetPickerSheet`
+  (searchable) fed by `fittingAdds(daySets)` / `fittingSwaps(nearbySets(window))`; after any edit `plan.save(...)` persists
+  locally (DEC-041) and `buildPlanTimeline` redraws the walk/break chips. **Tests:** **+13 unit** in `planEdit.test.ts`
+  (remove, add incl. touching-endpoint fit + duplicate-act no-op, swap incl. self/overlap rejection, `setFits` edges,
+  `fittingAdds`/`fittingSwaps` filters); new **`myplan.spec.js`** e2e builds a plan via Lock-in then **removes → adds →
+  swaps** from the timeline (count drops 1, returns to baseline, swap keeps count) — `lockin.spec` still green (PlanSetRow
+  → button didn't regress it). **server 136 + web 240 unit · e2e green · typecheck + build OK.** **Deployed:** Pages →
+  Production `master` (`festpilot.pages.dev` serves `index-Cp8KCfov.js`); Worker untouched (no backend change). → **R9 (P1 Squad)**.
 - **R7 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.10.2, frontend-only).** Timetable & Lineup polish (review §5/§10),
   all in `TimetableScreen.tsx` + `styles.css` (+ pure `domain/timetable.ts`): **R7.1 card recipe** — replaced the
   gradient top-line-under-a-white-border (which read as a doubled line) with a single **2px stage-color top border** and

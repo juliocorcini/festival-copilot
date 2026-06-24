@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.10.2";
+export const APP_VERSION = "0.10.3";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.10.3",
+    date: "2026-06-24",
+    title: "Tweak your plan without starting over",
+    icon: "edit_calendar",
+    whatsNew: [
+      "Your plan is yours to edit: tap any set in My Plan to swap it, remove it, or jump to it on the map.",
+      "Add a set anytime — we only offer acts that actually fit, so your day never ends up with a clash.",
+      "Walking times and breaks recalculate instantly after every change, so the plan always stays honest.",
+    ],
+    howToTest: [
+      "My Plan → tap a set → Swap / Remove / View on map; tap 'Add a set' to slot another act in.",
+      "Add or swap and watch the walk chips and breaks redraw — the plan never overlaps itself.",
+    ],
+  },
   {
     version: "0.10.2",
     date: "2026-06-24",

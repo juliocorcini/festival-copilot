@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) + R7 (timetable polish) CLOSED**, app v0.10.2)
+> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + R5 (favorites) + R6 (Now & Next) + R7 (timetable polish) + R8 (My Plan editable) CLOSED**, app v0.10.3)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -29,7 +29,11 @@ Production (frontend-only; Worker unchanged).
 line), centered heart and photos; discreet hour + **half-hour gridlines** with a Grid toggle (pure `gridLines` in
 `domain/timetable.ts`); a small inset so **back-to-back sets** don't glue; and a **compact top bar** (smaller title,
 single non-wrapping day row) so controls don't steal grid height. App **v0.10.2**, deployed to Production (frontend-only).
-**Next: R8 (P1 My Plan editable — context menu swap/remove/add, recompute zero-overlap).**
+**R8 (P1 My Plan editable) ✅ CLOSED:** the locked plan is editable in place — tap a set for **Swap / Remove / View on
+map**, or **Add a set** from a picker that only offers acts that fit. New pure `domain/planEdit.ts`
+(`removeFromPlan`/`addToPlan`/`swapInPlan` + `fittingAdds`/`fittingSwaps`) keeps the plan **zero-overlap by construction**;
+walk/break chips recompute after each edit. App **v0.10.3**, deployed to Production (frontend-only; Worker unchanged).
+**Next: R9 (P1 Squad — multiple squads, honest copy, avatar+emoji DEC-059, auto-share DEC-054, real mini-map, meeting photo).**
 
 ## How we build from here (the orchestrator)
 
