@@ -5,10 +5,10 @@
 > Seeded 2026-06-23.
 
 ## Current State
-- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 COMPLETE + LIVE; PHASE 3 core done; PHASE 5 in progress.**
+- 🔨 **BUILD IN PROGRESS (2026-06-23).** Executing the orchestrator autonomously. **PHASE 0 + PHASE 1 + PHASE 2 + PHASE 4 + PHASE 5 COMPLETE + LIVE; PHASE 3 core done.**
   Design pass + brain are done (59 screens locked, prototypes `23`–`30`).
-- Active Phase / Gate: **P5 in progress** — backend presence pipeline ✅ · **G5.1 consent + precise control ✅ · G5.2 roster + coarse map + current-artist ✅** —
-  next: **G5.3** (where-is-everyone ping round-trip + sharing-mode picker #25.3 + privacy/master-switch #25.6).
+- Active Phase / Gate: **P5 COMPLETE** — backend presence pipeline ✅ · **G5.1 consent + precise control ✅ · G5.2 roster + coarse map + current-artist ✅ · G5.3 ping round-trip + sharing-mode picker #25.3 + privacy/master-switch #25.6 ✅** —
+  next: **P6** (meeting points + nav + safety; rides the Phase-6 exact-coords channel for the precise dot per DEC-046).
   P3 core ✅ (travel matrix + coord→stage, Now & Next, stage routing/walking nav, offline contract); POI layer deferred (needs data).
   Phase 0: G0.1–G0.4 ✅ (live). Phase 1: **G1.1 ✅ · G1.2 ✅**. Phase 2: **G2.1 ✅ · G2.2 ✅ · G2.3 ✅**. Phase 3: **G3.2 ✅ · G3.3 ✅**.
 - **P4 G4.1 identity ✅ (this session):** auth **seam** `server/src/auth.ts` (`parseAuthIdentity`/`getUserFromRequest`) — V1
@@ -79,6 +79,21 @@
   Coarse / Stop). Shared `presenceUi.tsx` (`presenceLine`/`ago`/`mmss` + live-ring avatar) — **12 unit tests**. Entry: a
   "Where's the squad" group-home card. **75 server + 107 web unit + 16 e2e green** (new `presence` spec: consent/roster/
   precise, 3 screenshots faithful to #25). Web `0.3.0`→`0.4.0`. Pages https://3fce6f1a.festpilot.pages.dev.
+- **P5 G5.3 ping round-trip + sharing-mode picker + privacy ✅ (this session) → PHASE 5 COMPLETE:** the interactive
+  "where is everyone?" loop **without FCM** (push is Phase 3+; shipped the **in-app channel** over the existing DO fan-out).
+  Server: migration `0006_presence_ping.sql` (`presence_ping` — `locate`/`nudge`, `answered_at_utc` closes a ping; inbox
+  index), `api/pings.ts` (`sendPing` w/ **5-min dedupe** + 30-min TTL, `listInbox`, `answerPing`, `dismissPing`),
+  `recordStageReply` in `api/presence.ts` (**answer with GPS off** — un-ghosts a `nudge` target to stage, resolves the
+  picked stage's coords from the map transform, records a `push_reply` fix → honest "at <stage>"). 3 member-gated routes
+  (`POST /:id/ping`, `POST /:id/ping/:pingId/{answer,dismiss}`), each `notifyGroup(...,"presence")`; the inbox is **merged
+  into the roster DTO** (`GroupPresenceDto.inbox`). Web: `data/shareOptIn.ts` extended (reactive **default mode** +
+  **precise-expiry minutes**, 15–180 step 15); `api` ping methods. Screens: **Visibility picker** (#25.3 Stage/Precise/
+  Ghost, per-squad scope DEC-015), **Location & privacy** (#25.6 master switch + default-mode segment + precise-expiry
+  stepper + squad-only audience + **pause-all** → server ghost, privacy promise), and the **roster** now drives the loop —
+  incoming-ping prompt ("Ana asked where you are" → one-tap **stage-pick sheet**, no GPS), **Ping** a stale member / **Nudge**
+  a ghost. New pure helpers `rosterRank`/`sortRoster`/`pingKindFor` in `presenceUi.tsx`. **78 server + 112 web unit + 19 e2e
+  green** (3 new presence specs: picker #25.3, privacy #25.6, ping round-trip #25.4; 4 screenshots faithful to #25).
+  Migration 0006 applied remote, Worker redeployed. Pages https://8d596d1c.festpilot.pages.dev.
 - **P3 G3.2/G3.3 ✅ (this session):** pure `domain/travel.ts` — `metersBetween` (haversine), `buildTravelMatrix`
   (auto-estimate walk minutes from georeferenced stage coords: detour ×1.3, ~67 m/min, min 2 min, fallback flat),
   `coordToStage` (in-radius hit + nearest fallback + HIGH/MED/LOW confidence). `data/useTravelMatrix.ts` joins the

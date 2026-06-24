@@ -1,43 +1,35 @@
 /**
- * "Where's the squad" roster (#25.4 — Gate 5.2). Coarse map peek + member list with honest labels:
- * "at MAINSTAGE" / "near X" / "between A & B" / "last seen Nm ago" / "not sharing", a live ring for
- * precise sharers, and the current-artist auto-detect ("watching …"). No coordinate ever reaches
- * the client. While this screen is open and the user has opted in, the device shares in foreground.
+ * "Where's the squad" roster (#25.4 — Gate 5.2/5.3). Coarse map peek + member list with honest
+ * labels: "at MAINSTAGE" / "near X" / "between A & B" / "last seen Nm ago" / "not sharing", a live
+ * ring for precise sharers, and the current-artist auto-detect ("watching …"). No coordinate ever
+ * reaches the client. Ping a stale member / Nudge a ghost; answer an incoming ping one-tap with a
+ * stage (push-reply, works with GPS off). While opted in, the device shares in foreground.
  */
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
+import { api } from "../../data/api";
+import { useGroup } from "../../data/groups";
 import { useGroupPresence, useLocationSharing } from "../../data/presence";
 import { useSharingOptIn } from "../../data/shareOptIn";
-import type { PresenceMemberDto } from "../../data/types";
+import type { PingDto, PresenceMemberDto, StageDto } from "../../data/types";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { CoarsePresenceMap } from "./CoarsePresenceMap";
-import { PresenceAvatar, ago, presenceLine } from "./presenceUi";
-
-/** Rank for the roster: live first, then fresh sharers (newest), then stale, then not-sharing. */
-function rank(m: PresenceMemberDto): number {
-  if (m.live) return 0;
-  if (m.shareMode === "ghost") return 3;
-  if (!m.presence) return 3;
-  return m.presence.stale ? 2 : 1;
-}
-
-function sortRoster(members: PresenceMemberDto[]): PresenceMemberDto[] {
-  return [...members].sort((a, b) => {
-    const r = rank(a) - rank(b);
-    if (r !== 0) return r;
-    const aa = a.presence?.ageSeconds ?? Number.POSITIVE_INFINITY;
-    const ba = b.presence?.ageSeconds ?? Number.POSITIVE_INFINITY;
-    return aa - ba;
-  });
-}
+import { StagePickSheet } from "./StagePickSheet";
+import { PresenceAvatar, ago, pingKindFor, presenceLine, sortRoster } from "./presenceUi";
 
 export function WhereScreen(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { group } = useGroup(id);
   const { presence, status, reload } = useGroupPresence(id);
   const optedIn = useSharingOptIn();
   const sharing = useLocationSharing(reload);
+
+  const [pinged, setPinged] = useState<Record<string, true>>({});
+  const [answering, setAnswering] = useState<PingDto | null>(null);
+  const [stages, setStages] = useState<StageDto[] | null>(null);
+  const [answerBusy, setAnswerBusy] = useState(false);
 
   // While on this screen, keep the user's own dot fresh if they've opted in and granted permission.
   useEffect(() => {
@@ -47,19 +39,88 @@ export function WhereScreen(): JSX.Element {
   }, [optedIn, sharing.supported, sharing.permission, sharing.active, sharing.enable]);
 
   const roster = useMemo(() => sortRoster(presence?.members ?? []), [presence]);
+  const inboxPing = presence?.inbox?.[0] ?? null;
+
+  const ping = useCallback(
+    async (m: PresenceMemberDto, kind: "locate" | "nudge"): Promise<void> => {
+      if (!id) return;
+      setPinged((p) => ({ ...p, [m.userId]: true }));
+      try {
+        await api.sendPing(id, m.userId, kind);
+      } catch {
+        setPinged((p) => {
+          const next = { ...p };
+          delete next[m.userId];
+          return next;
+        });
+      }
+    },
+    [id]
+  );
+
+  const openAnswer = async (p: PingDto): Promise<void> => {
+    setAnswering(p);
+    if (stages === null && group) {
+      try {
+        setStages(await api.listStages(group.festivalId));
+      } catch {
+        setStages([]);
+      }
+    }
+  };
+
+  const answer = async (stageId: string): Promise<void> => {
+    if (!id || !answering || answerBusy) return;
+    setAnswerBusy(true);
+    try {
+      await api.answerPing(id, answering.id, stageId);
+    } catch {
+      /* keep the sheet on failure */
+    }
+    setAnswerBusy(false);
+    setAnswering(null);
+    reload();
+  };
+
+  const dismiss = async (p: PingDto): Promise<void> => {
+    if (!id) return;
+    try {
+      await api.dismissPing(id, p.id);
+    } catch {
+      /* best-effort */
+    }
+    reload();
+  };
 
   if (status === "loading" && !presence) return <LoadingState rows={4} />;
   if (status === "error" && !presence) return <ErrorState message="Couldn't load the squad's location." onRetry={reload} />;
 
   const count = presence?.memberCount ?? roster.length;
   const invisible = !optedIn || sharing.permission === "denied";
-  const meLive = presence?.me.live ?? false;
 
   return (
     <>
       <StackHeader title="Where's the squad" backTo="/squad" />
       <div className="screen where-screen">
         <div className="where-sub label">{count} {count === 1 ? "person" : "people"} · live</div>
+
+        {inboxPing && (
+          <div className="glass where-inbox">
+            <span className="ms" style={{ color: "var(--accent)" }} aria-hidden="true">person_pin_circle</span>
+            <div className="where-inbox-main">
+              <div className="where-inbox-title">
+                {inboxPing.fromName ?? "A squad-mate"} {inboxPing.kind === "nudge" ? "asked you to share" : "asked where you are"}
+              </div>
+              <div className="where-inbox-sub">Answer with your stage — no GPS needed.</div>
+            </div>
+            <div className="where-inbox-actions">
+              <button className="btn btn-primary btn-sm" onClick={() => openAnswer(inboxPing)}>Share</button>
+              <button className="where-inbox-dismiss" aria-label="Dismiss" onClick={() => dismiss(inboxPing)}>
+                <span className="ms">close</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         <CoarsePresenceMap members={roster} onOpen={() => navigate("/map")} />
 
@@ -78,6 +139,7 @@ export function WhereScreen(): JSX.Element {
           {roster.map((m) => {
             const line = presenceLine(m);
             const fresh = !line.muted && m.presence;
+            const kind = pingKindFor(m);
             return (
               <div className={`glass where-row${line.muted ? " muted" : ""}${m.live ? " is-live" : ""}`} key={m.userId}>
                 <PresenceAvatar name={m.displayName} color={m.avatarColor} live={m.live} />
@@ -93,8 +155,15 @@ export function WhereScreen(): JSX.Element {
                     {line.sub && <span className="where-row-sub">· {line.sub}</span>}
                   </div>
                 </div>
-                {fresh && (
-                  <div className={`where-row-age${m.live ? " live" : ""}`}>{ago(m.presence!.ageSeconds)}</div>
+                {fresh && <div className={`where-row-age${m.live ? " live" : ""}`}>{ago(m.presence!.ageSeconds)}</div>}
+                {!fresh && kind && (
+                  <button
+                    className="pill where-ping"
+                    disabled={pinged[m.userId]}
+                    onClick={() => ping(m, kind)}
+                  >
+                    {pinged[m.userId] ? "Sent" : kind === "nudge" ? "Nudge" : "Ping"}
+                  </button>
                 )}
               </div>
             );
@@ -104,10 +173,24 @@ export function WhereScreen(): JSX.Element {
         <div className="where-actions">
           <button className="btn btn-primary" onClick={() => navigate(`/squad/${id}/precise`)}>
             <span className="ms" aria-hidden="true">my_location</span>
-            {meLive ? "Manage precise pin" : "Share a precise pin"}
+            {presence?.me.live ? "Manage precise pin" : "Share a precise pin"}
+          </button>
+          <button className="btn btn-ghost" onClick={() => navigate(`/squad/${id}/visibility`)}>
+            <span className="ms" aria-hidden="true">tune</span>
+            How you appear
           </button>
         </div>
       </div>
+
+      {answering && (
+        <StagePickSheet
+          title="Which stage are you at?"
+          stages={stages}
+          busy={answerBusy}
+          onPick={answer}
+          onClose={() => setAnswering(null)}
+        />
+      )}
     </>
   );
 }

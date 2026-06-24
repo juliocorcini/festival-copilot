@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useAppearance, useLanguage } from "../../app/settings";
 
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.4.0";
 
 const APPEARANCE_LABEL: Record<string, string> = { auto: "Auto", day: "Day", night: "Night" };
 const LANGUAGE_LABEL: Record<string, string> = { en: "English", pt: "Português" };
@@ -46,14 +46,14 @@ export function SettingsScreen(): JSX.Element {
             </span>
             <span className="pill">Soon</span>
           </div>
-          <div className="row">
-            <span className="ms">shield</span>
+          <button className="row" style={rowButton} onClick={() => navigate("/settings/privacy")}>
+            <span className="ms">share_location</span>
             <span className="row-main">
-              <span className="row-title">Privacy</span>
-              <span className="row-sub">Location sharing controls arrive with Squad</span>
+              <span className="row-title">Location &amp; privacy</span>
+              <span className="row-sub">Master switch · default mode · pause all</span>
             </span>
-            <span className="pill">Soon</span>
-          </div>
+            <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
+          </button>
         </section>
 
         <p className="src" style={{ textAlign: "center" }}>FestPilot · v{APP_VERSION}</p>

@@ -191,10 +191,19 @@ export interface PresenceMemberDto {
   presence: CoarsePresenceDto | null;
 }
 
+export interface PingDto {
+  id: string;
+  fromUserId: string;
+  fromName: string | null;
+  kind: "locate" | "nudge";
+  createdAtUtc: string;
+}
+
 export interface GroupPresenceDto {
   groupId: string;
   memberCount: number;
   liveCount: number;
   members: PresenceMemberDto[];
   me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
+  inbox: PingDto[];
 }

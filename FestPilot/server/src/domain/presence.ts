@@ -111,6 +111,9 @@ export function coarsenPresence(
   return { stageId: null, betweenStageId: null, coarseLabel: "none", confidence: "low", meters };
 }
 
+/** A "where is everyone?" ping kind: ask a stale member to locate, or nudge a ghost to share. */
+export type PingKind = "locate" | "nudge";
+
 /** Freshness windows (DEC-008): a GPS fix is trusted ~15 min; a manual/push reply ~45 min. */
 export type PresenceSource = "gps" | "manual" | "push_reply";
 

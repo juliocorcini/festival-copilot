@@ -310,4 +310,31 @@ export const api = {
       signal,
     }).then(() => undefined);
   },
+
+  // "Where is everyone?" ping round-trip (Gate 5.3 — UC-25/26).
+  /** Ask a squad-mate to locate ("locate", when stale) or to turn sharing on ("nudge"). */
+  sendPing(groupId: string, toUserId: string, kind: "locate" | "nudge", signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${groupId}/ping`, {
+      method: "POST",
+      body: { toUserId, kind },
+      signal,
+    }).then(() => undefined);
+  },
+
+  /** Answer a ping by declaring a stage (push-reply; works with GPS off). */
+  answerPing(groupId: string, pingId: string, stageId: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${groupId}/ping/${pingId}/answer`, {
+      method: "POST",
+      body: { stageId },
+      signal,
+    }).then(() => undefined);
+  },
+
+  /** Dismiss a ping without sharing. */
+  dismissPing(groupId: string, pingId: string, signal?: AbortSignal): Promise<void> {
+    return authedJson<{ ok: boolean }>(`/api/groups/${groupId}/ping/${pingId}/dismiss`, {
+      method: "POST",
+      signal,
+    }).then(() => undefined);
+  },
 };

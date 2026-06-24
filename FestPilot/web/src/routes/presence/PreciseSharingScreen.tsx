@@ -9,13 +9,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../data/api";
 import { useGroup } from "../../data/groups";
 import { useGroupPresence, useLocationSharing } from "../../data/presence";
-import { setSharingOptIn } from "../../data/shareOptIn";
+import { setSharingOptIn, usePreciseMinutes } from "../../data/shareOptIn";
 import type { ShareMode } from "../../data/types";
 import { CoarsePresenceMap } from "./CoarsePresenceMap";
 import { PresenceAvatar, mmss } from "./presenceUi";
 
-const PRECISE_MINUTES = 60;
-const PRECISE_SECONDS = PRECISE_MINUTES * 60;
 const RING_R = 24;
 const RING_C = 2 * Math.PI * RING_R;
 const STACK_MAX = 4;
@@ -26,6 +24,8 @@ export function PreciseSharingScreen(): JSX.Element {
   const { group } = useGroup(id);
   const { presence, reload } = useGroupPresence(id);
   const sharing = useLocationSharing(reload);
+  const preciseMinutes = usePreciseMinutes();
+  const preciseSeconds = preciseMinutes * 60;
   const [busy, setBusy] = useState(false);
   const [secs, setSecs] = useState(0);
 
@@ -74,8 +74,8 @@ export function PreciseSharingScreen(): JSX.Element {
     setBusy(true);
     setSharingOptIn(true);
     if (sharing.supported && sharing.permission !== "denied" && !sharing.active) await sharing.enable();
-    await setMode("precise", PRECISE_MINUTES);
-    setSecs(PRECISE_SECONDS);
+    await setMode("precise", preciseMinutes);
+    setSecs(preciseSeconds);
     setBusy(false);
   };
 
@@ -96,7 +96,7 @@ export function PreciseSharingScreen(): JSX.Element {
   const others = useMemo(() => (presence?.members ?? []).filter((m) => !m.isYou), [presence]);
   const visible = others.slice(0, STACK_MAX);
   const overflow = others.length - visible.length;
-  const dashOffset = RING_C * (1 - Math.min(1, Math.max(0, secs / PRECISE_SECONDS)));
+  const dashOffset = RING_C * (1 - Math.min(1, Math.max(0, secs / preciseSeconds)));
 
   return (
     <div className="precise-screen">
@@ -136,7 +136,7 @@ export function PreciseSharingScreen(): JSX.Element {
               {live ? (
                 <>Auto-off in <b>{mmss(secs)}</b> · visible to {group?.name ?? "your squad"}</>
               ) : (
-                <>A high-confidence live position · auto-off in {PRECISE_MINUTES} min</>
+                <>A high-confidence live position · auto-off in {preciseMinutes} min</>
               )}
             </div>
           </div>
@@ -156,7 +156,7 @@ export function PreciseSharingScreen(): JSX.Element {
           <>
             <div className="precise-row">
               <button className="btn btn-ghost" onClick={startOrExtend} disabled={busy}>
-                <span className="ms" aria-hidden="true">add</span>+{PRECISE_MINUTES} min
+                <span className="ms" aria-hidden="true">add</span>+{preciseMinutes} min
               </button>
               <button className="btn btn-ghost" onClick={downgrade} disabled={busy}>
                 <span className="ms" aria-hidden="true">apartment</span>Coarse
@@ -169,7 +169,7 @@ export function PreciseSharingScreen(): JSX.Element {
         ) : (
           <button className="btn btn-primary" onClick={startOrExtend} disabled={busy || !sharing.supported}>
             <span className="ms" aria-hidden="true">my_location</span>
-            {busy ? "Starting…" : `Share precise pin (${PRECISE_MINUTES} min)`}
+            {busy ? "Starting…" : `Share precise pin (${preciseMinutes} min)`}
           </button>
         )}
       </section>

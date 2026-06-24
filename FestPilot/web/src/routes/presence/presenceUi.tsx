@@ -88,3 +88,28 @@ export function mmss(seconds: number): string {
   const r = s % 60;
   return `${m}:${String(r).padStart(2, "0")}`;
 }
+
+/** Roster bucket: live first (0), then fresh sharers (1), then stale (2), then ghost / no fix (3). */
+export function rosterRank(m: PresenceMemberDto): number {
+  if (m.live) return 0;
+  if (m.shareMode === "ghost" || !m.presence) return 3;
+  return m.presence.stale ? 2 : 1;
+}
+
+/** Order the roster by bucket, then by freshness (smallest age first). Stable, non-mutating. */
+export function sortRoster(members: PresenceMemberDto[]): PresenceMemberDto[] {
+  return [...members].sort((a, b) => {
+    const r = rosterRank(a) - rosterRank(b);
+    if (r !== 0) return r;
+    const aa = a.presence?.ageSeconds ?? Number.POSITIVE_INFINITY;
+    const ba = b.presence?.ageSeconds ?? Number.POSITIVE_INFINITY;
+    return aa - ba;
+  });
+}
+
+/** Which ping a member can receive: stale sharer → "locate"; ghost/silent → "nudge"; self → none. */
+export function pingKindFor(m: PresenceMemberDto): "locate" | "nudge" | null {
+  if (m.isYou) return null;
+  if (m.shareMode === "ghost" || !m.presence) return "nudge";
+  return m.presence.stale ? "locate" : null;
+}

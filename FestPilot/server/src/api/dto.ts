@@ -213,6 +213,15 @@ export interface PresenceMemberDto {
   presence: CoarsePresenceDto | null;
 }
 
+/** A pending "where are you?" / "turn on sharing" request addressed to the caller (#25.4). */
+export interface PingDto {
+  id: string;
+  fromUserId: string;
+  fromName: string | null;
+  kind: "locate" | "nudge";
+  createdAtUtc: string;
+}
+
 /** The squad's "where is everyone" roster for one group (coarse + freshness only). */
 export interface GroupPresenceDto {
   groupId: string;
@@ -222,4 +231,6 @@ export interface GroupPresenceDto {
   members: PresenceMemberDto[];
   /** The caller's own sharing for this squad (mirrors their entry; drives the precise control). */
   me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
+  /** Pending pings addressed to the caller in this squad (one-tap answer with a stage). */
+  inbox: PingDto[];
 }

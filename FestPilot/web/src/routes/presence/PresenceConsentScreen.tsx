@@ -10,7 +10,7 @@ import { StackHeader } from "../../app/StackHeader";
 import { api } from "../../data/api";
 import { useGroup } from "../../data/groups";
 import { useLocationSharing } from "../../data/presence";
-import { setSharingOptIn } from "../../data/shareOptIn";
+import { getDefaultShareMode, getPreciseMinutes, setSharingOptIn } from "../../data/shareOptIn";
 
 const PROMISES = [
   { icon: "apartment", color: "var(--ok)", title: "By default: just the stage", body: 'Squad sees "at MAINSTAGE", not a precise pin.' },
@@ -30,10 +30,12 @@ export function PresenceConsentScreen(): JSX.Element {
     setBusy(true);
     const ok = await sharing.enable(); // triggers the OS permission dialog (#25.2)
     if (ok) {
+      // Apply the user's default visibility — but turning sharing ON never starts as ghost.
+      const mode = getDefaultShareMode() === "ghost" ? "stage" : getDefaultShareMode();
       try {
-        await api.setShareMode(id, "stage");
+        await api.setShareMode(id, mode, mode === "precise" ? getPreciseMinutes() : undefined);
       } catch {
-        /* the fix already posted; mode defaults are fine */
+        /* the fix already posted; server defaults are fine */
       }
       setSharingOptIn(true);
       navigate(`/squad/${id}/where`);

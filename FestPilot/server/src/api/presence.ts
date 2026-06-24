@@ -48,7 +48,7 @@ function normalizeName(name: string): string {
  * Georeferenced stage coordinates for a festival, taken from the published map transform (the same
  * source the web map + travel matrix use) and joined to stage ids by name. Empty when no map.
  */
-async function getStageCoords(db: D1Database, festivalId: string): Promise<StageCoord[]> {
+export async function getStageCoords(db: D1Database, festivalId: string): Promise<StageCoord[]> {
   const [map, stages] = await Promise.all([getFestivalMap(db, festivalId), listStages(db, festivalId)]);
   if (!map) return [];
   const idByName = new Map(stages.map((s) => [normalizeName(s.name), s.id]));
@@ -194,6 +194,36 @@ export async function recordFix(
   return affected;
 }
 
+/**
+ * Answer a "where are you?" ping by declaring a stage (push-reply — works with GPS off, DEC-012).
+ * Un-ghosts this squad if needed so the reply is visible, resolves the stage's georeferenced coords,
+ * and records a coarse push_reply fix (resolves to "at <stage>"). Returns false if the stage is
+ * unknown for the squad's festival. Like every fix, raw coords are stored server-only.
+ */
+export async function recordStageReply(
+  db: D1Database,
+  userId: string,
+  groupId: string,
+  stageId: string,
+  nowIso: string
+): Promise<boolean> {
+  await db
+    .prepare(
+      `UPDATE group_member SET share_location = 'while_using', share_until_utc = NULL
+        WHERE group_id = ? AND user_id = ? AND share_location = 'off'`
+    )
+    .bind(groupId, userId)
+    .run();
+  const g = await db.prepare(`SELECT festival_id AS festivalId FROM app_group WHERE id = ?`).bind(groupId).first<{
+    festivalId: string;
+  }>();
+  if (!g) return false;
+  const coord = (await getStageCoords(db, g.festivalId)).find((s) => s.stageId === stageId);
+  if (!coord) return false;
+  await recordFix(db, userId, { lat: coord.lat, lng: coord.lng, accuracyMeters: null, source: "push_reply" }, nowIso);
+  return true;
+}
+
 interface PresenceRosterRow {
   userId: string;
   displayName: string | null;
@@ -303,6 +333,7 @@ export async function getGroupPresence(
       live: mine?.live ?? false,
       liveSecondsLeft: mine?.liveSecondsLeft ?? null,
     },
+    inbox: [],
   };
 }
 

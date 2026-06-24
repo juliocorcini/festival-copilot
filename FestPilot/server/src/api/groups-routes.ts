@@ -27,6 +27,8 @@ import {
 } from "./squadPlan";
 import { editNote, listNotes, MAX_NOTE_LENGTH, postNote, removeNote, setPinned } from "./board";
 import { getGroupPresence, PRECISE_DEFAULT_MINUTES, setGroupShareMode } from "./presence";
+import { answerPing, dismissPing, listInbox, sendPing } from "./pings";
+import type { PingKind } from "../domain/presence";
 
 export const groups = new Hono<{ Bindings: Env }>();
 
@@ -272,12 +274,17 @@ groups.delete("/:id/board/:noteId", async (c) => {
 
 // --- Live presence (Gate 5.1, UC-22/24 — DEC-007/015/046). Coarse-only; never coordinates. ---
 
-// The squad's "where is everyone" roster for this group (coarse label + freshness + live state).
+// The squad's "where is everyone" roster for this group (coarse label + freshness + live state),
+// plus the caller's pending ping inbox (so one fetch drives both the roster and the answer prompt).
 groups.get("/:id/presence", async (c) => {
   const m = await member(c, c.req.param("id"));
   if ("status" in m) return c.json({ error: "no" }, m.status);
-  const presence = await getGroupPresence(c.env.DB, m.group.id, m.user.id, new Date().toISOString());
-  return c.json({ presence });
+  const now = new Date().toISOString();
+  const [presence, inbox] = await Promise.all([
+    getGroupPresence(c.env.DB, m.group.id, m.user.id, now),
+    listInbox(c.env.DB, m.group.id, m.user.id, now),
+  ]);
+  return c.json({ presence: { ...presence, inbox } });
 });
 
 // Set my sharing mode for this squad (#25.3 + ghost). Body: { mode: stage|precise|ghost, durationMinutes? }.
@@ -292,6 +299,43 @@ groups.put("/:id/share", async (c) => {
   const duration = typeof body.durationMinutes === "number" ? body.durationMinutes : PRECISE_DEFAULT_MINUTES;
   await setGroupShareMode(c.env.DB, m.group.id, m.user.id, mode, duration, new Date().toISOString());
   await notifyGroup(c.env, m.group.id, "presence");
+  return c.json({ ok: true });
+});
+
+// "Where is everyone?" — ping a squad-mate to locate ('locate') or to turn sharing on ('nudge').
+groups.post("/:id/ping", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const toUserId = readString(body.toUserId, 64);
+  if (!toUserId) return c.json({ error: "toUserId is required" }, 400);
+  if (toUserId === m.user.id) return c.json({ error: "cannot ping yourself" }, 400);
+  const kind: PingKind = body.kind === "nudge" ? "nudge" : "locate";
+  const id = await sendPing(c.env.DB, m.group.id, m.user.id, toUserId, kind, new Date().toISOString());
+  await notifyGroup(c.env, m.group.id, "ping");
+  return c.json({ ok: true, id }, 201);
+});
+
+// Answer a ping by declaring a stage (push-reply; works with GPS off). Body: { stageId }.
+groups.post("/:id/ping/:pingId/answer", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const stageId = readString(body.stageId, 64);
+  if (!stageId) return c.json({ error: "stageId is required" }, 400);
+  const ok = await answerPing(c.env.DB, m.group.id, c.req.param("pingId"), m.user.id, stageId, new Date().toISOString());
+  if (!ok) return c.json({ error: "not found" }, 404);
+  await notifyGroup(c.env, m.group.id, "presence");
+  return c.json({ ok: true });
+});
+
+// Dismiss a ping without sharing.
+groups.post("/:id/ping/:pingId/dismiss", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const ok = await dismissPing(c.env.DB, m.group.id, c.req.param("pingId"), m.user.id, new Date().toISOString());
+  if (!ok) return c.json({ error: "not found" }, 404);
+  await notifyGroup(c.env, m.group.id, "ping");
   return c.json({ ok: true });
 });
 

@@ -23,6 +23,8 @@ import { SquadBoardScreen } from "./routes/squad/SquadBoardScreen";
 import { PresenceConsentScreen } from "./routes/presence/PresenceConsentScreen";
 import { WhereScreen } from "./routes/presence/WhereScreen";
 import { PreciseSharingScreen } from "./routes/presence/PreciseSharingScreen";
+import { VisibilityScreen } from "./routes/presence/VisibilityScreen";
+import { LocationPrivacyScreen } from "./routes/presence/LocationPrivacyScreen";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
 import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
@@ -57,12 +59,14 @@ export function App(): JSX.Element {
             <Route path="squad/:id/location" element={<PresenceConsentScreen />} />
             <Route path="squad/:id/where" element={<WhereScreen />} />
             <Route path="squad/:id/precise" element={<PreciseSharingScreen />} />
+            <Route path="squad/:id/visibility" element={<VisibilityScreen />} />
             <Route path="squad/join" element={<JoinScreen />} />
             <Route path="squad/join/:token" element={<JoinScreen />} />
             <Route path="j/:token" element={<JoinScreen />} />
             <Route path="settings" element={<SettingsScreen />} />
             <Route path="settings/appearance" element={<AppearanceScreen />} />
             <Route path="settings/offline" element={<OfflineScreen />} />
+            <Route path="settings/privacy" element={<LocationPrivacyScreen />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

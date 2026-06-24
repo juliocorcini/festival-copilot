@@ -46,6 +46,7 @@ const ROSTER = {
   memberCount: 5,
   liveCount: 1,
   me: { shareMode: "precise", live: true, liveSecondsLeft: 2820 },
+  inbox: [],
   members: [
     { userId: "u-you", displayName: "Julio", avatarColor: "#F5A623", role: "owner", isYou: true, shareMode: "precise", live: true, liveSecondsLeft: 2820, presence: coarse({ stageName: "FREEDOM BY BUD" }) },
     { userId: "u-ana", displayName: "Ana", avatarColor: "#FF5A36", role: "member", isYou: false, shareMode: "stage", live: false, liveSecondsLeft: null, presence: coarse({ stageName: "MAINSTAGE", currentArtistName: "Charlotte de Witte", ageSeconds: 10 }) },
@@ -54,6 +55,19 @@ const ROSTER = {
     { userId: "u-bruno", displayName: "Bruno", avatarColor: "#64748B", role: "member", isYou: false, shareMode: "ghost", live: false, liveSecondsLeft: null, presence: null },
   ],
 };
+
+// Same roster, but Ana has pinged "you" to locate — drives the inbox prompt + answer sheet (#25.4).
+const ROSTER_INBOX = {
+  ...ROSTER,
+  inbox: [{ id: "ping-1", fromUserId: "u-ana", fromName: "Ana", kind: "locate", createdAtUtc: "2026-07-18T20:29:00Z" }],
+};
+
+const STAGES = [
+  { id: "s-main", sourceStageId: "main", name: "MAINSTAGE", sortOrder: 0 },
+  { id: "s-core", sourceStageId: "core", name: "CORE", sortOrder: 1 },
+  { id: "s-cage", sourceStageId: "cage", name: "CAGE", sortOrder: 2 },
+  { id: "s-free", sourceStageId: "free", name: "FREEDOM BY BUD", sortOrder: 3 },
+];
 
 const SEED = (arg) => {
   localStorage.setItem("fp.auth.v1", JSON.stringify({ token: arg.token, user: arg.user }));
@@ -91,7 +105,16 @@ test.describe("Phase 5 — live presence", () => {
       if (path === "/api/presence" && method === "POST") {
         return route.fulfill({ json: { ok: true, groups: 1 } });
       }
+      if (path === "/api/presence/pause" && method === "POST") {
+        return route.fulfill({ json: { ok: true } });
+      }
       if (path.endsWith("/share") && method === "PUT") {
+        return route.fulfill({ json: { ok: true } });
+      }
+      if (path.endsWith("/stages") && method === "GET") {
+        return route.fulfill({ json: { stages: STAGES } });
+      }
+      if (/\/ping(\/[^/]+\/(answer|dismiss))?$/.test(path) && method === "POST") {
         return route.fulfill({ json: { ok: true } });
       }
       if (/^\/api\/groups\/[^/]+$/.test(path) && method === "GET") {
@@ -135,5 +158,65 @@ test.describe("Phase 5 — live presence", () => {
     await expect(page.getByRole("button", { name: "Stop sharing now" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Coarse" })).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase5-precise.png" });
+  });
+
+  test("sharing-mode picker (#25.3)", async ({ page }) => {
+    await page.goto(`/squad/${GROUP_ID}/visibility`);
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page.getByRole("heading", { name: "How you appear" })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Sharing with Fam Juntos")).toBeVisible();
+    await expect(page.getByText("Stage labels")).toBeVisible();
+    await expect(page.getByText("Precise live pin")).toBeVisible();
+    await expect(page.getByText("Ghost mode")).toBeVisible();
+    // Per-squad scope is spelled out (DEC-015).
+    await expect(page.getByText(/Visible to/)).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/phase5-visibility.png" });
+    // Switch to Stage and save → persists the chosen mode (PUT /share) and returns to the roster.
+    const savePut = page.waitForRequest(
+      (r) => r.url().includes(`/groups/${GROUP_ID}/share`) && r.method() === "PUT"
+    );
+    await page.getByText("Stage labels").click();
+    await page.getByRole("button", { name: "Save" }).click();
+    const req = await savePut;
+    expect(JSON.parse(req.postData() ?? "{}")).toMatchObject({ mode: "stage" });
+    await page.waitForURL(`**/squad/${GROUP_ID}/where`);
+  });
+
+  test("location & privacy master switch (#25.6)", async ({ page }) => {
+    await page.goto("/settings/privacy");
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page.getByText("Share with my squads")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Default mode")).toBeVisible();
+    await expect(page.getByText("Precise auto-expiry")).toBeVisible();
+    await expect(page.getByText("Pause all sharing")).toBeVisible();
+    // Master switch is on (seeded opt-in).
+    await expect(page.getByRole("switch", { name: "Share with my squads" })).toHaveAttribute("aria-checked", "true");
+    await page.screenshot({ path: "e2e/screenshots/phase5-privacy.png" });
+    // Go invisible everywhere.
+    const pause = page.getByRole("switch", { name: "Pause all sharing" });
+    await pause.click();
+    await expect(pause).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("where-is-everyone ping round-trip (#25.4)", async ({ page }) => {
+    // Override the roster so Ana has pinged "you".
+    await page.route("**/api/groups/*/presence", (route) => route.fulfill({ json: { presence: ROSTER_INBOX } }));
+    await page.goto(`/squad/${GROUP_ID}/where`);
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page.getByRole("heading", { name: "Where's the squad" })).toBeVisible({ timeout: 20_000 });
+    // Incoming ping prompt.
+    await expect(page.getByText("Ana asked where you are")).toBeVisible();
+    // Stale member can be pinged; ghost can be nudged.
+    await expect(page.getByRole("button", { name: "Ping" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nudge" })).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/phase5-where-ping.png" });
+    // Answer with a stage (push-reply, works with GPS off) → one-tap sheet.
+    await page.getByRole("button", { name: "Share", exact: true }).click();
+    await expect(page.getByText("Which stage are you at?")).toBeVisible();
+    await expect(page.getByRole("button", { name: /MAINSTAGE/ })).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/phase5-ping-sheet.png" });
+    await page.getByRole("button", { name: /MAINSTAGE/ }).click();
+    // Sheet closes after answering.
+    await expect(page.getByText("Which stage are you at?")).toHaveCount(0);
   });
 });
