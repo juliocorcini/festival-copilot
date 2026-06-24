@@ -513,3 +513,33 @@
 - **Detail**: `server/src/api/board.ts` (+ `dto.ts BoardNoteDto`, routes in `groups-routes.ts`), `server/test/board.test.ts`;
   `web/src/data/{types,api,board}.ts`, `web/src/routes/squad/SquadBoardScreen.tsx`, entry card in `SquadScreen.tsx`;
   `web/e2e/squad-board.spec.js`; orchestrator §13 Phase 4 G4.4.
+
+### DEC-046 — Phase 5 presence is coarse-only; the "precise live pin" exact dot rides the Phase-6 exact channel
+- **Date**: 2026-06-23 (build, Phase 5 — inline council)
+- **Status**: APPROVED (executor decision via inline council; implements DEC-006/007/008/012/015/035/039)
+- **Context**: The orchestrator §3 non-negotiables + DEC-007/015 + anti-goals are absolute: presence is **coarse**, raw
+  `lat/lng` is **server-only**, **clients never receive raw presence coordinates**, and exact coords leave the server
+  **only via meeting points** (+ the safety "I'm lost" action). But the approved wireframe `#25` (3/4/5), DEC-039 and the
+  Phase 5 gate spec all include a **"Precise live pin"** mode ("a moving dot on the map, auto-off in 60 min"). A 4-lens
+  council (Privacy-Strategist / Architect / Critic / User-Advocate) resolved the conflict.
+- **Decision**: Phase 5 ships **coarse presence end-to-end** as the must-ship core — `POST /api/presence` takes a raw fix
+  in, the server resolves **stage + coarse label (at/near/between/none) + confidence (high/med/low) + expiry** (GPS ~15m,
+  manual/push ~45m) and stores raw `lat/lng` **server-only**; `GET /api/groups/:id/presence` returns **coarse-only DTOs
+  that never carry `lat/lng`**. The three **sharing modes** are real *state* on `group_member` (`share_location`
+  off=Ghost / while_using=Stage / live_until=Precise, with `share_until_utc`). **Precise** is honoured as an explicit,
+  **server-side-hard-expiring 60-min** intent: the squad sees the sharer as **"live · precise · Nm left" at a
+  high-confidence coarse position** — never a raw coordinate. The truly-exact **moving dot is deferred to Phase 6**,
+  delivered by the **same exact-coords channel** that phase builds for "come to me" meeting points (R2 + exact share),
+  so we never build two exact-coords privacy surfaces and the approved **consent copy stays literally true**.
+- **Why (weightiest lens = Privacy-Strategist)**: the consent pre-prompt copy is **already approved verbatim** ("your
+  exact spot is never shared unless you tap 'come to me'") — the data contract must not contradict the words. Coarse-only
+  is unambiguous, fully buildable now, and exhaustively unit-testable (pure `coarsenPresence`). Exact-coords-to-clients
+  belongs to the phase that builds that infra anyway (Phase 6).
+- **Conditions (enforced)**: (a) **no DTO ever carries `lat/lng`** for presence; (b) precise **hard-expires server-side**
+  at `share_until_utc` (cron + lazy check), not just in the UI; (c) the precise control is **honestly labeled** (no claim
+  others see a meter-accurate dot in Phase 5); (d) the exact moving dot is a **named Phase-6 deliverable**, not vague
+  backlog. **Flip condition**: if Julio declares the exact dot a Phase-5 must-ship, build it now — but still as a
+  **separate explicit/expiring channel**, never by widening the coarse feed.
+- **Detail**: `server/src/domain/presence.ts` (pure `coarsenPresence` + tests), `server/src/api/presence.ts` (repo),
+  `POST /api/presence` + `GET/PUT /api/groups/:id/presence|share` routes, cron purge in `index.ts`; web consent +
+  precise-control + roster + sharing-mode + privacy screens (proto `25`); orchestrator §13 Phase 5.

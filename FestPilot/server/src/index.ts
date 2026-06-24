@@ -8,6 +8,7 @@ import type { Env } from "./env";
 import { api } from "./api/routes";
 import { upsertFestivalMap, type FestivalMapInput } from "./api/repo";
 import { runScheduledIngest } from "./ingest/ingest";
+import { purgeExpiredPresence } from "./api/presence";
 export { GroupRoom } from "./group/room";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -55,6 +56,12 @@ export default {
     ctx.waitUntil(
       runScheduledIngest(env).then((result) => {
         console.log("[cron] lineup ingest:", JSON.stringify(result));
+      })
+    );
+    // Presence hygiene (DEC-008/015): drop stale fixes + downgrade lapsed precise shares to coarse.
+    ctx.waitUntil(
+      purgeExpiredPresence(env.DB, new Date().toISOString()).then((r) => {
+        console.log("[cron] presence purge:", JSON.stringify(r));
       })
     );
   },

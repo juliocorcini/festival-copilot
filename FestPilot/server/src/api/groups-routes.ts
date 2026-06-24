@@ -26,20 +26,21 @@ import {
   type SharedSlotInput,
 } from "./squadPlan";
 import { editNote, listNotes, MAX_NOTE_LENGTH, postNote, removeNote, setPinned } from "./board";
+import { getGroupPresence, PRECISE_DEFAULT_MINUTES, setGroupShareMode } from "./presence";
 
 export const groups = new Hono<{ Bindings: Env }>();
 
 type Ctx = Context<{ Bindings: Env }>;
 
 /** Ensure + return the calling user, or null when the bearer token is absent/invalid. */
-async function caller(c: Ctx): Promise<UserDto | null> {
+export async function caller(c: Ctx): Promise<UserDto | null> {
   const identity = getUserFromRequest(c.req.raw);
   if (!identity) return null;
   return ensureUser(c.env.DB, identity, new Date().toISOString());
 }
 
 /** Best-effort realtime nudge: tell the group's Durable Object to fan out a change. */
-async function notifyGroup(env: Env, groupId: string, topic: string): Promise<void> {
+export async function notifyGroup(env: Env, groupId: string, topic: string): Promise<void> {
   try {
     const stub = env.GROUP_ROOM.get(env.GROUP_ROOM.idFromName(groupId));
     await stub.fetch("https://group-room/notify", {
@@ -266,6 +267,31 @@ groups.delete("/:id/board/:noteId", async (c) => {
   const ok = await removeNote(c.env.DB, m.group.id, c.req.param("noteId"), m.user.id, m.group.role === "owner");
   if (!ok) return c.json({ error: "not found" }, 404);
   await notifyGroup(c.env, m.group.id, "board");
+  return c.json({ ok: true });
+});
+
+// --- Live presence (Gate 5.1, UC-22/24 — DEC-007/015/046). Coarse-only; never coordinates. ---
+
+// The squad's "where is everyone" roster for this group (coarse label + freshness + live state).
+groups.get("/:id/presence", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const presence = await getGroupPresence(c.env.DB, m.group.id, m.user.id, new Date().toISOString());
+  return c.json({ presence });
+});
+
+// Set my sharing mode for this squad (#25.3 + ghost). Body: { mode: stage|precise|ghost, durationMinutes? }.
+groups.put("/:id/share", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const mode = body.mode;
+  if (mode !== "stage" && mode !== "precise" && mode !== "ghost") {
+    return c.json({ error: "mode must be stage|precise|ghost" }, 400);
+  }
+  const duration = typeof body.durationMinutes === "number" ? body.durationMinutes : PRECISE_DEFAULT_MINUTES;
+  await setGroupShareMode(c.env.DB, m.group.id, m.user.id, mode, duration, new Date().toISOString());
+  await notifyGroup(c.env, m.group.id, "presence");
   return c.json({ ok: true });
 });
 

@@ -172,3 +172,54 @@ export interface BoardNoteDto {
   /** Set when the note was edited (drives the "· edited" hint). */
   updatedAtUtc: string | null;
 }
+
+// Live presence (Pillar 3b, Phase 5 — DEC-007/008/015/046). The server keeps raw lat/lng
+// SERVER-ONLY and exposes ONLY this coarse view: a stage + an honest label/confidence + freshness.
+// No DTO here ever carries a coordinate. The "precise" sharing mode is honoured as a 60-min,
+// server-hard-expiring intent (live + countdown); the exact moving dot lands in Phase 6 (DEC-046).
+
+/** How a member appears to a squad: stage labels (coarse) / precise (60-min) / ghost (invisible). */
+export type ShareMode = "stage" | "precise" | "ghost";
+
+/** A member's coarse presence — the maximal info a client may ever receive (never coordinates). */
+export interface CoarsePresenceDto {
+  coarseLabel: "at" | "near" | "between" | "none";
+  stageName: string | null;
+  /** The second stage for "between A and B"; null otherwise. */
+  betweenStageName: string | null;
+  /** Auto-detected from the lineup at the resolved stage; null when unknown. */
+  currentArtistName: string | null;
+  confidence: "high" | "medium" | "low";
+  source: "gps" | "manual" | "push_reply";
+  updatedAtUtc: string;
+  /** Past its freshness window (GPS ~15m, manual/push ~45m) → shown as "last seen". */
+  stale: boolean;
+  /** Seconds since the fix (drives "now / 4m / 18m ago"). */
+  ageSeconds: number;
+}
+
+export interface PresenceMemberDto {
+  userId: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  role: string;
+  isYou: boolean;
+  shareMode: ShareMode;
+  /** Precise sharing is currently active (live_until and not yet expired). */
+  live: boolean;
+  /** Seconds remaining on an active precise share; null otherwise. */
+  liveSecondsLeft: number | null;
+  /** Coarse presence; null when the member isn't sharing a (fresh) fix to this squad / is ghost. */
+  presence: CoarsePresenceDto | null;
+}
+
+/** The squad's "where is everyone" roster for one group (coarse + freshness only). */
+export interface GroupPresenceDto {
+  groupId: string;
+  memberCount: number;
+  /** Members with a fresh coarse fix right now. */
+  liveCount: number;
+  members: PresenceMemberDto[];
+  /** The caller's own sharing for this squad (mirrors their entry; drives the precise control). */
+  me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
+}

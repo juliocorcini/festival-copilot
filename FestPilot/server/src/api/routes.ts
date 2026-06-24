@@ -6,6 +6,7 @@ import type { Env } from "../env";
 import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
 import { me } from "./me";
 import { groups } from "./groups-routes";
+import { presence } from "./presence-routes";
 
 export const api = new Hono<{ Bindings: Env }>();
 
@@ -19,6 +20,9 @@ api.route("/me", me);
 
 // Groups (Pillar 3a — UC-16/17). Auth-gated; realtime via the GroupRoom Durable Object.
 api.route("/groups", groups);
+
+// Live presence intake (Pillar 3b — UC-21/22). Raw fix in; coarse out (raw coords server-only).
+api.route("/presence", presence);
 
 api.get("/festivals", async (c) => {
   const festivals = await listFestivals(c.env.DB);
