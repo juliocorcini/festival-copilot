@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.13.0";
+export const APP_VERSION = "0.14.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.14.0",
+    date: "2026-06-24",
+    title: "More festivals, mapped for real",
+    icon: "map",
+    whatsNew: [
+      "New festivals, done right: behind the scenes the team can now add a festival straight from its official lineup page — nothing typed by hand — so each new event arrives with its real, automatically-updated lineup.",
+      "Every festival can get a true-to-life map: the team pins each stage on the venue illustration by its real-world spot, so 'where's my squad' and the walking times line up with the actual ground.",
+    ],
+    howToTest: [
+      "/admin → Festivals → 'Add festival' → paste an official lineup page URL → it imports the lineup live (and shows an honest error if a page can't be resolved — it never invents data).",
+      "/admin → a festival's 'Map' action → set/upload a base image, drop 3+ control points with their real lng/lat → 'Fit affine' (watch the pixel error), then place each stage and 'Save map'.",
+      "Per-festival 'Re-import from source' refreshes one festival; 'Re-import all' refreshes every registered one; 'Edit' renames or fixes a timezone.",
+    ],
+  },
   {
     version: "0.13.0",
     date: "2026-06-24",

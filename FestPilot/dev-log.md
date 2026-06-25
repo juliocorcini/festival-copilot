@@ -12,12 +12,16 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R11 (Admin back-office, DEC-057) CLOSED ✅ — deployed + live (v0.13.0).** **This closes the review-remediation
-  pass: R0–R11 all done.** Shipped **R11.0** guarded admin shell + `x-admin-token` gate · **R11.1a** Festivals overview
-  (KPIs + health table) · **R11.1b** Lineup & timetable dashboard · **R11.2** Data-source registry per festival · **R11.3**
-  Festival-suggestions inbox · **R11.4** Usage metrics + free-tier runway · **R11.5** Live test console (is_test users → inject
-  presence → purge). **Deferred R11.1c** (map editor / georeference / POI / travel-matrix) → **V1.1 admin** per **DEC-062**
-  (heavy visual drag/affine UI, unverifiable in this no-browser env; the `festival_map` publish pipeline already exists).
+- **Gate:** **R11.1c REOPENED + DONE ✅ — deployed + live (v0.14.0).** DEC-062's deferral was reversed (DEC-063) once a
+  **headless Playwright** screenshot loop proved visual verification works in this env. Shipped the two consumed slices:
+  **festival onboarding & management** (add a festival live from its official page · per-festival + bulk re-import · edit
+  name/timezone — commit 260ebf7) and the **map editor** (R2 base upload · georeference via ≥3 control points → ported
+  least-squares `fitAffine`/`residual` → 6-coeff affine + pixel-error readout · stage coordinate placement numeric or
+  click-the-map · live `geoToSvg` preview · saves the `MapTransformDoc` with revision auto-bump — commit e7a41c0).
+  **Still deferred → V1.1 (DEC-064): POI editor + travel-time matrix** — their tables (`poi`, `stage_travel_time`) have **no
+  client consumer** today, so an editor would be a dead surface. Map **ART** generation stays the local Node spike (a Worker
+  can't render the cartography). Earlier R11.0–R11.5 (admin shell, overview, lineup dashboard, data-source registry,
+  suggestions, metrics+runway, test console) remain closed (v0.13.0).
 - **Admin backend (R11):** one Hono sub-app `server/src/api/admin.ts` mounted under `/admin`, **fail-closed** behind
   `requireAdmin` (`x-admin-token` === `ADMIN_TOKEN` secret — already set in prod). New repos: `dataSource.ts` (festival data
   origin + capture method, falls back to operational `lineup_source`), `runway.ts` (**pure**, unit-tested free-tier estimator —
@@ -34,14 +38,15 @@
   nav entry for the deferred R11.1c screens).
 - **DB:** remote migrations **0012** (`festival_data_source`) + **0013** (`app_user.is_test` + `usage_counter`) **applied to
   prod D1**. Migrations through **0013** now applied.
-- **Tests now:** typecheck clean (server + web) · **server 183 + web 256 unit** pass · **e2e 30/30 green** (full suite;
-  `WhereScreen` test-badge change verified non-regressing) · build OK.
-- **Deployed:** **Worker Version `a83f97e3-28cc-4861-9a35-47184c51e652`** (admin routes + metrics + test console + `me_touch`).
-  **Pages Production (branch `master`)** serves **`index-BRgh7bLG.js`** (v0.13.0) — verified Environment=Production via
-  `pages deployment list`; the root `COu_AK2r` seen first was stale edge cache (cache-busted check returns `BRgh7bLG`).
+- **Tests now:** typecheck clean (server + web) · **server 197 + web 259 unit** pass (+14 server festival routes, +6 web
+  affine/transform) · build OK · **production map-editor smoke green** (Playwright on `festpilot.pages.dev`: editor loads,
+  base raster + 10 stage pins render, control-point tool drops a marker + table row, **zero console/page errors**).
+- **Deployed:** **Worker Version `57b3f511-9add-487d-a8e7-8efbbdc447b1`** (festival onboarding + multi-festival ingest + map
+  routes: `GET /admin/festivals/:id/map`, `POST .../map-asset` R2 upload, revision auto-bump on `POST .../map`).
+  **Pages Production (branch `master`)** serves **`index-BDQM8Uev.js`** (v0.14.0) — verified on the production domain.
 - **Baseline (2026-06-24, pre-pass):** server 121 + web 147 unit. Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. R2 bucket
   `festpilot-media` live.
-- Live URLs: app https://festpilot.pages.dev (v0.13.0) · API https://festpilot.trippilot.workers.dev (Worker `a83f97e3`, R2 + admin).
+- Live URLs: app https://festpilot.pages.dev (v0.14.0) · API https://festpilot.trippilot.workers.dev (Worker `57b3f511`, R2 + admin).
 
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
@@ -55,9 +60,36 @@
 - [x] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap. **CLOSED 2026-06-24 (v0.10.3).**
 - [x] **R9** (P1 squad) — multiple squads · honest copy · AI-icon/J-menu · auto-share (DEC-054) · avatar on R2 + custom emoji (DEC-059) · real mini-map · richer meeting card + meeting photo on R2 (DEC-047) · squad-home density. **CLOSED 2026-06-24 (v0.11.0).**
 - [x] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select. **CLOSED 2026-06-24 (v0.12.0). ← all P1 (R5–R10) done.**
-- [x] **R11** (Admin, DEC-057) — auth+shell · festivals overview · lineup/timetable dashboard · data-source registry · suggestions inbox · usage metrics + runway · live test console. **R11.1c (map editor/POI/travel-matrix) deferred → V1.1 (DEC-062).** **CLOSED 2026-06-24 (v0.13.0). ← review-remediation pass COMPLETE (R0–R11).**
+- [x] **R11** (Admin, DEC-057) — auth+shell · festivals overview · lineup/timetable dashboard · data-source registry · suggestions inbox · usage metrics + runway · live test console. **CLOSED 2026-06-24 (v0.13.0).**
+- [x] **R11.1c REOPENED** (DEC-063/064) — **festival onboarding & management** (add live from official page · re-import one/all · edit name/tz) + **map editor** (R2 base upload · georeference affine · stage placement · live preview · save MapTransformDoc). **POI editor + travel-matrix still deferred → V1.1 (DEC-064, no client consumer).** **CLOSED 2026-06-24 (v0.14.0), verified live via Playwright.**
 
 ### Pass log (most recent first)
+- **R11.1c REOPENED + CLOSED ✅ (2026-06-24) — deployed + live (v0.14.0).** Julio reversed the DEC-062 deferral ("hoje ainda
+  não dá para adicionar e gerenciar festivais novos") and asked for a **complete, well-functioning admin** for festivals + the
+  map tools, verified with a real browser. **Verification loop:** the `plugin-browse-browser` daemon wouldn't start in this
+  WSL env, so we used **headless Playwright** screenshot scripts (`web/scripts/admin-*-verify.mjs`) — the same engine already
+  green for e2e — proving visual verification works without a display. Recorded **DEC-063** (reverse DEC-062; reuse the
+  parametric ingest) + **DEC-064** (build only what the app consumes: base+affine+stages; defer POI/travel; ART stays the
+  local spike).
+  **Slice 1 — festival onboarding & management (commit 260ebf7):** new `server/src/ingest/festivals.ts` — "add a festival" =
+  register its official page + run the **existing parametric `ingest()`** (resolve ref → CDN JSON → normalize → diff → upsert);
+  **no new scraper, no hardcoded lineup** (DEC-009/061). `readOnboardInput`/`readMetaPatch`/`normalizeSlug`/`isValidTimezone`
+  (pure, unit-tested), `festivalSlugExists`, `updateFestivalMeta`, `listIngestTargets` (latest active source per festival via
+  correlated subquery), `ingestAllFestivals` (cron + "re-import all"; falls back to the env-seed only while the registry is
+  empty). Routes: `POST /admin/festivals` (409 dup slug · 502 honest "couldn't resolve a lineup"), `PATCH /admin/festivals/:id`,
+  `POST /admin/festivals/:id/ingest`, `POST /admin/ingest` → all festivals; `scheduled` now ingests all. Web: refactored
+  `AdminFestivalsScreen` (Add-festival form w/ live slug preview + advanced saved-ref · per-row Re-import/Edit/Map · banners),
+  `adminApi` surfaces server `{error}` messages; `AdminLineupScreen` re-import targets the viewed festival.
+  **Slice 2 — map editor (commit e7a41c0):** ported the proven **`fitAffine`/`residual`** least-squares solver into
+  `web/src/map/transform.ts` (+6 unit: exact recovery · residual-on-noise · min-3-points); `server/src/media/store.ts`
+  `MAX_MAP_BASE_BYTES` (4 MB); routes `GET /admin/festivals/:id/map` + `POST .../map-asset` (R2 upload, type/size guard) +
+  revision **auto-bump** on `POST .../map`. New `AdminMapEditorScreen` — mode toolbar (Pan / Add control point), an SVG canvas
+  over the base raster, control-point table (x/y/lng/lat → Fit affine + pixel-error pill), stage table (numeric or
+  click-the-map via `svgToGeo`), live `geoToSvg` preview, base URL/upload + venue; reachable per-festival via a contextual
+  **Map** action (no global dead nav). **Verified live (Playwright on prod):** editor loads, base + **10 stage pins** render,
+  control-point drop works, **0 errors**. Gate close: server **197** + web **259** unit · build OK · **Worker `57b3f511`** +
+  **Pages master `index-BDQM8Uev.js` v0.14.0** deployed · changelog 0.14.0 entry. Holds the invariants: real ingest (no
+  fabricated lineup), honest resolve-failure UX, **no dead affordances** (POI/travel not built since nothing consumes them).
 - **R11 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.13.0). Review-remediation pass COMPLETE: R0–R11 done.** The admin
   back-office (DEC-057), one Hono sub-app under `/admin` behind `requireAdmin` (`x-admin-token` === `ADMIN_TOKEN`, fail-closed).
   **R11.0** guarded shell + token gate + `AdminLayout` nav (commit 171478d). **R11.1a** Festivals overview — KPIs + per-festival

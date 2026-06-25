@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass **COMPLETE** — **R0–R11 all CLOSED**; admin back-office live, app v0.13.0; R11.1c map editor deferred → V1.1 per DEC-062)
+> Last updated: 2026-06-24 (review-remediation pass **COMPLETE** — **R0–R11 all CLOSED**; admin back-office live, app **v0.14.0**; **R11.1c REOPENED + DONE** per DEC-063/064 — festival onboarding/management + map editor live; only POI editor + travel-matrix still deferred → V1.1)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -61,11 +61,22 @@ last-seen, R2 bytes from the `media_object` ledger, `me_touch` app-activity; mig
 `usage_counter`), and any platform figure that needs the CF Analytics token is surfaced as a **`locked` service — never
 fabricated**. The **test console** spawns `is_test=1` members into a real squad and drives their presence through the **real**
 `recordFix`/`GroupRoom` pipeline (so they appear live on "Where's everyone", badged **`test`** via `isTest` on
-`PresenceMemberDto`), then **purges** every test entity FK-safe — so rehearsing the map never pollutes real metrics. **Deferred
-R11.1c** (map editor / georeference / POI / travel-matrix) → **V1.1 admin (DEC-062)**: it is heavy visual drag/affine UI that
-can't be verified in this no-browser env, the existing `festival_map` publish pipeline already onboards maps, and **no dead nav
-affordance** was added. App **v0.13.0**, deployed to Production; **Worker redeployed** (`a83f97e3`, admin routes + metrics + test
-console + `me_touch`); remote D1 migrations **0012 + 0013** applied. Tests: **server 183 + web 256 unit · e2e 30/30 · build OK**.
+`PresenceMemberDto`), then **purges** every test entity FK-safe — so rehearsing the map never pollutes real metrics. App
+**v0.13.0**, deployed to Production; **Worker redeployed** (`a83f97e3`, admin routes + metrics + test console + `me_touch`);
+remote D1 migrations **0012 + 0013** applied. Tests: **server 183 + web 256 unit · e2e 30/30 · build OK**.
+**R11.1c REOPENED + CLOSED (DEC-063/064) ✅:** Julio reversed the DEC-062 deferral and asked for a complete, well-functioning
+admin to **add and manage new festivals** plus the map tools, verified in a real browser. With the `plugin-browse-browser`
+daemon unavailable in this WSL env, verification runs on **headless Playwright** screenshot scripts (the same engine already
+green for e2e). Shipped: (1) **festival onboarding & management** — "add a festival" registers its official lineup page and
+runs the **existing parametric ingest** (no new scraper, no hardcoded lineup; honest 502 if a page can't be resolved), with
+per-festival + bulk **re-import** and **edit name/timezone**; the cron + "re-import all" now iterate **every** registered
+festival. (2) **Map editor** — upload a base raster to **R2**, **georeference** it from ≥3 control points (ported least-squares
+`fitAffine`/`residual` → 6-coeff affine + pixel-error readout), **place each stage** (numeric or click-the-map) over a live
+`geoToSvg` preview, and save the `MapTransformDoc` the app actually consumes (revision auto-bump); reachable per-festival via a
+contextual **Map** action. **Still deferred → V1.1 (DEC-064): the POI editor + travel-time matrix** — their tables have **no
+client consumer** today, so building them now would be a dead surface; map **ART** generation stays the local Node spike (a
+Worker can't render cartography). App **v0.14.0**, deployed to Production; **Worker redeployed** (`57b3f511`, festival +
+multi-festival ingest + map routes). Tests: **server 197 + web 259 unit · build OK · production map-editor smoke green (0 errors)**.
 
 ## How we build from here (the orchestrator)
 

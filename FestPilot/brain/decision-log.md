@@ -844,7 +844,7 @@
 
 ### DEC-063 — Build the full admin festival management + map/POI/travel editor (R11.1c) now; onboarding reuses the parametric ingest; verify via Playwright headless screenshots
 - **Date**: 2026-06-24 (review-remediation R11→R12; Julio's explicit directive; inline `/council` — Architect + Critic + Advocate)
-- **Status**: **PROPOSED** — supersedes DEC-062; refines DEC-057 + DEC-034/040 + DEC-059
+- **Status**: **ACCEPTED + IMPLEMENTED** (2026-06-24, v0.14.0, commits 260ebf7 + e7a41c0; verified live on `festpilot.pages.dev` via headless Playwright) — supersedes DEC-062; refines DEC-057 + DEC-034/040 + DEC-059
 - **Trigger**: Julio — "fazer a tela de admin completa e bem funcional, hoje ainda não dá para adicionar e gerenciar festivais novos" + "usar o Playwright para verificar, ou algum MCP / o próprio Cursor". DEC-062's flip condition ("as soon as a browser-capable verification path exists") is now TRUE: Playwright runs headless in this env (e2e 30/30) and produces screenshots the agent can read; the `plugin-browse-browser` daemon won't start in WSL, so **Playwright is the verification path**.
 - **Findings that de-risk it** (verified by reading the code 2026-06-24): the D1 schema is **already multi-festival** and **already has every geo table** — `stage_location` (lat/lng/radius_meters/color/source/verified), `poi` (type/name/lat/lng/source/verified), `stage_travel_time` (from/to/minutes_typical/minutes_crowded/source), `festival_map` (asset keys + 6-coeff affine `transform_json`), `imported_map_feature`, `stage_alias`; they simply have **no admin UI**. The ingestion `ingest()` is **already parametric per festival** (`festival: {name,slug,timezone}` + `pageUrl`, calls `store.ensureFestival` + `store.upsertSource`); only the thin `runScheduledIngest` wrapper is hard-bound to the single env-var festival.
 - **Decision**:
@@ -857,7 +857,7 @@
 
 ### DEC-064 — R11.1c map editor builds what the app actually consumes (base + affine + stage coords); map ART stays the local Node spike; POI + travel-matrix editors deferred (no client consumer)
 - **Date**: 2026-06-24 (review-remediation R11.1c; inline `/council` — Architect + Critic, after reading the live map data flow)
-- **Status**: PROPOSED — refines DEC-063 + DEC-034/040
+- **Status**: **ACCEPTED + IMPLEMENTED** (2026-06-24, v0.14.0, commit e7a41c0) — refines DEC-063 + DEC-034/040
 - **Findings (verified by reading the code 2026-06-24)**:
   1. The client map is driven **entirely by the `festival_map.transform_json` doc** (`MapTransformDoc`: `canvas{w,h}`, `bbox`, `affine{a..f}`, **`stages[{name,lng,lat,matched}]`**, `source`) + the two base WebP keys. Stage pins are `geoToSvg(affine, lng, lat)` over the base raster (`web/src/map/transform.ts`, `MapView`, `getFestivalMap`/`upsertFestivalMap`).
   2. The schema tables **`stage_location`, `poi`, `stage_travel_time`, `imported_map_feature`, `stage_alias` are NOT read or written by ANY server/client code** — they are vestigial/planned. Stage coords live in the transform doc, not `stage_location`; walking time is computed live from coords (`metersBetween`/`route.ts`), not `stage_travel_time`.
