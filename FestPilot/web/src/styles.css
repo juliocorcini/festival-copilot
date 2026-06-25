@@ -1696,6 +1696,18 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .admin-muted { color: var(--muted); font-weight: 400; }
 @media (max-width: 640px) { .admin-form-grid { grid-template-columns: 1fr; } }
 
+/* R11.1c — festival onboarding + management */
+.admin-add-form { max-width: none; margin-bottom: 20px; }
+.admin-form-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.admin-form-actions .admin-muted { font-size: 12px; }
+.admin-disclosure { align-self: flex-start; gap: 4px; }
+.admin-col-actions { width: 1%; white-space: nowrap; }
+.admin-col-actions .admin-row-actions { justify-content: flex-end; }
+.admin-edit-row > td { background: rgba(255, 255, 255, 0.03); }
+.admin-inline-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 4px 0; }
+.admin-inline-form .admin-field { min-width: 200px; }
+.admin-inline-error { color: var(--danger-ink); font-size: 12px; align-self: center; }
+
 /* R11.4 — metrics & free-tier runway */
 .admin-section { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 26px 0 12px; }
 .admin-section .ms { font-size: 18px; color: var(--accent); }

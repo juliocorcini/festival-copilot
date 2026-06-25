@@ -369,3 +369,52 @@ describe("admin guard (R11.0 / x-admin-token)", () => {
     expect(body.festivals).toHaveLength(1);
   });
 });
+
+describe("festival management routes (R11.1c / DEC-063)", () => {
+  const authedJson = (token: string, method: string, body?: unknown): RequestInit => ({
+    method,
+    headers: { "x-admin-token": token, "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+  // The 201 success path resolves a live page, so it's covered by festivals.test.ts (fixture fetcher)
+  // + the browser smoke; here we assert the guard / validation / conflict branches that stay offline.
+  it("POST /festivals rejects a missing token, an invalid body, and a duplicate slug", async () => {
+    const db = await freshDb();
+    await seedFestival(db); // slug "tml"
+    const env = envWith(db, "secret");
+
+    const noToken = await admin.request("/festivals", authedJson("", "POST", { name: "X", timezone: "UTC", pageUrl: "https://x.test/l" }), env);
+    expect(noToken.status).toBe(401);
+
+    const bad = await admin.request("/festivals", authedJson("secret", "POST", { timezone: "UTC" }), env);
+    expect(bad.status).toBe(400);
+
+    const dup = await admin.request("/festivals", authedJson("secret", "POST", { name: "Clash", slug: "tml", timezone: "UTC", pageUrl: "https://x.test/l" }), env);
+    expect(dup.status).toBe(409);
+  });
+
+  it("PATCH /festivals/:id renames a festival, 404s an unknown id, 400s an empty patch", async () => {
+    const db = await freshDb();
+    await seedFestival(db);
+    const env = envWith(db, "secret");
+
+    const ok = await admin.request("/festivals/fest-1", authedJson("secret", "PATCH", { name: "TML Belgium", timezone: "Europe/Brussels" }), env);
+    expect(ok.status).toBe(200);
+    const row = await db.prepare("SELECT name FROM festival WHERE id = 'fest-1'").first<{ name: string }>();
+    expect(row!.name).toBe("TML Belgium");
+
+    const missing = await admin.request("/festivals/nope", authedJson("secret", "PATCH", { name: "Y" }), env);
+    expect(missing.status).toBe(404);
+
+    const empty = await admin.request("/festivals/fest-1", authedJson("secret", "PATCH", {}), env);
+    expect(empty.status).toBe(400);
+  });
+
+  it("POST /festivals/:id/ingest 404s when the festival has no registered source", async () => {
+    const db = await freshDb();
+    const env = envWith(db, "secret");
+    const res = await admin.request("/festivals/nope/ingest", authedJson("secret", "POST"), env);
+    expect(res.status).toBe(404);
+  });
+});

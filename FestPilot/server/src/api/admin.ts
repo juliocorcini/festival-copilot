@@ -23,7 +23,16 @@ import {
   spawnTestMember,
 } from "./testConsole";
 import { notifyGroup } from "./groups-routes";
-import { runScheduledIngest } from "../ingest/ingest";
+import {
+  festivalSlugExists,
+  getIngestTarget,
+  ingestAllFestivals,
+  ingestFestival,
+  onboardFestival,
+  readMetaPatch,
+  readOnboardInput,
+  updateFestivalMeta,
+} from "../ingest/festivals";
 
 export const admin = new Hono<{ Bindings: Env }>();
 
@@ -46,6 +55,41 @@ admin.get("/ping", (c) => c.json({ ok: true }));
 admin.get("/overview", async (c) => {
   const overview = await getAdminOverview(c.env.DB);
   return c.json(overview);
+});
+
+// R11.1c — Add a festival (DEC-063): register its official lineup page + run the parametric
+// ingest. No new scraper, no hardcoded lineup — a new festival is imported exactly like the seed.
+admin.post("/festivals", async (c) => {
+  const parsed = readOnboardInput(await c.req.json().catch(() => null));
+  if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
+  if (await festivalSlugExists(c.env.DB, parsed.value.slug)) {
+    return c.json({ error: `a festival with slug "${parsed.value.slug}" already exists` }, 409);
+  }
+
+  const result = await onboardFestival(c.env, parsed.value);
+  if (result.status === "error") {
+    // Honest failure (DEC-063): we couldn't resolve a lineup from that page — nothing is fabricated.
+    return c.json({ error: `could not import a lineup from that page: ${result.error ?? "unknown error"}` }, 502);
+  }
+  return c.json({ ...result, slug: parsed.value.slug, name: parsed.value.name }, 201);
+});
+
+// R11.1c — Edit festival metadata (rename / fix timezone). Slug stays stable (it's the client key).
+admin.patch("/festivals/:id", async (c) => {
+  const parsed = readMetaPatch(await c.req.json().catch(() => null));
+  if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+  const ok = await updateFestivalMeta(c.env.DB, c.req.param("id"), parsed.value);
+  if (!ok) return c.json({ error: "festival not found" }, 404);
+  return c.json({ ok: true, ...parsed.value });
+});
+
+// R11.1c — Re-import ONE festival now (the per-festival "Re-import" action on the dashboard).
+admin.post("/festivals/:id/ingest", async (c) => {
+  const target = await getIngestTarget(c.env.DB, c.req.param("id"));
+  if (!target) return c.json({ error: "no registered lineup source for this festival" }, 404);
+  const result = await ingestFestival(c.env, target);
+  return c.json(result);
 });
 
 // R11.4 — Usage metrics + free-tier runway (DEC-057c): real users + R2 + first-party activity,
@@ -140,10 +184,10 @@ admin.post("/test/purge", async (c) => {
   return c.json(result);
 });
 
-// Manual lineup ingestion trigger for dev/ops (also the dashboard "Re-import" action, R11.1b).
+// Manual "re-import everything" trigger for dev/ops — iterates every registered festival (DEC-063).
 admin.post("/ingest", async (c) => {
-  const result = await runScheduledIngest(c.env);
-  return c.json(result);
+  const results = await ingestAllFestivals(c.env);
+  return c.json({ results });
 });
 
 // Publish/replace a festival's map asset registry (DEC-040). Body = the map publish payload

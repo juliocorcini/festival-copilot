@@ -3,7 +3,7 @@ import {
   AdminError,
   fetchAdminOverview,
   fetchLineupDashboard,
-  reimportLineup,
+  reimportFestival,
   type AdminFestivalRow,
   type LineupDashboard,
 } from "./adminApi";
@@ -61,15 +61,15 @@ export function AdminLineupScreen(): JSX.Element {
   }, [festivalId]);
 
   async function onReimport(): Promise<void> {
+    if (!festivalId) return;
     setReimporting(true);
     setToast(null);
     try {
-      const res = await reimportLineup();
-      setToast(res.status === "updated" ? `Re-imported · ${res.changes ?? 0} changes` : "Re-imported · no changes");
-      if (festivalId) {
-        const fresh = await fetchLineupDashboard(festivalId);
-        setDash(fresh);
-      }
+      const res = await reimportFestival(festivalId);
+      const changes = typeof res.changesCount === "number" ? res.changesCount : 0;
+      setToast(res.status === "updated" ? `Re-imported · ${changes} changes` : "Re-imported · no changes");
+      const fresh = await fetchLineupDashboard(festivalId);
+      setDash(fresh);
     } catch (err) {
       setToast(describe(err));
     } finally {

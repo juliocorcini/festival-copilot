@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import type { Env } from "./env";
 import { api } from "./api/routes";
 import { admin } from "./api/admin";
-import { runScheduledIngest } from "./ingest/ingest";
+import { ingestAllFestivals } from "./ingest/festivals";
 import { purgeExpiredPresence } from "./api/presence";
 import { purgeExpiredMeetingPoints } from "./api/meetingPoints";
 import { getImage } from "./media/store";
@@ -42,8 +42,8 @@ export default {
 
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(
-      runScheduledIngest(env).then((result) => {
-        console.log("[cron] lineup ingest:", JSON.stringify(result));
+      ingestAllFestivals(env).then((results) => {
+        console.log("[cron] lineup ingest:", JSON.stringify({ festivals: results.length, results }));
       })
     );
     // Presence hygiene (DEC-008/015): drop stale fixes + downgrade lapsed precise shares to coarse.

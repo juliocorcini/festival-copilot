@@ -72,7 +72,15 @@ async function adminRequest<T>(path: string, opts: AdminRequestOpts = {}): Promi
     throw new AdminError("Network error reaching the admin API", 0);
   }
   if (res.status === 401) throw new AdminAuthError();
-  if (!res.ok) throw new AdminError(`Request failed (${res.status})`, res.status);
+  if (!res.ok) {
+    // Surface the server's `{ error }` message when present (e.g. an honest "couldn't import" reason).
+    const serverMessage = await res
+      .clone()
+      .json()
+      .then((b) => (b && typeof (b as { error?: unknown }).error === "string" ? (b as { error: string }).error : null))
+      .catch(() => null);
+    throw new AdminError(serverMessage ?? `Request failed (${res.status})`, res.status);
+  }
   return (await res.json()) as T;
 }
 
@@ -147,7 +155,36 @@ export interface IngestResult {
   changes?: number;
   [k: string]: unknown;
 }
-export const reimportLineup = (): Promise<IngestResult> => adminSend<IngestResult>("/ingest", "POST");
+export const reimportLineup = (): Promise<{ results: IngestResult[] }> =>
+  adminSend<{ results: IngestResult[] }>("/ingest", "POST");
+
+// R11.1c — Festival onboarding + management (DEC-063).
+export interface CreateFestivalInput {
+  name: string;
+  slug?: string;
+  timezone: string;
+  pageUrl: string;
+  /** Optional saved source ref — only used if the page can't be resolved live. */
+  event?: string;
+  uuid?: string;
+}
+export interface CreateFestivalResult extends IngestResult {
+  festivalId: string;
+  slug: string;
+  name: string;
+  revision?: number;
+  changesCount?: number;
+}
+export interface FestivalMetaPatch {
+  name?: string;
+  timezone?: string;
+}
+export const createFestival = (input: CreateFestivalInput): Promise<CreateFestivalResult> =>
+  adminSend<CreateFestivalResult>("/festivals", "POST", input);
+export const updateFestival = (id: string, patch: FestivalMetaPatch): Promise<{ ok: boolean }> =>
+  adminSend<{ ok: boolean }>(`/festivals/${id}`, "PATCH", patch);
+export const reimportFestival = (id: string): Promise<IngestResult> =>
+  adminSend<IngestResult>(`/festivals/${id}/ingest`, "POST");
 
 // R11.3 — Festival suggestions inbox.
 export type SuggestionStatus = "new" | "planned" | "live" | "declined";
