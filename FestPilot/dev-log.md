@@ -12,30 +12,36 @@
 > then P1, then Admin). Commit per fix; deploy + dev-log per gate. Autonomy: never stop to ask to advance (DEC-056).
 
 ### Current State (this pass)
-- **Gate:** **R10 (P1 Settings/polish) CLOSED ✅ — deployed + live (v0.12.0).** **R10.1** i18n EN/PT live switch (persisted) ·
-  **R10.2** PWA install prompt + honest SW update check · **R10.3** About build date + Privacy/Offline links + data-source
-  credit · **R10.4** global no-text-select feel + WCAG dark-on-dark avatar contrast. **All P0 + P1 (R0–R10) now done.**
-  Next + last: **R11 (Admin back-office, DEC-057)**.
-- **i18n (R10.1):** `web/src/i18n/index.ts` — **EN is the source of truth**, **PT a partial overlay**, `translate()` is pure
-  with EN fallback, `useT()` is the reactive hook (re-renders on the persisted appearance-store language). Wired through
-  nav + Settings + Appearance + Offline copy. EN strings kept byte-identical so e2e copy assertions hold.
-- **PWA (R10.2):** `web/src/app/pwaInstall.ts` captures `beforeinstallprompt`, detects iOS Safari + installed (standalone),
-  exposes `useInstallPrompt()`. `registerSW.ts` registers **`/sw.js?v=<APP_VERSION>`** (version-stamped → real update
-  detection) with `checkForUpdate()` / `applyUpdate()`; `public/sw.js` reads the version from the query, **drops
-  `skipWaiting` on install** (a new worker waits so we can prompt) and honours a `SKIP_WAITING` message on user reload.
-  `OfflineScreen` drives install + honest "update ready → reload" UI.
-- **Polish (R10.3/R10.4):** About shows the build date (latest changelog) + working Privacy/Offline links + data-source
-  credit. Global `user-select:none` + `-webkit-touch-callout:none` on `body`; `input`/`textarea`/`[contenteditable]`/
-  `.selectable` re-enable selection. New `web/src/lib/contrast.ts` `readableInkOn()` (relative-luminance AA pick) applied to
-  **every initial-avatar** (Avatar, presence, squad board/join, meeting detail) so ink never drops below AA on dark colors.
-- **Tests now:** typecheck clean · **server 153 + web 256 unit** pass · **e2e 30/30 green** (full suite; added `a11y.spec`,
-  i18n + contrast unit tests) · build OK. **Regression fixed:** `presence.spec` now blocks the SW (its network-first `/api`
-  shadowed the `page.route` stubs and 404'd the poll); SW stays covered by `registerSW` unit tests.
-- **Worker unchanged (R10 is frontend-only):** still **Version `b5f9ce0d`** (R2 + media routes + photoUrl). Pages Production
-  serves **`index-COu_AK2r.js`** (v0.12.0).
-- **Baseline (2026-06-24, pre-change):** server 121 + web 147 unit (worker 158.55 KiB / gzip 36.73; web 401 KB / gzip 121).
-  Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. Remote migrations through **0011** applied. R2 bucket `festpilot-media` live.
-- Live URLs: app https://festpilot.pages.dev (v0.12.0) · API https://festpilot.trippilot.workers.dev (Worker `b5f9ce0d`, R2 bound).
+- **Gate:** **R11 (Admin back-office, DEC-057) CLOSED ✅ — deployed + live (v0.13.0).** **This closes the review-remediation
+  pass: R0–R11 all done.** Shipped **R11.0** guarded admin shell + `x-admin-token` gate · **R11.1a** Festivals overview
+  (KPIs + health table) · **R11.1b** Lineup & timetable dashboard · **R11.2** Data-source registry per festival · **R11.3**
+  Festival-suggestions inbox · **R11.4** Usage metrics + free-tier runway · **R11.5** Live test console (is_test users → inject
+  presence → purge). **Deferred R11.1c** (map editor / georeference / POI / travel-matrix) → **V1.1 admin** per **DEC-062**
+  (heavy visual drag/affine UI, unverifiable in this no-browser env; the `festival_map` publish pipeline already exists).
+- **Admin backend (R11):** one Hono sub-app `server/src/api/admin.ts` mounted under `/admin`, **fail-closed** behind
+  `requireAdmin` (`x-admin-token` === `ADMIN_TOKEN` secret — already set in prod). New repos: `dataSource.ts` (festival data
+  origin + capture method, falls back to operational `lineup_source`), `runway.ts` (**pure**, unit-tested free-tier estimator —
+  Workers 100k req/day, D1 5M reads / 100k writes / 5GB, R2 10GB + 1M/10M ops; cumulative vs daily), `metricsRepo.ts` (real
+  users excl. `is_test`, country + last-seen, R2 bytes from `media_object` ledger, `me_touch` activity, orchestrates runway),
+  `testConsole.ts` (spawn `is_test=1` member → add to group → `injectStageFix` via the **real** `recordFix` pipeline → live on
+  the map → `purgeTestData` deletes every test entity FK-safe). `me.get` records a fire-and-forget `me_touch` daily counter.
+- **Honesty invariant held:** metrics show **only first-party measured** data; platform figures that need the CF Analytics
+  token are surfaced as **`locked` services**, never fabricated. Synthetic members carry `isTest` end-to-end
+  (`PresenceMemberDto` → `WhereScreen` shows a small **`test`** badge); purge leaves real members intact.
+- **Admin frontend (R11):** desktop shell `web/src/admin/` — `AdminLayout` nav, `adminApi.ts` client, new screens
+  `AdminDataSourceScreen` / `AdminMetricsScreen` (KPI + runway cards + locked-services + demographics) /
+  `AdminTestConsoleScreen`. Routes `/admin/data-sources`, `/admin/metrics`, `/admin/test-console`. **No dead affordances** (no
+  nav entry for the deferred R11.1c screens).
+- **DB:** remote migrations **0012** (`festival_data_source`) + **0013** (`app_user.is_test` + `usage_counter`) **applied to
+  prod D1**. Migrations through **0013** now applied.
+- **Tests now:** typecheck clean (server + web) · **server 183 + web 256 unit** pass · **e2e 30/30 green** (full suite;
+  `WhereScreen` test-badge change verified non-regressing) · build OK.
+- **Deployed:** **Worker Version `a83f97e3-28cc-4861-9a35-47184c51e652`** (admin routes + metrics + test console + `me_touch`).
+  **Pages Production (branch `master`)** serves **`index-BRgh7bLG.js`** (v0.13.0) — verified Environment=Production via
+  `pages deployment list`; the root `COu_AK2r` seen first was stale edge cache (cache-busted check returns `BRgh7bLG`).
+- **Baseline (2026-06-24, pre-pass):** server 121 + web 147 unit. Live D1 `e6753623-2b4e-41ce-9725-4bd417966cfa`. R2 bucket
+  `festpilot-media` live.
+- Live URLs: app https://festpilot.pages.dev (v0.13.0) · API https://festpilot.trippilot.workers.dev (Worker `a83f97e3`, R2 + admin).
 
 ### Gate checklist
 - [x] **R0** — Setup: nvm22, baseline green, DEC-048..061 verified in decision-log, dev-log seeded, commit.
@@ -49,9 +55,32 @@
 - [x] **R8** (P1 my-plan) — editable timeline (swap/remove/add) keeping zero-overlap. **CLOSED 2026-06-24 (v0.10.3).**
 - [x] **R9** (P1 squad) — multiple squads · honest copy · AI-icon/J-menu · auto-share (DEC-054) · avatar on R2 + custom emoji (DEC-059) · real mini-map · richer meeting card + meeting photo on R2 (DEC-047) · squad-home density. **CLOSED 2026-06-24 (v0.11.0).**
 - [x] **R10** (P1 settings/polish) — i18n EN/PT · PWA install · check-updates · About · contrast + no-select. **CLOSED 2026-06-24 (v0.12.0). ← all P1 (R5–R10) done.**
-- [ ] **R11** (Admin, DEC-057) — auth+shell · festivals/map/POI · data-source registry · suggestions inbox · usage metrics + runway · live test console.
+- [x] **R11** (Admin, DEC-057) — auth+shell · festivals overview · lineup/timetable dashboard · data-source registry · suggestions inbox · usage metrics + runway · live test console. **R11.1c (map editor/POI/travel-matrix) deferred → V1.1 (DEC-062).** **CLOSED 2026-06-24 (v0.13.0). ← review-remediation pass COMPLETE (R0–R11).**
 
 ### Pass log (most recent first)
+- **R11 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.13.0). Review-remediation pass COMPLETE: R0–R11 done.** The admin
+  back-office (DEC-057), one Hono sub-app under `/admin` behind `requireAdmin` (`x-admin-token` === `ADMIN_TOKEN`, fail-closed).
+  **R11.0** guarded shell + token gate + `AdminLayout` nav (commit 171478d). **R11.1a** Festivals overview — KPIs + per-festival
+  health table (171478d). **R11.1b** Lineup & timetable dashboard (60f53c3). **R11.3** Festival-suggestions inbox (60f53c3).
+  **R11.2** Data-source registry — `migrations/0012_festival_data_source.sql`, `dataSource.ts` (origin official_page/manual/
+  ai_assisted + capture method; **falls back to the operational `lineup_source`** so a fresh festival prefills, not empty),
+  GET/PUT `/admin/festivals/:id/data-source`, `AdminDataSourceScreen` (commit c030354). **R11.4** Usage metrics + free-tier
+  runway — `migrations/0013` (`app_user.is_test` + `usage_counter`), **pure** `runway.ts` (`estimateRunway`: usedPct/daysLeft/
+  status; cumulative vs daily; verified CF free-tier limits), `metricsRepo.ts` (real users **excl. is_test**, country + last-seen,
+  R2 bytes from the `media_object` ledger, `me_touch` activity), `me.get` fire-and-forget `recordUsage("me_touch")`, GET
+  `/admin/metrics`, `AdminMetricsScreen` (KPI + runway cards + **locked-services** + demographics). **Honesty:** only
+  first-party measured data is shown; platform figures needing the CF Analytics token render as **`locked`**, never invented
+  (commit e792df8). **R11.5** Live test console — `testConsole.ts` (`spawnTestMember` → `is_test=1` user added to a group,
+  `injectStageFix` drives presence through the **real** `recordFix`/`GroupRoom` pipeline so a synthetic member appears live on
+  `WhereScreen`, `purgeTestData` deletes every test entity FK-safe), `isTest` plumbed `PresenceMemberDto` → `presence.ts` →
+  `WhereScreen` **`test` badge**, routes under `/admin/test/*`, `AdminTestConsoleScreen`. **Deferred R11.1c** (map editor /
+  georeference / POI / travel-matrix) → **V1.1 admin (DEC-062)**: heavy visual drag/affine UI, unverifiable in this no-browser
+  env; the `festival_map` publish pipeline (local `generateMap` + `POST /admin/festivals/:id/map`, DEC-034/040) already covers
+  onboarding, and **no dead nav affordance** was added. Tests: server **153→183** (+30: admin/data-source, runway, metrics,
+  test-console), web **256** (isTest woven into existing presence fixtures). Gate close: typecheck clean · server 183 + web 256
+  unit · **e2e 30/30** · build OK · remote migrations 0012+0013 applied · **Worker `a83f97e3`** deployed · **Pages Production
+  (master)** `index-BRgh7bLG.js` v0.13.0 (verified Environment=Production). Bundle web 485.82 KB / gzip 147.09; worker 193.91 KiB
+  / gzip 45.09.
 - **R10 GATE CLOSED ✅ (2026-06-24) — deployed + live (v0.12.0). All P0 + P1 (R0–R10) done.** Four polish slices:
   **R10.1 i18n EN/PT.** New `web/src/i18n/index.ts`: `EN` dictionary is the source of truth, `PT` a partial overlay,
   `interpolate()` for `{var}` substitution, `translate(key, lang, vars)` is **pure with EN fallback**, `useT()` subscribes to

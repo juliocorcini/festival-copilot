@@ -833,3 +833,11 @@
   (`?width=` — e.g. 160/320/520 by surface); URL-encode the path (it contains spaces). Update a test fixture to include
   an artist with `image`. No new scraper, consistent with DEC-009.
 - **Detail**: supersedes the "resolve a separate photo source" half of DEC-052; orchestrator §6 row 1 + gate R1.3 + R5.4.
+
+### DEC-062 — Defer the admin Map editor / georeference / POI / travel-matrix (R11.1c) to V1.1; ship the rest of R11 now
+- **Date**: 2026-06-24 (review-remediation R11, inline quick `/council` — Architect + Critic)
+- **Status**: **PROPOSED** — refines DEC-057; pre-sanctioned by the orchestrator (R11.1c "heaviest; defer w/ dev-log note if needed") + §12 ("not-yet-pulled parts noted in dev-log")
+- **Council synthesis**: the `festival_map` publish pipeline already exists (local `generateMap` + `POST /admin/festivals/:id/map`, DEC-034/040), so onboarding maps is **not blocked**; the four screens are heavily visual drag/affine UIs that **can't be visually verified** in this WSL/no-browser environment, so building them blind is high-risk for low confidence; the operationally critical back-office (auth, festivals, lineup, data-source, suggestions, metrics+runway, test console) is shipped and verifiable. Weightiest lens = **Architect** (reuse the existing pipeline; don't ship an unverifiable surface), guarded by **Critic** (no dead nav affordance for unbuilt screens).
+- **Decision**: ship **R11** with **R11.0 / R11.1a / R11.1b / R11.2 / R11.3 / R11.4 / R11.5**; **defer R11.1c** (map editor, georeference/verify, POI editor, travel-time matrix) to a **V1.1 admin enhancement**. **No dead affordances** are added (no nav entries for the unbuilt screens). Maps continue to be published via the existing local pipeline.
+- **Flip**: pull R11.1c forward as soon as a browser-capable verification path exists, or if onboarding a map-less festival becomes a real blocker (minority-wins scenario).
+- **Detail**: refines DEC-057; orchestrator §10 R11.1c + §12 stop-criteria allowance + §11 "credential/verification you don't have → mark ⏳, keep building".

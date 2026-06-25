@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.12.0";
+export const APP_VERSION = "0.13.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.13.0",
+    date: "2026-06-24",
+    title: "Behind the scenes: a real control room",
+    icon: "tune",
+    whatsNew: [
+      "Behind the scenes, FestPilot now has a proper back-office: the team can add festivals, check that each lineup and timetable looks healthy, and keep an eye on how the app is doing — so what you see stays accurate and reliable.",
+      "A live test room lets us rehearse the 'find your squad' map with stand-in members before a real festival, so presence and meeting points just work on the day.",
+      "Honest by design: usage and storage are watched against the free limits, and nothing you see in the app is ever faked test data.",
+    ],
+    howToTest: [
+      "Open /admin with the operator token: Festivals overview, Lineup & timetable health, Data sources, Suggestions, Metrics & runway, and the Test console.",
+      "Metrics & runway shows real users (country + last-seen) and how close R2/Workers are to the free tier; exact platform figures are marked 'locked' until an analytics token is connected — never invented.",
+      "Test console → add a synthetic member, drop them on a stage, and watch them appear live in your own 'Where's everyone'; Purge clears every test entity.",
+      "End users see no change beyond a small 'test' badge that only appears next to synthetic members during a live test.",
+    ],
+  },
   {
     version: "0.12.0",
     date: "2026-06-24",

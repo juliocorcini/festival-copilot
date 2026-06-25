@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-24 (review-remediation pass active — **all P0 (R0–R4) + ALL P1 (R5–R10) CLOSED**; only R11 Admin remains, app v0.12.0)
+> Last updated: 2026-06-24 (review-remediation pass **COMPLETE** — **R0–R11 all CLOSED**; admin back-office live, app v0.13.0; R11.1c map editor deferred → V1.1 per DEC-062)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
@@ -48,8 +48,24 @@ detection) and an **honest update check** — the SW is registered version-stamp
 date + reachable Privacy/Offline links + data-source credit; and an app-feel pass — global **no-text-selection**
 (`-webkit-touch-callout` off, inputs exempt) + a WCAG **`readableInkOn()`** contrast helper applied to every initial-avatar
 so ink never falls below AA on dark colours. App **v0.12.0**, deployed to Production (frontend-only; Worker unchanged at
-`b5f9ce0d`). **Next: R11 (Admin back-office, DEC-057) — the final gate** (auth+shell · festivals/map/POI · data-source
-registry · suggestions inbox · usage metrics + runway · live test console).
+`b5f9ce0d`).
+**R11 (Admin back-office, DEC-057) ✅ CLOSED — the review-remediation pass is COMPLETE (R0–R11 all done):** a single guarded
+admin back-office at `/admin`, one Hono sub-app behind `requireAdmin` (`x-admin-token` === the `ADMIN_TOKEN` secret,
+**fail-closed**). It ships **Festivals overview** (KPIs + per-festival health), a **Lineup & timetable dashboard**, a
+**Data-source registry** per festival (origin official_page/manual/ai_assisted + capture method, prefilled from the operational
+`lineup_source`; migration 0012), a **Festival-suggestions inbox** (DEC-055), **Usage metrics + free-tier runway**, and a
+**Live test console**. The metrics engine is **honest by construction**: a **pure, unit-tested** `runway.ts` estimates days-left
+against verified Cloudflare free-tier limits (Workers 100k req/day · D1 5M reads / 100k writes / 5GB · R2 10GB + 1M/10M ops;
+cumulative vs daily), `metricsRepo.ts` reports **only first-party measured** data (real users **excluding `is_test`**, country +
+last-seen, R2 bytes from the `media_object` ledger, `me_touch` app-activity; migration 0013 adds `app_user.is_test` +
+`usage_counter`), and any platform figure that needs the CF Analytics token is surfaced as a **`locked` service — never
+fabricated**. The **test console** spawns `is_test=1` members into a real squad and drives their presence through the **real**
+`recordFix`/`GroupRoom` pipeline (so they appear live on "Where's everyone", badged **`test`** via `isTest` on
+`PresenceMemberDto`), then **purges** every test entity FK-safe — so rehearsing the map never pollutes real metrics. **Deferred
+R11.1c** (map editor / georeference / POI / travel-matrix) → **V1.1 admin (DEC-062)**: it is heavy visual drag/affine UI that
+can't be verified in this no-browser env, the existing `festival_map` publish pipeline already onboards maps, and **no dead nav
+affordance** was added. App **v0.13.0**, deployed to Production; **Worker redeployed** (`a83f97e3`, admin routes + metrics + test
+console + `me_touch`); remote D1 migrations **0012 + 0013** applied. Tests: **server 183 + web 256 unit · e2e 30/30 · build OK**.
 
 ## How we build from here (the orchestrator)
 
