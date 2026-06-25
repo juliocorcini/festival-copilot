@@ -4,6 +4,7 @@
  * re-prompt for the token. Mirrors the server DTOs in `server/src/api/adminRepo.ts`.
  */
 import { API_BASE } from "../data/api";
+import type { FestivalMapDto, MapTransformDoc } from "../data/types";
 
 const TOKEN_KEY = "fp.admin.token.v1";
 
@@ -185,6 +186,45 @@ export const updateFestival = (id: string, patch: FestivalMetaPatch): Promise<{ 
   adminSend<{ ok: boolean }>(`/festivals/${id}`, "PATCH", patch);
 export const reimportFestival = (id: string): Promise<IngestResult> =>
   adminSend<IngestResult>(`/festivals/${id}/ingest`, "POST");
+
+// R11.1c — Festival map editor (DEC-064): georeference a base raster + place stage coordinates.
+export type { FestivalMapDto, MapTransformDoc };
+export interface FestivalMapInput {
+  assetSlug: string;
+  baseNightKey: string;
+  baseDayKey: string;
+  transform: MapTransformDoc;
+  revision?: number;
+}
+export const fetchFestivalMap = (id: string, signal?: AbortSignal): Promise<{ map: FestivalMapDto | null }> =>
+  adminGet<{ map: FestivalMapDto | null }>(`/festivals/${id}/map`, signal);
+export const saveFestivalMap = (id: string, input: FestivalMapInput): Promise<{ ok: boolean; revision: number }> =>
+  adminSend<{ ok: boolean; revision: number }>(`/festivals/${id}/map`, "POST", input);
+
+/** Upload a base raster (night/day) to R2; returns the absolute media URL to store as the base key. */
+export async function uploadMapAsset(id: string, slot: "night" | "day", file: Blob): Promise<{ url: string }> {
+  const token = getAdminToken();
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/admin/festivals/${id}/map-asset?slot=${slot}`, {
+      method: "POST",
+      headers: { "x-admin-token": token, "content-type": file.type || "application/octet-stream" },
+      body: file,
+    });
+  } catch {
+    throw new AdminError("Network error uploading the image", 0);
+  }
+  if (res.status === 401) throw new AdminAuthError();
+  if (!res.ok) {
+    const msg = await res
+      .clone()
+      .json()
+      .then((b) => (b && typeof (b as { error?: unknown }).error === "string" ? (b as { error: string }).error : null))
+      .catch(() => null);
+    throw new AdminError(msg ?? `Upload failed (${res.status})`, res.status);
+  }
+  return (await res.json()) as { url: string };
+}
 
 // R11.3 — Festival suggestions inbox.
 export type SuggestionStatus = "new" | "planned" | "live" | "declined";

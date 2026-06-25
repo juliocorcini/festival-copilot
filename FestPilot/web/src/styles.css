@@ -1748,3 +1748,27 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .admin-test-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .admin-inline-select { max-width: 200px; padding: 7px 10px; font-size: 13px; }
 @media (max-width: 640px) { .admin-test-add-row { flex-direction: column; } .admin-test-add-row .field { width: 100%; } }
+
+/* R11.1c — map editor (georeference + stage placement) */
+.map-editor { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 18px; align-items: start; }
+.map-editor-canvas { padding: 14px; position: sticky; top: 16px; }
+.map-editor-modes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.map-editor-hint { font-size: 12px; }
+.map-editor-svg { width: 100%; height: auto; max-height: 70vh; display: block; border-radius: 12px; border: 1px solid var(--line); background: #0a0d18; cursor: crosshair; }
+.map-cp circle { fill: rgba(124, 92, 255, 0.18); stroke: var(--accent); stroke-width: 2; }
+.map-cp line { stroke: #fff; stroke-width: 2; }
+.map-pin circle { fill: var(--accent); stroke: #fff; stroke-width: 2; opacity: 0.92; }
+.map-pin text { fill: #fff; font-size: 13px; font-weight: 800; paint-order: stroke; stroke: #0a0d18; stroke-width: 4px; }
+.map-pin.on circle { fill: var(--ok-ink, #34d399); }
+.map-editor-empty { padding: 48px 18px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
+.map-editor-panel { display: flex; flex-direction: column; gap: 16px; }
+.map-editor-section { padding: 16px; }
+.map-editor-section .admin-section { margin: 2px 0 10px; }
+.map-editor-url-row { display: flex; align-items: center; gap: 8px; }
+.map-editor-url-row .field { flex: 1; min-width: 0; }
+.map-editor-cp-table th, .map-editor-cp-table td,
+.map-editor-stage-table th, .map-editor-stage-table td { padding: 6px 8px; }
+.map-editor-num { width: 100%; min-width: 72px; padding: 6px 8px; font-size: 12px; }
+.map-editor-cp-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.map-stage-active > td { background: rgba(124, 92, 255, 0.1); }
+@media (max-width: 900px) { .map-editor { grid-template-columns: 1fr; } .map-editor-canvas { position: static; } }

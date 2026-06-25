@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AdminError,
   createFestival,
@@ -35,6 +36,7 @@ interface Banner {
 
 /** R11.1a/c — Festivals overview + onboarding: add, manage and re-import festivals (DEC-063). */
 export function AdminFestivalsScreen(): JSX.Element {
+  const navigate = useNavigate();
   const [data, setData] = useState<AdminOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -168,6 +170,7 @@ export function AdminFestivalsScreen(): JSX.Element {
                     busy={busyId === f.id}
                     editing={editingId === f.id}
                     onReimport={() => onReimport(f)}
+                    onMap={() => navigate(`/admin/festivals/${f.id}/map`)}
                     onToggleEdit={() => setEditingId((cur) => (cur === f.id ? null : f.id))}
                     onSaved={(msg) => {
                       setEditingId(null);
@@ -207,6 +210,7 @@ function FestivalRow({
   busy,
   editing,
   onReimport,
+  onMap,
   onToggleEdit,
   onSaved,
 }: {
@@ -214,6 +218,7 @@ function FestivalRow({
   busy: boolean;
   editing: boolean;
   onReimport: () => void;
+  onMap: () => void;
   onToggleEdit: () => void;
   onSaved: (message: string) => void;
 }): JSX.Element {
@@ -259,6 +264,9 @@ function FestivalRow({
           <div className="admin-row-actions">
             <button className="btn btn-ghost btn-sm" type="button" onClick={onReimport} disabled={busy} title="Re-import from source">
               <span className={`ms${busy ? " admin-state-spin" : ""}`}>sync</span>
+            </button>
+            <button className="btn btn-ghost btn-sm" type="button" onClick={onMap} title="Map editor (georeference + stages)">
+              <span className="ms">map</span>
             </button>
             <button className="btn btn-ghost btn-sm" type="button" onClick={onToggleEdit} title="Edit name / timezone">
               <span className="ms">{editing ? "close" : "edit"}</span>

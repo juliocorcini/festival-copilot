@@ -11,7 +11,8 @@ import {
   listFestivalSuggestions,
   updateSuggestionStatus,
 } from "./festivalSuggestions";
-import { upsertFestivalMap, type FestivalMapInput } from "./repo";
+import { getFestivalMap, upsertFestivalMap, type FestivalMapInput } from "./repo";
+import { MAX_MAP_BASE_BYTES, MEDIA_CONTENT_TYPES, putImage } from "../media/store";
 import { getDataSource, readDataSourceInput, upsertDataSource } from "./dataSource";
 import { getMetrics } from "./metricsRepo";
 import {
@@ -190,14 +191,43 @@ admin.post("/ingest", async (c) => {
   return c.json({ results });
 });
 
+// R11.1c — load a festival's current map for the editor (null when none is published yet).
+admin.get("/festivals/:id/map", async (c) => {
+  const map = await getFestivalMap(c.env.DB, c.req.param("id"));
+  return c.json({ map });
+});
+
+// R11.1c — upload a base raster (night/day) for a festival to R2 (DEC-059/064). Raw image body +
+// content-type header; returns the absolute media URL to store as the base key. Operator-only.
+admin.post("/festivals/:id/map-asset", async (c) => {
+  const festivalId = c.req.param("id");
+  const slot = c.req.query("slot") === "day" ? "day" : "night";
+  const contentType = c.req.header("content-type") ?? "";
+  const ext = MEDIA_CONTENT_TYPES[contentType];
+  if (!ext) return c.json({ error: "unsupported image type — use PNG, JPEG or WebP" }, 415);
+
+  const body = await c.req.arrayBuffer();
+  if (body.byteLength === 0) return c.json({ error: "empty image" }, 400);
+  if (body.byteLength > MAX_MAP_BASE_BYTES) return c.json({ error: "image too large (max 4 MB)" }, 413);
+
+  const key = `map/${festivalId}/${slot}-${Date.now()}.${ext}`;
+  await putImage(c.env, key, body, contentType);
+  const url = `${new URL(c.req.url).origin}/media/${key}`;
+  return c.json({ ok: true, slot, key, url }, 201);
+});
+
 // Publish/replace a festival's map asset registry (DEC-040). Body = the map publish payload
-// (asset slug + static keys + the engine transform doc). Used by the local publish step + map editor.
+// (asset slug + base keys + the engine transform doc). Used by the local publish step + map editor.
 admin.post("/festivals/:id/map", async (c) => {
   const festivalId = c.req.param("id");
   const body = (await c.req.json().catch(() => null)) as FestivalMapInput | null;
   if (!body?.assetSlug || !body?.baseNightKey || !body?.baseDayKey || !body?.transform) {
     return c.json({ error: "invalid map payload" }, 400);
   }
-  await upsertFestivalMap(c.env.DB, festivalId, body, new Date().toISOString());
-  return c.json({ ok: true, festivalId, revision: body.revision ?? 1 });
+  // Auto-bump the revision on each publish unless the caller pins one (the local publish step pins
+  // a revision; the in-product editor just increments so re-saves don't reset it to 1).
+  const current = await getFestivalMap(c.env.DB, festivalId);
+  const revision = body.revision ?? (current?.revision ?? 0) + 1;
+  await upsertFestivalMap(c.env.DB, festivalId, { ...body, revision }, new Date().toISOString());
+  return c.json({ ok: true, festivalId, revision });
 });
