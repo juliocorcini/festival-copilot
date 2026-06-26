@@ -14,11 +14,26 @@ test.describe("Phase 2 — timetable grid", () => {
         JSON.stringify({ v: 1, onboarding: { festivalId: "x", weekendIds: [w1], dayKeys: [], completed: true }, favorites: {}, plans: {} })
       );
     }, W1);
+    // Inject the animation-freeze CSS from the first document init (not via a post-goto addStyleTag),
+    // so it's present before paint and survives an early reload — e.g. the service worker's
+    // controllerchange → location.reload(), which otherwise destroyed the execution context that a
+    // post-goto addStyleTag runs in ("Execution context was destroyed" flake, ~10% per goto).
+    await page.addInitScript((css) => {
+      const inject = () => {
+        const style = document.createElement("style");
+        style.textContent = css;
+        (document.head || document.documentElement).appendChild(style);
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", inject, { once: true });
+      } else {
+        inject();
+      }
+    }, FREEZE);
   });
 
   test("renders the grid, favorites a set, filters and zooms", async ({ page }) => {
     await page.goto("/timetable");
-    await page.addStyleTag({ content: FREEZE });
 
     // Grid renders: stage rows + positioned set cards, with the hour lines always on (no toggle).
     await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
@@ -49,7 +64,6 @@ test.describe("Phase 2 — timetable grid", () => {
   // DEC-049: the Lineup is discoverable in ≤1 tap from the Timetable via the segmented switch.
   test("reaches the Lineup in one tap via the Timetable⇄Lineup switch", async ({ page }) => {
     await page.goto("/timetable");
-    await page.addStyleTag({ content: FREEZE });
     await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
 
     await page.locator(".view-switch .vs-seg", { hasText: "Lineup" }).click();
