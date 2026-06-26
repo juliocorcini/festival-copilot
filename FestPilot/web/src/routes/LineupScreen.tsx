@@ -12,6 +12,7 @@ import { performancesForWeekends, uniqueActs, type Act } from "../domain/lineup"
 import { daysForWeekends, type DayInfo } from "../lib/festival";
 import { stageColorRgb } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
+import { PullToRefresh } from "../ui/PullToRefresh";
 import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
@@ -178,6 +179,7 @@ export function LineupScreen(): JSX.Element {
       className={`screen cols-${cols}${dataState === "timetable" ? " has-view-dock" : ""}`}
       style={{ paddingTop: "calc(8px + var(--safe-top))", paddingInline: 16 }}
     >
+      <PullToRefresh onRefresh={reload} />
       <header className="lu-top">
         <div className="shell-eyebrow">
           {lineup.festival.name} <span className="view">LINEUP</span>

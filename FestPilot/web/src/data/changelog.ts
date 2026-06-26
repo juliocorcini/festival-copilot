@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.22.0";
+export const APP_VERSION = "0.23.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.23.0",
+    date: "2026-06-26",
+    title: "Pull to refresh",
+    icon: "sync",
+    whatsNew: [
+      "Pull down from the top of the Lineup, the Now screen, or your Squad home to refresh — just like your favorite apps. A little buzz tells you when to let go.",
+      "Scrolling feels tighter: a flick inside a list stays in that list instead of nudging the whole page.",
+      "Honors 'reduce motion': the spinner keeps you informed without the extra spin if your phone asks for less animation.",
+    ],
+    howToTest: [
+      "On the Lineup (or Now, or your Squad home), drag down from the very top — a spinner slides in; past a short pull it buzzes, and releasing refreshes the data.",
+      "A tiny pull that doesn't pass the line just springs back and does nothing.",
+      "Scrolling normally up/down is unaffected — the pull only arms when you're already at the top.",
+    ],
+  },
   {
     version: "0.22.0",
     date: "2026-06-26",

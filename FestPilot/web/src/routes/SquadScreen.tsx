@@ -16,6 +16,7 @@ import { useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
+import { PullToRefresh } from "../ui/PullToRefresh";
 import { BoardPreviewCard, MeetingCompassCard, WhereEveryoneCard } from "./squad/squadHomeCards";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
@@ -103,12 +104,22 @@ function GroupHome({
   onChanged: () => void;
 }): JSX.Element {
   const navigate = useNavigate();
-  const { members } = useGroup(group.id);
-  const { points } = useMeetingPoints(group.id);
-  const { points: safetyPoints } = useSafety(group.id);
-  const { presence } = useGroupPresence(group.id);
-  const { notes, status: boardStatus } = useBoard(group.id);
+  const { members, reload: reloadMembers } = useGroup(group.id);
+  const { points, reload: reloadPoints } = useMeetingPoints(group.id);
+  const { points: safetyPoints, reload: reloadSafety } = useSafety(group.id);
+  const { presence, reload: reloadPresence } = useGroupPresence(group.id);
+  const { notes, status: boardStatus, reload: reloadBoard } = useBoard(group.id);
   const [leaving, setLeaving] = useState(false);
+
+  // Pull-to-refresh fans out to every live source on the home (server is source of truth).
+  const refreshAll = (): void => {
+    reloadMembers();
+    reloadPoints();
+    reloadSafety();
+    reloadPresence();
+    reloadBoard();
+    onChanged();
+  };
 
   // The freshest active "come to me" point gets the rich compass card; the rest stay as compact rows.
   const primaryPoint = points[0] ?? null;
@@ -140,6 +151,7 @@ function GroupHome({
           </button>
         }
       />
+      <PullToRefresh onRefresh={refreshAll} />
       <div className="screen">
         {groups.length > 1 && (
           <div className="squad-switcher" role="tablist" aria-label="Your squads">

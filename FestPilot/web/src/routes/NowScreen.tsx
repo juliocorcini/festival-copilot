@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
+import { PullToRefresh } from "../ui/PullToRefresh";
 import { useLineup } from "../data/useLineup";
 import { useFavorites, useOnboarding, usePlan } from "../data/localStore";
 import { useTravelMatrix } from "../data/useTravelMatrix";
@@ -144,6 +145,7 @@ export function NowScreen(): JSX.Element {
     return (
       <>
         <AppHeader eyebrow={shorten(festivalName)} title="Now & Next" />
+        <PullToRefresh onRefresh={reload} />
         <NowEmpty
           favCount={favorites.count}
           hasTimetable={lineup.hasTimetable}
@@ -164,6 +166,7 @@ export function NowScreen(): JSX.Element {
   return (
     <>
       <AppHeader eyebrow={eyebrow} title="Now & Next" />
+      <PullToRefresh onRefresh={reload} />
       <div className="screen">
         <NowHero
           vm={vm}

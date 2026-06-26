@@ -160,7 +160,38 @@ a { color: inherit; text-decoration: none; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  /* Keep a fling inside the screen — don't chain it to the body (and feed our own pull-to-refresh). */
+  overscroll-behavior-y: contain;
 }
+
+/* Pull-to-refresh spinner (Phase 4). Self-contained: lives at the top of a scrollable screen,
+   absolutely anchored to its `.scr` ancestor (position:relative), and only ever translates itself —
+   never the content (preserves the fixed view-switch dock). The component drives transform/opacity. */
+.ptr {
+  position: absolute;
+  top: calc(6px + var(--safe-top));
+  left: 50%;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.7);
+  color: var(--accent);
+  pointer-events: none;
+  opacity: 0;
+}
+.ptr-glyph { font-size: 20px; line-height: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .ptr:not(.dragging) { transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.18s ease; }
+  .ptr-spin { animation: ptr-spin 0.7s linear infinite; }
+}
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
 .screen { display: flex; flex-direction: column; gap: 12px; padding: 4px 18px 18px; }
 .screen-map { position: absolute; inset: 0; }
 
@@ -822,7 +853,7 @@ a { color: inherit; text-decoration: none; }
   padding: 9px 14px; white-space: nowrap; cursor: pointer; flex: 0 0 auto; }
 .tt-lk .ms { font-size: 17px; }
 
-.tt-scroll { flex: 1; min-height: 0; overflow: auto; position: relative; -webkit-overflow-scrolling: touch; }
+.tt-scroll { flex: 1; min-height: 0; overflow: auto; position: relative; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .tt-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .tt-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .tt-content { position: relative; transition: width 0.25s ease; padding: 0 0 calc(120px + var(--safe-bottom)); }

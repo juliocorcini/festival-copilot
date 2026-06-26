@@ -6,6 +6,29 @@
 
 ---
 
+## Native polish 4/7 26/06 — pull-to-refresh + polish de scroll ✅ DEPLOYED — v0.23.0
+
+> Gesto-músculo de app real: **puxar pra baixo** do topo do Lineup / Now / Squad home **atualiza os dados**, com buzz no gatilho e spinner nativo.
+> Conselho inline (Architect/Performance/Critic/Advocate): componente **auto-contido** `<PullToRefresh onRefresh>` que acha o scroller compartilhado via
+> `closest('.scr')` e renderiza **só o indicador** — nunca transforma o conteúdo (quebraria o `position:fixed` do view-switch dock; mesma restrição do fade).
+> `preventDefault` **cirúrgico**: só quando o pull é "dono" do gesto (1 dedo, `scrollTop<=0`, puxando pra baixo) → scroll normal e a **pinça de 2 dedos** do Lineup intactos.
+> `tsc` limpo · **320** testes (+12: 8 math rubber-band/threshold + 4 DOM de gesto provando que pull curto/scrollado não dispara e scroll-up não é bloqueado) · build ok · deploy `--branch=master`.
+
+### Current State (this batch)
+- **Pull-to-refresh no ar (v0.23.0)** em **Lineup, Now e Squad home** (os 3 scrollers verticais de 1 dedo no `.scr`). **Fora**: Timetable (scroll interno `.tt-scroll` + pinça + altura cheia) e Map (`absolute` full-bleed) — lá PTR vira bug, não feature.
+- **Encaixe (decisão Architect):** o `.scr` é remontado por rota (`key={pathname}`), então PTR não pode morar no layout com ref fixo nem virar 2º scroller (aninhado). O componente acha o `.scr` via `closest`, anexa listeners de toque a ele e o `useEffect` re-anexa a cada mount.
+- **Indicador-only (Performance):** transladar **só** o spinner (transform/opacity compositáveis), nunca o conteúdo → preserva o dock `fixed` e evita reflow. Sem libs (0 bytes).
+- **Guardas (Critic):** armar só com 1 dedo em `scrollTop<=0`; lock durante `refreshing`; rubber-band com gatilho a 64px; `haptic("select")` no cruzamento + `haptic("light")` ao disparar; **min-spin 600ms** para o reload silencioso do lineup ler como refresh real.
+- **Refresh real:** Lineup/Now = `useLineup.reload()` (revalida em background); Squad home = fan-out de `reloadMembers/Points/Safety/Presence/Board + onChanged`.
+- **Polish de scroll:** `overscroll-behavior: contain` no `.scr` e no `.tt-scroll` → fling não encadeia pro body. Reduced-motion: spinner sem rotação infinita e sem transição de snap-back.
+- **Lógica pura testável:** `lib/pullToRefresh.ts` (`resistPull`/`shouldTrigger`/`pullProgress`/`pullRotation`) separada da UI (`ui/PullToRefresh.tsx`).
+
+### Escopo (arquivos)
+- **Novos:** `lib/pullToRefresh.ts` (+ `.test.ts`, 8 math), `ui/PullToRefresh.tsx` (+ `.test.tsx`, 4 DOM).
+- **Editados:** `routes/LineupScreen.tsx` + `routes/NowScreen.tsx` (2 returns) + `routes/SquadScreen.tsx` (captura `reload` dos hooks + `refreshAll`), `styles.css` (`.ptr` + `@keyframes ptr-spin` reduced-motion-gated + `overscroll-behavior: contain` em `.scr`/`.tt-scroll`), `data/changelog.ts` + `web/package.json` (**0.23.0**).
+
+---
+
 ## Native polish 3/7 26/06 — transição de tela + skeleton em grid ✅ DEPLOYED — v0.22.0
 
 > O "A": telas deixam de **cortar seco** e passam a **fade-in** na navegação; cada tela abre no topo. Conselho rápido (Architect+Critic):
