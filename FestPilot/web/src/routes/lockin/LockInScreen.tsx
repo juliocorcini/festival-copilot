@@ -21,6 +21,7 @@ import {
 import type { PlannableSet, PlanSlot } from "../../domain/types";
 import { daysForWeekends, initials } from "../../lib/festival";
 import { haptic } from "../../lib/haptics";
+import { toast } from "../../lib/toast";
 import { dayLabel, stageColor, timeInZone } from "../../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../../ui/states";
 import { Sheet } from "../../ui/Sheet";
@@ -101,6 +102,8 @@ export function LockInScreen(): JSX.Element {
     if (snapshot.locked.length === 0) return;
     savedFor.current = dayKey;
     plan.save(snapshot.locked);
+    const count = snapshot.locked.length;
+    toast.success(`Plan locked in · ${count} artist${count === 1 ? "" : "s"}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot, dayKey]);
 

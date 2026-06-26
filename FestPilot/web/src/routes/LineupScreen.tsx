@@ -17,6 +17,7 @@ import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { toast } from "../lib/toast";
 import { usePinch } from "../lib/usePinch";
 import { useArtistSheet } from "../ui/useArtistSheet";
 
@@ -167,7 +168,15 @@ export function LineupScreen(): JSX.Element {
           data-haptic="select"
           aria-pressed={on}
           aria-label={on ? `Remove ${act.label} from favorites` : `Add ${act.label} to favorites`}
-          onClick={() => favorites.toggle(act.actKey)}
+          onClick={() => {
+            favorites.toggle(act.actKey);
+            toast.show({
+              message: on ? `Removed ${act.label}` : `Saved ${act.label}`,
+              tone: on ? "info" : "success",
+              key: "favorite",
+              haptic: false,
+            });
+          }}
         >
           <span className="ms">{on ? "favorite" : "favorite_border"}</span>
         </button>

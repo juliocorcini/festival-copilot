@@ -2314,3 +2314,34 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
 @media (prefers-reduced-motion: no-preference) {
   .event-card, .squad-agenda-band, .squad-now { animation: fp-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 }
+
+/* --- Unified toasts (Phase 10 — feedback) ----------------------------------------------------- */
+/* Fixed, centered within the 480px app frame, floating just above where the bottom nav sits on the
+   tab screens (z above nav/sheets). A stack grows upward; newest at the bottom, closest to the thumb. */
+.toaster {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(80px + var(--safe-bottom)); z-index: 60;
+  width: min(calc(100% - 32px), 448px);
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px 11px 14px; border-radius: 14px;
+  background: rgba(28, 24, 17, 0.96); border: 1px solid var(--border);
+  box-shadow: 0 14px 38px -12px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  font-size: 13.5px; color: var(--ink); line-height: 1.35;
+}
+.toast-ico { font-size: 19px; flex-shrink: 0; }
+.toast-msg { flex: 1; min-width: 0; font-weight: 600; }
+.toast-x {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; border: 0; padding: 0;
+  background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center;
+}
+.toast-x .ms { font-size: 17px; }
+.toast-info .toast-ico { color: var(--accent2); }
+.toast-success { border-color: rgba(22, 163, 74, 0.4); }
+.toast-success .toast-ico { color: #5fd08a; }
+.toast-error { border-color: rgba(220, 38, 38, 0.45); }
+.toast-error .toast-ico { color: var(--danger-ink); }

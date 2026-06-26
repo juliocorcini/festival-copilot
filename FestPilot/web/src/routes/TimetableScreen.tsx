@@ -19,6 +19,7 @@ import { DayDropdown } from "../ui/DayDropdown";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { toast } from "../lib/toast";
 import { usePinch } from "../lib/usePinch";
 import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
 
@@ -238,7 +239,15 @@ export function TimetableScreen(): JSX.Element {
                             className="heart"
                             data-haptic="select"
                             aria-label={set.isFav ? "Remove favorite" : "Add favorite"}
-                            onClick={() => favorites.toggle(set.actKey)}
+                            onClick={() => {
+                              favorites.toggle(set.actKey);
+                              toast.show({
+                                message: set.isFav ? `Removed ${set.label}` : `Saved ${set.label}`,
+                                tone: set.isFav ? "info" : "success",
+                                key: "favorite",
+                                haptic: false,
+                              });
+                            }}
                           >
                             <span className="ms">{set.isFav ? "favorite" : "favorite_border"}</span>
                           </button>

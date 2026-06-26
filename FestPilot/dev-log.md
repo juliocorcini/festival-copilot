@@ -6,6 +6,28 @@
 
 ---
 
+## Fase 10a 26/06 — Toasts unificados + feedback (parte 1 de 2) ✅ — v0.29.0
+
+> Fase 10 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`), **dividida em 10a (chrome+toasts, v0.29.0)** e **10b (auditoria a11y/perf/resp., v0.30.0)**. Frontend puro.
+> **System chrome — auditado, já conforme:** `theme-color`/`background_color` (#0F0D09) no `index.html` **e** no `manifest.webmanifest`; `viewport-fit=cover`; `apple-mobile-web-app-capable` + `status-bar-style black-translucent` + `apple-touch-icon`; `display:standalone`, `orientation:portrait`, ícones 192/512/maskable. Safe-areas via `--safe-top`/`--safe-bottom` (`env(safe-area-inset-*)`) usadas em todo header/nav/sheet/dock. **Nada a corrigir aqui** — registrado como verificado.
+> **Toast unificado (a lacuna real — antes só havia banners inline no admin):**
+> - `lib/toast.ts` (**store leve, agnóstico de React** — testável): API imperativa `toast.success/info/error/show/dismiss` (espelha a ergonomia do `haptic()`), tons com ícone+duração padrão (info/success 2.6s, error 4.2s), **chave de coalescência** (repetições rápidas no mesmo `key` **substituem**, não empilham), **cap de 3** (estouro derruba o mais antigo), haptic no show (`haptic:false` quando o toque que disparou já vibrou), auto-dismiss com timers.
+> - `ui/Toaster.tsx`: um único live region montado na raiz (`App`), lê o store via `useSyncExternalStore`. **A11y:** cada toast carrega seu próprio role — `status` (polite) p/ info/success, `alert` (assertive) p/ erro — em vez de aninhar live regions; `×` p/ dispensar; entrada `fp-rise` (gated por reduced-motion). Fixo, centralizado no frame de 480px, **acima da bottom-nav**.
+> **Ligações (favoritar / lock / erros — AC):** coração do **Lineup** e do **Timetable** → toast "Saved/Removed {artista}" (`key:"favorite"`, `haptic:false` pois o toque já vibra); **Lock-in** persistido → `toast.success("Plan locked in · N artists")` (com buzz de sucesso, que antes não existia nesse instante); **Share my plan** → sucesso "Plan shared" (sobrevive à navegação) + **erro** (antes silencioso: só `setBusy(false)`) → "Couldn't share your plan…". **Onboarding (swipe/grid) propositalmente NÃO toasta** (seria ruído).
+> `tsc` limpo · **web 396 testes** (+8 `toast`: defaults por tom, coalescência por key, cap 3, auto-dismiss, sticky, subscribe/unsubscribe, snapshot estável) · `vite build` ok (`index-B0a1tMm6.js`).
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.29.0):** confirmações rápidas (favoritar/lock/share) + erros visíveis (share) com haptic, reduced-motion-aware, a11y por role. Chrome auditado e conforme.
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo (10b, v0.30.0):** auditoria a11y/perf/responsivo + correções P0–P2 + relatório.
+
+### Escopo (arquivos)
+- **Novos (web):** `lib/toast.ts` (+`toast.test.ts`), `ui/Toaster.tsx`.
+- **Editados (web):** `App.tsx` (monta `<Toaster/>`), `routes/LineupScreen.tsx` + `routes/TimetableScreen.tsx` (toast no coração), `routes/lockin/LockInScreen.tsx` (toast no lock), `routes/squad/ShareMyPlanScreen.tsx` (sucesso+erro), `styles.css` (`.toaster`/`.toast*`), `data/changelog.ts` + `web/package.json` (**0.29.0**).
+- **Guardrail intacto:** nada de backend/domínio; toasts são só apresentação. `buildSquadPlan`/lock intocados.
+
+---
+
 ## Fase 9 26/06 — Home = pessoal + squad · card "Squad now" (D4) ✅ — v0.28.0
 
 > Fase 9 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`). **Frontend puro — zero backend** (reusa hooks existentes). Traz um pedaço do squad pra home pessoal (Now & Next): um card **"Squad now"** abaixo do hero com **onde o squad está agora** (resumo de presença, ex.: "3 at FREEDOM · 1 between A & B") + **o próximo combinado** (group event ao vivo/futuro; senão um meeting point ativo) com countdown, e **abre o Squad ao tocar**.

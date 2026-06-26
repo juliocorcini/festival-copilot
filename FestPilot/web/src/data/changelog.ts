@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.28.0";
+export const APP_VERSION = "0.29.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.29.0",
+    date: "2026-06-26",
+    title: "Little confirmations everywhere",
+    icon: "notifications",
+    whatsNew: [
+      "FestPilot now gives you a quick, friendly nudge when something happens — saving an artist, locking your plan, sharing with your squad — so you always know it worked.",
+      "If something goes wrong (like a flaky connection when sharing), you'll see a clear message instead of silence.",
+      "Each confirmation comes with a subtle buzz on phones that support it, and respects your 'reduce motion' setting.",
+    ],
+    howToTest: [
+      "Heart an artist in the Lineup or Timetable — a small 'Saved …' toast slides up; tap the heart again for 'Removed …'. Spamming the heart shows just one toast, not a pile.",
+      "Lock a day in Lock-in — you get a 'Plan locked in · N artists' confirmation.",
+      "Share your plan with a squad — success shows 'Plan shared'; turn off your connection and try again to see the error toast.",
+    ],
+  },
   {
     version: "0.28.0",
     date: "2026-06-26",

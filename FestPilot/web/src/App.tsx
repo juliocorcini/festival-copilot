@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./app/AppLayout";
 import { UpdateBanner } from "./app/UpdateBanner";
+import { Toaster } from "./ui/Toaster";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
 import { NowScreen } from "./routes/NowScreen";
@@ -53,6 +54,7 @@ export function App(): JSX.Element {
   return (
     <BrowserRouter>
       <UpdateBanner />
+      <Toaster />
       <Routes>
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route element={<RequireOnboarding />}>

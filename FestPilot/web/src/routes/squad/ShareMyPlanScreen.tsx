@@ -11,6 +11,7 @@ import { useGroup } from "../../data/groups";
 import { useFavorites, usePlan, loadStore } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
 import { stageColor, timeInZone } from "../../lib/format";
+import { toast } from "../../lib/toast";
 import { ErrorState, LoadingState } from "../../ui/states";
 
 export function ShareMyPlanScreen(): JSX.Element {
@@ -72,8 +73,10 @@ export function ShareMyPlanScreen(): JSX.Element {
           await api.shareMyPlan(id, { day, slots, shareFavorites: shareFav, favoriteActKeys });
         }
       }
+      toast.success("Plan shared with your squad");
       navigate(`/squad/${id}/plan`, { replace: true });
     } catch {
+      toast.error("Couldn't share your plan. Check your connection and try again.");
       setBusy(false);
     }
   };
