@@ -219,6 +219,17 @@ a { color: inherit; text-decoration: none; }
 .navitem .ms { font-size: 23px; }
 .navitem.active { color: var(--accent); }
 .navitem.active .ms { font-variation-settings: "FILL" 1, "wght" 500, "opsz" 24; }
+/* Sliding active indicator (D5 part 2): a short bar over the active tab that glides between tabs.
+   left/width match the nav's 18px horizontal padding and the 5 equal tabs; --active (0..4) slides it. */
+.nav-ind {
+  position: absolute; top: 6px; left: 18px; width: calc((100% - 36px) / 5); height: 3px;
+  display: flex; justify-content: center; pointer-events: none;
+  transform: translateX(calc(var(--active, 0) * 100%));
+}
+.nav-ind::after { content: ""; width: 26px; height: 3px; border-radius: 999px; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .nav-ind { transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease; }
+}
 
 /* =============================================================================
    Components (§5)
@@ -2223,5 +2234,9 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
 @media (prefers-reduced-motion: no-preference) {
   .fp-rise { animation: fp-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: calc(var(--i, 0) * 26ms); }
   .sheet .sheet-body { animation: fp-fade 0.3s 0.08s ease both; }
+  /* Live counters (leave-in / countdown) fade in when their value changes — the span is re-keyed
+     on change so this one-shot mount animation re-runs. Opacity-only: safe over the gradient-clipped
+     text (a transform would need inline-block and could break -webkit-background-clip: text). */
+  .count-pop { animation: fp-fade 0.32s ease; }
 }
 @keyframes fp-rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }

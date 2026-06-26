@@ -42,6 +42,7 @@ import { stageColor, timeInZone } from "../lib/format";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
+import { Sheet } from "../ui/Sheet";
 import { PHOTO_WIDTH } from "../lib/photo";
 import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
 import { SharePlanSheet } from "./share/SharePlanSheet";
@@ -433,31 +434,27 @@ function PlanItemMenu({
   onClose: () => void;
 }): JSX.Element {
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">{slot.label}</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-        <div className="plan-menu-meta">
-          <span className="dot" style={{ background: stageColor(slot.stageName) }} />
-          {slot.stageName} · {timeInZone(new Date(slot.startMs).toISOString(), tz)}
-        </div>
-        <div className="sheet-body">
-          <button className="plan-menu-item" onClick={onMap}>
-            <span className="ms">map</span> View on map
-          </button>
-          <button className="plan-menu-item" onClick={onSwap}>
-            <span className="ms">swap_horiz</span> Swap set
-          </button>
-          <button className="plan-menu-item danger" onClick={onRemove}>
-            <span className="ms">delete</span> Remove from plan
-          </button>
-        </div>
+    <Sheet onClose={onClose} label={slot.label}>
+      <div className="sheet-head">
+        <div className="poster sheet-title">{slot.label}</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+      <div className="plan-menu-meta">
+        <span className="dot" style={{ background: stageColor(slot.stageName) }} />
+        {slot.stageName} · {timeInZone(new Date(slot.startMs).toISOString(), tz)}
+      </div>
+      <div className="sheet-body">
+        <button className="plan-menu-item" onClick={onMap}>
+          <span className="ms">map</span> View on map
+        </button>
+        <button className="plan-menu-item" onClick={onSwap}>
+          <span className="ms">swap_horiz</span> Swap set
+        </button>
+        <button className="plan-menu-item danger" onClick={onRemove}>
+          <span className="ms">delete</span> Remove from plan
+        </button>
+      </div>
+    </Sheet>
   );
 }
 
@@ -481,40 +478,36 @@ function SetPickerSheet({
     ? options.filter((set) => set.label.toLowerCase().includes(query.trim().toLowerCase()))
     : options;
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">{title}</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-        <div className="search">
-          <span className="ms" style={{ color: "var(--muted)", fontSize: 20 }}>search</span>
-          <input placeholder="Search artists…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search artists" />
-        </div>
-        <div className="sheet-body">
-          {filtered.length === 0 ? (
-            <p className="lk-note">No acts fit here without a clash.</p>
-          ) : (
-            filtered.map((set) => (
-              <div key={set.id} className="row">
-                <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
-                <div className="min0">
-                  <div className="lk-add-name">{set.label}</div>
-                  <div className="lk-opt-meta">
-                    <span className="dot" style={{ background: stageColor(set.stageName) }} />
-                    {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
-                  </div>
-                </div>
-                <button className="addpill" onClick={() => onPick(set)}>{title.startsWith("Swap") ? "Swap" : "Add"}</button>
-              </div>
-            ))
-          )}
-          <p className="lk-note">{hint}</p>
-        </div>
+    <Sheet onClose={onClose} label={title}>
+      <div className="sheet-head">
+        <div className="poster sheet-title">{title}</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+      <div className="search">
+        <span className="ms" style={{ color: "var(--muted)", fontSize: 20 }}>search</span>
+        <input placeholder="Search artists…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search artists" />
+      </div>
+      <div className="sheet-body">
+        {filtered.length === 0 ? (
+          <p className="lk-note">No acts fit here without a clash.</p>
+        ) : (
+          filtered.map((set) => (
+            <div key={set.id} className="row">
+              <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
+              <div className="min0">
+                <div className="lk-add-name">{set.label}</div>
+                <div className="lk-opt-meta">
+                  <span className="dot" style={{ background: stageColor(set.stageName) }} />
+                  {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
+                </div>
+              </div>
+              <button className="addpill" onClick={() => onPick(set)}>{title.startsWith("Swap") ? "Swap" : "Add"}</button>
+            </div>
+          ))
+        )}
+        <p className="lk-note">{hint}</p>
+      </div>
+    </Sheet>
   );
 }
 
@@ -545,81 +538,77 @@ function BlockSheet({
     onChange({ ...draft, kind, label: wasDefault ? BLOCK_KINDS[kind].label : draft.label });
   };
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">{draft.id ? "Edit plan" : "Add to your day"}</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-        <div className="sheet-body">
-          <div className="block-presets">
-            {PRESET_ORDER.map((kind) => (
-              <button
-                key={kind}
-                className={`block-preset${draft.kind === kind ? " on" : ""}`}
-                onClick={() => pickKind(kind)}
-                aria-pressed={draft.kind === kind}
-              >
-                <span className="ms" aria-hidden="true">{BLOCK_KINDS[kind].icon}</span>
-                {BLOCK_KINDS[kind].label}
-              </button>
-            ))}
-          </div>
-
-          <label className="block-field">
-            <span className="block-field-label">Label</span>
-            <input
-              className="block-input"
-              value={draft.label}
-              placeholder={BLOCK_KINDS[draft.kind].label}
-              onChange={(e) => onChange({ ...draft, label: e.target.value })}
-              aria-label="Block label"
-            />
-          </label>
-
-          <div className="block-times">
-            <TimeStepper
-              label="From"
-              valueMs={draft.startMs}
-              tz={tz}
-              onChange={(startMs) => onChange({ ...draft, startMs, endMs: Math.max(draft.endMs, startMs + STEP_MS) })}
-            />
-            <TimeStepper
-              label="To"
-              valueMs={draft.endMs}
-              tz={tz}
-              min={draft.startMs + STEP_MS}
-              onChange={(endMs) => onChange({ ...draft, endMs })}
-            />
-            <span className="block-duration">{durationMin} min</span>
-          </div>
-
-          <label className="block-field">
-            <span className="block-field-label">Note (optional)</span>
-            <input
-              className="block-input"
-              value={draft.note}
-              placeholder="e.g. north gate, with Ana"
-              onChange={(e) => onChange({ ...draft, note: e.target.value })}
-              aria-label="Block note"
-            />
-          </label>
-
-          {!valid && <p className="block-error"><span className="ms" style={{ fontSize: 14 }}>error</span> That time overlaps a set or another plan.</p>}
-
-          <button className="btn btn-primary" disabled={!valid} onClick={() => onCommit(draft)}>
-            <span className="ms">{draft.id ? "check" : "add"}</span> {draft.id ? "Save" : "Add to plan"}
-          </button>
-          {onDelete && (
-            <button className="plan-menu-item danger" onClick={onDelete}>
-              <span className="ms">delete</span> Remove from plan
-            </button>
-          )}
-        </div>
+    <Sheet onClose={onClose} label={draft.id ? "Edit plan" : "Add to your day"}>
+      <div className="sheet-head">
+        <div className="poster sheet-title">{draft.id ? "Edit plan" : "Add to your day"}</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+      <div className="sheet-body">
+        <div className="block-presets">
+          {PRESET_ORDER.map((kind) => (
+            <button
+              key={kind}
+              className={`block-preset${draft.kind === kind ? " on" : ""}`}
+              onClick={() => pickKind(kind)}
+              aria-pressed={draft.kind === kind}
+            >
+              <span className="ms" aria-hidden="true">{BLOCK_KINDS[kind].icon}</span>
+              {BLOCK_KINDS[kind].label}
+            </button>
+          ))}
+        </div>
+
+        <label className="block-field">
+          <span className="block-field-label">Label</span>
+          <input
+            className="block-input"
+            value={draft.label}
+            placeholder={BLOCK_KINDS[draft.kind].label}
+            onChange={(e) => onChange({ ...draft, label: e.target.value })}
+            aria-label="Block label"
+          />
+        </label>
+
+        <div className="block-times">
+          <TimeStepper
+            label="From"
+            valueMs={draft.startMs}
+            tz={tz}
+            onChange={(startMs) => onChange({ ...draft, startMs, endMs: Math.max(draft.endMs, startMs + STEP_MS) })}
+          />
+          <TimeStepper
+            label="To"
+            valueMs={draft.endMs}
+            tz={tz}
+            min={draft.startMs + STEP_MS}
+            onChange={(endMs) => onChange({ ...draft, endMs })}
+          />
+          <span className="block-duration">{durationMin} min</span>
+        </div>
+
+        <label className="block-field">
+          <span className="block-field-label">Note (optional)</span>
+          <input
+            className="block-input"
+            value={draft.note}
+            placeholder="e.g. north gate, with Ana"
+            onChange={(e) => onChange({ ...draft, note: e.target.value })}
+            aria-label="Block note"
+          />
+        </label>
+
+        {!valid && <p className="block-error"><span className="ms" style={{ fontSize: 14 }}>error</span> That time overlaps a set or another plan.</p>}
+
+        <button className="btn btn-primary" disabled={!valid} onClick={() => onCommit(draft)}>
+          <span className="ms">{draft.id ? "check" : "add"}</span> {draft.id ? "Save" : "Add to plan"}
+        </button>
+        {onDelete && (
+          <button className="plan-menu-item danger" onClick={onDelete}>
+            <span className="ms">delete</span> Remove from plan
+          </button>
+        )}
+      </div>
+    </Sheet>
   );
 }
 
@@ -684,56 +673,52 @@ function TravelSheet({
   const hm = (ms: number): string => timeInZone(new Date(ms).toISOString(), tz);
 
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">Tight walk</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-        <div className="travel-summary">
-          <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
-          {info.walkMinutes} min from {info.fromStageName} to {item.slot.stageName} — about {lost} min overlaps.
-        </div>
-        <div className="sheet-body">
-          <button
-            className={`travel-opt${info.resolution === "leave-early" ? " on" : ""}`}
-            disabled={!leaveFeasible}
-            onClick={onLeaveEarly}
-          >
-            <span className="ms">logout</span>
-            <span className="min0">
-              <span className="travel-opt-title">Leave {prev?.label ?? "the set"} early</span>
-              <span className="travel-opt-sub">
-                {leaveFeasible ? `Catch all of ${item.slot.label}. Leave at ${hm(departMs)} — miss the last ${lost} min.` : "Not enough time to make this walk."}
-              </span>
-            </span>
-            {info.resolution === "leave-early" && <span className="ms travel-opt-check">check_circle</span>}
-          </button>
-
-          <button
-            className={`travel-opt${info.resolution === "arrive-late" ? " on" : ""}`}
-            onClick={onArriveLate}
-          >
-            <span className="ms">login</span>
-            <span className="min0">
-              <span className="travel-opt-title">Arrive at {item.slot.label} late</span>
-              <span className="travel-opt-sub">
-                Stay to the end of {prev?.label ?? "the set"}. Arrive {hm(arriveMs)} — miss the first {lost} min.
-              </span>
-            </span>
-            {info.resolution === "arrive-late" && <span className="ms travel-opt-check">check_circle</span>}
-          </button>
-
-          {info.explicit && (
-            <button className="plan-menu-item" onClick={onClear}>
-              <span className="ms">restart_alt</span> Use the default again
-            </button>
-          )}
-        </div>
+    <Sheet onClose={onClose} label="Tight walk">
+      <div className="sheet-head">
+        <div className="poster sheet-title">Tight walk</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+      <div className="travel-summary">
+        <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
+        {info.walkMinutes} min from {info.fromStageName} to {item.slot.stageName} — about {lost} min overlaps.
+      </div>
+      <div className="sheet-body">
+        <button
+          className={`travel-opt${info.resolution === "leave-early" ? " on" : ""}`}
+          disabled={!leaveFeasible}
+          onClick={onLeaveEarly}
+        >
+          <span className="ms">logout</span>
+          <span className="min0">
+            <span className="travel-opt-title">Leave {prev?.label ?? "the set"} early</span>
+            <span className="travel-opt-sub">
+              {leaveFeasible ? `Catch all of ${item.slot.label}. Leave at ${hm(departMs)} — miss the last ${lost} min.` : "Not enough time to make this walk."}
+            </span>
+          </span>
+          {info.resolution === "leave-early" && <span className="ms travel-opt-check">check_circle</span>}
+        </button>
+
+        <button
+          className={`travel-opt${info.resolution === "arrive-late" ? " on" : ""}`}
+          onClick={onArriveLate}
+        >
+          <span className="ms">login</span>
+          <span className="min0">
+            <span className="travel-opt-title">Arrive at {item.slot.label} late</span>
+            <span className="travel-opt-sub">
+              Stay to the end of {prev?.label ?? "the set"}. Arrive {hm(arriveMs)} — miss the first {lost} min.
+            </span>
+          </span>
+          {info.resolution === "arrive-late" && <span className="ms travel-opt-check">check_circle</span>}
+        </button>
+
+        {info.explicit && (
+          <button className="plan-menu-item" onClick={onClear}>
+            <span className="ms">restart_alt</span> Use the default again
+          </button>
+        )}
+      </div>
+    </Sheet>
   );
 }
 

@@ -18,8 +18,8 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
   test("removes, adds and swaps a set from the timeline", async ({ page }) => {
     // Build a plan: favorite a few sets across stages, lock in, view My Plan.
     await page.goto("/timetable");
-    await page.addStyleTag({ content: FREEZE });
     await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
+    await page.addStyleTag({ content: FREEZE });
 
     const stages = page.locator(".tt-content .stage");
     const stageCount = Math.min(await stages.count(), 5);
@@ -28,7 +28,7 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
       if (await hearts.count()) await hearts.first().click();
     }
 
-    await page.locator(".tt-lockin").click();
+    await page.locator(".tt-lk").click();
     await page.addStyleTag({ content: FREEZE });
     let guard = 0;
     while ((await page.locator(".lk-clash-title").count()) > 0 && guard++ < 40) {
@@ -42,8 +42,9 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
     const before = await page.locator(".plan-card").count();
     expect(before).toBeGreaterThan(1);
 
-    // Swap (best-effort: only if a non-clashing alternative exists around that slot).
-    await page.locator(".plan-card").first().click();
+    // Swap (best-effort: only if a non-clashing alternative exists around that slot). The card body
+    // opens the artist sheet; the per-set menu (Swap / Remove / Map) opens from the more_vert button.
+    await page.locator(".plan-state-ico-btn").first().click();
     await expect(page.locator(".sheet .sheet-title")).toBeVisible();
     await page.locator(".plan-menu-item", { hasText: "Swap set" }).click();
     await expect(page.locator(".sheet .sheet-title", { hasText: "Swap" })).toBeVisible();
@@ -56,7 +57,7 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
     }
 
     // Remove a set → the timeline drops exactly one card.
-    await page.locator(".plan-card").first().click();
+    await page.locator(".plan-state-ico-btn").first().click();
     await page.locator(".plan-menu-item", { hasText: "Remove from plan" }).click();
     await expect(page.locator(".plan-card")).toHaveCount(before - 1);
     await page.screenshot({ path: "e2e/screenshots/r8-myplan-removed.png" });

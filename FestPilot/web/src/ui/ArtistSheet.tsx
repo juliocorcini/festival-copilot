@@ -7,11 +7,11 @@
  * Pure presentation over a prebuilt `ArtistDetail` (see domain/artistDetail) — no time/lineup math
  * here. Brand glyphs are small inline SVGs (Material Symbols carries no brand logos).
  */
-import { useEffect, useRef } from "react";
 import type { ArtistSocials } from "../data/types";
 import type { ArtistDetail } from "../domain/artistDetail";
 import { PHOTO_WIDTH } from "../lib/photo";
 import { ArtistPhoto } from "./ArtistPhoto";
+import { Sheet } from "./Sheet";
 
 const SOCIAL_ORDER = [
   "instagram",
@@ -124,26 +124,6 @@ export function ArtistSheet({
   detail: ArtistDetail;
   onClose: () => void;
 }): JSX.Element {
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  // A11y: focus the close button on open, close on Esc, and return focus to the trigger on unmount.
-  useEffect(() => {
-    const previouslyFocused = (typeof document !== "undefined" ? document.activeElement : null) as
-      | HTMLElement
-      | null;
-    // preventScroll: the sheet animates up from translateY(100%); focusing without it makes the
-    // browser scroll the background (the timetable) to reveal the off-screen button — a visible jump.
-    closeRef.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      previouslyFocused?.focus?.();
-    };
-  }, [onClose]);
-
   const links = SOCIAL_ORDER.filter((key) => detail.socials[key]).map((key) => ({
     key,
     href: detail.socials[key] as string,
@@ -155,80 +135,70 @@ export function ArtistSheet({
   const showWeekend = new Set(detail.slots.map((s) => s.weekendName).filter(Boolean)).size > 1;
 
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div
-        className="sheet on artist-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label={detail.name}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sheet-grip" />
-        <div className="sheet-head artist-sheet-head">
-          <button ref={closeRef} className="ms sheet-x" aria-label="Close" onClick={onClose}>
-            close
-          </button>
-        </div>
-
-        <div className="sheet-body artist-sheet-body">
-          <div className="artist-sheet-hero">
-            <ArtistPhoto
-              src={detail.imageUrl}
-              name={detail.name}
-              width={PHOTO_WIDTH.grid}
-              className="artist-sheet-photo"
-            />
-          </div>
-
-          <h2 className="poster artist-sheet-name">{detail.name}</h2>
-
-          {links.length > 0 && (
-            <div className="artist-sheet-socials">
-              {links.map((link) => (
-                <a
-                  key={link.key}
-                  className="artist-sheet-social"
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={link.label}
-                  title={link.label}
-                >
-                  <SocialGlyph kind={link.key} />
-                </a>
-              ))}
-            </div>
-          )}
-
-          {detail.slots.length > 0 ? (
-            <ul className="artist-sheet-slots">
-              {detail.slots.map((slot, index) => (
-                <li className="artist-sheet-slot" key={`${slot.stageName}-${slot.start}-${index}`}>
-                  <span
-                    className="artist-sheet-dot"
-                    style={{ background: slot.stageColorKey }}
-                    aria-hidden="true"
-                  />
-                  <div className="artist-sheet-slot-text">
-                    <div className="artist-sheet-stage">
-                      {slot.stageName}
-                      {showWeekend && slot.weekendName && (
-                        <span className="artist-sheet-wk">{slot.weekendName}</span>
-                      )}
-                    </div>
-                    <div className="artist-sheet-when">
-                      {slot.dayLabel} {slot.dateLabel} · {slot.start}–{slot.end}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="artist-sheet-empty">Set times to be announced.</p>
-          )}
-        </div>
+    <Sheet onClose={onClose} label={detail.name} className="artist-sheet">
+      <div className="sheet-head artist-sheet-head">
+        <button className="ms sheet-x" aria-label="Close" onClick={onClose}>
+          close
+        </button>
       </div>
-    </>
+
+      <div className="sheet-body artist-sheet-body">
+        <div className="artist-sheet-hero">
+          <ArtistPhoto
+            src={detail.imageUrl}
+            name={detail.name}
+            width={PHOTO_WIDTH.grid}
+            className="artist-sheet-photo"
+          />
+        </div>
+
+        <h2 className="poster artist-sheet-name">{detail.name}</h2>
+
+        {links.length > 0 && (
+          <div className="artist-sheet-socials">
+            {links.map((link) => (
+              <a
+                key={link.key}
+                className="artist-sheet-social"
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                title={link.label}
+              >
+                <SocialGlyph kind={link.key} />
+              </a>
+            ))}
+          </div>
+        )}
+
+        {detail.slots.length > 0 ? (
+          <ul className="artist-sheet-slots">
+            {detail.slots.map((slot, index) => (
+              <li className="artist-sheet-slot" key={`${slot.stageName}-${slot.start}-${index}`}>
+                <span
+                  className="artist-sheet-dot"
+                  style={{ background: slot.stageColorKey }}
+                  aria-hidden="true"
+                />
+                <div className="artist-sheet-slot-text">
+                  <div className="artist-sheet-stage">
+                    {slot.stageName}
+                    {showWeekend && slot.weekendName && (
+                      <span className="artist-sheet-wk">{slot.weekendName}</span>
+                    )}
+                  </div>
+                  <div className="artist-sheet-when">
+                    {slot.dayLabel} {slot.dateLabel} · {slot.start}–{slot.end}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="artist-sheet-empty">Set times to be announced.</p>
+        )}
+      </div>
+    </Sheet>
   );
 }

@@ -230,7 +230,9 @@ function NowHero({
             <div>
               <div className="now-next-label">{vm.leaveInMinutes <= 0 ? "LEAVE" : "LEAVE IN"}</div>
               <div className="big-count">
-                {vm.leaveInMinutes <= 0 ? "now" : vm.leaveInMinutes}
+                <span key={vm.leaveInMinutes} className="count-pop">
+                  {vm.leaveInMinutes <= 0 ? "now" : vm.leaveInMinutes}
+                </span>
                 {vm.leaveInMinutes > 0 && <span style={{ fontSize: 24 }}>min</span>}
               </div>
             </div>
@@ -244,7 +246,9 @@ function NowHero({
           <div>
             <div className="now-next-label">{daysAhead > 0 ? "DOORS IN" : "STARTS IN"}</div>
             <div className="big-count">
-              {daysAhead > 0 ? daysAhead : startsInMin}
+              <span key={daysAhead > 0 ? `d${daysAhead}` : `m${startsInMin}`} className="count-pop">
+                {daysAhead > 0 ? daysAhead : startsInMin}
+              </span>
               <span style={{ fontSize: daysAhead > 0 ? 18 : 24 }}>
                 {daysAhead > 0 ? (daysAhead === 1 ? "day" : "days") : "min"}
               </span>

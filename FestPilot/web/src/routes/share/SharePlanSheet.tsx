@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlanSlot } from "../../domain/types";
 import { drawPlanPoster, planPosterBlob, type PosterFormat, type PosterInput } from "../../lib/planPoster";
 import { copyPlanText, downloadBlob, formatPlanText, sharePlanImage } from "../../lib/share";
+import { Sheet } from "../../ui/Sheet";
 
 interface Props {
   festivalName: string;
@@ -95,47 +96,43 @@ export function SharePlanSheet({ festivalName, dayName, slots, timeZone, onClose
   };
 
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on share-sheet">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">Share your plan</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-
-        <div className="share-preview">
-          <canvas ref={canvasRef} className={`share-canvas ${format}`} aria-label="Plan poster preview" />
-        </div>
-
-        <div className="seg share-format">
-          <button className={format === "story" ? "on" : ""} onClick={() => setFormat("story")}>
-            <span className="ms" style={{ fontSize: 15 }}>crop_portrait</span> Story
-          </button>
-          <button className={format === "square" ? "on" : ""} onClick={() => setFormat("square")}>
-            <span className="ms" style={{ fontSize: 15 }}>crop_square</span> Square
-          </button>
-        </div>
-
-        <div className="share-actions">
-          <button className="btn btn-primary" disabled={busy} onClick={() => void shareImage()}>
-            <span className="ms">ios_share</span>
-            Share image
-          </button>
-          <div className="share-actions-row">
-            <button className="btn btn-ghost" disabled={busy} onClick={() => void saveImage()}>
-              <span className="ms">download</span>
-              Save
-            </button>
-            <button className="btn btn-ghost" disabled={busy} onClick={() => void copyText()}>
-              <span className="ms">link</span>
-              Copy link
-            </button>
-          </div>
-        </div>
-
-        <p className="share-note">{msg ?? "Drop it in your Instagram story or send it on WhatsApp."}</p>
+    <Sheet onClose={onClose} label="Share your plan" className="share-sheet">
+      <div className="sheet-head">
+        <div className="poster sheet-title">Share your plan</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+
+      <div className="share-preview">
+        <canvas ref={canvasRef} className={`share-canvas ${format}`} aria-label="Plan poster preview" />
+      </div>
+
+      <div className="seg share-format">
+        <button className={format === "story" ? "on" : ""} onClick={() => setFormat("story")}>
+          <span className="ms" style={{ fontSize: 15 }}>crop_portrait</span> Story
+        </button>
+        <button className={format === "square" ? "on" : ""} onClick={() => setFormat("square")}>
+          <span className="ms" style={{ fontSize: 15 }}>crop_square</span> Square
+        </button>
+      </div>
+
+      <div className="share-actions">
+        <button className="btn btn-primary" disabled={busy} onClick={() => void shareImage()}>
+          <span className="ms">ios_share</span>
+          Share image
+        </button>
+        <div className="share-actions-row">
+          <button className="btn btn-ghost" disabled={busy} onClick={() => void saveImage()}>
+            <span className="ms">download</span>
+            Save
+          </button>
+          <button className="btn btn-ghost" disabled={busy} onClick={() => void copyText()}>
+            <span className="ms">link</span>
+            Copy link
+          </button>
+        </div>
+      </div>
+
+      <p className="share-note">{msg ?? "Drop it in your Instagram story or send it on WhatsApp."}</p>
+    </Sheet>
   );
 }

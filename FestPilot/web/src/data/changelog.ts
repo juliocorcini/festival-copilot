@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.25.2";
+export const APP_VERSION = "0.26.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.26.0",
+    date: "2026-06-26",
+    title: "Sheets you can swipe away",
+    icon: "swipe_down",
+    whatsNew: [
+      "Any pop-up panel (artist details, the plan menus, share, lock-in pickers) now closes with a natural swipe down — drag it and it follows your finger, flick it and it's gone.",
+      "The bottom tab bar gained a little gliding marker that slides to whatever tab you're on, so it's always clear where you are.",
+      "Live countdowns (your 'leave in' minutes) gently fade as they tick — a small sign the app is keeping time with you.",
+    ],
+    howToTest: [
+      "Open any artist from the lineup, then drag the panel downwards — it tracks your finger and closes when you let go past a quarter of the way (or on a quick flick). A small drag just springs back.",
+      "Do the same on the My Plan set menu, the share sheet and the Lock-in 'all clashes' / 'add artist' sheets — they all behave the same now.",
+      "Switch tabs at the bottom and watch the marker slide. If you've set 'reduce motion' on your phone, everything cuts instantly instead.",
+    ],
+  },
   {
     version: "0.25.2",
     date: "2026-06-26",

@@ -6,6 +6,22 @@
 
 ---
 
+## Native polish 7/10 26/06 — Drag-to-dismiss sheets + base `Sheet` + nav indicator + number pop (D3+D5.2) ✅ — v0.26.0
+
+> Fase 7 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`). **Todo bottom sheet fecha arrastando pra baixo**, seguindo o dedo 1:1 (flick rápido ou >25% da altura fecha; abaixo volta com mola), com haptic no dismiss e **reduced-motion = corte**.
+> **D3 — `ui/Sheet.tsx` base (Q4 = todos os sheets):** um componente único para o padrão `scrim + sheet` que centraliza scrim, grip, drag-to-dismiss, Esc, foco no dialog (volta ao gatilho no unmount) e `aria-modal`. Convertidos **8 sheets**: ArtistSheet, SharePlanSheet, PlanItemMenu, SetPickerSheet, BlockSheet, TravelSheet (My Plan), ClashesSheet, AddSheet (Lock-in). Hook `useSheetDrag` espelha a disciplina do pull-to-refresh: **arma só com o corpo (`.sheet-body`) no topo**, `preventDefault` cirúrgico, math pura em `lib/sheetDrag.ts`.
+> **D5 parte 2 — motion:** indicador deslizante na bottom-nav (`.nav-ind`, transform por `--active` 0–4, reduced-motion-gated) + "pop" (fade) dos números ao vivo (leave-in / countdown) no Now via re-key do span.
+> **Exclusão deliberada:** `StagePickSheet` (`.sheet-scrim`/`.stage-sheet`, `position:fixed` sobre o mapa) — contexto de posicionamento diferente; manteve o tap-no-scrim pra fechar. Fica pra uma rodada de melhoria se o conselho pedir.
+> `tsc` limpo · **371 testes** (+17: 11 `sheetDrag` math + 6 `Sheet` DOM — arrasta/fecha, arrasto curto volta, corpo rolado não arma, preventDefault só ao dominar, Esc, scrim) · `vite build` ok (`index-BSFyCvqD.js`) · **e2e `lockin` + `myplan` verdes** após sanar 2 seletores **pré-existentes desatualizados** (`.tt-lockin`→`.tt-lk` do redesign do Timetable; e o menu do set agora abre pelo `more_vert`/`.plan-state-ico-btn`, não pelo corpo do card que abre o ArtistSheet).
+
+### Current State (this batch)
+- **No ar (v0.26.0):** todos os bottom sheets padrão arrastam pra fechar; bottom-nav com marcador deslizante; números do Now dão um fade ao mudar.
+- **Novos:** `lib/sheetDrag.ts` (+test), `ui/Sheet.tsx` (+test), `ui/useSheetDrag.ts`.
+- **Editados:** `ui/ArtistSheet.tsx`, `routes/share/SharePlanSheet.tsx`, `routes/MyPlanScreen.tsx` (4 sheets), `routes/lockin/LockInScreen.tsx` (2 sheets), `app/BottomNav.tsx` (useLocation + `.nav-ind`), `routes/NowScreen.tsx` (count-pop key), `styles.css` (`.nav-ind`, `.count-pop`), `e2e/{myplan,lockin}.spec.js` (seletores atuais), `data/changelog.ts` + `web/package.json` (**0.26.0**).
+- **Guardrail intacto:** nenhuma mudança no domínio de plano/grupo; conversão é só de apresentação (markup/comportamento de sheet). `slotToShareInput` e `buildSquadPlan` intocados.
+
+---
+
 ## Feedback patch 26/06 — Link de convite atravessa o onboarding → auto-join no squad ✅ DEPLOYED — v0.25.2
 
 > Item mais pedido: quem clica num link de convite (`/j/:token`) sem ter o app **perdia o contexto** — o `RequireOnboarding` redirecionava pro `/onboarding` descartando o token, e o onboarding terminava em `/` (home). A pessoa nunca entrava no squad.

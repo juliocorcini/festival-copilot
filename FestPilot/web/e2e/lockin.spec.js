@@ -33,7 +33,7 @@ test.describe("Phase 2 — lock-in clash resolver → my plan", () => {
     expect(await page.locator(".set.fav").count()).toBeGreaterThan(0);
 
     // Into the resolver.
-    await page.locator(".tt-lockin").click();
+    await page.locator(".tt-lk").click();
     await page.addStyleTag({ content: FREEZE });
     await Promise.race([
       page.locator(".lk-clash-title").waitFor({ state: "visible", timeout: 20_000 }),

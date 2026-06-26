@@ -23,6 +23,7 @@ import { daysForWeekends, initials } from "../../lib/festival";
 import { haptic } from "../../lib/haptics";
 import { dayLabel, stageColor, timeInZone } from "../../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../../ui/states";
+import { Sheet } from "../../ui/Sheet";
 import { SharePlanSheet } from "../share/SharePlanSheet";
 import type { TravelMatrix } from "../../domain/types";
 
@@ -425,34 +426,30 @@ function ClashesSheet({
 }): JSX.Element {
   const windows = previewRemainingClashes(snapshot);
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">All clashes</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-        <div className="sheet-body">
-          {windows.length === 0 ? (
-            <p className="lk-note">No clashes left — you're all set.</p>
-          ) : (
-            windows.map((w, i) => (
-              <div key={`${w.startMs}-${i}`} className="row">
-                <div className="lk-ava" style={{ color: i === 0 ? "var(--accent)" : "var(--muted)" }}>{i + 1}</div>
-                <div className="min0">
-                  <div className="lk-clash-row-title">
-                    {timeInZone(new Date(w.startMs).toISOString(), tz)} – {timeInZone(new Date(w.endMs).toISOString(), tz)}
-                  </div>
-                  <div className="lk-opt-meta">{w.optionCount} favorites overlap{i === 0 ? " · resolving now" : ""}</div>
-                </div>
-              </div>
-            ))
-          )}
-          <p className="lk-note">This is a preview — picking a longer set can absorb a later clash.</p>
-        </div>
+    <Sheet onClose={onClose} label="All clashes">
+      <div className="sheet-head">
+        <div className="poster sheet-title">All clashes</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+      <div className="sheet-body">
+        {windows.length === 0 ? (
+          <p className="lk-note">No clashes left — you're all set.</p>
+        ) : (
+          windows.map((w, i) => (
+            <div key={`${w.startMs}-${i}`} className="row">
+              <div className="lk-ava" style={{ color: i === 0 ? "var(--accent)" : "var(--muted)" }}>{i + 1}</div>
+              <div className="min0">
+                <div className="lk-clash-row-title">
+                  {timeInZone(new Date(w.startMs).toISOString(), tz)} – {timeInZone(new Date(w.endMs).toISOString(), tz)}
+                </div>
+                <div className="lk-opt-meta">{w.optionCount} favorites overlap{i === 0 ? " · resolving now" : ""}</div>
+              </div>
+            </div>
+          ))
+        )}
+        <p className="lk-note">This is a preview — picking a longer set can absorb a later clash.</p>
+      </div>
+    </Sheet>
   );
 }
 
@@ -474,43 +471,39 @@ function AddSheet({
     ? nearby.filter((set) => set.label.toLowerCase().includes(query.trim().toLowerCase()))
     : nearby;
   return (
-    <>
-      <div className="scrim on" onClick={onClose} />
-      <div className="sheet on">
-        <div className="sheet-grip" />
-        <div className="sheet-head">
-          <div className="poster sheet-title">Add an artist</div>
-          <button className="ms sheet-x" onClick={onClose}>close</button>
-        </div>
-        <div className="win-tag">
-          Playing around <b>{timeInZone(new Date(window.startMs).toISOString(), tz)} – {timeInZone(new Date(window.endMs).toISOString(), tz)}</b>
-        </div>
-        <div className="search">
-          <span className="ms" style={{ color: "var(--muted)", fontSize: 20 }}>search</span>
-          <input placeholder="Search any artist…" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
-        <div className="sheet-body">
-          <div className="sheet-section">NEARBY THIS TIME</div>
-          {filtered.length === 0 ? (
-            <p className="lk-note">No other acts around this slot.</p>
-          ) : (
-            filtered.map((set) => (
-              <div key={set.id} className="row">
-                <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
-                <div className="min0">
-                  <div className="lk-add-name">{set.label}</div>
-                  <div className="lk-opt-meta">
-                    <span className="dot" style={{ background: stageColor(set.stageName) }} />
-                    {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
-                  </div>
-                </div>
-                <button className="addpill" onClick={() => onAdd(set)}>Add</button>
-              </div>
-            ))
-          )}
-          <p className="lk-note">Only acts playing near this slot are shown — so the choice still makes sense.</p>
-        </div>
+    <Sheet onClose={onClose} label="Add an artist">
+      <div className="sheet-head">
+        <div className="poster sheet-title">Add an artist</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
-    </>
+      <div className="win-tag">
+        Playing around <b>{timeInZone(new Date(window.startMs).toISOString(), tz)} – {timeInZone(new Date(window.endMs).toISOString(), tz)}</b>
+      </div>
+      <div className="search">
+        <span className="ms" style={{ color: "var(--muted)", fontSize: 20 }}>search</span>
+        <input placeholder="Search any artist…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+      <div className="sheet-body">
+        <div className="sheet-section">NEARBY THIS TIME</div>
+        {filtered.length === 0 ? (
+          <p className="lk-note">No other acts around this slot.</p>
+        ) : (
+          filtered.map((set) => (
+            <div key={set.id} className="row">
+              <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
+              <div className="min0">
+                <div className="lk-add-name">{set.label}</div>
+                <div className="lk-opt-meta">
+                  <span className="dot" style={{ background: stageColor(set.stageName) }} />
+                  {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
+                </div>
+              </div>
+              <button className="addpill" onClick={() => onAdd(set)}>Add</button>
+            </div>
+          ))
+        )}
+        <p className="lk-note">Only acts playing near this slot are shown — so the choice still makes sense.</p>
+      </div>
+    </Sheet>
   );
 }
