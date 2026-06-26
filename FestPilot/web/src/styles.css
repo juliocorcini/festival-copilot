@@ -2355,6 +2355,18 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
 .toast-error { border-color: rgba(220, 38, 38, 0.45); }
 .toast-error .toast-ico { color: var(--danger-ink); }
 
+/* Touch-target comfort (WCAG 2.5.5 / 2.5.8). These close buttons stay visually compact — the toast
+   is intentionally small, the sheet × is a quiet glyph — but their TAP area is expanded to ~44px
+   with a transparent overlay. Purely additive: no glyph resize, no layout shift, and the overlay
+   only overlaps non-interactive neighbours (the message text / sheet title), so it never steals a
+   tap from another control. */
+.toast-x,
+.sheet-x,
+.stage-sheet-close { position: relative; }
+.toast-x::before,
+.sheet-x::before,
+.stage-sheet-close::before { content: ""; position: absolute; inset: -11px; }
+
 /* --- A11y safeguard (Phase 10b audit · P1) ---------------------------------------------------- */
 /* A global "reduce" net so EVERY animation/transition is honoured — the older INFINITE ones
    (loading shimmer, onboarding swipe cue, live presence + safety pulses, spinners) predate the

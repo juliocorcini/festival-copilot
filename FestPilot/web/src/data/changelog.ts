@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.1";
+export const APP_VERSION = "0.31.2";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,19 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.2",
+    date: "2026-06-26",
+    title: "Easier to tap with one hand",
+    icon: "touch_app",
+    whatsNew: [
+      "The small ✕ buttons — on the little confirmation pop-ups and at the top of the slide-up panels — are now easier to hit, with a bigger invisible tap area around them.",
+      "They look exactly the same; there's just more room for your thumb, which helps when you're on the move in a crowd.",
+    ],
+    howToTest: [
+      "Open any slide-up panel (e.g. tap an artist) and tap near — not exactly on — its ✕: it still closes. Same for the ✕ on a confirmation pop-up.",
+    ],
+  },
   {
     version: "0.31.1",
     date: "2026-06-26",

@@ -6,6 +6,24 @@
 
 ---
 
+## Rodada de melhoria R3 26/06 — A11y de toque: hit-area dos close × ≥44px ✅ — v0.31.2
+
+> Terceira rodada, conselho HOW rápido (Critic/Maintainability + Advocate). Fecha o item P3 da auditoria 10b (× do toast 26px) ampliado numa **varredura** dos close × mais reusados.
+> **Achado da varredura:** os menores alvos interativos são os botões de fechar — `.sheet-x` (~22px, o × no head de **todos** os 8 sheets base), `.toast-x` (26px) e `.stage-sheet-close` (34px). `.ava` (40px) fica (é avatar visual; redimensionar mexe no header). Todos **acima** do mínimo AA (24px), mas abaixo do confortável 44px (WCAG 2.5.5/2.5.8) — relevante no festival (uma mão, movimento).
+> **Mudança (CSS-only, layout-neutra):** `position: relative` + `::before { inset: -11px }` transparente em `.toast-x`/`.sheet-x`/`.stage-sheet-close` → área de toque ~44px **sem** redimensionar o glifo nem mudar layout. O overlay só cobre vizinhos **não-interativos** (texto da mensagem / título do sheet, sempre à esquerda do ×), então nunca rouba toque de outro controle.
+> **Verificação:** SafetyScreen (a única flaky no run paralelo) **não** usa nenhuma dessas classes — flakiness era carga de máquina; safety isolada passou 4/4 (`--repeat-each=2`). `vite build` 360.36 kB (sem aviso 500 kB) · **e2e 30/30** (fecha-por-× coberto em ArtistSheet/MyPlan/Lock-in/Share/SquadEvents/StagePick + dismiss de toast).
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.2):** os × de fechar (toasts + sheets) têm alvo de toque ~44px; **visual idêntico, layout idêntico.** Nada removido.
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo:** rodada a definir pelo conselho (candidatos: split de CSS, estados de erro/empty, micro-perf de re-render).
+
+### Escopo (arquivos)
+- **Editados (web):** `styles.css` (bloco de hit-area `.toast-x`/`.sheet-x`/`.stage-sheet-close`), `data/changelog.ts` + `web/package.json` (**0.31.2**).
+- **Guardrail intacto:** CSS-only; nenhum glifo redimensionado, nenhum layout alterado; domínio/backend intocados.
+
+---
+
 ## Rodada de melhoria R2 26/06 — Consistência: StagePickSheet → drag-to-dismiss ✅ — v0.31.1
 
 > Segunda rodada, conselho HOW rápido (Architect+Critic). Fecha a dívida deliberada da Fase 7: o `StagePickSheet` (responder ping com palco / escolher palco de encontro) era o **único** bottom sheet sem arrastar-pra-fechar — só tap no scrim/×.
