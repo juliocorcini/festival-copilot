@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.21.1";
+export const APP_VERSION = "0.22.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.22.0",
+    date: "2026-06-26",
+    title: "Screens that glide",
+    icon: "animation",
+    whatsNew: [
+      "Moving between screens now fades smoothly instead of snapping — the app feels calmer and more polished as you tap around.",
+      "Every screen opens at the top, so you always start where you expect.",
+      "While the Lineup loads for the first time, you'll see card-shaped placeholders (not generic bars) so it's clear the artist grid is on its way.",
+      "Honors 'reduce motion': if your phone asks for less animation, screens switch instantly with no fade.",
+    ],
+    howToTest: [
+      "Tap between the bottom tabs (Now / Timetable / Lineup / Map / Squad) — each should fade in gently and start scrolled to the top.",
+      "Open the Lineup on a fresh load — the loading placeholder is a grid of cards.",
+      "Turn on 'Reduce Motion' in your phone settings — navigation becomes an instant cut (no fade).",
+    ],
+  },
   {
     version: "0.21.1",
     date: "2026-06-26",

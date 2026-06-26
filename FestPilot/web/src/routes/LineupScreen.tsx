@@ -115,7 +115,7 @@ export function LineupScreen(): JSX.Element {
     });
   }, [acts, query, dayFilter, favOnly, favorites]);
 
-  if (status === "loading") return <LoadingState />;
+  if (status === "loading") return <LoadingState variant="grid" />;
   if (status === "error" || !lineup) return <ErrorState message={error ?? "Could not load."} onRetry={reload} />;
 
   const dataState = festivalDataState(lineup.hasLineup, lineup.hasTimetable);

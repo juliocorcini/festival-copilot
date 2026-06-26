@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { useLineup } from "../data/useLineup";
 import { useFavorites } from "../data/localStore";
@@ -19,12 +19,18 @@ export function AppLayout(): JSX.Element {
   );
   useKeepFavoritePhotos(imageByKey, favorites.keys);
 
+  // Re-key the scroll container by route so each tab fades in (route-fade) and starts at the top,
+  // instead of a hard cut. Keying `<main>` (not a wrapper) keeps the height chain intact for
+  // full-height screens (timetable/map). The fade is opacity-only (see styles.css) so it never
+  // creates a containing block that would break the fixed view-switch dock / Artist Sheet.
+  const { pathname } = useLocation();
+
   // ArtistSheetProvider spans every primary tab so any surface can open the Artist Detail Sheet
   // (ART-6). The sheet renders as a direct child of `.app`, overlaying the bottom nav (z-index 50).
   return (
     <div className="app">
       <ArtistSheetProvider lineup={lineup}>
-        <main className="scr">
+        <main className="scr route-fade" key={pathname}>
           <Outlet />
         </main>
         <BottomNav />

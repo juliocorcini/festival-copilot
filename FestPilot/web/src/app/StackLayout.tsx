@@ -1,10 +1,12 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 /** Shell for pushed/stack screens (settings, profile) — no bottom nav (DEC-032). */
 export function StackLayout(): JSX.Element {
+  // Re-key by route so each pushed screen fades in and starts at the top (see AppLayout note).
+  const { pathname } = useLocation();
   return (
     <div className="app">
-      <main className="scr">
+      <main className="scr route-fade" key={pathname}>
         <Outlet />
       </main>
     </div>

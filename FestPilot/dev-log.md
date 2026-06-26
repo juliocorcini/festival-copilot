@@ -6,7 +6,28 @@
 
 ---
 
-## Fix 26/06 — haptic só em tap genuíno (não em scroll) ✅ — v0.21.1
+## Native polish 3/7 26/06 — transição de tela + skeleton em grid ✅ DEPLOYED — v0.22.0
+
+> O "A": telas deixam de **cortar seco** e passam a **fade-in** na navegação; cada tela abre no topo. Conselho rápido (Architect+Critic):
+> achado que **skeletons já existem** (`LoadingState` shimmer em TODAS as telas via `status==='loading'`; zero spinner) e o lineup é **cacheado**
+> (`useSyncExternalStore`, abas instantâneas) → a transição com remount **não** flasha skeleton. Decisão técnica crítica: **opacity-only** —
+> `transform` deixaria containing-block (`translate(0)` ≠ `none`) e quebraria `position:fixed` (dock do view-switch, scrims, ArtistSheet) dentro do `.scr`.
+> `tsc` limpo · **308** testes · `vite build` ok · e2e de navegação (shell+timetable) verdes · deploy `--branch=master` (deploy único: inclui também o fix 0.21.1).
+
+### Current State (this batch)
+- **Transição de tela no ar (v0.22.0).** `.scr` (container de scroll) é **re-keyado por pathname** nos dois layouts (`AppLayout`/`StackLayout`) → cada navegação **re-anima** a entrada (`.route-fade`, opacity 0→1, 200ms, `cubic-bezier(.2,.8,.2,1)`) e **reseta o scroll pro topo** (bônus do remount). Antes era corte seco e o scroll às vezes "herdava" a posição.
+- **Por que keyar o `<main>` e não um wrapper:** telas full-height (`.tt-screen`/`.lockin`/`.route`/mapa `position:absolute`) dependem da cadeia de `height:100%` a partir do `.scr`; um wrapper intermediário quebraria isso. Keyar o próprio `.scr` preserva a cadeia.
+- **Skeleton content-shaped no Lineup:** `LoadingState` ganhou `variant: "list" | "grid"`; Lineup usa `grid` (6 cards `aspect-ratio 3/4`) — placeholder de cold-load que lembra o grid real, não barras genéricas. Demais telas seguem `list`.
+- **Acessibilidade:** `.route-fade` só sob `@media (prefers-reduced-motion: no-preference)` → quem pede menos movimento tem corte instantâneo.
+- **Adiado (escopo):** **UI otimista** (amplo/arriscado — toca mutações em todo lugar) fica para uma fase própria. Skeletons por-tela além do grid também adiados (genérico já cobre).
+- **Tests:** web **308** unit (40 files; sem novos — mudança é layout/CSS) · `tsc` limpo · e2e shell+timetable verdes.
+
+### Escopo (arquivos)
+- **Editados:** `app/AppLayout.tsx` + `app/StackLayout.tsx` (`key={pathname}` + `.route-fade` no `<main>`), `ui/states.tsx` (`LoadingState` `variant`), `routes/LineupScreen.tsx` (`variant="grid"`), `styles.css` (`@keyframes route-fade-in` + `.route-fade` reduced-motion-gated + `.shimmer-grid`), `data/changelog.ts` + `web/package.json` (**0.22.0**).
+
+---
+
+## Fix 26/06 — haptic só em tap genuíno (não em scroll) ✅ DEPLOYED — v0.21.1
 
 > Bug reportado: rolar/arrastar o dedo no Timetable/Lineup **já vibrava** (os cards são botões, e o delegate estava em `pointerdown`,
 > que dispara no início do toque, inclusive num scroll). Conselho rápido (Architect+Critic): trocar o delegate de `pointerdown` → **`click`**

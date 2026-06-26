@@ -2095,3 +2095,23 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
   .heart-btn:active, .gc-heart:active { transform: scale(0.8); }
   .tt-content .heart:active { transform: translateY(-50%) scale(0.8); } /* preserve vertical centering */
 }
+
+/* ── Route transition (native polish · phase 3) ───────────────────────────────────
+   Each routed screen fades in on navigation instead of a hard cut. Applied to the
+   scroll container (.scr), which is re-keyed by pathname in the layouts so the
+   animation replays per navigation. OPACITY-ONLY on purpose: a transform here would
+   leave a containing block (translateX/Y(0) ≠ none) that permanently breaks the
+   position:fixed view-switch dock / scrims / Artist Sheet living inside .scr.
+   Gated on prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .route-fade { animation: route-fade-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+}
+@keyframes route-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Content-shaped loading skeleton for the card grid (Lineup) — closer to the real
+   layout than stacked bars, so the cold-load placeholder reads as "cards incoming". */
+.shimmer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.shimmer-grid .shimmer-card { height: auto; aspect-ratio: 3 / 4; border-radius: 18px; }

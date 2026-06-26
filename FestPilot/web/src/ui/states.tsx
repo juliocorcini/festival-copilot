@@ -44,14 +44,31 @@ export function EmptyState({ icon = "inbox", title, message, action }: EmptyStat
   );
 }
 
-/** A few stacked shimmer bars — the generic "loading" skeleton. */
-export function LoadingState({ rows = 4 }: { rows?: number }): JSX.Element {
+/**
+ * The generic "loading" skeleton: a hero block + either stacked bars (`list`, default) or a card
+ * grid (`grid`, for the Lineup) so the placeholder roughly matches the screen it stands in for.
+ */
+export function LoadingState({
+  rows = 4,
+  variant = "list",
+}: {
+  rows?: number;
+  variant?: "list" | "grid";
+}): JSX.Element {
   return (
     <div className="screen" aria-busy="true" aria-label="Loading">
       <div className="shimmer" style={{ height: 132 }} />
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="shimmer" style={{ height: 56 }} />
-      ))}
+      {variant === "grid" ? (
+        <div className="shimmer-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="shimmer shimmer-card" />
+          ))}
+        </div>
+      ) : (
+        Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="shimmer" style={{ height: 56 }} />
+        ))
+      )}
     </div>
   );
 }
