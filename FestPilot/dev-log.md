@@ -6,6 +6,24 @@
 
 ---
 
+## Rodada de melhoria R8 26/06 — A11y: focus-trap na base Sheet (completa o padrão de dialog modal) ✅ — v0.31.6
+
+> Oitava rodada. **Conselho (O QUE/SE):** triagem honesta no teto de polish. **(A)** matar o flake de interação do SW (test-only, já recuperado pelo `retries:1`; único fix limpo = bloquear o SW, que sacrifica a fidelidade "as-shipped" do gate e pode **mascarar** regressão de SW/offline) → **DEFER**. **(B)** focus-trap na base `Sheet` → **vencedor**: hoje a `Sheet` faz foco-no-open + Escape + `aria-modal` + restauração de foco, mas **não** prende o Tab — gap do padrão WAI-ARIA de dialog modal (WCAG 2.4.3). Aditivo, **1 arquivo**, beneficia **todos** os sheets (ArtistSheet, StagePick, MeetingPoint, Share… todos usam a base `Sheet`). **(C)** features (busca no lineup) → exigem decisão no brain, fora de polish. Lente dominante = **Architect** (correção contida e padrão).
+> **Conselho (COMO):** estende o `keydown` que a `Sheet` **já** registra (trata Escape) para também envolver `Tab`/`Shift+Tab`: coleta os focáveis do diálogo, faz wrap nas bordas (último→primeiro / primeiro→último) e **puxa o foco de volta** se ele estiver no container ou tiver escapado. Sem novo componente, sem CSS, sem dependência. `aria-modal` já escondia o fundo do AT; o trap fecha o caso de **teclado/switch** (PWA desktop/tablet).
+> **Decisão de risco (Critic):** é código de **produção** → bump **0.31.6** + changelog. **Sem auto-redeploy** — Julio está testando no celular; o trap é só-teclado (invisível no mobile), então empurrar um deploy agora só mostraria o banner "nova versão" no meio do teste. Deploy oferecido no fim. Nada removido; Escape/drag-to-dismiss/scrim/restauração de foco **intactos**.
+> **Verificação:** `tsc` limpo · **unit 411 verde** (50 arquivos; `Sheet.test.tsx` agora **10**: +4 do trap — wrap nas 2 pontas, Tab no container → 1º focável, e "sem focáveis → foco preso no diálogo") · `vite build` verde (main **367 kB**, embute 0.31.6) · **e2e 29 + 1 flaky-recuperado** (onboarding = a corrida de interação do SW **deferida** acima — **não** é regressão do trap: o trap é só-teclado e o onboarding falha no `fill→click`, sem Tab).
+> **R8.A (sinalizada, deferida):** flake de interação do SW (`controllerchange→reload` limpa estado no meio de `fill`/multi-step; ~1 por suíte, recuperado pelo `retries:1`). Fix candidato sem perder fidelidade: esperar o SW **assentar** após o `goto`. Rodada futura, se o Julio quiser fechar o último flaky.
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.6):** com um teclado, qualquer painel (detalhe de artista, picker de palco, compartilhar plano) mantém o foco dentro dele; Esc fecha e devolve o foco. Aditivo; invisível no toque/mobile. **Não deployado** (Julio testando; deploy ofertado).
+- **Próximo:** teto de polish atingido — o maior valor restante é de **produto** (ex.: busca/filtros no lineup) e precisa de decisão do Julio (brain/decision-log), ou fechar o último flaky de e2e (R8.A). Bom ponto de revisão.
+
+### Escopo (arquivos)
+- **Editados (web):** `ui/Sheet.tsx` (+ trap de Tab no `useEffect` de a11y já existente), `ui/Sheet.test.tsx` (+4 testes), `data/changelog.ts` (+entrada, `APP_VERSION` → **0.31.6**), `package.json` (**0.31.6**).
+- **Guardrail intacto:** sem novo componente/CSS; nenhum assert/teste removido; Escape/drag/scrim/restauração de foco preservados; só código de a11y aditivo na base `Sheet`.
+
+---
+
 ## Rodada de melhoria R7 26/06 — hardening sistêmico do e2e (freeze via fixture, fim da corrida do addStyleTag) ✅ — sem bump (só-de-teste)
 
 > Sétima rodada. **Conselho (O QUE/SE):** triagem honesta num app já muito maduro. Candidatos user-facing **descartados por evidência**: `loading="lazy"` regrediria a estratégia de fotos (SW cache-first + `usePhotoPrefetch`/`useKeepFavoritePhotos`); a11y de sheet **já** existe (`Sheet` tem `role=dialog`+`aria-modal`+Escape+focus-trap+restauração); offline/PWA maduro; reduced-motion amplamente gated; busca no lineup = **feature nova** (exige decisão no brain, não cabe em polish). Vencedor por impacto×risco×evidência: **dívida de teste isolada** — 38 `page.addStyleTag({content:FREEZE})` pós-`goto` em 17 specs compartilhavam a corrida com o `controllerchange→reload` do SW ("Execution context was destroyed", ~10%/goto). Lente dominante = **Strategist** (ROI composto: o guardrail honesto protege o requisito-mãe do Julio — "sem regressões" — em toda rodada futura). Risco de produção = **zero** (só-de-teste).

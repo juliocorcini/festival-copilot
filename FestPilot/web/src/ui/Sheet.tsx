@@ -27,7 +27,9 @@ export function Sheet({ onClose, label, labelledBy, className, children }: Sheet
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
-  // A11y: focus the dialog on open, close on Esc, and return focus to the trigger on unmount.
+  // A11y: focus the dialog on open, close on Esc, trap Tab within the dialog, and return focus to the
+  // trigger on unmount. The trap completes the WAI-ARIA modal-dialog pattern (`aria-modal` already
+  // hides the background from AT; this also keeps keyboard focus from escaping behind the scrim).
   useEffect(() => {
     const previouslyFocused = (typeof document !== "undefined" ? document.activeElement : null) as
       | HTMLElement
@@ -35,8 +37,40 @@ export function Sheet({ onClose, label, labelledBy, className, children }: Sheet
     // preventScroll: the sheet animates up from translateY(100%); focusing without it makes the
     // browser scroll the background to reveal the off-screen dialog — a visible jump.
     sheetRef.current?.focus({ preventScroll: true });
+
+    const trapTab = (e: KeyboardEvent): void => {
+      const root = sheetRef.current;
+      if (!root) return;
+      const focusable = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      const active = (document.activeElement as HTMLElement | null) ?? null;
+      // No focusable children: keep focus pinned on the dialog container itself.
+      if (focusable.length === 0) {
+        e.preventDefault();
+        root.focus({ preventScroll: true });
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      // Wrap at the edges, and pull focus back in if it sits on the container or has escaped the dialog.
+      if (e.shiftKey) {
+        if (active === first || active === root || !root.contains(active)) {
+          e.preventDefault();
+          last.focus({ preventScroll: true });
+        }
+      } else if (active === last || active === root || !root.contains(active)) {
+        e.preventDefault();
+        first.focus({ preventScroll: true });
+      }
+    };
+
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") onCloseRef.current();
+      if (e.key === "Escape") {
+        onCloseRef.current();
+        return;
+      }
+      if (e.key === "Tab") trapTab(e);
     };
     document.addEventListener("keydown", onKey);
     return () => {

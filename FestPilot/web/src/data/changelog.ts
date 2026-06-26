@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.5";
+export const APP_VERSION = "0.31.6";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,19 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.6",
+    date: "2026-06-26",
+    title: "Panels keep your keyboard focus",
+    icon: "keyboard_tab",
+    whatsNew: [
+      "When a panel is open — an artist's details, a stage picker, sharing your plan — keyboard and switch-control users now stay inside it: Tab cycles through just that panel instead of drifting onto the dimmed page behind it.",
+      "Esc still closes it and focus returns to wherever you were, so moving around with a keyboard feels predictable.",
+    ],
+    howToTest: [
+      "Open any bottom sheet (tap an artist on the Lineup, or 'Share my plan'), then press Tab repeatedly on a keyboard: focus loops within the panel and never lands on the page behind it. Press Esc and focus jumps back to the control you opened it from.",
+    ],
+  },
   {
     version: "0.31.5",
     date: "2026-06-26",

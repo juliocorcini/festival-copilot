@@ -39,6 +39,32 @@ function mountSheet(onClose = vi.fn()): {
   return { onClose, sheet, scrim, body };
 }
 
+function mountSheetWithButtons(onClose = vi.fn()): {
+  onClose: ReturnType<typeof vi.fn>;
+  sheet: HTMLElement;
+  first: HTMLElement;
+  last: HTMLElement;
+} {
+  const utils = render(
+    <Sheet onClose={onClose} label="Test sheet">
+      <div className="sheet-head">
+        <button type="button">first</button>
+      </div>
+      <div className="sheet-body">
+        <button type="button">last</button>
+      </div>
+    </Sheet>
+  );
+  const sheet = utils.container.querySelector(".sheet") as HTMLElement;
+  const buttons = utils.container.querySelectorAll("button");
+  return {
+    onClose,
+    sheet,
+    first: buttons[0] as HTMLElement,
+    last: buttons[buttons.length - 1] as HTMLElement,
+  };
+}
+
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
   vi.runOnlyPendingTimers();
@@ -107,5 +133,37 @@ describe("Sheet drag-to-dismiss", () => {
       fireEvent.click(scrim);
     });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Sheet focus trap", () => {
+  it("wraps Tab at the last focusable back to the first", () => {
+    const { first, last } = mountSheetWithButtons();
+    act(() => last.focus());
+    const notPrevented = fireEvent.keyDown(document, { key: "Tab" });
+    expect(notPrevented).toBe(false); // default prevented → the trap engaged
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("wraps Shift+Tab at the first focusable to the last", () => {
+    const { first, last } = mountSheetWithButtons();
+    act(() => first.focus());
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("pulls focus to the first focusable when Tab is pressed on the dialog container", () => {
+    const { sheet, first } = mountSheetWithButtons();
+    act(() => sheet.focus());
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("keeps focus on the dialog when it has no focusable children", () => {
+    const { sheet } = mountSheet();
+    act(() => sheet.focus());
+    const notPrevented = fireEvent.keyDown(document, { key: "Tab" });
+    expect(notPrevented).toBe(false);
+    expect(document.activeElement).toBe(sheet);
   });
 });
