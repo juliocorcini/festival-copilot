@@ -1,5 +1,29 @@
 # FestPilot — Project Status
 
+> Last updated: 2026-06-26 (native-polish roadmap **Phases 5–10 COMPLETE** + **8 council-guided improvement rounds R1–R8**; app **v0.31.6**, fully deployed to Production. See `FestPilot/dev-log.md` for the live per-round detail.)
+
+## Native-polish roadmap + improvement rounds (2026-06-26) — COMPLETE & DEPLOYED
+
+Source roadmap: `brain/documents/2026-06-26-native-polish-and-features-roadmap.md`. Live execution detail: `FestPilot/dev-log.md` (newest entries on top).
+
+**Phases 5–10 (native polish & features) — shipped, v0.24.0 → v0.30.0:** group events (`group_event`, fixed-time squad commitments, D1 migration **0015**), a personal **+ squad home** (gated "Squad now" card), unified **toasts/feedback** (favorite, lock, errors), and an **a11y/perf/responsive audit** with P0–P2 fixes + report (Phase 10a `v0.29.0`, 10b `v0.30.0`). Post-phase **general review**: server + web suites, builds, 3-flow smoke, zero regressions, group-lock guardrail (e2e 30/30).
+
+**8 council-guided improvement rounds (R1–R8) — additive, no regressions, nothing removed:**
+- **R1** PERF code-split per cluster (initial bundle 555→~360 kB) · `v0.31.0`
+- **R2** `StagePickSheet` drag-to-dismiss (full sheet parity) · `v0.31.1`
+- **R3** touch a11y (≈44px tap targets) · `v0.31.2`
+- **R4** PERF idle-prefetch of the lazy Map/Squad chunks · `v0.31.3`
+- **R5** RESILIENCE app-wide `ErrorBoundary` (no blank screen on a failed lazy chunk) · `v0.31.4`
+- **R6** SPA-navigation a11y (route announcer + skip-to-content + per-route title) · `v0.31.5`
+- **R7** e2e hardening (shared freeze fixture via `addInitScript` → killed the `addStyleTag`/SW-reload race across 18 specs) · test-only, no bump
+- **R8** A11y: keyboard **focus-trap** in the base `Sheet` (completes the WAI-ARIA modal-dialog pattern; benefits every sheet) · `v0.31.6`
+
+**Production (deployed 2026-06-26, verified):** web **v0.31.6** at `festpilot.pages.dev` (deploy `d276f936`); Worker at `festpilot.trippilot.workers.dev` (healthy); D1 through migration **0015**. Prod smoke green (`/api/health`, `/festivals/:id/lineup|stages|map`, SPA routes 200). Tests: **web 411 unit · e2e 30/30 (1 retry-recovered SW-interaction flake, deferred R8.A) · builds OK**.
+
+**Next (needs Julio):** safe-polish ceiling reached — the highest-value remaining work is **product** (e.g. lineup search/filters — a new feature requiring a decision-log entry), or closing the last e2e flake (**R8.A**: wait for the SW to settle after `goto`, fidelity-preserving).
+
+---
+
 > Last updated: 2026-06-24 (review-remediation pass **COMPLETE** — **R0–R11 all CLOSED**; admin back-office live, app **v0.14.0**; **R11.1c REOPENED + DONE** per DEC-063/064 — festival onboarding/management + map editor live; only POI editor + travel-matrix still deferred → V1.1)
 
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
