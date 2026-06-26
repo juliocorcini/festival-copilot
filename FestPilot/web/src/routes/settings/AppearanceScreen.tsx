@@ -1,7 +1,8 @@
 import { StackHeader } from "../../app/StackHeader";
-import { useAppearance, useHaptics, useLanguage, type AppearanceMode, type Language } from "../../app/settings";
+import { useAppearance, useHaptics, useLanguage, useTravelPref, type AppearanceMode, type Language } from "../../app/settings";
 import { canVibrate, haptic } from "../../lib/haptics";
 import { useT, type MessageKey } from "../../i18n";
+import type { TravelPref } from "../../domain/plan";
 
 const APPEARANCE: { id: AppearanceMode; label: MessageKey; hint: MessageKey }[] = [
   { id: "auto", label: "appearance.auto", hint: "appearance.autoHint" },
@@ -14,11 +15,17 @@ const LANGUAGES: { id: Language; label: string }[] = [
   { id: "pt", label: "Português" },
 ];
 
+const TRAVEL_PREFS: { id: TravelPref; label: MessageKey }[] = [
+  { id: "leave-early", label: "travel.leaveEarly" },
+  { id: "arrive-late", label: "travel.arriveLate" },
+];
+
 export function AppearanceScreen(): JSX.Element {
   const t = useT();
   const { mode, setMode, palette } = useAppearance();
   const { language, setLanguage } = useLanguage();
   const { haptics, setHaptics } = useHaptics();
+  const { travelPref, setTravelPref } = useTravelPref();
   const activeHint = APPEARANCE.find((o) => o.id === mode)?.hint ?? "appearance.autoHint";
 
   const toggleHaptics = (): void => {
@@ -66,6 +73,26 @@ export function AppearanceScreen(): JSX.Element {
           </div>
           <p className="row-sub" style={{ marginTop: 10 }}>
             {t("appearance.languageNote")}
+          </p>
+        </section>
+
+        <section className="glass" style={{ padding: 16 }}>
+          <span className="label">{t("travel.title")}</span>
+          <div className="seg" style={{ marginTop: 12, width: "100%", display: "flex" }}>
+            {TRAVEL_PREFS.map((opt) => (
+              <button
+                key={opt.id}
+                className={travelPref === opt.id ? "on" : ""}
+                style={{ flex: 1 }}
+                data-haptic="light"
+                onClick={() => setTravelPref(opt.id)}
+              >
+                {t(opt.label)}
+              </button>
+            ))}
+          </div>
+          <p className="row-sub" style={{ marginTop: 10 }}>
+            {t("travel.note")}
           </p>
         </section>
 

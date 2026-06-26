@@ -7,7 +7,7 @@
  * the anonymous uid adopts this store — no data loss.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PlanSlot } from "../domain/types";
+import type { PlanBlock, PlanSlot } from "../domain/types";
 
 export const STORE_KEY = "fp.store.v1";
 const STORE_EVENT = "fp:store";
@@ -28,6 +28,8 @@ export interface OnboardingState {
 
 export interface PersistedPlan {
   slots: PlanSlot[];
+  /** Personal, on-device-only activities slotted into the day (DEC-073). Absent on pre-feature plans. */
+  blocks?: PlanBlock[];
   lockedAt: number;
 }
 
@@ -91,7 +93,17 @@ export function acknowledgeLineup(store: StoreShape, actKeys: string[]): StoreSh
 
 export function setPlan(store: StoreShape, festivalId: string, dayKey: string, slots: PlanSlot[]): StoreShape {
   const key = planKey(festivalId, dayKey);
-  return { ...store, plans: { ...store.plans, [key]: { slots, lockedAt: Date.now() } } };
+  // Preserve any personal blocks already attached to this day — editing sets must not drop them.
+  const blocks = store.plans[key]?.blocks;
+  return { ...store, plans: { ...store.plans, [key]: { slots, ...(blocks ? { blocks } : {}), lockedAt: Date.now() } } };
+}
+
+/** Persist this day's personal blocks (DEC-073), leaving the locked sets + lock time untouched. */
+export function setPlanBlocks(store: StoreShape, festivalId: string, dayKey: string, blocks: PlanBlock[]): StoreShape {
+  const key = planKey(festivalId, dayKey);
+  const existing = store.plans[key];
+  if (!existing) return store;
+  return { ...store, plans: { ...store.plans, [key]: { ...existing, blocks } } };
 }
 
 export function clearPlan(store: StoreShape, festivalId: string, dayKey: string): StoreShape {
@@ -201,6 +213,7 @@ export function usePlan(
 ): {
   plan: PersistedPlan | null;
   save: (slots: PlanSlot[]) => void;
+  saveBlocks: (blocks: PlanBlock[]) => void;
   clear: () => void;
 } {
   const [state, update] = useStore();
@@ -208,6 +221,7 @@ export function usePlan(
   return {
     plan: key ? state.plans[key] ?? null : null,
     save: (slots) => festivalId && dayKey && update((store) => setPlan(store, festivalId, dayKey, slots)),
+    saveBlocks: (blocks) => festivalId && dayKey && update((store) => setPlanBlocks(store, festivalId, dayKey, blocks)),
     clear: () => festivalId && dayKey && update((store) => clearPlan(store, festivalId, dayKey)),
   };
 }

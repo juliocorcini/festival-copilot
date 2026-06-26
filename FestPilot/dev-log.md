@@ -6,6 +6,26 @@
 
 ---
 
+## Native polish 6/10 26/06 — My Plan editável + blocos pessoais + deslocamento inteligente (D1+D7) + update descobrível ✅ DEPLOYED — v0.25.0
+
+> Fase 6 do roadmap (D1 + D7 num só deploy). **My Plan ganha modo Editar**: blocos pessoais (comer/descansar/água/encontro/explorar/custom) com presets, steppers ±15min e nota; CTA "Preencher" nos vãos longos; **invariante zero-overlap** preservada (planEdit puro).
+> **Deslocamento inteligente (D7):** quando a caminhada entre dois sets invadiria o próximo, o plano resolve por **sair antes** (corta o fim) ou **chegar depois** (empurra o início) — escolha por trajeto + **preferência padrão** em Settings → Aparência. Tempos honestos via effectiveStart/End centralizados em `planSlot.ts`.
+> **Guardrail:** blocos e escolhas de trajeto ficam **só no device** (`slotToShareInput` não serializa `lateStartMs`/blocks) — nunca vão pro grupo.
+> **Update descobrível:** "Buscar atualização"/"Forçar atualização" agora na tela **Sobre** (ao lado da versão), via hook `useUpdateCheck`; Offline reusa o mesmo. (Auto-discovery em background já existia desde v0.19.0.)
+> `tsc` limpo · **341 testes** · `vite build` ok (`index-FQcZCJwT.js`) · deploy `--branch=master` → festpilot.pages.dev.
+
+### Current State (this batch)
+- **No ar (v0.25.0):** My Plan editável + blocos + travel; Settings → Aparência tem o seletor "Caminhadas apertadas" (Sair antes / Chegar depois); Sobre tem "Buscar atualização".
+- **Domínio novo:** `planSlot.ts` (effectiveStart/End/Interval honrando `cutMs`+`lateStartMs`); `plan.ts` reescrito (resolveSets + interleave blocks/gaps + `TravelInfo` por transição); `planEdit.ts` (+addBlock/resizeBlock/editBlockMeta/removeBlock + applyLeaveEarly/applyArriveLate/clearTravelChoice + rangeIsFree).
+- **Store/Settings:** `PersistedPlan.blocks` + `setPlanBlocks` + `usePlan.saveBlocks`; `settings.useTravelPref` (default leave-early).
+- **Pós-lock CTA:** Celebration ganhou "Add breaks & plans" → My Plan já em `?edit=1`.
+
+### Escopo (arquivos)
+- **Novos:** `domain/planSlot.ts`, `app/useUpdateCheck.ts`.
+- **Editados:** `domain/plan.ts`, `domain/planEdit.ts`, `domain/nowNext.ts`, `data/localStore.ts`, `data/api.ts`, `app/settings.ts`, `routes/MyPlanScreen.tsx` (reescrita), `routes/settings/{AboutScreen,OfflineScreen,AppearanceScreen}.tsx`, `routes/lockin/LockInScreen.tsx`, `routes/squad/{ShareMyPlanScreen,SquadBlockScreen}.tsx`, `i18n/index.ts`, `styles.css`, `data/changelog.ts` + `web/package.json` (**0.25.0**) · testes estendidos (plan/planEdit/nowNext/localStore/api).
+
+---
+
 ## Native polish 5/10 26/06 — Timetable defaults (1h + linhas sempre on) + animações de entrada ✅ DEPLOYED — v0.24.0
 
 > Primeira fase do roadmap re-faseado (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`, conselho D1–D7, decisões Q1–Q8 travadas).

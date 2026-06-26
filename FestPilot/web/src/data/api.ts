@@ -23,6 +23,7 @@ import type {
   TravelTimeDto,
   UserDto,
 } from "./types";
+import type { PlanSlot } from "../domain/types";
 import { authHeader, getAuthToken } from "./authToken";
 
 const DEFAULT_API = "https://festpilot.trippilot.workers.dev";
@@ -114,6 +115,18 @@ export interface ShareSlotInput {
   performanceId: string;
   startOverrideUtc?: string | null;
   endOverrideUtc?: string | null;
+}
+
+/**
+ * Map a personal plan slot to the squad-share payload (guardrail, DEC-073/074): the squad only ever
+ * receives the set id plus a partial-set early-leave (`endOverrideUtc`). Personal arrive-late shifts
+ * (`lateStartMs`) and personal blocks are NEVER serialized — the group plan aggregates real set times.
+ */
+export function slotToShareInput(slot: PlanSlot): ShareSlotInput {
+  return {
+    performanceId: slot.setId,
+    endOverrideUtc: slot.cutMs != null ? new Date(slot.cutMs).toISOString() : null,
+  };
 }
 
 export interface ShareMyPlanInput {

@@ -1,19 +1,12 @@
 /**
- * Pure edits for a locked plan (R8, DEC-017/029/041). The Lock-in resolver builds a ZERO-overlap
- * plan by construction; these helpers let the user tweak it afterwards (remove / add / swap a set)
- * WITHOUT re-walking Lock-in, while preserving that same zero-overlap invariant. No DOM/React.
+ * Pure edits for a locked plan (R8, DEC-017/029/041/073/074). The Lock-in resolver builds a ZERO-overlap
+ * plan by construction; these helpers let the user tweak it afterwards — remove / add / swap a set,
+ * slot in a personal block (eat/rest/…), or choose how to absorb a travel overlap — WITHOUT re-walking
+ * Lock-in and while preserving that same zero-overlap invariant. No DOM/React.
  */
 import { overlaps } from "./intervals";
-import type { PlannableSet, PlanSlot } from "./types";
-
-/** Effective end honoring a partial-set early-leave cut (DEC-018). */
-function effectiveEnd(slot: PlanSlot): number {
-  return slot.cutMs != null && slot.cutMs > slot.startMs && slot.cutMs < slot.endMs ? slot.cutMs : slot.endMs;
-}
-
-function slotInterval(slot: PlanSlot): { startMs: number; endMs: number } {
-  return { startMs: slot.startMs, endMs: effectiveEnd(slot) };
-}
+import { effectiveInterval } from "./planSlot";
+import type { PlanBlock, PlannableSet, PlanSlot } from "./types";
 
 function setToSlot(set: PlannableSet): PlanSlot {
   return {
@@ -25,6 +18,7 @@ function setToSlot(set: PlannableSet): PlanSlot {
     startMs: set.startMs,
     endMs: set.endMs,
     cutMs: null,
+    lateStartMs: null,
   };
 }
 
@@ -44,7 +38,7 @@ export function setFits(
   if (!Number.isFinite(candidate.startMs) || !Number.isFinite(candidate.endMs) || candidate.endMs <= candidate.startMs) {
     return false;
   }
-  return slots.every((slot) => slot.setId === exceptSetId || !overlaps(candidate, slotInterval(slot)));
+  return slots.every((slot) => slot.setId === exceptSetId || !overlaps(candidate, effectiveInterval(slot)));
 }
 
 /** Remove a set from the plan. Removing can never create an overlap, so the invariant always holds. */
@@ -82,4 +76,87 @@ export function fittingSwaps(slots: PlanSlot[], oldSetId: string, candidates: Pl
 export function fittingAdds(slots: PlanSlot[], candidates: PlannableSet[]): PlannableSet[] {
   const chosenActs = new Set(slots.map((slot) => slot.actKey));
   return candidates.filter((set) => !chosenActs.has(set.actKey) && setFits(slots, set));
+}
+
+// ── Personal blocks (DEC-073) ────────────────────────────────────────────────
+// Blocks live ONLY in the local plan; they never overlap a set's effective interval or another block.
+
+function byBlockStart(a: PlanBlock, b: PlanBlock): number {
+  return a.startMs - b.startMs || a.endMs - b.endMs;
+}
+
+/** True iff `[startMs, endMs)` is free of every set's effective interval and every block (bar `exceptId`). */
+export function rangeIsFree(
+  slots: PlanSlot[],
+  blocks: PlanBlock[],
+  range: { startMs: number; endMs: number },
+  exceptBlockId?: string
+): boolean {
+  if (!Number.isFinite(range.startMs) || !Number.isFinite(range.endMs) || range.endMs <= range.startMs) return false;
+  if (slots.some((slot) => overlaps(range, effectiveInterval(slot)))) return false;
+  return blocks.every((block) => block.id === exceptBlockId || !overlaps(range, { startMs: block.startMs, endMs: block.endMs }));
+}
+
+/** Add a personal block, kept chronological. Returns `null` if it overlaps a set or another block. */
+export function addBlock(slots: PlanSlot[], blocks: PlanBlock[], block: PlanBlock): PlanBlock[] | null {
+  if (!rangeIsFree(slots, blocks, { startMs: block.startMs, endMs: block.endMs })) return null;
+  return [...blocks, block].sort(byBlockStart);
+}
+
+/** Move/resize a block to `[startMs, endMs)`. Returns `null` if it's unknown or would overlap. */
+export function resizeBlock(
+  slots: PlanSlot[],
+  blocks: PlanBlock[],
+  id: string,
+  startMs: number,
+  endMs: number
+): PlanBlock[] | null {
+  if (!blocks.some((block) => block.id === id)) return null;
+  if (!rangeIsFree(slots, blocks, { startMs, endMs }, id)) return null;
+  return blocks.map((block) => (block.id === id ? { ...block, startMs, endMs } : block)).sort(byBlockStart);
+}
+
+/** Update a block's kind/label/note without touching its times (always valid). */
+export function editBlockMeta(
+  blocks: PlanBlock[],
+  id: string,
+  patch: Partial<Pick<PlanBlock, "kind" | "label" | "note">>
+): PlanBlock[] {
+  return blocks.map((block) => (block.id === id ? { ...block, ...patch } : block));
+}
+
+/** Remove a block. */
+export function removeBlock(blocks: PlanBlock[], id: string): PlanBlock[] {
+  return blocks.filter((block) => block.id !== id);
+}
+
+// ── Travel choice (DEC-074) ──────────────────────────────────────────────────
+// Both options only ever SHRINK an effective interval (cut the end, or push the start), so neither can
+// create an overlap — the zero-overlap invariant is preserved without a fit check.
+
+/** Leave `fromSetId` early at `departMs` to make the walk into `toSetId` (clears any arrive-late there). */
+export function applyLeaveEarly(slots: PlanSlot[], fromSetId: string, toSetId: string, departMs: number): PlanSlot[] {
+  return slots.map((slot) => {
+    if (slot.setId === fromSetId) return { ...slot, cutMs: departMs };
+    if (slot.setId === toSetId) return { ...slot, lateStartMs: null };
+    return slot;
+  });
+}
+
+/** Arrive at `toSetId` late at `arriveMs` after the walk from `fromSetId` (clears any leave-early there). */
+export function applyArriveLate(slots: PlanSlot[], fromSetId: string, toSetId: string, arriveMs: number): PlanSlot[] {
+  return slots.map((slot) => {
+    if (slot.setId === toSetId) return { ...slot, lateStartMs: arriveMs };
+    if (slot.setId === fromSetId) return { ...slot, cutMs: null };
+    return slot;
+  });
+}
+
+/** Clear both travel adjustments for the `fromSetId → toSetId` transition (see the full sets). */
+export function clearTravelChoice(slots: PlanSlot[], fromSetId: string, toSetId: string): PlanSlot[] {
+  return slots.map((slot) => {
+    if (slot.setId === fromSetId) return { ...slot, cutMs: null };
+    if (slot.setId === toSetId) return { ...slot, lateStartMs: null };
+    return slot;
+  });
 }

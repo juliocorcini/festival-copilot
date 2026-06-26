@@ -6,20 +6,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
-import { api, type ShareSlotInput } from "../../data/api";
+import { api, slotToShareInput } from "../../data/api";
 import { useGroup } from "../../data/groups";
 import { useFavorites, usePlan, loadStore } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
-import type { PlanSlot } from "../../domain/types";
 import { stageColor, timeInZone } from "../../lib/format";
 import { ErrorState, LoadingState } from "../../ui/states";
-
-function slotToShare(slot: PlanSlot): ShareSlotInput {
-  return {
-    performanceId: slot.setId,
-    endOverrideUtc: slot.cutMs != null ? new Date(slot.cutMs).toISOString() : null,
-  };
-}
 
 export function ShareMyPlanScreen(): JSX.Element {
   const navigate = useNavigate();
@@ -76,7 +68,7 @@ export function ShareMyPlanScreen(): JSX.Element {
         await api.shareMyPlan(id, { day: fallbackDay, slots: [], shareFavorites: shareFav, favoriteActKeys });
       } else {
         for (const day of daysToShare) {
-          const slots = (store.plans[`${festivalId}:${day}`]?.slots ?? []).map(slotToShare);
+          const slots = (store.plans[`${festivalId}:${day}`]?.slots ?? []).map(slotToShareInput);
           await api.shareMyPlan(id, { day, slots, shareFavorites: shareFav, favoriteActKeys });
         }
       }

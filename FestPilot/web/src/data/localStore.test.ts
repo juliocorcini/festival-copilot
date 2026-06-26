@@ -10,11 +10,13 @@ import {
   saveStore,
   setOnboarding,
   setPlan,
+  setPlanBlocks,
   setProfile,
   STORE_KEY,
   toggleFavorite,
   type StoreShape,
 } from "./localStore";
+import type { PlanBlock } from "../domain/types";
 
 function slot(id: string, startMin: number, endMin: number): PlanSlot {
   return {
@@ -83,6 +85,23 @@ describe("onboarding + plan reducers", () => {
     expect(store.plans[planKey("tml", "2026-07-18")]!.slots).toHaveLength(2);
     store = clearPlan(store, "tml", "2026-07-18");
     expect(store.plans[planKey("tml", "2026-07-18")]).toBeUndefined();
+  });
+
+  it("attaches personal blocks without losing the locked sets, and re-saving sets keeps the blocks", () => {
+    const eat: PlanBlock = { id: "b1", kind: "eat", label: "Dinner", startMs: 60 * 60_000, endMs: 90 * 60_000 };
+    let store = setPlan(EMPTY_STORE, "tml", "2026-07-18", [slot("a", 0, 60)]);
+    store = setPlanBlocks(store, "tml", "2026-07-18", [eat]);
+    const key = planKey("tml", "2026-07-18");
+    expect(store.plans[key]!.blocks).toEqual([eat]);
+    // Editing sets afterwards must preserve the blocks (DEC-073).
+    store = setPlan(store, "tml", "2026-07-18", [slot("a", 0, 60), slot("c", 100, 160)]);
+    expect(store.plans[key]!.slots).toHaveLength(2);
+    expect(store.plans[key]!.blocks).toEqual([eat]);
+  });
+
+  it("ignores blocks for a day with no plan (nothing to attach to)", () => {
+    const eat: PlanBlock = { id: "b1", kind: "rest", label: "Nap", startMs: 0, endMs: 60_000 };
+    expect(setPlanBlocks(EMPTY_STORE, "tml", "2026-07-18", [eat])).toBe(EMPTY_STORE);
   });
 });
 

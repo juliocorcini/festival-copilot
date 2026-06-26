@@ -5,6 +5,8 @@
  */
 import { useNavigate } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
+import { useUpdateCheck } from "../../app/useUpdateCheck";
+import { useT, type TranslateFn } from "../../i18n";
 import { APP_ABOUT, APP_TAGLINE, APP_VERSION, CHANGELOG, CREATOR } from "../../data/changelog";
 
 function formatDate(iso: string): string {
@@ -21,6 +23,7 @@ const LINKS: { to: string; icon: string; title: string; sub: string }[] = [
 
 export function AboutScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   // The current release's date doubles as the build date — no separate constant to drift.
   const buildDate = CHANGELOG[0] ? formatDate(CHANGELOG[0].date) : "";
 
@@ -36,6 +39,7 @@ export function AboutScreen(): JSX.Element {
           <p className="about-tagline">{APP_TAGLINE}</p>
           <span className="pill about-version">v{APP_VERSION}</span>
           {buildDate && <p className="about-build">Updated {buildDate}</p>}
+          <AboutUpdate t={t} />
         </section>
 
         <section className="glass about-card">
@@ -110,6 +114,53 @@ export function AboutScreen(): JSX.Element {
         </p>
       </div>
     </>
+  );
+}
+
+/**
+ * Discoverable manual update, right by the version (R10.2). Re-checks for a new build; if one is
+ * waiting it switches to a one-tap reload, otherwise it states you're current. The "force" link is the
+ * last-resort hard refresh for long-open sessions. (The app also auto-discovers updates in the
+ * background — launch, foreground, reconnect, interval — and pops a global banner; this is the
+ * on-demand control for when the user wants to check right now.)
+ */
+function AboutUpdate({ t }: { t: TranslateFn }): JSX.Element {
+  const update = useUpdateCheck();
+
+  if (update.state === "updated") {
+    return (
+      <div className="about-update">
+        <span className="about-update-note ok">{t("update.ready")}</span>
+        <button className="about-update-btn on" data-haptic="medium" onClick={update.apply}>
+          <span className="ms" style={{ fontSize: 16 }}>restart_alt</span> {t("update.reload")}
+        </button>
+      </div>
+    );
+  }
+
+  const note =
+    update.state === "current"
+      ? t("update.current", { version: APP_VERSION })
+      : update.state === "unsupported"
+        ? t("update.unsupported")
+        : null;
+
+  return (
+    <div className="about-update">
+      <button
+        className="about-update-btn"
+        data-haptic="light"
+        disabled={update.state === "checking"}
+        onClick={update.check}
+      >
+        <span className="ms" style={{ fontSize: 16 }}>refresh</span>
+        {update.state === "checking" ? t("update.checking") : t("update.check")}
+      </button>
+      {note && <span className="about-update-note">{note}</span>}
+      <button className="link-btn" onClick={update.force}>
+        <span className="ms" style={{ fontSize: 15 }}>sync</span> {t("update.force")}
+      </button>
+    </div>
   );
 }
 

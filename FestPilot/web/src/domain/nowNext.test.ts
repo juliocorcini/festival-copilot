@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildNowNext, chronoNowNext, type HomeSet } from "./nowNext";
+import { buildNowNext, chronoNowNext, liveBlock, type HomeSet } from "./nowNext";
 import { flatTravelMatrix } from "./partialSet";
-import type { PlanSlot } from "./types";
+import type { PlanBlock, PlanSlot } from "./types";
 
 const MIN = 60_000;
 const travel = flatTravelMatrix(6); // 6 min between different stages, 0 same
@@ -48,6 +48,13 @@ describe("buildNowNext", () => {
     expect(buildNowNext(cut, travel, 45 * MIN).live).toBeNull(); // 45 ≥ cut(40)
   });
 
+  it("honors an arrive-late choice: not live until you arrive (DEC-074)", () => {
+    const late: PlanSlot = { ...slot("a", 0, 60, "s1"), lateStartMs: 20 * MIN };
+    expect(buildNowNext([late], travel, 10 * MIN).live).toBeNull(); // before your arrival at 20
+    expect(buildNowNext([late], travel, 30 * MIN).live?.setId).toBe("a"); // 20 ≤ 30 < 60
+    expect(buildNowNext([late], travel, 30 * MIN).progress).toBeCloseTo(0.25, 5); // (30−20)/(60−20)
+  });
+
   it("after the last set: nothing live or next", () => {
     const m = buildNowNext(plan, travel, 300 * MIN);
     expect(m.live).toBeNull();
@@ -88,5 +95,19 @@ describe("chronoNowNext (favorites source, R6)", () => {
   it("after every favorite has ended: hero is null (an honest empty state, not arbitrary)", () => {
     expect(chronoNowNext(favs, 300 * MIN).hero).toBeNull();
     expect(chronoNowNext([], 0).hero).toBeNull();
+  });
+});
+
+describe("liveBlock (personal block hero, DEC-073)", () => {
+  const blocks: PlanBlock[] = [
+    { id: "b1", kind: "eat", label: "Dinner", startMs: 60 * MIN, endMs: 90 * MIN },
+    { id: "b2", kind: "rest", label: "Nap", startMs: 120 * MIN, endMs: 150 * MIN },
+  ];
+
+  it("returns the block on now, or null between/before blocks", () => {
+    expect(liveBlock(blocks, 75 * MIN)?.id).toBe("b1");
+    expect(liveBlock(blocks, 130 * MIN)?.id).toBe("b2");
+    expect(liveBlock(blocks, 100 * MIN)).toBeNull();
+    expect(liveBlock([], 75 * MIN)).toBeNull();
   });
 });

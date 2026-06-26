@@ -17,7 +17,13 @@ export interface PlannableSet {
   weekendId: string | null;
 }
 
-/** A locked entry in the personal plan. `cutMs` records a partial-set early-leave (DEC-018). */
+/**
+ * A locked entry in the personal plan.
+ * - `cutMs` records a partial-set early-leave (DEC-018) — you leave before the scheduled end.
+ * - `lateStartMs` is the symmetric travel choice (DEC-074): you arrive AFTER the scheduled start,
+ *   used when walking from the previous set would otherwise make you miss its opening. Optional so
+ *   plans persisted before this field load unchanged (DEC-041, no plan migration).
+ */
 export interface PlanSlot {
   setId: string;
   actKey: string;
@@ -27,6 +33,25 @@ export interface PlanSlot {
   startMs: number;
   endMs: number;
   cutMs: number | null;
+  lateStartMs?: number | null;
+}
+
+/** A personal, on-device-only activity the user slots into their day (DEC-073) — never shared. */
+export type PlanBlockKind = "eat" | "rest" | "water" | "meet" | "explore" | "custom";
+
+/**
+ * A non-set block in the personal plan: eating, resting at the tent, water, meeting someone,
+ * exploring, or a custom note. Lives ONLY in the local plan and is filtered out of every group
+ * serialization (the squad plan is sets-only). Times are absolute ms; intervals never overlap a
+ * set's effective interval or another block.
+ */
+export interface PlanBlock {
+  id: string;
+  kind: PlanBlockKind;
+  label: string;
+  startMs: number;
+  endMs: number;
+  note?: string;
 }
 
 /** A chronological clash: 2+ favorites whose intervals chain-overlap (DEC-017/029). */

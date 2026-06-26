@@ -106,6 +106,11 @@ const EN = {
   "update.force": "Force update",
   "update.forcing": "Updating\u2026",
 
+  "travel.title": "Tight walks between stages",
+  "travel.leaveEarly": "Leave early",
+  "travel.arriveLate": "Arrive late",
+  "travel.note": "When the walk to your next set would overlap it, this is applied automatically. You can still change any single walk in My Plan.",
+
   // Shared palette words (used inside templated copy)
   "palette.day": "day",
   "palette.night": "night",
@@ -197,6 +202,11 @@ const PT: Partial<Record<MessageKey, string>> = {
   "update.later": "Dispensar",
   "update.force": "Forçar atualização",
   "update.forcing": "Atualizando\u2026",
+
+  "travel.title": "Caminhadas apertadas entre palcos",
+  "travel.leaveEarly": "Sair antes",
+  "travel.arriveLate": "Chegar depois",
+  "travel.note": "Quando a caminhada até o próximo show invadiria o horário dele, isso é aplicado automaticamente. Você ainda pode mudar cada trajeto no Meu Plano.",
 
   "palette.day": "dia",
   "palette.night": "noite",

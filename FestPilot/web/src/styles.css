@@ -1088,6 +1088,62 @@ a { color: inherit; text-decoration: none; }
 .plan-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .plan-chip { display: inline-flex; align-items: center; gap: 5px; appearance: none; cursor: pointer; font-size: 11px; font-weight: 600;
   padding: 5px 11px; border-radius: 999px; color: var(--muted); background: rgba(255, 255, 255, 0.05); border: 1px dashed rgba(255, 255, 255, 0.16); }
+.plan-chip.fill { color: var(--accent); border-style: solid; border-color: rgba(245, 166, 35, 0.4); background: rgba(245, 166, 35, 0.1); }
+
+/* My Plan — Edit mode + personal blocks + smart travel (F6, DEC-073/074). */
+.plan-actions { display: flex; align-items: center; gap: 8px; }
+.plan-edit-btn { display: inline-flex; align-items: center; gap: 5px; appearance: none; cursor: pointer; padding: 7px 13px; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--border); color: var(--ink); font-size: 13px; font-weight: 600; }
+.plan-edit-btn.on { border-color: rgba(245, 166, 35, 0.5); background: rgba(245, 166, 35, 0.12); color: var(--accent); }
+.plan-add-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Walk trade-off chip shown above a destination set when a travel choice is in effect. */
+.plan-travel-chip { display: flex; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; margin-bottom: 8px; appearance: none;
+  cursor: pointer; text-align: left; padding: 7px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; color: var(--muted);
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); }
+.plan-travel-chip.set { border-color: rgba(245, 166, 35, 0.4); }
+.plan-travel-chip.danger { color: var(--danger-ink); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+
+/* Personal block card on the timeline. */
+.plan-dot.block { border-color: var(--accent2); }
+.plan-card.block { gap: 12px; }
+.block-card-ico { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; font-size: 22px;
+  color: var(--accent); background: rgba(245, 166, 35, 0.12); border: 1px solid rgba(245, 166, 35, 0.25); }
+
+/* Block editor sheet. */
+.block-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.block-preset { display: flex; flex-direction: column; align-items: center; gap: 5px; appearance: none; cursor: pointer; padding: 12px 6px;
+  border-radius: 14px; background: var(--glass); border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; }
+.block-preset .ms { font-size: 20px; }
+.block-preset.on { color: var(--ink); border-color: rgba(245, 166, 35, 0.5); background: rgba(245, 166, 35, 0.1); }
+.block-preset.on .ms { color: var(--accent); }
+.block-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.block-field-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.block-input { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; background: var(--glass); border: 1px solid var(--border);
+  color: var(--ink); font: inherit; font-size: 15px; }
+.block-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.block-times { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.block-duration { font-size: 12px; font-weight: 700; color: var(--muted); padding-bottom: 10px; }
+.block-error { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--danger-ink); margin: -2px 0 12px; }
+
+/* Time stepper (±15 min). */
+.time-stepper { display: flex; flex-direction: column; gap: 6px; }
+.time-stepper-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.time-stepper-ctrl { display: flex; align-items: center; gap: 8px; }
+.time-stepper-btn { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; appearance: none; cursor: pointer;
+  background: var(--glass); border: 1px solid var(--border); color: var(--ink); }
+.time-stepper-val { min-width: 58px; text-align: center; font-size: 15px; font-weight: 700; }
+
+/* Travel trade-off sheet (leave early vs arrive late). */
+.travel-summary { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-weight: 600; margin: -4px 0 10px; line-height: 1.4; }
+.travel-opt { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; appearance: none; cursor: pointer; padding: 14px;
+  border-radius: 14px; background: var(--glass); border: 1px solid var(--border); color: var(--ink); margin-bottom: 10px; }
+.travel-opt:disabled { opacity: 0.45; cursor: not-allowed; }
+.travel-opt.on { border-color: rgba(245, 166, 35, 0.5); background: rgba(245, 166, 35, 0.08); }
+.travel-opt > .ms { font-size: 22px; color: var(--accent); flex-shrink: 0; }
+.travel-opt-title { display: block; font-size: 15px; font-weight: 700; }
+.travel-opt-sub { display: block; font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 3px; line-height: 1.35; }
+.travel-opt-check { margin-left: auto; color: var(--accent) !important; }
 
 /* =============================================================================
    Stage-to-stage routing + walking guidance (#29 B7.4/B7.5)
@@ -1779,6 +1835,13 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .about-tagline { font-size: 13px; color: var(--muted); max-width: 260px; }
 .about-version { margin-top: 6px; color: var(--accent2); border-color: rgba(245, 166, 35, 0.4); background: rgba(245, 166, 35, 0.12); }
 .about-build { margin-top: 8px; font-size: 11px; color: var(--muted); }
+.about-update { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 14px; }
+.about-update-btn { display: inline-flex; align-items: center; gap: 6px; appearance: none; cursor: pointer; padding: 9px 16px;
+  border-radius: 999px; background: var(--glass); border: 1px solid var(--border); color: var(--ink); font-size: 13px; font-weight: 700; }
+.about-update-btn.on { border-color: rgba(245, 166, 35, 0.5); background: rgba(245, 166, 35, 0.14); color: var(--accent); }
+.about-update-btn:disabled { opacity: 0.6; cursor: default; }
+.about-update-note { font-size: 12px; font-weight: 600; color: var(--muted); }
+.about-update-note.ok { color: var(--ok-ink); }
 .about-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .about-blurb { font-size: 13px; line-height: 1.5; color: var(--ink); }
 .about-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--border); }

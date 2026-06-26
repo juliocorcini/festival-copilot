@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.24.0";
+export const APP_VERSION = "0.25.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,24 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.25.0",
+    date: "2026-06-26",
+    title: "Make the day yours — breaks, plans & smarter walks",
+    icon: "edit_calendar",
+    whatsNew: [
+      "My Plan now has an Edit mode. Tap Edit, then drop personal plans into the gaps of your day — food, rest, water, a meet-up, a wander, anything — and they slot neatly between your sets.",
+      "Smarter walks: when reaching your next set on time would mean missing a moment, your plan offers a clear choice — leave the current set a little early, or arrive at the next one a little late — so the times you see are honest.",
+      "Pick your default once in Settings (leave early vs arrive late) and it's applied automatically; you can still override any single walk in My Plan.",
+      "Checking for updates is now right on the About screen next to the version — on top of the automatic background checks the app already runs for you.",
+    ],
+    howToTest: [
+      "My Plan → Edit: a long gap shows a 'Fill' chip and an 'Add a break' button. Add a Food/Rest/… block and set its time with the +/− steppers; it refuses to overlap a set or another block.",
+      "Lock in a day with two back-to-back sets on far-apart stages — the second shows a walk chip. In Edit, tap it to switch between 'leave early' and 'arrive late' and watch the plan times update.",
+      "Settings → Appearance: set the default for tight walks. Settings → About: tap 'Check for updates' by the version — it says you're current or offers a one-tap reload; 'Force update' pulls the freshest build.",
+      "Your breaks/plans and walk choices stay on your phone — they are never shared into your squad's plan.",
+    ],
+  },
   {
     version: "0.24.0",
     date: "2026-06-26",

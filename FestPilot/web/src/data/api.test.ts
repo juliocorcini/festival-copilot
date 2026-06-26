@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api, API_BASE, ApiError } from "./api";
+import { api, API_BASE, ApiError, slotToShareInput } from "./api";
+import type { PlanSlot } from "../domain/types";
 
 type FetchImpl = (input: unknown, init?: unknown) => Promise<unknown>;
 
@@ -55,5 +56,33 @@ describe("api client", () => {
       throw new TypeError("network down");
     });
     await expect(api.health()).rejects.toMatchObject({ name: "ApiError", status: 0 });
+  });
+});
+
+describe("slotToShareInput — squad guardrail (DEC-073/074)", () => {
+  const base: PlanSlot = {
+    setId: "perf1",
+    actKey: "act1",
+    label: "ARTBAT",
+    stageId: "s1",
+    stageName: "CORE",
+    startMs: 1000,
+    endMs: 5000,
+    cutMs: null,
+    lateStartMs: null,
+  };
+
+  it("shares only the set id (and an early-leave), never a personal arrive-late shift", () => {
+    const withLate: PlanSlot = { ...base, cutMs: 4000, lateStartMs: 2000 };
+    const payload = slotToShareInput(withLate);
+    expect(payload.performanceId).toBe("perf1");
+    expect(payload.endOverrideUtc).toBe(new Date(4000).toISOString()); // the cut is shared
+    // The personal arrive-late shift is NEVER serialized — it must not reach the squad plan.
+    expect(payload).not.toHaveProperty("startOverrideUtc");
+    expect(JSON.stringify(payload)).not.toContain("2000");
+  });
+
+  it("emits a null early-leave when the user attends the full set", () => {
+    expect(slotToShareInput(base)).toEqual({ performanceId: "perf1", endOverrideUtc: null });
   });
 });

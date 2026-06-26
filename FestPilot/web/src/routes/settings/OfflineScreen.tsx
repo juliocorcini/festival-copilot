@@ -10,13 +10,12 @@ import { useCallback, useEffect, useState } from "react";
 import { StackHeader } from "../../app/StackHeader";
 import { useLineup } from "../../data/useLineup";
 import { useInstallPrompt } from "../../app/pwaInstall";
-import { applyUpdate, checkForUpdate, forceUpdate, type UpdateStatus } from "../../app/registerSW";
+import { useUpdateCheck, type UpdateCheckState } from "../../app/useUpdateCheck";
 import { useT, type TranslateFn } from "../../i18n";
 import { APP_VERSION } from "../../data/changelog";
 import { getOfflineStatus, primeOffline, type OfflineStatus } from "../../data/offline";
 
 type SaveState = "idle" | "saving" | "saved";
-type CheckState = "idle" | "checking" | UpdateStatus;
 
 export function OfflineScreen(): JSX.Element {
   const t = useT();
@@ -26,7 +25,7 @@ export function OfflineScreen(): JSX.Element {
   const [online, setOnline] = useState<boolean>(typeof navigator === "undefined" ? true : navigator.onLine);
   const [status, setStatus] = useState<OfflineStatus | null>(null);
   const [save, setSave] = useState<SaveState>("idle");
-  const [check, setCheck] = useState<CheckState>("idle");
+  const update = useUpdateCheck();
 
   const refresh = useCallback(() => {
     void getOfflineStatus(festivalId).then(setStatus);
@@ -54,11 +53,6 @@ export function OfflineScreen(): JSX.Element {
     setStatus(next);
     setSave("saved");
     window.setTimeout(() => setSave("idle"), 2400);
-  };
-
-  const runUpdateCheck = async (): Promise<void> => {
-    setCheck("checking");
-    setCheck(await checkForUpdate());
   };
 
   const allReady = Boolean(status?.lineup && status?.map && status?.art);
@@ -108,10 +102,10 @@ export function OfflineScreen(): JSX.Element {
 
         <UpdateControl
           t={t}
-          check={check}
-          onCheck={() => void runUpdateCheck()}
-          onApply={() => void applyUpdate()}
-          onForce={() => void forceUpdate()}
+          check={update.state}
+          onCheck={update.check}
+          onApply={update.apply}
+          onForce={update.force}
         />
 
         <p className="src" style={{ textAlign: "center" }}>{t("offline.blurb")}</p>
@@ -161,7 +155,7 @@ function UpdateControl({
   onForce,
 }: {
   t: TranslateFn;
-  check: CheckState;
+  check: UpdateCheckState;
   onCheck: () => void;
   onApply: () => void;
   onForce: () => void;

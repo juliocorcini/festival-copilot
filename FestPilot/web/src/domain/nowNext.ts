@@ -4,7 +4,8 @@
  * `TravelMatrix` so the home, My Plan and the reminder job agree on the math. No DOM/React.
  */
 import { evaluateTransition } from "./partialSet";
-import type { PlanSlot, TravelMatrix } from "./types";
+import { effectiveEnd, effectiveStart } from "./planSlot";
+import type { PlanBlock, PlanSlot, TravelMatrix } from "./types";
 
 const MIN = 60_000;
 
@@ -26,14 +27,10 @@ export interface NowNextModel {
   later: PlanSlot[];
 }
 
-function effectiveEnd(slot: PlanSlot): number {
-  return slot.cutMs != null && slot.cutMs > slot.startMs && slot.cutMs < slot.endMs ? slot.cutMs : slot.endMs;
-}
-
 /** Build the Now&Next model for a single day's locked slots at instant `nowMs`. */
 export function buildNowNext(slots: PlanSlot[], travel: TravelMatrix, nowMs: number): NowNextModel {
   const ordered = [...slots].sort((a, b) => a.startMs - b.startMs);
-  const live = ordered.find((s) => s.startMs <= nowMs && nowMs < effectiveEnd(s)) ?? null;
+  const live = ordered.find((s) => effectiveStart(s) <= nowMs && nowMs < effectiveEnd(s)) ?? null;
   const next = ordered.find((s) => s.startMs > nowMs) ?? null;
 
   let walkMinutes = 0;
@@ -48,7 +45,7 @@ export function buildNowNext(slots: PlanSlot[], travel: TravelMatrix, nowMs: num
     leaveInMinutes = Math.round((next.startMs - walkMinutes * MIN - nowMs) / MIN);
   }
 
-  const progress = live ? clamp01((nowMs - live.startMs) / Math.max(1, effectiveEnd(live) - live.startMs)) : 0;
+  const progress = live ? clamp01((nowMs - effectiveStart(live)) / Math.max(1, effectiveEnd(live) - effectiveStart(live))) : 0;
   const later = next ? ordered.filter((s) => s.startMs > next.startMs) : [];
 
   return { live, next, walkMinutes, leaveInMinutes, progress, later };
@@ -94,4 +91,12 @@ export function chronoNowNext(sets: HomeSet[], nowMs: number, laterLimit = 6): H
   const hero = live ?? upcoming[0] ?? null;
   const after = hero ? ordered.filter((s) => s.startMs > hero.startMs) : [];
   return { live, hero, next: after[0] ?? null, later: after.slice(0, laterLimit) };
+}
+
+/**
+ * The personal block happening right now (DEC-073, AC4): the home promotes "Dinner" / "Resting" to the
+ * hero so the day's plan reflects what you're actually doing, not just sets. Null when none is live.
+ */
+export function liveBlock(blocks: PlanBlock[], nowMs: number): PlanBlock | null {
+  return blocks.find((b) => b.startMs <= nowMs && nowMs < b.endMs) ?? null;
 }

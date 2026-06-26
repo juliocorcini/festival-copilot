@@ -9,7 +9,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
-import { api, type ShareSlotInput } from "../../data/api";
+import { api, slotToShareInput } from "../../data/api";
 import { useGroup } from "../../data/groups";
 import { setPlan, loadStore, saveStore } from "../../data/localStore";
 import { useSquadPlan } from "../../data/squadPlan";
@@ -18,10 +18,6 @@ import type { PlannableSet, PlanSlot } from "../../domain/types";
 import { stageColor, timeInZone } from "../../lib/format";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { AvatarStack, methodLabel } from "./squadUi";
-
-function slotToShare(slot: PlanSlot): ShareSlotInput {
-  return { performanceId: slot.setId, endOverrideUtc: slot.cutMs != null ? new Date(slot.cutMs).toISOString() : null };
-}
 
 export function SquadBlockScreen(): JSX.Element {
   const navigate = useNavigate();
@@ -72,12 +68,13 @@ export function SquadBlockScreen(): JSX.Element {
         startMs: target.startMs,
         endMs: target.endMs,
         cutMs: null,
+        lateStartMs: null,
       };
       const next = [...kept, newSlot].sort((a, b) => a.startMs - b.startMs);
       saveStore(setPlan(loadStore(), festivalId, day, next));
       await api.shareMyPlan(id, {
         day,
-        slots: next.map(slotToShare),
+        slots: next.map(slotToShareInput),
         shareFavorites: me?.shareFavorites ?? false,
         favoriteActKeys: me?.shareFavorites ? me.favoriteActKeys : [],
       });

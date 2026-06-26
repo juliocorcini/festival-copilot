@@ -4,6 +4,7 @@
  * synced across all consumers (map palette, theme, copy) via a custom event.
  */
 import { useEffect, useState } from "react";
+import type { TravelPref } from "../domain/plan";
 
 export type AppearanceMode = "auto" | "day" | "night";
 export type Palette = "day" | "night";
@@ -14,7 +15,10 @@ const KEYS = {
   language: "fp.language",
   autoShare: "fp.autoShareOnJoin",
   haptics: "fp.haptics",
+  travelPref: "fp.travelPref",
 } as const;
+
+const TRAVEL_DEFAULT: TravelPref = "leave-early";
 const SETTING_EVENT = "fp:setting";
 
 function read(key: string, fallback: string): string {
@@ -100,4 +104,22 @@ export function useHaptics(): { haptics: boolean; setHaptics: (on: boolean) => v
 /** Non-React read of the haptics preference (the vibration layer gates every pulse on this). */
 export function hapticsEnabled(): boolean {
   return read(KEYS.haptics, "1") !== "0";
+}
+
+function asTravelPref(value: string): TravelPref {
+  return value === "arrive-late" ? "arrive-late" : "leave-early";
+}
+
+/**
+ * Default for how a travel overlap is absorbed (DEC-074, Q8 = leave early). Overridable per transition
+ * in My Plan; this only sets the starting point when the user hasn't chosen for a given walk.
+ */
+export function useTravelPref(): { travelPref: TravelPref; setTravelPref: (pref: TravelPref) => void } {
+  const [value, set] = useSetting(KEYS.travelPref, TRAVEL_DEFAULT);
+  return { travelPref: asTravelPref(value), setTravelPref: (pref) => set(pref) };
+}
+
+/** Non-React read of the travel default (the My Plan timeline builder gates auto-resolution on this). */
+export function travelPrefValue(): TravelPref {
+  return asTravelPref(read(KEYS.travelPref, TRAVEL_DEFAULT));
 }

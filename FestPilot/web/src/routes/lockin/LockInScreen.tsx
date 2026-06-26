@@ -141,6 +141,9 @@ export function LockInScreen(): JSX.Element {
           giveUp={giveUp}
           onUndo={canUndo ? undo : undefined}
           onView={() => navigate(`/plan${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`, { replace: true })}
+          onPlanEdit={() =>
+            navigate(`/plan?${dayKey ? `day=${encodeURIComponent(dayKey)}&` : ""}edit=1`, { replace: true })
+          }
           onShare={() => setShowShare(true)}
         />
         {showShare && (
@@ -355,6 +358,7 @@ function Celebration({
   giveUp,
   onUndo,
   onView,
+  onPlanEdit,
   onShare,
 }: {
   slots: PlanSlot[];
@@ -363,6 +367,7 @@ function Celebration({
   giveUp: { picked: string; gaveUp: string[] } | null;
   onUndo?: () => void;
   onView: () => void;
+  onPlanEdit: () => void;
   onShare: () => void;
 }): JSX.Element {
   return (
@@ -401,6 +406,10 @@ function Celebration({
         <button className="btn btn-primary" onClick={onView}>View My Plan</button>
         <button className="btn btn-ghost" onClick={onShare}>Share</button>
       </div>
+      <button className="lk-celebrate-undo" onClick={onPlanEdit}>
+        <span className="ms" style={{ fontSize: 15 }}>add_circle</span>
+        Add breaks &amp; plans
+      </button>
     </div>
   );
 }
