@@ -2,7 +2,8 @@
 // The contract is deliberately small so the orchestrator (ingest.ts) can be unit
 // tested against an in-memory fake (see test/), while D1 holds production state.
 
-import type { NormalizedLineup } from "../lineup/types";
+import type { ArtistSocials, NormalizedLineup } from "../lineup/types";
+import { pickSocials } from "../lineup/normalize";
 import type { IdFactory } from "../db/ids";
 import { ulid } from "../db/ids";
 import type { ExistingPerformance, LineupChangeRecord } from "./diff";
@@ -263,24 +264,28 @@ export class D1LineupStore implements LineupStore {
       );
     });
 
-    // 5) Artists (global, keyed on source_artist_id).
-    const artistsSeen = new Map<string, { name: string; image?: string }>();
+    // 5) Artists (global, keyed on source_artist_id). Carry the source socials (ART-3): one JSON
+    // cell, written only when non-empty (else NULL) so social-less artists stay clean.
+    const artistsSeen = new Map<string, { name: string; image?: string; socials: ArtistSocials }>();
     for (const p of lineup.performances) {
       for (const a of p.artists) {
-        if (!artistsSeen.has(a.id)) artistsSeen.set(a.id, { name: a.name, image: a.image });
+        if (!artistsSeen.has(a.id)) {
+          artistsSeen.set(a.id, { name: a.name, image: a.image, socials: pickSocials(a) });
+        }
       }
     }
     for (const [sourceArtistId, a] of artistsSeen) {
       const id = idFor(artistMap, sourceArtistId);
+      const socialsJson = Object.keys(a.socials).length > 0 ? JSON.stringify(a.socials) : null;
       stmts.push(
         db
           .prepare(
-            `INSERT INTO artist (id, source_artist_id, name, image_url)
-             VALUES (?, ?, ?, ?)
+            `INSERT INTO artist (id, source_artist_id, name, image_url, socials)
+             VALUES (?, ?, ?, ?, ?)
              ON CONFLICT(source_artist_id) DO UPDATE SET
-               name = excluded.name, image_url = excluded.image_url`
+               name = excluded.name, image_url = excluded.image_url, socials = excluded.socials`
           )
-          .bind(id, sourceArtistId, a.name, a.image ?? null)
+          .bind(id, sourceArtistId, a.name, a.image ?? null, socialsJson)
       );
     }
 

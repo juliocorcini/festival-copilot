@@ -14,11 +14,13 @@ import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { useArtistSheet } from "../ui/useArtistSheet";
 
 export function LineupScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const festivalId = lineup?.festival.id;
   const favorites = useFavorites(festivalId);
+  const { openArtist } = useArtistSheet();
 
   const [query, setQuery] = useState("");
   const [dayFilter, setDayFilter] = useState<string | "all">("all");
@@ -72,11 +74,18 @@ export function LineupScreen(): JSX.Element {
     const on = favorites.isFavorite(act.actKey);
     return (
       <div className="art-row" key={act.actKey}>
-        <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.list} className="art-photo" />
-        <div className="art-info">
-          <div className="nm">{act.label}</div>
-          <div className="mt">{meta(act)}</div>
-        </div>
+        <button
+          type="button"
+          className="art-row-tap"
+          aria-label={`View ${act.label}`}
+          onClick={() => openArtist(act.actKey)}
+        >
+          <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.list} className="art-photo" />
+          <div className="art-info">
+            <div className="nm">{act.label}</div>
+            <div className="mt">{meta(act)}</div>
+          </div>
+        </button>
         <button
           className={`heart-btn${on ? " on" : ""}`}
           aria-pressed={on}

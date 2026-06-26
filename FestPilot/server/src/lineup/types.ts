@@ -23,7 +23,35 @@ export interface SourceStages {
   stages: SourceStage[];
 }
 
-export interface SourceArtist {
+/**
+ * Optional social links a source artist may carry. The source (TML HAR, event TL26BE) exposes them
+ * as full URLs; this list is ordered by real-world frequency in that capture (instagram → twitter).
+ * Most artists carry only a couple, so every field is optional.
+ */
+export interface ArtistSocials {
+  instagram?: string;
+  spotify?: string;
+  soundcloud?: string;
+  facebook?: string;
+  tiktok?: string;
+  youtube?: string;
+  website?: string;
+  twitter?: string;
+}
+
+/** The known social keys in display order — drives the data-driven `pickSocials` and the UI row. */
+export const ARTIST_SOCIAL_KEYS = [
+  "instagram",
+  "spotify",
+  "soundcloud",
+  "facebook",
+  "tiktok",
+  "youtube",
+  "website",
+  "twitter",
+] as const;
+
+export interface SourceArtist extends ArtistSocials {
   id: string;
   name: string;
   image?: string;

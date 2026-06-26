@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FestPilot — Timetable · 10 testes de design (mesma visualização)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+body{font-family:"Albert Sans",system-ui,sans-serif;background:radial-gradient(90% 60% at 50% 0%,#1a1610,#08070a);color:#F5F0E6;margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle}
+.frame{width:236px;height:510px;overflow:hidden;border-radius:30px;box-shadow:0 24px 60px -20px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.08)}
+.frame iframe{width:390px;height:844px;border:0;transform:scale(.605);transform-origin:top left}
+.badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;display:inline-block;background:#F5A623;color:#0F0D09}
+.card{display:block;text-decoration:none;color:inherit}
+.num{font-family:"Oswald";font-size:13px;font-weight:700;color:#F5A623}
+.flag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;display:inline-block}
+.flag.safe{background:rgba(22,163,74,.18);color:#5fd08a;border:1px solid rgba(22,163,74,.4)}
+.flag.watch{background:rgba(245,158,11,.16);color:#f3c969;border:1px solid rgba(245,158,11,.4)}
+.flag.risk{background:rgba(224,86,59,.16);color:#f08a73;border:1px solid rgba(224,86,59,.4)}
+.bandlbl{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#9C9080}
+*::-webkit-scrollbar{width:8px;height:8px}*::-webkit-scrollbar-thumb{background:rgba(245,166,35,.3);border-radius:99px}
+</style>
+</head>
+<body class="min-h-screen py-12 px-5">
+<div class="max-w-7xl mx-auto">
+  <div class="text-center text-[12px] tracking-[.3em] text-[#9C9080] font-bold">FESTPILOT · TIMETABLE</div>
+  <h1 class="poster text-4xl md:text-5xl font-bold text-center mt-2">10 testes de design</h1>
+  <p class="text-center text-[#cabfa8]/80 mt-3 max-w-2xl mx-auto text-sm leading-relaxed">
+    A <b style="color:#F5A623">mesma visualização</b> que você aprovou (grade horizontal, palcos em faixas, tempo na lateral,
+    linha do NOW, coração p/ favoritar). Aqui só muda o <b style="color:#F5A623">design do card</b> — textura, forma, foto, tipografia.
+    Mesmos dados (Tomorrowland · Sáb · 22:40). As skins estão agrupadas do <b>mais seguro</b> ao <b>mais expressivo</b>;
+    o selo indica risco de legibilidade ao sol / bateria. Clique para abrir e interagir.
+  </p>
+
+  <!-- REFERENCE -->
+  <div class="mt-12">
+    <div class="bandlbl mb-3">A base que você curtiu (referência)</div>
+    <a href="../timetable-explorations/02-horizontal-refined.html" class="card">
+      <div class="rounded-3xl p-5 flex items-center gap-5" style="background:linear-gradient(135deg,rgba(245,166,35,.16),rgba(255,208,96,.04));border:1px solid rgba(245,166,35,.4)">
+        <div class="frame" style="width:150px;height:325px;flex-shrink:0;border-radius:22px"><iframe src="../timetable-explorations/02-horizontal-refined.html" style="transform:scale(.385)"></iframe></div>
+        <div class="flex-1">
+          <div class="poster text-2xl font-bold">Horizontal Refinado — o esqueleto</div>
+          <div class="text-[#cabfa8]/75 text-sm mt-1.5 leading-relaxed">Linhas = palcos, tempo correndo na horizontal, scroll lateral, linha do NOW, contagem ★ por palco, "ir para agora", zoom 1h/2h e "só favoritos". <b style="color:#F5A623">Toda skin abaixo usa exatamente esta estrutura</b> — muda só o visual do bloco de cada set.</div>
+        </div>
+        <span class="badge">abrir →</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- BAND A — SAFE -->
+  <div class="mt-14">
+    <div class="bandlbl mb-1">Faixa A · evoluções seguras</div>
+    <div class="text-[13px] text-[#cabfa8]/60 mb-5">Refinam o que já existe. Alto contraste, baixo risco — candidatas a default do uso diário.</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-9 justify-items-center">
+
+      <a href="06-deep-frosted.html" class="card text-center">
+        <div class="frame"><iframe src="06-deep-frosted.html"></iframe></div>
+        <div class="mt-3"><span class="num">D6</span> · <span class="badge">Deep Frosted</span> <span class="flag safe">sol/bateria ok</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">O Amber Glass levado ao premium: vidro em camadas, brilho no topo, profundidade real. O baseline, mais bonito.</div>
+      </a>
+
+      <a href="05-hairline-editorial.html" class="card text-center">
+        <div class="frame"><iframe src="05-hairline-editorial.html"></iframe></div>
+        <div class="mt-3"><span class="num">D5</span> · <span class="badge">Hairline Editorial</span> <span class="flag safe">sol/bateria ok</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Calmo e arejado: só um filete de cor do palco + nome + avatar pequeno. Legibilidade máxima, mínima poluição.</div>
+      </a>
+
+      <a href="08-duotone-chips.html" class="card text-center">
+        <div class="frame"><iframe src="08-duotone-chips.html"></iframe></div>
+        <div class="mt-3"><span class="num">D8</span> · <span class="badge">Duotone Chips</span> <span class="flag safe">sol/bateria ok</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Foto do artista como tile duotone na cor do palco. Paleta única amarra a grade toda (estilo revista).</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- BAND B — TACTILE -->
+  <div class="mt-14">
+    <div class="bandlbl mb-1">Faixa B · metáforas táteis</div>
+    <div class="text-[13px] text-[#cabfa8]/60 mb-5">Pegam formas que o usuário já conhece (ingresso, cápsula, bloco). Personalidade sem perder leitura.</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-9 justify-items-center">
+
+      <a href="02-ticket-stub.html" class="card text-center">
+        <div class="frame"><iframe src="02-ticket-stub.html"></iframe></div>
+        <div class="mt-3"><span class="num">D2</span> · <span class="badge">Ticket Stub</span> <span class="flag safe">sol/bateria ok</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Cada set vira um canhoto de ingresso: stub colorido com a hora na vertical, picote tracejado e "código de barras".</div>
+      </a>
+
+      <a href="10-capsule-lanes.html" class="card text-center">
+        <div class="frame"><iframe src="10-capsule-lanes.html"></iframe></div>
+        <div class="mt-3"><span class="num">D10</span> · <span class="badge">Capsule Lanes</span> <span class="flag safe">sol/bateria ok</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Sets como cápsulas (stadium) com avatar circular do artista na ponta. Muito redondo e tátil, estilo app moderno.</div>
+      </a>
+
+      <a href="03-bold-blocks.html" class="card text-center">
+        <div class="frame"><iframe src="03-bold-blocks.html"></iframe></div>
+        <div class="mt-3"><span class="num">D3</span> · <span class="badge">Bold Blocks</span> <span class="flag watch">checar contraste</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Sem vidro: blocos sólidos na cor do palco, tipografia Oswald grande. Confiante e punchy (estilo calendário/Spotify).</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- BAND C — EXPRESSIVE -->
+  <div class="mt-14">
+    <div class="bandlbl mb-1">Faixa C · expressivas / after-dark</div>
+    <div class="text-[13px] text-[#cabfa8]/60 mb-5">As mais "wow". Lindas à noite e ótimas p/ marketing — mas vigie sol forte e bateria (vidro/animação/foto).</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-9 justify-items-center">
+
+      <a href="01-photo-canvas.html" class="card text-center">
+        <div class="frame"><iframe src="01-photo-canvas.html"></iframe></div>
+        <div class="mt-3"><span class="num">D1</span> · <span class="badge">Photo Canvas</span> <span class="flag watch">sol: checar</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Cada set é um mini-cartaz: foto do artista preenchendo o bloco, nome em poster por cima. Visual e imersivo.</div>
+      </a>
+
+      <a href="09-aurora-mesh.html" class="card text-center">
+        <div class="frame"><iframe src="09-aurora-mesh.html"></iframe></div>
+        <div class="mt-3"><span class="num">D9</span> · <span class="badge">Aurora Mesh</span> <span class="flag watch">sol: checar</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Malha de gradiente (aurora) na cor do palco misturada ao âmbar. Expressivo e colorido, com vidro por cima.</div>
+      </a>
+
+      <a href="04-neon-outline.html" class="card text-center">
+        <div class="frame"><iframe src="04-neon-outline.html"></iframe></div>
+        <div class="mt-3"><span class="num">D4</span> · <span class="badge">Neon Outline</span> <span class="flag risk">sol: difícil</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">After-dark/rave: contorno neon brilhante na cor do palco + scanlines sutis. Energia de pista — fraco sob sol.</div>
+      </a>
+
+      <a href="07-waveform.html" class="card text-center">
+        <div class="frame"><iframe src="07-waveform.html"></iframe></div>
+        <div class="mt-3"><span class="num">D7</span> · <span class="badge">Waveform</span> <span class="flag watch">animação/bateria</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Textura de equalizador na cor do palco; o set ao vivo tem barras animadas. Cara de produção musical.</div>
+      </a>
+
+    </div>
+  </div>
+
+  <p class="text-center text-[#9C9080]/60 text-[11px] mt-16">FestPilot · Timetable design tests · wireframes/timetable-design-tests/ · mesma IA do <code>Horizontal Refinado</code>, só o card muda · selos = leitura do Analyst (sol/bateria)</p>
+</div>
+</body>
+</html>

@@ -14,6 +14,8 @@ import {
 import { getFestivalMap, upsertFestivalMap, type FestivalMapInput } from "./repo";
 import { MAX_MAP_BASE_BYTES, MEDIA_CONTENT_TYPES, putImage } from "../media/store";
 import { getDataSource, readDataSourceInput, upsertDataSource } from "./dataSource";
+import { listPois, readPoiInputs, replacePois } from "./poiRepo";
+import { listTravelTimes, readTravelTimeInputs, replaceTravelTimes } from "./travelTimeRepo";
 import { getMetrics } from "./metricsRepo";
 import {
   getInjectableStages,
@@ -230,4 +232,30 @@ admin.post("/festivals/:id/map", async (c) => {
   const revision = body.revision ?? (current?.revision ?? 0) + 1;
   await upsertFestivalMap(c.env.DB, festivalId, { ...body, revision }, new Date().toISOString());
   return c.json({ ok: true, festivalId, revision });
+});
+
+// R11.1c POIs (DEC-065). List + replace-set the points of interest the client drops on the map
+// (toilets/water/food/medical/exits…). The editor saves the whole set at once, like the map doc.
+admin.get("/festivals/:id/pois", async (c) => {
+  const pois = await listPois(c.env.DB, c.req.param("id"));
+  return c.json({ pois });
+});
+
+admin.put("/festivals/:id/pois", async (c) => {
+  const inputs = readPoiInputs(await c.req.json().catch(() => null));
+  const count = await replacePois(c.env.DB, c.req.param("id"), inputs);
+  return c.json({ ok: true, count });
+});
+
+// R11.1c travel-time matrix (DEC-065). Operator-curated walking minutes between stages; the client
+// prefers a stored pair over the live coord estimate (DEC-011). Replace-set, deduped per directed pair.
+admin.get("/festivals/:id/travel-times", async (c) => {
+  const times = await listTravelTimes(c.env.DB, c.req.param("id"));
+  return c.json({ times });
+});
+
+admin.put("/festivals/:id/travel-times", async (c) => {
+  const inputs = readTravelTimeInputs(await c.req.json().catch(() => null));
+  const count = await replaceTravelTimes(c.env.DB, c.req.param("id"), inputs);
+  return c.json({ ok: true, count });
 });

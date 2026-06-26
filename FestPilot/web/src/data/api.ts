@@ -15,10 +15,12 @@ import type {
   InvitePreviewDto,
   LineupDto,
   MeetingPointDto,
+  PoiDto,
   SettableMeetingStatus,
   ShareMode,
   SquadPlanDataDto,
   StageDto,
+  TravelTimeDto,
   UserDto,
 } from "./types";
 import { authHeader, getAuthToken } from "./authToken";
@@ -164,6 +166,18 @@ export const api = {
 
   getMap(festivalId: string, signal?: AbortSignal): Promise<FestivalMapDto> {
     return getJson<FestivalMapDto>(`/api/festivals/${festivalId}/map`, signal);
+  },
+
+  /** Points of interest for the map layer (DEC-065). Empty array when the festival has none. */
+  async listPois(festivalId: string, signal?: AbortSignal): Promise<PoiDto[]> {
+    const data = await getJson<{ pois: PoiDto[] }>(`/api/festivals/${festivalId}/pois`, signal);
+    return data.pois;
+  },
+
+  /** Operator-curated walking minutes between stages (DEC-065); empty → use the coord estimate. */
+  async listTravelTimes(festivalId: string, signal?: AbortSignal): Promise<TravelTimeDto[]> {
+    const data = await getJson<{ times: TravelTimeDto[] }>(`/api/festivals/${festivalId}/travel-times`, signal);
+    return data.times;
   },
 
   // Identity (anonymous-first; DEC-024). GET ensures + returns the caller's user.

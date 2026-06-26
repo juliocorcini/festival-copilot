@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Switch Inferior — Refinos (V1–V5)</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;min-height:100vh;display:flex;flex-direction:column}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle}
+header{padding:26px 26px 6px}
+header .k{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:800;text-transform:uppercase}
+header h1{font-family:"Oswald",sans-serif;font-size:26px;margin:8px 0 6px}
+header p{font-size:13.5px;color:var(--muted);line-height:1.55;max-width:780px;margin:0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:18px 26px 8px}
+.tab{border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:700;font-size:13px;padding:9px 15px;border-radius:999px;cursor:pointer;font-family:inherit;display:inline-flex;gap:8px;align-items:center}
+.tab .num{font-family:"Oswald",sans-serif;color:var(--muted)}
+.tab.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.tab.on .num{color:rgba(0,0,0,.55)}
+.desc{padding:6px 26px 12px;color:var(--muted);font-size:13px;min-height:20px}
+.desc b{color:var(--ink)}
+.frame{flex:1;min-height:0;border:0;width:100%;background:#08070a}
+.rules{display:flex;gap:7px;flex-wrap:wrap;padding:0 26px 18px}
+.rule{font-size:11px;color:var(--muted);background:var(--glass);border:1px solid var(--border);border-radius:999px;padding:5px 11px}
+.rule b{color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="k">FestPilot · Design · Round 2</div>
+  <h1 class="poster">Switch Inferior — Refinos do P6</h1>
+  <p>Mesma ideia que você escolheu (toggle flutuante embaixo, telas paralelas), explorando o <b style="color:var(--ink)">porquê</b>: topo eficiente, máximo de grade pro Timetable, nada cortando, sensação de uma tela só. 5 maneiras de organizar o topo. Cada um mostra as duas views lado a lado; clique no toggle dentro de cada telefone.</p>
+</header>
+<div class="rules">
+  <span class="rule">Switch <b>embaixo</b>, idêntico nas duas</span>
+  <span class="rule">Topo <b>paralelo</b> entre as telas</span>
+  <span class="rule">Timetable com <b>mais grade</b></span>
+  <span class="rule">Lock in <b>nunca corta</b></span>
+  <span class="rule">Fade pro switch <b>flutuar limpo</b></span>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="desc" id="desc"></div>
+<iframe class="frame" id="frame" src="V1-icon-controls.html"></iframe>
+<script>
+const P=[
+ {f:"V1-icon-controls.html",t:"Refino do P6 (ícones)",d:"O mais próximo do que você pediu, só mais limpo: título + dias/busca na linha 1; controles secundários como ícones + Lock inteiro na linha 2."},
+ {f:"V2-no-title.html",t:"Sem título",d:"O switch já nomeia a view → título some (eyebrow minúsculo). Linha 1 = widget herói full-width (dias/busca); linha 2 = controles/filtros. Máximo paralelismo."},
+ {f:"V3-one-line.html",t:"Uma linha",d:"Topo colapsa em UMA linha funcional (dias+ícones / busca+filtro). Máxima altura de grade pro Timetable. Agressivo."},
+ {f:"V4-hero-control.html",t:"Controle herói",d:"A ação principal vira protagonista: seletor de dia grande (TT) / busca grande (LU). Secundários discretos abaixo."},
+ {f:"V5-context-bar.html",t:"Barra de contexto",d:"Esqueleto idêntico: uma 'barra de contexto' (mesmo formato) transmuta dias↔busca; a linha de controles transmuta controles↔filtros. Só o conteúdo muda."},
+ {f:"V6-days-scroll.html",t:"Dias rolam / ícones fixos",d:"Comportamento responsivo do topo: controles (zoom/grade/favoritos/Lock in) ficam FIXOS e nunca somem — os dias é que rolam; muitos dias → só número; Lock in vira ícone quando aperta. Ícone do Lock in = playlist_add_check."},
+ {f:"V7-unified-twin.html",t:"Shell unificado (gêmeos)",d:"Timetable e Lineup lado a lado com a MESMA casca: sobrancelha igual, switch igual embaixo, primeira barra no padrão 'primário flexível + controles fixos'. Dias↔busca, controles↔filtros, grade↔cards. A convergência das duas telas."},
+ {f:"V8-day-dropdown.html",t:"Dia em dropdown (final)",d:"Seletor de dia vira um botão compacto que abre um dropdown com cada dia por extenso (Dia 1 · 24 de julho · Sexta · ★favs). Sem rolagem lateral, header livre, Lock in sempre com texto. Substitui as bolinhas que rolavam do V6."},
+ {f:"V9-final-shell.html",t:"★ Shell final (interativo)",d:"O canônico: V7 (gêmeos) + V8 (dropdown) num único protótipo interativo. Toque no dia para abrir o dropdown; toque no switch embaixo para alternar Timetable↔Lineup. Mesma casca, só o miolo muda."}
+];
+const tabs=document.getElementById("tabs"),frame=document.getElementById("frame"),desc=document.getElementById("desc");
+let cur=8;
+function render(){tabs.innerHTML=P.map((p,i)=>`<button class="tab ${i===cur?'on':''}" data-i="${i}"><span class="num">V${i+1}</span> ${p.t}</button>`).join("");
+  desc.innerHTML=`<b>V${cur+1} · ${P[cur].t}</b> — ${P[cur].d}`;frame.src=P[cur].f;
+  tabs.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;render();});}
+render();
+</script>
+</body>
+</html>

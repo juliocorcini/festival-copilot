@@ -75,6 +75,24 @@ describe("uniqueActs", () => {
   });
 });
 
+describe("uniqueActs — socials propagation (ART-4)", () => {
+  it("adopts the first non-empty socials across an act's performances", () => {
+    const noSocials = perf({ id: "p-1", day: "D1", artists: [{ id: "a-x", name: "X", imageUrl: null }] });
+    const withSocials = perf({
+      id: "p-2",
+      day: "D2",
+      artists: [{ id: "a-x", name: "X", imageUrl: null, socials: { instagram: "https://ig/x" } }],
+    });
+    const act = uniqueActs([noSocials, withSocials])[0]!;
+    expect(act.socials).toEqual({ instagram: "https://ig/x" });
+  });
+
+  it("leaves socials undefined for an act whose artist carries none", () => {
+    const act = uniqueActs([perf({ artists: [{ id: "a-y", name: "Y", imageUrl: null }] })])[0]!;
+    expect(act.socials).toBeUndefined();
+  });
+});
+
 describe("toPlannableSets", () => {
   it("maps valid performances and resolves the stage name", () => {
     const sets = toPlannableSets([perf({ stageId: "stage-cage" })], stages);

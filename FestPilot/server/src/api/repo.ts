@@ -2,6 +2,8 @@
 // No client ever calls the festival site; everything is served from our D1.
 
 import type {
+  ArtistDto,
+  ArtistSocials,
   FestivalDto,
   FestivalMapDto,
   LineupDto,
@@ -10,6 +12,17 @@ import type {
   StageDto,
   WeekendDto,
 } from "./dto";
+
+/** Parse the stored socials JSON back into an object, omitting it when null/blank/empty. */
+function parseSocials(raw: string | null): ArtistSocials | undefined {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw) as ArtistSocials;
+    return parsed && typeof parsed === "object" && Object.keys(parsed).length > 0 ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export interface LineupQuery {
   weekend?: string; // weekend name, e.g. "W1"
@@ -121,7 +134,7 @@ export async function getLineup(
 
   const artistRes = await db
     .prepare(
-      `SELECT pa.performance_id, a.id, a.name, a.image_url, pa.sort_order
+      `SELECT pa.performance_id, a.id, a.name, a.image_url, a.socials, pa.sort_order
          FROM performance_artist pa
          JOIN artist a ON a.id = pa.artist_id
         WHERE pa.performance_id IN (SELECT id FROM performance WHERE festival_id = ? AND active = 1)
@@ -133,13 +146,17 @@ export async function getLineup(
       id: string;
       name: string;
       image_url: string | null;
+      socials: string | null;
       sort_order: number;
     }>();
 
-  const artistsByPerf = new Map<string, { id: string; name: string; imageUrl: string | null }[]>();
+  const artistsByPerf = new Map<string, ArtistDto[]>();
   for (const r of artistRes.results ?? []) {
     const list = artistsByPerf.get(r.performance_id) ?? [];
-    list.push({ id: r.id, name: r.name, imageUrl: r.image_url });
+    const artist: ArtistDto = { id: r.id, name: r.name, imageUrl: r.image_url };
+    const socials = parseSocials(r.socials);
+    if (socials) artist.socials = socials;
+    list.push(artist);
     artistsByPerf.set(r.performance_id, list);
   }
 

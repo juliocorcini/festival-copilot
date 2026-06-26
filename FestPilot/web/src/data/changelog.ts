@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.14.0";
+export const APP_VERSION = "0.15.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.15.0",
+    date: "2026-06-25",
+    title: "Tap any artist — photos, set times & socials",
+    icon: "person_pin",
+    whatsNew: [
+      "Tap any artist — on Now, the timetable, the lineup, or your plan — to see exactly where and when they play, with their photo and links to Instagram, Spotify, SoundCloud and more.",
+      "Artist photos now load reliably and stay put: the right face under the right name even on a flaky festival signal, and your favorites' photos keep working offline.",
+      "Picking artists on the first run is fixed on iPhone/Safari — every artist's name stays fully visible while you choose.",
+    ],
+    howToTest: [
+      "Tap an artist card anywhere (Now, Timetable, Lineup, My Plan) → a sheet shows their photo, every set (where + when), and social links; the heart and the ⋮ menu still work on their own without opening the sheet.",
+      "Scroll the lineup fast on a slow connection → each photo settles on the correct artist (no wrong-photo flash); turn on airplane mode → favorited artists keep their photos.",
+      "On an iPhone, run onboarding artist selection → each name is always fully visible.",
+    ],
+  },
   {
     version: "0.14.0",
     date: "2026-06-24",

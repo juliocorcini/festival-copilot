@@ -27,10 +27,24 @@ export interface StageDto {
   sortOrder: number;
 }
 
+/** Social links a source artist may carry (ART-3), in display order. Mirrors server ArtistSocials. */
+export interface ArtistSocials {
+  instagram?: string;
+  spotify?: string;
+  soundcloud?: string;
+  facebook?: string;
+  tiktok?: string;
+  youtube?: string;
+  website?: string;
+  twitter?: string;
+}
+
 export interface ArtistDto {
   id: string;
   name: string;
   imageUrl: string | null;
+  /** Present social links only; omitted entirely when the artist has none. */
+  socials?: ArtistSocials;
 }
 
 export interface PerformanceDto {
@@ -91,6 +105,40 @@ export interface FestivalMapDto {
   baseDayUrl: string;
   revision: number;
   transform: MapTransformDoc;
+}
+
+// Points of interest (DEC-065) — mirror of server/src/api/poiRepo.ts. Real-world coords the client
+// drops on the illustration through the same affine the stages use.
+export const POI_TYPES = [
+  "toilet",
+  "water",
+  "food",
+  "medical",
+  "exit",
+  "atm",
+  "charging",
+  "locker",
+  "entrance",
+  "landmark",
+] as const;
+export type PoiType = (typeof POI_TYPES)[number];
+
+export interface PoiDto {
+  id: string;
+  type: PoiType;
+  name: string | null;
+  lng: number;
+  lat: number;
+  verified: boolean;
+}
+
+// Operator-curated stage-to-stage walking minutes (DEC-065). The router prefers a stored pair over
+// the live coord estimate (DEC-011). Mirror of server/src/api/travelTimeRepo.ts.
+export interface TravelTimeDto {
+  fromStageId: string;
+  toStageId: string;
+  minutesTypical: number;
+  minutesCrowded: number | null;
 }
 
 // Identity behind the auth seam (DEC-024). Anonymous-first; profile set at first group join.

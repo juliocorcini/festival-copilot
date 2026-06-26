@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Header — dias rolam, ícones fixos</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.12)}
+*{box-sizing:border-box}
+body{background:radial-gradient(120% 80% at 50% -10%,#19130b 0%,#0b0a07 60%,#08070a 100%);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;padding:28px 24px 44px}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle;line-height:1}
+h1{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em;font-size:25px;margin:0 0 4px}
+.k{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:800;text-transform:uppercase}
+.lead{color:var(--muted);font-size:13.5px;line-height:1.55;max-width:820px;margin:8px 0 6px}
+.rules{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 26px}
+.rule{font-size:11px;color:var(--muted);background:var(--glass);border:1px solid var(--border);border-radius:999px;padding:5px 11px}
+.rule b{color:var(--accent2)}
+.row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.col{width:312px}
+.cap{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px;line-height:1.45}
+.cap b{color:var(--ink)}
+.phone{height:560px;border-radius:30px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,#100d09,#0b0907);box-shadow:0 30px 70px -30px #000;overflow:hidden;display:flex;flex-direction:column;position:relative}
+/* header */
+.hdr{padding:14px 14px 8px;flex-shrink:0}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;color:var(--muted);font-weight:800;text-transform:uppercase;margin-bottom:9px}
+.eyebrow .view{color:var(--accent);font-family:"Oswald",sans-serif;letter-spacing:.04em}
+.bar{display:flex;align-items:center;gap:8px}
+.days{display:flex;gap:6px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:none;-webkit-mask:linear-gradient(90deg,#000 0,#000 88%,transparent);mask:linear-gradient(90deg,#000 0,#000 88%,transparent)}
+.days::-webkit-scrollbar{display:none}
+.day{flex:0 0 auto;border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:700;font-size:12.5px;padding:7px 12px;border-radius:999px;white-space:nowrap;cursor:pointer}
+.day.num{padding:7px 0;width:32px;text-align:center}
+.day.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.ctrls{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.ic{width:34px;height:34px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ic .ms{font-size:18px}
+.lk{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:999px;font-family:inherit;font-weight:800;font-size:12.5px;color:var(--bg);background:linear-gradient(135deg,var(--accent),var(--accent2));padding:8px 13px;white-space:nowrap;cursor:pointer}
+.lk .ms{font-size:16px}
+.lk.iconly{width:34px;height:34px;padding:0;justify-content:center;gap:0}
+.lk.iconly .tx{display:none}
+/* time axis */
+.axis{display:flex;gap:0;padding:8px 14px 4px;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.04em;flex-shrink:0}
+.axis span{flex:0 0 92px}
+/* body */
+.tt{flex:1;overflow:hidden;padding:0 0 6px}
+.stage{padding:2px 14px 0}
+.slabel{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);margin:8px 0 5px}
+.dot{width:7px;height:7px;border-radius:999px;background:rgb(var(--c))}
+.star{color:var(--accent2);font-size:10px;display:inline-flex;align-items:center;gap:2px}
+.lane{display:flex;gap:8px;overflow-x:hidden}
+.set{flex:0 0 auto;display:flex;align-items:center;gap:9px;height:46px;border-radius:999px;padding:4px 16px 4px 4px;min-width:182px;
+  background:linear-gradient(150deg,rgba(var(--c),.44),rgba(var(--c),.12) 62%,rgba(12,10,7,.55)),rgba(14,11,8,.5);
+  border:1px solid rgba(var(--c),.5);backdrop-filter:blur(12px);box-shadow:0 8px 18px -12px rgba(0,0,0,.8)}
+.ph{width:38px;height:38px;border-radius:999px;flex-shrink:0;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;background-color:rgba(var(--c),.85)}
+.txt{min-width:0}
+.nm{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm{font-size:11px;color:rgba(255,255,255,.72)}
+/* bottom switch */
+.dock{position:absolute;left:0;right:0;bottom:0;padding:12px 0 16px;display:flex;justify-content:center;background:linear-gradient(180deg,transparent,rgba(8,7,6,.85) 45%)}
+.switch{display:inline-flex;background:rgba(20,16,10,.8);border:1px solid var(--border);border-radius:999px;padding:5px;gap:4px;backdrop-filter:blur(14px)}
+.switch button{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-family:inherit;font-weight:700;font-size:13px;padding:8px 16px;cursor:pointer}
+.switch button.on{background:var(--accent);color:var(--bg)}
+.switch .ms{font-size:17px}
+</style>
+</head>
+<body>
+  <div class="k">FestPilot · Timetable · Comportamento do topo</div>
+  <h1>Dias rolam · ícones ficam fixos</h1>
+  <p class="lead">Mesmo header, três quantidades de dias. Os <b style="color:var(--ink)">controles (zoom, grade, favoritos, Lock in) ficam fixos e nunca somem</b> — só espremem. Quem rola horizontalmente são os <b style="color:var(--ink)">dias</b>. Em caso extremo de muitos dias, o dia encolhe pra <b style="color:var(--ink)">só o número</b> e o Lock in colapsa pra ícone (<span class="ms" style="font-size:14px">playlist_add_check</span>). Arraste os dias pra ver a rolagem.</p>
+  <div class="rules">
+    <span class="rule">Controles <b>fixos</b></span>
+    <span class="rule">Dias <b>rolam</b></span>
+    <span class="rule">Muitos dias → <b>só número</b></span>
+    <span class="rule">Lock in: texto se cabe, <b>ícone se aperta</b></span>
+    <span class="rule">Ícone novo: <b>playlist_add_check</b></span>
+  </div>
+  <div class="row" id="row"></div>
+
+<script>
+const STAGES=[
+ {name:"Mainstage",c:"225,82,72",fav:1,sets:[["CW","Charlotte de Witte","22:00"],["DV","Dimitri V.","23:30"]]},
+ {name:"Freedom",c:"56,150,222",fav:1,sets:[["MP","Maceo Plex","22:00"],["AB","Adam Beyer","23:30"]]},
+ {name:"Cage",c:"201,162,39",fav:0,sets:[["LP","Lilly Palmer","22:00"],["AL","Amelie Lens","23:30"]]},
+ {name:"Elixir",c:"139,92,246",fav:1,sets:[["AD","Adriatique","22:00"],["TU","Tale of Us","23:30"]]},
+];
+const DAYNAMES=["Sex","Sáb","Dom","Seg","Ter","Qua","Qui"];
+function dayPills(n,numbersOnly){
+  let out="";
+  for(let i=0;i<n;i++){
+    const date=17+i;
+    const on=i===1?"on":"";
+    if(numbersOnly){ out+=`<button class="day num ${on}">${date}</button>`; }
+    else { out+=`<button class="day ${on}">${DAYNAMES[i%7]} ${date}</button>`; }
+  }
+  return out;
+}
+function body(){
+  return STAGES.map(s=>`
+   <div class="stage" style="--c:${s.c}">
+     <div class="slabel"><span class="dot"></span>${s.name.toUpperCase()} ${s.fav?`<span class="star"><span class="ms" style="font-size:11px">star</span>${s.fav}</span>`:""}</div>
+     <div class="lane">
+       ${s.sets.map(([ini,nm,tm])=>`<div class="set"><div class="ph">${ini}</div><div class="txt"><div class="nm">${nm}</div><div class="tm">${tm} – +1h30</div></div></div>`).join("")}
+     </div>
+   </div>`).join("");
+}
+function phone({days,numbersOnly,lockIcon,caption,note}){
+  const lk = lockIcon
+    ? `<button class="lk iconly" title="Lock in"><span class="ms">playlist_add_check</span><span class="tx">Lock in</span></button>`
+    : `<button class="lk"><span class="ms">playlist_add_check</span><span class="tx">Lock in</span></button>`;
+  return `
+  <div class="col">
+    <p class="cap">${caption}</p>
+    <div class="phone">
+      <div class="hdr">
+        <div class="eyebrow">TOMORROWLAND <span class="view">TIMETABLE</span></div>
+        <div class="bar">
+          <div class="days">${dayPills(days,numbersOnly)}</div>
+          <div class="ctrls">
+            <button class="ic" title="Zoom"><span class="ms">search</span></button>
+            <button class="ic" title="Grade"><span class="ms">grid_view</span></button>
+            <button class="ic" title="Favoritos"><span class="ms">favorite</span></button>
+            ${lk}
+          </div>
+        </div>
+      </div>
+      <div class="axis"><span>21:00</span><span>22:00</span><span>23:00</span><span>00:00</span></div>
+      <div class="tt">${body()}</div>
+      <div class="dock"><div class="switch">
+        <button class="on"><span class="ms">calendar_month</span>Timetable</button>
+        <button><span class="ms">groups</span>Lineup</button>
+      </div></div>
+    </div>
+  </div>`;
+}
+document.getElementById("row").innerHTML=[
+  phone({days:3,numbersOnly:false,lockIcon:false,caption:"<b>Poucos dias (3)</b><br>Dias com rótulo, sem rolagem. Lock in com texto. Tudo folgado."}),
+  phone({days:7,numbersOnly:false,lockIcon:false,caption:"<b>Médio (7)</b><br>Dias com rótulo mas <b>rolando</b> (fade na direita). Controles fixos, Lock in ainda com texto."}),
+  phone({days:14,numbersOnly:true,lockIcon:true,caption:"<b>Muitos dias (14)</b><br>Dia vira <b>só número</b> e rola. Controles espremidos, <b>Lock in colapsa pra ícone</b>."}),
+].join("");
+</script>
+</body>
+</html>

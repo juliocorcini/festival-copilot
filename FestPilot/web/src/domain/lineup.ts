@@ -6,13 +6,15 @@
  * artist (e.g. "More to be announced") fall back to the unique performance id so placeholders
  * never merge into one another.
  */
-import type { PerformanceDto, StageDto } from "../data/types";
+import type { ArtistSocials, PerformanceDto, StageDto } from "../data/types";
 import type { PlannableSet } from "./types";
 
 export interface Act {
   actKey: string;
   label: string;
   imageUrl: string | null;
+  /** First non-empty socials across the act's performances (same first-wins rule as `imageUrl`). */
+  socials?: ArtistSocials;
   performances: PerformanceDto[];
   stageIds: string[];
   days: string[];
@@ -69,11 +71,13 @@ export function uniqueActs(
       }
       if (day && !existing.days.includes(day)) existing.days.push(day);
       if (!existing.imageUrl) existing.imageUrl = performance.artists[0]?.imageUrl ?? null;
+      if (!existing.socials) existing.socials = performance.artists[0]?.socials;
     } else {
       byKey.set(key, {
         actKey: key,
         label: actLabel(performance),
         imageUrl: performance.artists[0]?.imageUrl ?? null,
+        socials: performance.artists[0]?.socials,
         performances: [performance],
         stageIds: performance.stageId ? [performance.stageId] : [],
         days: day ? [day] : [],

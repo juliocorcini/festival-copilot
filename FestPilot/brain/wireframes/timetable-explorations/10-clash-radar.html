@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>T10 · Clash Radar — FestPilot Timetable</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--danger:#E0563B;--ok:#16A34A}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none;-ms-overflow-style:none}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.head{padding:36px 18px 6px;flex-shrink:0}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 22px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+.body{flex:1;min-height:0;overflow:auto;padding:2px 16px 14px}
+.sec{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin:16px 2px 9px;display:flex;align-items:center;gap:6px}
+
+.ribbon{position:relative;border-radius:16px;padding:10px 10px 18px;background:rgba(0,0,0,.3);border:1px solid var(--border);overflow:hidden}
+.ribrow{position:relative;height:13px;margin-bottom:4px}
+.ribrow .bar{position:absolute;top:1px;bottom:1px;border-radius:99px;opacity:.9}
+.ribzone{position:absolute;top:6px;bottom:16px;background:repeating-linear-gradient(45deg,rgba(224,86,59,.22),rgba(224,86,59,.22) 5px,rgba(224,86,59,.1) 5px,rgba(224,86,59,.1) 10px);border-left:1px solid rgba(224,86,59,.5);border-right:1px solid rgba(224,86,59,.5)}
+.ribtk{position:absolute;bottom:2px;transform:translateX(-50%);font-size:8px;font-weight:700;color:var(--muted)}
+
+.progress{display:flex;align-items:center;gap:9px;margin:12px 2px 2px}
+.progress .pp{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.progress .pf{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent),#ff5d2e);transition:width .3s}
+.progress .px{font-size:11px;font-weight:800;color:var(--accent)}
+
+.clash{border-radius:18px;padding:12px;margin-bottom:10px;border:1px solid rgba(224,86,59,.4);
+  background:linear-gradient(160deg,rgba(224,86,59,.1),rgba(224,86,59,.02)),rgba(20,17,12,.5);backdrop-filter:blur(12px)}
+.clash.solved{border-color:rgba(245,166,35,.45);background:linear-gradient(160deg,rgba(245,166,35,.12),rgba(255,208,96,.02)),rgba(20,17,12,.5)}
+.clash-h{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.clash-h .w{font-size:13px;font-weight:800}
+.clash-h .tag{font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 8px;border-radius:99px;color:#f08a73;background:rgba(224,86,59,.16);border:1px solid rgba(224,86,59,.4);margin-left:auto}
+.clash.solved .tag{color:var(--accent);background:rgba(245,166,35,.16);border-color:rgba(245,166,35,.4)}
+.opts{display:flex;gap:8px}
+.opt{flex:1;border-radius:13px;padding:10px 9px;cursor:pointer;background:rgba(22,19,14,.6);border:1px solid var(--border);text-align:center;transition:.15s;position:relative}
+.opt .ph{width:42px;height:42px;border-radius:12px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:linear-gradient(135deg,#3a3224,#241f16);color:#cbb78e;border:1px solid rgba(255,255,255,.12)}
+.opt .nm{font-size:11.5px;font-weight:800;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt .st{font-size:8.5px;font-weight:800;letter-spacing:.03em;margin-top:2px}
+.opt .tm{font-size:9px;color:var(--muted);margin-top:2px}
+.opt.keep{background:linear-gradient(135deg,rgba(255,216,128,.95),rgba(245,166,35,.82));border-color:rgba(255,222,150,.9);color:#1a1205}
+.opt.keep .ph{background:linear-gradient(135deg,#fff,#f1dca8);color:#7a5a10}
+.opt.keep .tm{color:#6a4a08}
+.opt.keep::after{content:"check_circle";font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 1;position:absolute;top:5px;right:6px;font-size:15px;color:#1a1205}
+.opt.drop{opacity:.4}
+.opt.drop::after{content:"close";font-family:"Material Symbols Rounded";position:absolute;top:5px;right:6px;font-size:14px;color:var(--muted)}
+.vs{align-self:center;font-family:"Oswald";font-size:11px;font-weight:700;color:var(--muted)}
+
+.clear-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:13px;margin-bottom:6px;
+  background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(22,163,74,.02)),rgba(20,17,12,.5);border:1px solid rgba(22,163,74,.3)}
+.clear-row .ms{color:#5fd08a;font-size:18px}
+.clear-row .nm{font-size:12.5px;font-weight:700}
+.clear-row .tm{font-size:10px;color:var(--muted);margin-left:auto}
+.cta{display:flex;align-items:center;justify-content:center;gap:7px;font-size:14px;font-weight:800;color:var(--bg);padding:13px;border-radius:15px;margin-top:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 26px -8px rgba(245,166,35,.55);cursor:pointer}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <div class="head">
+    <div class="flex items-center justify-between">
+      <div><h1 class="poster text-[22px] font-bold leading-none">Clash radar</h1><span class="text-[11px] text-[var(--muted)] font-semibold">6 picks · solve overlaps before you lock in</span></div>
+      <span class="ms text-[var(--danger)] text-[24px]" style="font-variation-settings:'FILL' 1">crisis_alert</span>
+    </div>
+    <div class="progress"><span class="px" id="px">0/3</span><div class="pp"><div class="pf" id="pf"></div></div></div>
+  </div>
+  <div class="body">
+    <div class="sec"><span class="ms text-[13px]">radar</span>Your night at a glance</div>
+    <div class="ribbon" id="ribbon"></div>
+
+    <div class="sec"><span class="ms text-[13px]">join_inner</span>Decisions to make</div>
+    <div id="clashes"></div>
+
+    <div class="sec"><span class="ms text-[13px]">check_circle</span>No clash — you'll catch these</div>
+    <div id="clear"></div>
+
+    <div class="cta"><span class="ms text-[16px]">lock</span>Lock in my plan</div>
+  </div>
+  <div class="nav">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem active"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+<script>
+const WIN_START=21*60,WIN_END=27*60;
+const toMin=t=>{let[h,m]=t.split(":").map(Number);if(h<12)h+=24;return h*60+m;};
+const pct=m=>(m-WIN_START)/(WIN_END-WIN_START)*100;
+const FAVS=[
+ {a:"Charlotte de Witte",s:"21:00",e:"23:00",stage:"MAINSTAGE",color:"#FF5A36",i:"CW"},
+ {a:"Peggy Gou",s:"22:45",e:"00:30",stage:"ROSE GARDEN",color:"#EC4899",i:"PG"},
+ {a:"Adam Beyer",s:"23:00",e:"01:00",stage:"FREEDOM",color:"#0EA5E9",i:"AB"},
+ {a:"Amelie Lens",s:"23:15",e:"00:30",stage:"CAGE",color:"#F59E0B",i:"AL"},
+ {a:"Tale Of Us",s:"23:15",e:"01:30",stage:"ELIXIR",color:"#7C3AED",i:"TU"},
+ {a:"Martin Garrix",s:"23:45",e:"01:30",stage:"RISE",color:"#EAB308",i:"MG"}
+];
+// ribbon
+const ribbon=document.getElementById("ribbon");let rb="";
+FAVS.forEach(f=>{rb+=`<div class="ribrow"><span class="bar" style="left:${pct(toMin(f.s))}%;width:${pct(toMin(f.e))-pct(toMin(f.s))}%;background:${f.color}"></span></div>`;});
+rb+=`<div class="ribzone" style="left:${pct(23*60+15)}%;width:${pct(24*60+30)-pct(23*60+15)}%"></div>`;
+for(let h=21;h<=27;h+=1)rb+=`<span class="ribtk" style="left:${pct(h*60)}%">${String(h%24).padStart(2,"0")}</span>`;
+ribbon.innerHTML=rb;
+// clash decisions (curated overlap groups)
+const CLASHES=[
+ {w:"22:45 – 23:00",label:"Opening overlap",opts:[{a:"Charlotte de Witte",st:"MAINSTAGE",tm:"21:00–23:00",i:"CW"},{a:"Peggy Gou",st:"ROSE GARDEN",tm:"22:45–00:30",i:"PG"}]},
+ {w:"23:15 – 00:30",label:"3-way clash",opts:[{a:"Adam Beyer",st:"FREEDOM",tm:"23:00–01:00",i:"AB"},{a:"Amelie Lens",st:"CAGE",tm:"23:15–00:30",i:"AL"},{a:"Tale Of Us",st:"ELIXIR",tm:"23:15–01:30",i:"TU"}]},
+ {w:"23:45 – 01:30",label:"Headliner clash",opts:[{a:"Tale Of Us",st:"ELIXIR",tm:"23:15–01:30",i:"TU"},{a:"Martin Garrix",st:"RISE",tm:"23:45–01:30",i:"MG"}]}
+];
+const COLOR={MAINSTAGE:"#FF5A36","ROSE GARDEN":"#EC4899",FREEDOM:"#0EA5E9",CAGE:"#F59E0B",ELIXIR:"#7C3AED",RISE:"#EAB308"};
+const cont=document.getElementById("clashes");
+cont.innerHTML=CLASHES.map((c,ci)=>{const opts=c.opts.map((o,oi)=>`<div class="opt" data-c="${ci}" data-o="${oi}"><div class="ph">${o.i}</div><div class="nm">${o.a}</div><div class="st" style="color:${COLOR[o.st]}">${o.st}</div><div class="tm">${o.tm}</div></div>`).join('<span class="vs">vs</span>');
+  return `<div class="clash" data-c="${ci}"><div class="clash-h"><span class="ms" style="color:#f08a73;font-size:16px">bolt</span><span class="w">${c.w}</span><span class="tag" id="tag${ci}">${c.label}</span></div><div class="opts">${opts}</div></div>`;}).join("");
+// clear list (none fully clear in this dense night — honest message)
+document.getElementById("clear").innerHTML=`<div class="clear-row"><span class="ms">info</span><span class="nm">Every pick overlaps tonight</span><span class="tm">resolve above</span></div>`;
+// interaction
+const solved=new Set();
+function refresh(){document.getElementById("px").textContent=solved.size+"/3";document.getElementById("pf").style.width=(solved.size/3*100)+"%";}
+cont.querySelectorAll(".opt").forEach(opt=>opt.addEventListener("click",()=>{const ci=opt.dataset.c;
+  cont.querySelectorAll(`.opt[data-c="${ci}"]`).forEach(o=>{o.classList.remove("keep","drop");o.classList.add(o===opt?"keep":"drop");});
+  cont.querySelector(`.clash[data-c="${ci}"]`).classList.add("solved");
+  document.getElementById("tag"+ci).textContent="kept";solved.add(ci);refresh();}));
+</script>
+</body>
+</html>

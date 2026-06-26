@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FestPilot — Timetable · 10 explorações de design</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+body{font-family:"Albert Sans",system-ui,sans-serif;background:radial-gradient(90% 60% at 50% 0%,#1a1610,#08070a);color:#F5F0E6;margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle}
+.frame{width:236px;height:510px;overflow:hidden;border-radius:30px;box-shadow:0 24px 60px -20px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.08)}
+.frame iframe{width:390px;height:844px;border:0;transform:scale(.605);transform-origin:top left}
+.badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;display:inline-block;background:#F5A623;color:#0F0D09}
+.card{display:block;text-decoration:none;color:inherit}
+.num{font-family:"Oswald";font-size:13px;font-weight:700;color:#F5A623}
+*::-webkit-scrollbar{width:8px;height:8px}*::-webkit-scrollbar-thumb{background:rgba(245,166,35,.3);border-radius:99px}
+</style>
+</head>
+<body class="min-h-screen py-12 px-5">
+<div class="max-w-7xl mx-auto">
+  <div class="text-center text-[12px] tracking-[.3em] text-[#9C9080] font-bold">FESTPILOT · TIMETABLE</div>
+  <h1 class="poster text-4xl md:text-5xl font-bold text-center mt-2">10 explorações de design</h1>
+  <p class="text-center text-[#cabfa8]/80 mt-3 max-w-2xl mx-auto text-sm leading-relaxed">
+    Dez ideias distintas para a tela de <b style="color:#F5A623">Timetable</b>, todas na mesma identidade
+    <b style="color:#F5A623">Amber Glass</b> (vidro, cor-por-palco, Oswald + Albert Sans, favoritar com coração),
+    com os mesmos dados reais (Tomorrowland · Sáb · 22:40). Clique para abrir em tela cheia e interagir.
+  </p>
+
+  <!-- BASELINE -->
+  <div class="mt-12">
+    <div class="text-[12px] font-bold tracking-[.2em] text-[#9C9080] uppercase mb-3">O que temos hoje (referência)</div>
+    <a href="../directions/15e-amber-timetable-tml.html" class="card">
+      <div class="rounded-3xl p-5 flex items-center gap-5" style="background:linear-gradient(135deg,rgba(245,166,35,.16),rgba(255,208,96,.04));border:1px solid rgba(245,166,35,.4)">
+        <div class="frame" style="width:150px;height:325px;flex-shrink:0;border-radius:22px"><iframe src="../directions/15e-amber-timetable-tml.html" style="transform:scale(.385)"></iframe></div>
+        <div class="flex-1">
+          <div class="poster text-2xl font-bold">#15e — Timetable atual</div>
+          <div class="text-[#cabfa8]/75 text-sm mt-1.5 leading-relaxed">Grade horizontal estilo app TML: linhas = palcos, colunas = tempo, scroll lateral. Cards de vidro com borda da cor do palco, foto + coração, linha do NOW, zoom 1h/2h e filtro "só favoritos". É o ponto de partida — as 10 ideias abaixo mantêm esse DNA.</div>
+        </div>
+        <span class="badge">abrir →</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- EXPLORATIONS -->
+  <div class="mt-12">
+    <div class="text-[12px] font-bold tracking-[.2em] text-[#9C9080] uppercase mb-5">As 10 explorações</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-9 justify-items-center">
+
+      <a href="01-vertical-swimlanes.html" class="card text-center">
+        <div class="frame"><iframe src="01-vertical-swimlanes.html"></iframe></div>
+        <div class="mt-3"><span class="num">T1</span> · <span class="badge">Vertical Swimlanes</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Tempo desce, palcos viram colunas (estilo calendário). Scroll vertical natural no celular.</div>
+      </a>
+
+      <a href="02-horizontal-refined.html" class="card text-center">
+        <div class="frame"><iframe src="02-horizontal-refined.html"></iframe></div>
+        <div class="mt-3"><span class="num">T2</span> · <span class="badge">Horizontal Refinado</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">O atual evoluído: linha do NOW forte, contagem ★ por palco, botão "ir para agora" e cards mais limpos.</div>
+      </a>
+
+      <a href="03-chronological-agenda.html" class="card text-center">
+        <div class="frame"><iframe src="03-chronological-agenda.html"></iframe></div>
+        <div class="mt-3"><span class="num">T3</span> · <span class="badge">Agenda Cronológica</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Lista por hora, sem grade. Tudo em ordem, conflitos sinalizados — super legível com uma mão.</div>
+      </a>
+
+      <a href="04-my-day-spine.html" class="card text-center">
+        <div class="frame"><iframe src="04-my-day-spine.html"></iframe></div>
+        <div class="mt-3"><span class="num">T4</span> · <span class="badge">My Day Spine</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Só os seus favoritos numa espinha de tempo, com tempo de caminhada e conflitos antes do lock-in.</div>
+      </a>
+
+      <a href="05-stage-accordion.html" class="card text-center">
+        <div class="frame"><iframe src="05-stage-accordion.html"></iframe></div>
+        <div class="mt-3"><span class="num">T5</span> · <span class="badge">Stage Accordion</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Cada palco recolhível, com mini-linha-do-tempo + lista. Foco em um palco por vez (bom p/ 15 palcos).</div>
+      </a>
+
+      <a href="06-epg-tv-guide.html" class="card text-center">
+        <div class="frame"><iframe src="06-epg-tv-guide.html"></iframe></div>
+        <div class="mt-3"><span class="num">T6</span> · <span class="badge">EPG TV-Guide</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Grade densa estilo guia de programação de TV: a noite inteira, todos os palcos, de relance.</div>
+      </a>
+
+      <a href="07-now-next-focus.html" class="card text-center">
+        <div class="frame"><iframe src="07-now-next-focus.html"></iframe></div>
+        <div class="mt-3"><span class="num">T7</span> · <span class="badge">Now &amp; Next</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Centrado no agora: hero ao vivo, "próximos" dos seus favoritos e o que toca em cada palco neste momento.</div>
+      </a>
+
+      <a href="08-stage-carousel.html" class="card text-center">
+        <div class="frame"><iframe src="08-stage-carousel.html"></iframe></div>
+        <div class="mt-3"><span class="num">T8</span> · <span class="badge">Stage Carousel</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Um palco por vez com banner colorido; deslize entre palcos (estilo stories) e veja a linha do tempo dele.</div>
+      </a>
+
+      <a href="09-editorial-poster.html" class="card text-center">
+        <div class="frame"><iframe src="09-editorial-poster.html"></iframe></div>
+        <div class="mt-3"><span class="num">T9</span> · <span class="badge">Editorial Poster</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Estética de cartaz: faixas de horário (Golden Hour / Prime / Afters) com headliners em destaque grande.</div>
+      </a>
+
+      <a href="10-clash-radar.html" class="card text-center">
+        <div class="frame"><iframe src="10-clash-radar.html"></iframe></div>
+        <div class="mt-3"><span class="num">T10</span> · <span class="badge">Clash Radar</span></div>
+        <div class="text-[12px] text-[#cabfa8]/70 mt-1.5 w-[236px] mx-auto leading-snug">Foco em conflitos: um radar da noite + decisões "fique em 1 lugar" para resolver antes do lock-in.</div>
+      </a>
+
+    </div>
+  </div>
+
+  <p class="text-center text-[#9C9080]/60 text-[11px] mt-16">FestPilot · Timetable design exploration · wireframes/timetable-explorations/ · mesma DNA Amber Glass de <code>#15e</code></p>
+</div>
+</body>
+</html>

@@ -14,9 +14,12 @@ import { usePanZoom } from "./usePanZoom";
 import { NO_INSETS, type Insets } from "./panClamp";
 import { coarsePresencePins, isOutsideVenue } from "./presencePins";
 import { useDeviceLocation } from "./useDeviceLocation";
+import { poiMeta } from "./poiMeta";
 import { useMyGroups } from "../data/groups";
 import { useGroupPresence } from "../data/presence";
 import { useLineup } from "../data/useLineup";
+import { usePois } from "../data/usePois";
+import type { PoiDto, PoiType } from "../data/types";
 import { imageByActKey, toPlannableSets } from "../domain/lineup";
 import { setsAtStage, stageProgrammeAt } from "../domain/stageProgramme";
 import { PresenceAvatar, ago, presenceLine, sortRoster } from "../routes/presence/presenceUi";
@@ -107,16 +110,52 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
   const timeZone = lineup?.festival.timezone ?? "UTC";
 
+  // Amenities (DEC-065): toilets/water/food/medical/exits dropped through the same affine as stages.
+  // Keyed by the festival ULID like the travel matrix, so onboarded festivals show their POIs too.
+  const pois = usePois(lineup?.festival.id);
+  const poiTypesPresent = useMemo(() => {
+    const seen = new Set<PoiType>();
+    for (const p of pois) seen.add(p.type);
+    return [...seen];
+  }, [pois]);
+  // Hidden types (filter chips toggle membership); empty = show every amenity.
+  const [hiddenPoiTypes, setHiddenPoiTypes] = useState<Set<PoiType>>(() => new Set());
+  const visiblePois = useMemo(() => pois.filter((p) => !hiddenPoiTypes.has(p.type)), [pois, hiddenPoiTypes]);
+  const togglePoiType = (type: PoiType): void =>
+    setHiddenPoiTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+
   const [openStage, setOpenStage] = useState<StageGeo | null>(null);
+  const [openPoi, setOpenPoi] = useState<PoiDto | null>(null);
   // Open on tap, but ignore the click that ends a pan-drag (release far from where it started).
   const downAt = useRef<{ x: number; y: number } | null>(null);
+  const isTap = (e: React.MouseEvent): boolean => {
+    const d = downAt.current;
+    return !d || Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8;
+  };
+  const markDown = (e: React.PointerEvent): void => {
+    downAt.current = { x: e.clientX, y: e.clientY };
+  };
   const stageTap = (s: StageGeo) => ({
-    onPointerDown: (e: React.PointerEvent) => {
-      downAt.current = { x: e.clientX, y: e.clientY };
-    },
+    onPointerDown: markDown,
     onClick: (e: React.MouseEvent) => {
-      const d = downAt.current;
-      if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) setOpenStage(s);
+      if (isTap(e)) {
+        setOpenPoi(null);
+        setOpenStage(s);
+      }
+    },
+  });
+  const poiTap = (p: PoiDto) => ({
+    onPointerDown: markDown,
+    onClick: (e: React.MouseEvent) => {
+      if (isTap(e)) {
+        setOpenStage(null);
+        setOpenPoi(p);
+      }
     },
   });
 
@@ -152,6 +191,26 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
         >
           <img className="base" src={base} width={cw} height={ch} alt={`${t.venue} map`} draggable={false} />
           <svg className="overlay" viewBox={`0 0 ${cw} ${ch}`} width={cw} height={ch}>
+            {visiblePois.map((p) => {
+              const [x, y] = geoToSvg(t.affine, p.lng, p.lat);
+              const meta = poiMeta(p.type);
+              const selected = openPoi?.id === p.id;
+              return (
+                <g
+                  key={p.id}
+                  className={`poi-pin${selected ? " is-open" : ""}`}
+                  transform={`translate(${x},${y}) scale(${pinScale})`}
+                  role="button"
+                  aria-label={p.name ? `${meta.label}: ${p.name}` : meta.label}
+                  {...poiTap(p)}
+                >
+                  <ellipse className="poi-pin-shadow" cx="0" cy="2.6" rx="4.4" ry="1.6" />
+                  <circle className="poi-pin-disc" r="5.2" style={{ fill: meta.color }} />
+                  <text className="poi-pin-glyph" y="2.1" textAnchor="middle">{meta.glyph}</text>
+                </g>
+              );
+            })}
+
             {t.stages.map((s) => {
               const [x, y] = geoToSvg(t.affine, s.lng, s.lat);
               const live = stageProgrammeAt(sets, s.name, nowMs).now;
@@ -219,6 +278,27 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
 
       <button className="recenter" onClick={recenter} title="Recenter">⤢</button>
 
+      {poiTypesPresent.length > 0 && (
+        <div className="poi-legend" role="group" aria-label="Map amenities">
+          {poiTypesPresent.map((type) => {
+            const meta = poiMeta(type);
+            const off = hiddenPoiTypes.has(type);
+            return (
+              <button
+                key={type}
+                type="button"
+                className={`poi-chip${off ? " is-off" : ""}`}
+                aria-pressed={!off}
+                onClick={() => togglePoiType(type)}
+              >
+                <span aria-hidden="true">{meta.glyph}</span>
+                {meta.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {outside && (
         <div className="map-outside glass" role="status">
           <span className="ms" aria-hidden="true">location_off</span>
@@ -229,6 +309,23 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
           <button className="btn btn-primary btn-sm" onClick={recenter}>Show festival map</button>
         </div>
       )}
+
+      {openPoi && (() => {
+        const meta = poiMeta(openPoi.type);
+        return (
+          <section className="stage-sheet poi-sheet" role="dialog" aria-label={`${meta.label} info`}>
+            <header className="stage-sheet-head">
+              <span className="poi-sheet-glyph" style={{ background: meta.color }} aria-hidden="true">{meta.glyph}</span>
+              <h3>{openPoi.name ?? meta.label}</h3>
+              <button className="stage-sheet-close" aria-label="Close" onClick={() => setOpenPoi(null)}>✕</button>
+            </header>
+            <div className="poi-sheet-body">
+              <span className="pill">{meta.label}</span>
+              {openPoi.verified && <span className="pill ok">✓ verified</span>}
+            </div>
+          </section>
+        );
+      })()}
 
       {openStage && (
         <section className="stage-sheet" role="dialog" aria-label={`${openStage.name} info`}>

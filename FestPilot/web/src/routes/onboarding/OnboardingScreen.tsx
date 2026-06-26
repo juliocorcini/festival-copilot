@@ -13,6 +13,7 @@ import { isValidEmail } from "../../lib/validate";
 import { cardDragStyle, swipeOutcome, type SwipeOutcome } from "../../domain/swipe";
 import { ArtistPhoto } from "../../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../../lib/photo";
+import { usePhotoPrefetch } from "../../lib/usePhotoPrefetch";
 import type { ReactNode } from "react";
 import { festivalDayIdByPerformanceId } from "../../domain/festivalDay";
 import { uniqueActs, type Act } from "../../domain/lineup";
@@ -85,6 +86,12 @@ export function OnboardingScreen(): JSX.Element {
     () => groupActsByDay(acts, dayOrder.map((d) => d.key)),
     [acts, dayOrder]
   );
+
+  // Prefetch photos ahead of the current swipe card (IMG-3): the first batch warms early (while the
+  // user is still on the festival/day steps, since swipeIndex starts at 0), and the window follows
+  // the deck — so each next card's image is already decoded and undo never re-fetches.
+  const prefetchUrls = useMemo(() => orderedActs.map((a) => a.imageUrl), [orderedActs]);
+  usePhotoPrefetch(prefetchUrls, swipeIndex, PHOTO_WIDTH.card);
 
   // First run: capture a lightweight identity (name required, email optional) before the picker
   // (DEC-060). Persist locally and best-effort sync to the server for admin metrics — never block
@@ -582,7 +589,7 @@ function StepSwipe({
 
   return (
     <>
-      <div className="ob-body">
+      <div className="ob-body is-swipe">
         {modeToggle}
         <div className="swipe-head">
           <div className="count">

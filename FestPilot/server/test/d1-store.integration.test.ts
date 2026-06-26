@@ -12,7 +12,7 @@ import { buildFixturePayload, FixtureLineupFetcher } from "./fixtures";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const schemaSql = ["0001_init.sql", "0008_festival_with_timetable.sql"]
+const schemaSql = ["0001_init.sql", "0008_festival_with_timetable.sql", "0014_artist_socials.sql"]
   .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
   .join("\n");
 
@@ -152,6 +152,55 @@ describe("D1 integration (real migration applied via sql.js)", () => {
     const withPhoto = lineup!.performances.flatMap((p) => p.artists).filter((a) => a.imageUrl === PHOTO);
     expect(withPhoto.length).toBeGreaterThan(0);
     expect(lineup!.performances.flatMap((p) => p.artists).some((a) => a.imageUrl === null)).toBe(true);
+    db.close();
+  });
+
+  it("captures and serves the source social links per artist (ART-3)", async () => {
+    const db = await createSqliteDb(schemaSql);
+    const store = new D1LineupStore(makeD1(db), ids);
+
+    const run = await ingestFixture(store);
+    expect(run.status).toBe("updated");
+
+    const d1 = makeD1(db);
+
+    // Afrojack (source id 1261857121) ships all eight socials in the real TL26BE capture — the
+    // column must store them verbatim as JSON, nothing dropped or invented.
+    const stored = await d1
+      .prepare("SELECT socials FROM artist WHERE source_artist_id = ?")
+      .bind("1261857121")
+      .first<{ socials: string | null }>();
+    expect(stored!.socials).not.toBeNull();
+    expect(JSON.parse(stored!.socials!)).toEqual({
+      instagram: "https://www.instagram.com/afrojack",
+      spotify: "https://open.spotify.com/artist/4D75GcNG95ebPtNvoNVXhz",
+      soundcloud: "https://soundcloud.com/afrojack",
+      facebook: "https://www.facebook.com/djafrojack",
+      tiktok: "https://www.tiktok.com/@afrojack",
+      youtube: "https://www.youtube.com/user/afrojacktv",
+      website: "https://afrojack.com/",
+      twitter: "https://twitter.com/afrojack",
+    });
+
+    // Social-less artists keep a NULL column (nothing fabricated).
+    expect(count(db, "SELECT count(*) FROM artist WHERE socials IS NULL")).toBeGreaterThan(0);
+
+    // The read API surfaces socials on the act, and OMITS the field for social-less artists.
+    const lineup = await getLineup(d1, run.festivalId);
+    const afrojackAct = lineup!.performances.flatMap((p) => p.artists).find((a) => a.name === "Afrojack");
+    expect(afrojackAct!.socials).toBeDefined();
+    expect(afrojackAct!.socials!.instagram).toBe("https://www.instagram.com/afrojack");
+    expect(afrojackAct!.socials!.spotify).toBe("https://open.spotify.com/artist/4D75GcNG95ebPtNvoNVXhz");
+    const bareAct = lineup!.performances.flatMap((p) => p.artists).find((a) => a.socials === undefined);
+    expect(bareAct).toBeDefined();
+
+    // Idempotent re-run keeps the socials intact (the upsert backfills, never clobbers to NULL).
+    await ingestFixture(store);
+    const after = await d1
+      .prepare("SELECT socials FROM artist WHERE source_artist_id = ?")
+      .bind("1261857121")
+      .first<{ socials: string | null }>();
+    expect(JSON.parse(after!.socials!).instagram).toBe("https://www.instagram.com/afrojack");
     db.close();
   });
 

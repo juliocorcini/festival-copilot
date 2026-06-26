@@ -11,7 +11,7 @@ import { getLineup } from "../src/api/repo";
 import { createSqliteDb, makeD1 } from "./d1-shim";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const migrations = ["0001_init.sql", "0008_festival_with_timetable.sql"]
+const migrations = ["0001_init.sql", "0008_festival_with_timetable.sql", "0014_artist_socials.sql"]
   .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
   .join("\n");
 

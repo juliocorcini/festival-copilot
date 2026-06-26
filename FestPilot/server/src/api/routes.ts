@@ -4,6 +4,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env } from "../env";
 import { getFestivalMap, getLineup, listFestivals, listStages } from "./repo";
+import { listPois } from "./poiRepo";
+import { listTravelTimes } from "./travelTimeRepo";
 import { suggestFestival } from "./festivalSuggestions";
 import { getUserFromRequest } from "../auth";
 import { me } from "./me";
@@ -74,4 +76,19 @@ api.get("/festivals/:id/map", async (c) => {
   const map = await getFestivalMap(c.env.DB, id);
   if (!map) return c.json({ error: "map not found" }, 404);
   return c.json(map);
+});
+
+// Points of interest (DEC-065). Toilets/water/food/medical/exits the client drops on the map
+// through the same affine the stages use. Always 200 with a (possibly empty) array — POIs are
+// optional decoration, so a festival without any is an honest empty layer, not an error.
+api.get("/festivals/:id/pois", async (c) => {
+  const pois = await listPois(c.env.DB, c.req.param("id"));
+  return c.json({ pois });
+});
+
+// Operator-curated stage-to-stage walking minutes (DEC-065). The router prefers a stored pair
+// over the live coord estimate (DEC-011); an empty array means "fall back to the estimate".
+api.get("/festivals/:id/travel-times", async (c) => {
+  const times = await listTravelTimes(c.env.DB, c.req.param("id"));
+  return c.json({ times });
 });

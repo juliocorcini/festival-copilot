@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>L4 · Compact Ring — FestPilot Lineup</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1;vertical-align:middle}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none;-ms-overflow-style:none}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.lu-head{padding:34px 16px 0;flex-shrink:0}
+.lu-headrow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:700}
+.lu-head h1{font-size:26px;font-weight:700;margin:2px 0 0}
+.fav-count{text-align:right}
+.fav-count .n{font-family:"Oswald",sans-serif;font-weight:700;font-size:20px;color:var(--accent);line-height:1}
+.fav-count .l{font-size:10px;color:var(--muted);font-weight:600}
+.lu-switch{padding:12px 16px 0;flex-shrink:0}
+.view-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border)}
+.vs-seg{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:650;cursor:pointer;line-height:1;white-space:nowrap;font-family:inherit}
+.vs-seg .ms{font-size:16px}.vs-seg.on{background:var(--accent);color:var(--bg)}
+.lu-controls{padding:10px 16px 2px;flex-shrink:0}
+.lineup-search{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;background:var(--glass);border:1px solid var(--border);margin-bottom:10px}
+.lineup-search .ms{color:var(--muted);font-size:20px}
+.lineup-search input{flex:1;background:transparent;border:0;outline:0;color:var(--ink);font-size:14px;font-family:inherit}
+.lineup-search input::placeholder{color:var(--muted)}
+.filter-rail{display:flex;gap:8px;overflow-x:auto}
+.chip{appearance:none;border:1px solid var(--border);background:var(--glass);color:var(--muted);font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-family:inherit}
+.chip.on{background:linear-gradient(135deg,rgba(245,166,35,.18),rgba(255,208,96,.04));border-color:rgba(245,166,35,.5);color:var(--accent2)}
+.chip .ms{font-size:14px}
+.lu-scroll{flex:1;min-height:0;overflow:auto;padding:0 16px 16px}
+.sec{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--muted);padding:16px 2px 9px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 22px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+/* ===== L4 — COMPACT RING : dense 3-col, circular photo with stage-color ring. See many artists fast. ===== */
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 8px}
+.gc{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;background:none;border:0;color:var(--ink);padding:0;font-family:inherit}
+.gc-photo{width:82px;height:82px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  font-family:"Oswald",sans-serif;font-size:23px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5);position:relative;
+  background:linear-gradient(150deg,rgb(var(--c)),#0c0a07 96%);box-shadow:0 0 0 2px rgb(var(--c)),0 7px 16px -8px rgba(0,0,0,.75)}
+.gc-photo::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(70% 55% at 68% 16%,rgba(255,255,255,.4),transparent 60%);mix-blend-mode:overlay}
+.gc-heart{position:absolute;top:-3px;right:14px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(15,13,9,.78);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);color:#fff;z-index:2}
+.gc-heart .ms{font-size:15px}
+.gc.on .gc-heart{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg);border-color:transparent}
+.gc.on .gc-photo{box-shadow:0 0 0 2px var(--accent),0 7px 16px -8px rgba(0,0,0,.75)}
+.gc-name{font-size:11.5px;font-weight:700;margin-top:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.15}
+.gc-sub{font-size:9px;color:var(--muted);margin-top:2px;display:inline-flex;align-items:center;gap:4px}
+.gc-sub .dot{width:6px;height:6px;border-radius:50%;background:rgb(var(--c))}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="lu-head">
+    <div class="lu-headrow">
+      <div><div class="eyebrow">TOMORROWLAND 2026</div><h1 class="poster">Lineup</h1></div>
+      <div class="fav-count"><div class="n">5</div><div class="l">favorites</div></div>
+    </div>
+  </header>
+  <div class="lu-switch">
+    <div class="view-switch">
+      <button class="vs-seg"><span class="ms">calendar_month</span>Timetable</button>
+      <button class="vs-seg on"><span class="ms">groups</span>Lineup</button>
+    </div>
+  </div>
+  <div class="lu-controls">
+    <div class="lineup-search"><span class="ms">search</span><input placeholder="Search artists…"></div>
+    <div class="filter-rail">
+      <button class="chip"><span class="ms">star</span>Favorites</button>
+      <button class="chip on">All days</button>
+      <button class="chip">Sat 18</button>
+      <button class="chip">Sun 19</button>
+    </div>
+  </div>
+  <div class="lu-scroll">
+    <div class="sec">YOUR FAVORITES · 5</div>
+    <div class="grid" id="favGrid"></div>
+    <div class="sec">ALL ARTISTS · 13</div>
+    <div class="grid" id="allGrid"></div>
+  </div>
+  <nav class="nav">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem active"><span class="ms">groups</span>Lineup</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </nav>
+</div>
+<script>
+const ARTISTS=[
+ {n:"Charlotte de Witte",st:"MAINSTAGE",c:"#FF5A36",d:"Sat",i:"CW",fav:true},
+ {n:"Amelie Lens",st:"CAGE",c:"#F59E0B",d:"Sat",i:"AL",fav:true},
+ {n:"Tale Of Us",st:"ELIXIR",c:"#7C3AED",d:"Sat",i:"TU",fav:true},
+ {n:"Peggy Gou",st:"ROSE GARDEN",c:"#EC4899",d:"Sat",i:"PG",fav:true},
+ {n:"Martin Garrix",st:"RISE",c:"#EAB308",d:"Sat",i:"MG",fav:true},
+ {n:"Adam Beyer",st:"FREEDOM",c:"#0EA5E9",d:"Sat",i:"AB"},
+ {n:"Dimitri Vegas",st:"MAINSTAGE",c:"#FF5A36",d:"Sat",i:"DV"},
+ {n:"Maceo Plex",st:"FREEDOM",c:"#0EA5E9",d:"Sat",i:"MP"},
+ {n:"Ben Böhmer",st:"CORE",c:"#16A34A",d:"Sat",i:"BB"},
+ {n:"Stephan Bodzin",st:"CORE",c:"#16A34A",d:"Sat",i:"SB"},
+ {n:"Adriatique",st:"ELIXIR",c:"#7C3AED",d:"Sat",i:"AD"},
+ {n:"Solomun",st:"ATMOSPHERE",c:"#06B6D4",d:"Sun",i:"SO"},
+ {n:"Boris Brejcha",st:"ATMOSPHERE",c:"#06B6D4",d:"Sat",i:"BR"},
+ {n:"Hardwell",st:"RISE",c:"#EAB308",d:"Sat",i:"HW"},
+ {n:"Lilly Palmer",st:"CAGE",c:"#F59E0B",d:"Sat",i:"LP"},
+ {n:"Sofi Tukker",st:"ROSE GARDEN",c:"#EC4899",d:"Sun",i:"ST"},
+ {n:"Honey Dijon",st:"ROSE GARDEN",c:"#EC4899",d:"Sun",i:"HD"},
+ {n:"Innellea",st:"ELIXIR",c:"#7C3AED",d:"Sun",i:"IN"}
+];
+const rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(",");
+function card(a){return `<button class="gc${a.fav?' on':''}" style="--c:${rgb(a.c)}">
+  <div class="gc-photo">${a.i}</div>
+  <span class="gc-heart"><span class="ms">${a.fav?'favorite':'favorite_border'}</span></span>
+  <div class="gc-name">${a.n}</div><div class="gc-sub"><span class="dot"></span>${a.st}</div>
+</button>`;}
+document.getElementById("favGrid").innerHTML=ARTISTS.filter(a=>a.fav).map(card).join("");
+document.getElementById("allGrid").innerHTML=ARTISTS.filter(a=>!a.fav).map(card).join("");
+document.querySelectorAll(".gc-heart").forEach(h=>h.addEventListener("click",e=>{e.stopPropagation();const c=h.closest(".gc");const on=c.classList.toggle("on");const ic=h.querySelector(".ms");if(ic)ic.textContent=on?"favorite":"favorite_border";}));
+</script>
+</body>
+</html>

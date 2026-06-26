@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Shell Unificado — FestPilot (Lineup ⇄ Timetable)</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;min-height:100vh;display:flex;flex-direction:column}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle}
+header{padding:26px 26px 6px}
+header .k{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:800;text-transform:uppercase}
+header h1{font-family:"Oswald",sans-serif;font-size:27px;margin:8px 0 6px}
+header p{font-size:13.5px;color:var(--muted);line-height:1.55;max-width:760px;margin:0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:18px 26px 8px}
+.tab{border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:700;font-size:13px;padding:9px 15px;border-radius:999px;cursor:pointer;font-family:inherit;display:inline-flex;gap:8px;align-items:center}
+.tab .num{font-family:"Oswald",sans-serif;color:var(--muted)}
+.tab.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.tab.on .num{color:rgba(0,0,0,.55)}
+.desc{padding:6px 26px 12px;color:var(--muted);font-size:13px;min-height:20px}
+.desc b{color:var(--ink)}
+.frame{flex:1;min-height:0;border:0;width:100%;background:#08070a}
+.rules{display:flex;gap:7px;flex-wrap:wrap;padding:0 26px 18px}
+.rule{font-size:11px;color:var(--muted);background:var(--glass);border:1px solid var(--border);border-radius:999px;padding:5px 11px}
+.rule b{color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="k">FestPilot · Design</div>
+  <h1 class="poster">Shell Unificado — Lineup ⇄ Timetable</h1>
+  <p>O problema: hoje o toggle entre as duas telas fica em lugares diferentes e os headers têm formatos distintos, fazendo parecer duas telas sem relação. Estes 5 protótipos exploram onde fixar o toggle pra que vire <b style="color:var(--ink)">uma tela só</b> que troca o miolo — sem fricção, sem o botão sair do lugar — mantendo o Timetable enxuto. Cada protótipo mostra as duas views lado a lado; clique no toggle dentro de cada telefone.</p>
+</header>
+<div class="rules">
+  <span class="rule">Toggle no <b>mesmo lugar</b> nas duas views</span>
+  <span class="rule">Header compartilhado <b>mínimo</b></span>
+  <span class="rule">Trilha de controle <b>troca conteúdo</b>, não pula</span>
+  <span class="rule">Timetable ganha <b>espaço</b> pra grade</span>
+  <span class="rule">Card N6 + grid L5 já aprovados</span>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="desc" id="desc"></div>
+<iframe class="frame" id="frame" src="P6-bottom-refined.html"></iframe>
+<script>
+const P=[
+ {f:"P6-bottom-refined.html",t:"Switch inferior — refinado ✓",d:"ESCOLHIDO (evolução do P3) — toggle flutuante embaixo; topo com dias (Timetable) / busca (Lineup) ao lado do título; controles na linha de baixo usando a largura toda, Lock in sem cortar."},
+ {f:"P1-frozen-corner.html",t:"Canto congelado",d:"Toggle fixo no canto superior direito nas duas views (onde já está no Timetable). Conservador e seguro."},
+ {f:"P2-toggle-as-title.html",t:"Toggle é o título",d:"Sem h1 redundante: o segmented centralizado É o título. Elegante, máxima sensação de 'uma tela'."},
+ {f:"P3-bottom-switch.html",t:"Switch inferior (base)",d:"Base do escolhido. Toggle flutuante acima da nav — alcance do polegar e topo livre. Refinado no P6."},
+ {f:"P4-sticky-subtabs.html",t:"Sub-abas fixas",d:"Segmented largura-cheia sob um header fino. Sinal mais forte de 'uma tela, duas views'. Robusto e familiar. Custo: ~1 linha extra."},
+ {f:"P5-morphing-rail.html",t:"Trilha que transmuta",d:"Toggle travado à esquerda + contador à direita; só a trilha do meio troca. O mais fiel a 'muda só o que está em volta' e o mais enxuto."}
+];
+const tabs=document.getElementById("tabs"),frame=document.getElementById("frame"),desc=document.getElementById("desc");
+let cur=0;
+function render(){tabs.innerHTML=P.map((p,i)=>`<button class="tab ${i===cur?'on':''}" data-i="${i}"><span class="num">P${i+1}</span> ${p.t}</button>`).join("");
+  desc.innerHTML=`<b>P${cur+1} · ${P[cur].t}</b> — ${P[cur].d}`;frame.src=P[cur].f;
+  tabs.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;render();});}
+render();
+</script>
+</body>
+</html>

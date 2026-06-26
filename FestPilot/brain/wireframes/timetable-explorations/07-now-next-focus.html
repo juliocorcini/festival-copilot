@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>T7 · Now &amp; Next Focus — FestPilot Timetable</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1);--danger:#E0563B;--ok:#16A34A}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none;-ms-overflow-style:none}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+.head{padding:36px 18px 4px;flex-shrink:0}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 22px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+.body{flex:1;min-height:0;overflow:auto;padding:0 16px 16px}
+.sec{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin:16px 2px 8px;display:flex;align-items:center;gap:6px}
+
+.scrub{position:relative;height:46px;margin:6px 2px 2px;border-radius:14px;background:rgba(0,0,0,.3);border:1px solid var(--border);overflow:hidden}
+.scrub .seg{position:absolute;top:50%;height:5px;transform:translateY(-50%);border-radius:99px;opacity:.5}
+.scrub .seg.fav{height:9px;opacity:1;box-shadow:0 0 8px rgba(245,166,35,.5)}
+.scrub .tk{position:absolute;bottom:4px;transform:translateX(-50%);font-size:8px;font-weight:700;color:var(--muted)}
+.scrub .nowm{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.scrub .nowm::before{content:"";position:absolute;top:-1px;left:50%;width:9px;height:9px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
+
+.hero{position:relative;border-radius:22px;overflow:hidden;padding:16px;min-height:148px;display:flex;flex-direction:column;justify-content:flex-end;
+  background:linear-gradient(180deg,rgba(15,13,9,.1),rgba(15,13,9,.86)),linear-gradient(135deg,#FF5A36,#7a2a18)}
+.hero .live{position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.1em;
+  background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.25);padding:4px 9px;border-radius:99px}
+.hero .live .d{width:7px;height:7px;border-radius:50%;background:#fff;animation:p 1.6s infinite}
+@keyframes p{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+.hero .endin{position:absolute;top:14px;right:14px;font-size:10px;font-weight:800;background:rgba(0,0,0,.4);padding:4px 9px;border-radius:99px}
+.hero .stg{font-size:11px;font-weight:800;letter-spacing:.06em;color:#ffd9c9}
+.hero .nm{font-family:"Oswald";font-size:30px;font-weight:700;line-height:.96;margin-top:2px}
+.hero .tm{font-size:12px;color:rgba(255,255,255,.8);margin-top:4px;font-weight:600}
+.hero .fav{position:absolute;bottom:14px;right:14px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.3);color:var(--accent2)}
+
+.next{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.ncard{flex:0 0 150px;border-radius:16px;padding:11px;background:linear-gradient(135deg,rgba(245,166,35,.16),rgba(255,208,96,.03)),rgba(20,17,12,.55);border:1px solid rgba(245,166,35,.4);backdrop-filter:blur(12px)}
+.ncard .in{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--accent)}
+.ncard .ph{width:38px;height:38px;border-radius:11px;margin:7px 0 6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:linear-gradient(135deg,#fff,#f1dca8);color:#7a5a10}
+.ncard .nm{font-size:13px;font-weight:800;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ncard .st{font-size:9.5px;font-weight:700;margin-top:2px}
+.ncard .tm{font-size:10px;color:var(--muted);margin-top:1px}
+
+.live-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:14px;margin-bottom:6px;
+  background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.01)),rgba(20,17,12,.5);border:1px solid var(--border)}
+.live-row .pin{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.live-row .nm{font-size:12.5px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-row .stg{font-size:9.5px;font-weight:800;letter-spacing:.03em}
+.live-row .tm{font-size:10px;color:var(--muted);font-weight:600}
+.live-row .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+<div class="phone">
+  <div class="head">
+    <div class="flex items-center justify-between">
+      <div><h1 class="poster text-[22px] font-bold leading-none">Timetable</h1><span class="text-[11px] text-[var(--muted)] font-semibold">Saturday · 22:40</span></div>
+      <span class="ms text-[var(--muted)] text-[22px]">tune</span>
+    </div>
+    <div class="scrub" id="scrub"></div>
+  </div>
+  <div class="body">
+    <div class="sec"><span class="ms text-[13px]">sensors</span>Happening now · your pick</div>
+    <div class="hero">
+      <span class="live"><span class="d"></span>LIVE NOW</span>
+      <span class="endin">ends in 20 min</span>
+      <span class="stg">MAINSTAGE</span>
+      <span class="nm">Charlotte de Witte</span>
+      <span class="tm">21:00 – 23:00</span>
+      <span class="fav ms" style="font-variation-settings:'FILL' 1">favorite</span>
+    </div>
+
+    <div class="sec"><span class="ms text-[13px]">skip_next</span>Up next · your picks</div>
+    <div class="next" id="next"></div>
+
+    <div class="sec"><span class="ms text-[13px]">graphic_eq</span>On now · all stages</div>
+    <div id="live"></div>
+  </div>
+  <div class="nav">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem active"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </div>
+</div>
+<script>
+const STAGES=[
+ {name:"MAINSTAGE",color:"#FF5A36",sets:[{a:"Charlotte de Witte",s:"21:00",e:"23:00",fav:true,i:"CW"},{a:"Dimitri Vegas",s:"23:15",e:"01:00",i:"DV"},{a:"Steve Aoki",s:"01:15",e:"03:00",i:"SA"}]},
+ {name:"FREEDOM",color:"#0EA5E9",sets:[{a:"Maceo Plex",s:"21:00",e:"22:45",i:"MP"},{a:"Adam Beyer",s:"23:00",e:"01:00",fav:true,i:"AB"},{a:"Pig&Dan",s:"01:30",e:"03:00",i:"PD"}]},
+ {name:"CAGE",color:"#F59E0B",sets:[{a:"Lilly Palmer",s:"21:00",e:"22:30",i:"LP"},{a:"Amelie Lens",s:"23:15",e:"00:30",fav:true,i:"AL"},{a:"FJAAK",s:"00:45",e:"02:00",i:"FJ"}]},
+ {name:"CORE",color:"#16A34A",sets:[{a:"Ben Böhmer",s:"21:00",e:"22:30",i:"BB"},{a:"Stephan Bodzin",s:"22:45",e:"00:15",i:"SB"},{a:"Reinier Z.",s:"00:30",e:"02:00",i:"RZ"}]},
+ {name:"ELIXIR",color:"#7C3AED",sets:[{a:"Adriatique",s:"21:00",e:"23:00",i:"AD"},{a:"Tale Of Us",s:"23:15",e:"01:30",fav:true,i:"TU"},{a:"Innellea",s:"01:45",e:"03:00",i:"IN"}]},
+ {name:"ROSE GARDEN",color:"#EC4899",sets:[{a:"Sofi Tukker",s:"21:00",e:"22:30",i:"ST"},{a:"Peggy Gou",s:"22:45",e:"00:30",fav:true,i:"PG"},{a:"Honey Dijon",s:"00:45",e:"02:30",i:"HD"}]},
+ {name:"RISE",color:"#EAB308",sets:[{a:"Hardwell",s:"21:30",e:"23:30",i:"HW"},{a:"Martin Garrix",s:"23:45",e:"01:30",fav:true,i:"MG"}]},
+ {name:"ATMOSPHERE",color:"#06B6D4",sets:[{a:"Boris Brejcha",s:"21:30",e:"23:15",i:"BR"},{a:"Solomun",s:"23:30",e:"01:30",i:"SO"}]}
+];
+const WIN_START=21*60,WIN_END=27*60,NOW=22*60+40;
+const toMin=t=>{let[h,m]=t.split(":").map(Number);if(h<12)h+=24;return h*60+m;};
+const pct=m=>(m-WIN_START)/(WIN_END-WIN_START)*100;
+const mins=n=>n<60?n+" min":Math.floor(n/60)+"h"+(n%60?(n%60):"");
+// scrubber: a thin segment per stage row of fav/non-fav blocks + now marker + ticks
+const scrub=document.getElementById("scrub");let sc="";
+STAGES.forEach((st,i)=>{const yy=8+i*4;st.sets.forEach(se=>{const l=pct(toMin(se.s)),w=pct(toMin(se.e))-l;sc+=`<span class="seg${se.fav?" fav":""}" style="left:${l}%;width:${w}%;top:${yy}px;background:${st.color}"></span>`;});});
+for(let h=21;h<=27;h+=2)sc+=`<span class="tk" style="left:${pct(h*60)}%">${String(h%24).padStart(2,"0")}h</span>`;
+sc+=`<span class="nowm" style="left:${pct(NOW)}%"></span>`;scrub.innerHTML=sc;
+// up next: favorites starting after NOW, soonest first
+let upcoming=[];STAGES.forEach(st=>st.sets.forEach(se=>{if(se.fav&&toMin(se.s)>=NOW)upcoming.push({...se,stage:st.name,color:st.color,sm:toMin(se.s)});}));
+upcoming.sort((a,b)=>a.sm-b.sm);
+document.getElementById("next").innerHTML=upcoming.map(x=>`<div class="ncard"><div class="in">IN ${mins(x.sm-NOW)}</div><div class="ph">${x.i}</div><div class="nm">${x.a}</div><div class="st" style="color:${x.color}">${x.stage}</div><div class="tm">${x.s} – ${x.e}</div></div>`).join("");
+// on now all stages
+let liveNow=[];STAGES.forEach(st=>st.sets.forEach(se=>{if(NOW>=toMin(se.s)&&NOW<toMin(se.e))liveNow.push({...se,stage:st.name,color:st.color,em:toMin(se.e)});}));
+liveNow.sort((a,b)=>a.em-b.em);
+document.getElementById("live").innerHTML=liveNow.map(x=>`<div class="live-row"><span class="dot"></span><span class="pin" style="background:${x.color}"></span><span class="nm">${x.a}</span><span class="stg" style="color:${x.color}">${x.stage}</span><span class="tm">→ ${x.e}</span></div>`).join("");
+</script>
+</body>
+</html>

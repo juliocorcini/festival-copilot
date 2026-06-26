@@ -54,20 +54,35 @@ export interface TravelMatrixOptions {
   fallbackMinutes?: number;
   detour?: number;
   minMinutes?: number;
+  /**
+   * Operator-curated walking minutes for specific directed pairs (DEC-065), keyed `"fromId|toId"`.
+   * A present pair wins over the coord estimate — the admin knows the real path around fences/crowds.
+   */
+  overrides?: ReadonlyMap<string, number>;
+}
+
+/** Key for the override map — a directed stage pair. */
+export function travelPairKey(fromStageId: string, toStageId: string): string {
+  return `${fromStageId}|${toStageId}`;
 }
 
 /**
- * A `TravelMatrix` keyed by stage id, derived from published coordinates. Same stage → 0; a pair with
- * coords → distance/​speed (rounded up, floored at `minMinutes`); a pair missing coords → fallback.
+ * A `TravelMatrix` keyed by stage id. Same stage → 0; an operator override for the pair wins; else a
+ * pair with coords → distance/​speed (rounded up, floored at `minMinutes`); a pair missing both → fallback.
  */
 export function buildTravelMatrix(coords: ReadonlyMap<string, LatLng>, options: TravelMatrixOptions = {}): TravelMatrix {
   const metersPerMinute = options.metersPerMinute ?? DEFAULT_METERS_PER_MINUTE;
   const fallbackMinutes = options.fallbackMinutes ?? DEFAULT_FALLBACK_MINUTES;
   const detour = options.detour ?? DEFAULT_DETOUR;
   const minMinutes = options.minMinutes ?? 2;
+  const overrides = options.overrides;
   return {
     minutesBetween(fromStageId, toStageId) {
       if (fromStageId && toStageId && fromStageId === toStageId) return 0;
+      if (overrides && fromStageId && toStageId) {
+        const stored = overrides.get(travelPairKey(fromStageId, toStageId));
+        if (stored != null && Number.isFinite(stored)) return stored;
+      }
       const a = fromStageId ? coords.get(fromStageId) : undefined;
       const b = toStageId ? coords.get(toStageId) : undefined;
       if (!a || !b) return fallbackMinutes;

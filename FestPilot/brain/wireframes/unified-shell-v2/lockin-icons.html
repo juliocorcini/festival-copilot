@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Lock in — candidatos de ícone</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:radial-gradient(120% 80% at 50% -10%,#1a140b 0%,#0b0a07 60%,#08070a 100%);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;padding:30px 28px 48px}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle;line-height:1}
+h1{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em;font-size:26px;margin:0 0 4px}
+.k{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:800;text-transform:uppercase}
+.lead{color:var(--muted);font-size:13.5px;line-height:1.55;max-width:760px;margin:8px 0 22px}
+.grp{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--accent2);margin:24px 0 10px;display:flex;align-items:center;gap:8px}
+.grp::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.12),transparent)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:rgba(20,16,10,.55);border:1px solid var(--border);border-radius:16px;padding:14px 14px 13px;display:flex;align-items:center;gap:14px;backdrop-filter:blur(12px)}
+.card.win{border-color:rgba(245,166,35,.55);box-shadow:0 0 0 1px rgba(245,166,35,.25),0 10px 30px -16px rgba(245,166,35,.5)}
+.demo{display:flex;flex-direction:column;gap:9px;align-items:center;flex-shrink:0}
+/* full labeled pill, exactly like the app */
+.pill{display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-weight:800;font-size:13px;border:none;border-radius:999px;padding:9px 15px;cursor:default;color:var(--bg);background:linear-gradient(135deg,var(--accent),var(--accent2));white-space:nowrap}
+.pill .ms{font-size:16px}
+/* icon-only control chip, like V3 collapsed mode */
+.iconly{width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--glass);color:var(--ink)}
+.iconly .ms{font-size:20px}
+.meta{min-width:0}
+.meta .nm{font-weight:700;font-size:14px}
+.meta .gl{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace}
+.meta .rd{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:3px}
+.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-top:6px}
+.tag.good{background:rgba(120,220,140,.14);color:#9be8af}
+.tag.warn{background:rgba(255,170,60,.14);color:#ffd089}
+.tag.bad{background:rgba(255,110,90,.16);color:#ff9d8a}
+.note{margin-top:18px;font-size:12px;color:var(--muted);background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:12px 14px;line-height:1.5}
+.note b{color:var(--ink)}
+@media(max-width:680px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="k">FestPilot · Lock in</div>
+  <h1>Que ícone diz "fechei meu dia"?</h1>
+  <p class="lead">Ação real (DEC-005/029): pega seus favoritos, resolve os choques de horário e <b style="color:var(--ink)">fecha seu plano pessoal</b> do dia — termina em "LOCKED IN!". Cada candidato mostrado <b style="color:var(--ink)">com rótulo</b> (como na maioria das telas) e <b style="color:var(--ink)">só ícone</b> (modo compacto/V3). A pergunta crítica é o modo só-ícone.</p>
+
+  <div class="grp">Compromisso / trancar (atual)</div>
+  <div class="grid">
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">lock</span>Lock in</button><span class="iconly"><span class="ms">lock</span></span></div>
+      <div class="meta"><div class="nm">lock <span class="gl">(atual)</span></div><div class="rd">Casa com o verbo "Lock in". Mas sozinho lê "conteúdo bloqueado / segurança".</div><span class="tag warn">com rótulo: ok · só ícone: confuso</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">lock_clock</span>Lock in</button><span class="iconly"><span class="ms">lock_clock</span></span></div>
+      <div class="meta"><div class="nm">lock_clock</div><div class="rd">Cadeado + relógio = "trancar o horário". Um tiquinho mais "tempo", mesmo problema do cadeado.</div><span class="tag warn">marginal</span></div>
+    </div>
+  </div>
+
+  <div class="grp">Construir / confirmar a lista (mais perto da função)</div>
+  <div class="grid">
+    <div class="card win">
+      <div class="demo"><button class="pill"><span class="ms">playlist_add_check</span>Lock in</button><span class="iconly"><span class="ms">playlist_add_check</span></span></div>
+      <div class="meta"><div class="nm">playlist_add_check <span class="gl">★ favorito</span></div><div class="rd">"Transformar meus picks num set fechado". É literalmente o que a ação faz. Funciona até sem rótulo.</div><span class="tag good">com rótulo: ótimo · só ícone: bom</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">fact_check</span>Lock in</button><span class="iconly"><span class="ms">fact_check</span></span></div>
+      <div class="meta"><div class="nm">fact_check</div><div class="rd">Lista com check. "Revisar e confirmar". Bom, um pouco mais "tarefa/burocrático".</div><span class="tag good">forte</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">checklist</span>Lock in</button><span class="iconly"><span class="ms">checklist</span></span></div>
+      <div class="meta"><div class="nm">checklist</div><div class="rd">"Minha lista pronta". Claro, mas genérico (parece to-do).</div><span class="tag warn">ok</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">task_alt</span>Lock in</button><span class="iconly"><span class="ms">task_alt</span></span></div>
+      <div class="meta"><div class="nm">task_alt</div><div class="rd">Check em círculo = "concluir". Universal, mas não diz "plano".</div><span class="tag warn">ok</span></div>
+    </div>
+  </div>
+
+  <div class="grp">Fechar o dia / calendário</div>
+  <div class="grid">
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">event_available</span>Lock in</button><span class="iconly"><span class="ms">event_available</span></span></div>
+      <div class="meta"><div class="nm">event_available</div><div class="rd">Dia com check = "meu dia confirmado". Bom, mas colide com o ícone de calendário da nav.</div><span class="tag warn">cuidado: colisão</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">edit_calendar</span>Lock in</button><span class="iconly"><span class="ms">edit_calendar</span></span></div>
+      <div class="meta"><div class="nm">edit_calendar</div><div class="rd">"Montar minha agenda". Idem: muito perto do calendário da nav.</div><span class="tag warn">cuidado: colisão</span></div>
+    </div>
+  </div>
+
+  <div class="grp">Energia / "bora" (gamificado — alternativa ao play)</div>
+  <div class="grid">
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">bolt</span>Lock in</button><span class="iconly"><span class="ms">bolt</span></span></div>
+      <div class="meta"><div class="nm">bolt</div><div class="rd">Raio = "resolver os choques num passo". Energético, combina com a celebração. Não diz "plano" sozinho.</div><span class="tag warn">vibe boa, semântica média</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">sports_score</span>Lock in</button><span class="iconly"><span class="ms">sports_score</span></span></div>
+      <div class="meta"><div class="nm">sports_score</div><div class="rd">Bandeira quadriculada = "fechar/chegar na linha". Gamificado e único. Um pouco abstrato.</div><span class="tag warn">criativo</span></div>
+    </div>
+    <div class="card">
+      <div class="demo"><button class="pill"><span class="ms">play_arrow</span>Lock in</button><span class="iconly"><span class="ms">play_arrow</span></span></div>
+      <div class="meta"><div class="nm">play_arrow <span class="gl">(sua ideia)</span></div><div class="rd">Num app de música, ▶ = "tocar áudio". Alto risco de ser lido como player, não como "fechar plano".</div><span class="tag bad">evitar (colisão de mídia)</span></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Leitura do comparativo:</b> com rótulo "Lock in" do lado, quase todo ícone funciona — o texto carrega o sentido. O problema só nasce no <b>modo só-ícone</b> (V3). Aí o cadeado falha e o ▶ engana. Os que sobrevivem sem rótulo são os de <b>"lista confirmada"</b> (playlist_add_check / fact_check). Conclusão prática: <b>trocar o glifo para playlist_add_check</b> e, sempre que houver espaço, <b>manter o rótulo</b> — só colapsar pra ícone em último caso.
+  </div>
+</body>
+</html>

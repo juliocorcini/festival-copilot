@@ -6,6 +6,29 @@
 
 ---
 
+## Lote de Campo 25/06 — IMG / OBV / ART (orquestrado por `brain/design-sync.md`) ✅
+
+> Loop + INVARIANTES + gates em `brain/design-sync.md`. Inline, sem subagentes (constituição de custo).
+> Um change set por vez; o gate fecha em: tsc + `npm run test` (web **e** server) 0 falhas · build ok ·
+> golden path · screenshot bate com o alvo · `git diff --stat` só os arquivos do gate · tabela de Status atualizada.
+
+### Current State (this batch)
+- **3 gates fechados ✅** — **IMG** (fotos: anti-corrida + buffer + cache + favoritos offline), **OBV** (onboarding Safari/iPhone: nome sempre visível), **ART** (Artist Detail Sheet + socials).
+- **Tests:** web **276** unit (39 files) · server **215** unit (23 files) · ambos `tsc --noEmit` limpos · web `vite build` OK · server `wrangler deploy --dry-run` OK (208 KiB).
+- **Verificação visual:** Playwright headless contra o `dist` (preview :4174) — o Node (com rede) busca o lineup live e o Playwright intercepta `**/api/**` (o Chromium do sandbox não tem egress). Golden path + as 4 superfícies de toque; screenshots lidos e conferidos.
+- **Deploy:** **NÃO** publicado neste lote (mudança de código). O worker em produção ainda **não foi re-ingerido**, então a coluna `socials` fica vazia em prod até o próximo ingest (DEC-069).
+- **Escopo:** apenas arquivos de IMG/OBV/ART foram tocados. O WIP **pré-existente do DEC-065** (editor de POI/travel/mapa + consumidores: `admin.ts`, `routes.ts`, `poiRepo.ts`, `travelTimeRepo.ts`, `api.ts`, `usePois.ts`, `useTravelMatrix.ts`, `travel.ts`, `MapView.tsx`, `poiMeta.ts`) **não foi tocado** e segue não-commitado na árvore.
+
+### Gates (uma entrada por gate)
+
+- **IMG ✅ (DEC-067)** — *Feito:* IMG-1 `<ArtistPhoto>` à prova de corrida (reseta `loaded`/`failed` ao mudar `src`/`name` → foto nunca pinta sob o nome errado) + IMG-6 retry/backoff + diagnóstico; IMG-2 `lib/photoBuffer.ts` (fila **pura**, testada) + IMG-3 `usePhotoPrefetch` (5 fotos à frente no swipe); IMG-4 cache dedicado de fotos no `public/sw.js` com **teto LRU**; IMG-5 `useKeepFavoritePhotos` (montado no `AppLayout`) fixa as fotos dos favoritos **isentas do LRU**. *Arquivos:* `ui/ArtistPhoto.tsx`, `lib/photoBuffer.ts`(+test), `lib/usePhotoPrefetch.ts`, `public/sw.js`, `app/AppLayout.tsx`, `styles.css`. *Testes:* +`photoBuffer` (6). *Regressão verificada:* API pública do `<ArtistPhoto>` `{src,name,width,className}` e o fallback de iniciais **intactos**; cache network-first `/api` do SW **preservado**; nenhuma math de domínio mudou.
+
+- **OBV ✅ (DEC-068)** — *Feito:* OBV-1 card do swipe escala pela **altura** disponível; OBV-2 cabeçalho do swipe compacta em viewport baixa; OBV-3 passo do swipe `overflow:hidden` (o **grid** continua rolando); OBV-4 nome do artista **clamped e sempre visível** com o toggle de favorito preservado. *Arquivos:* `routes/onboarding/OnboardingScreen.tsx`, `styles.css` (CSS-only + layout). *Regressão verificada:* grid ainda rola; toggle de favorito intacto; nome visível em viewport curta iPhone/Safari (screenshots do segmento anterior).
+
+- **ART ✅ (DEC-069; ART-7 → DEC-070 pendente)** — *Feito:* **servidor** ART-1 `SourceArtist` ganha socials; ART-2 `normalize` preserva via `pickSocials` **puro** (data-driven sobre `ARTIST_SOCIAL_KEYS`); ART-3 migração **aditiva** `0014_artist_socials.sql` (`socials TEXT` default NULL) + `ingest/store.ts` grava JSON + `ArtistDto.socials?` + `repo.parseSocials`. **web** ART-4 `ArtistSocials` espelhado + `Act.socials` propagado por `uniqueActs` (first-non-empty) + `buildArtistDetail` **puro** (cada show = dot da cor do palco + dia/data + início–fim na tz; tag W1/W2 só quando cruza os 2 fins de semana); ART-5 `ArtistSheet` (`role="dialog"`, foco gerido, Esc) + CSS (hero, glifos SVG dos socials, slots); ART-6 wire dos toques — Timetable `.set-inner` (heart segue separado), Lineup foto+info viram `<button>` (heart separado), Now hero/lista, My Plan corpo do card (edição movida pro `⋮`), via `ArtistSheetProvider` no `AppLayout` + helper `openOnActivate`. ART-7 **não implementado** (gênero/bio ausentes na fonte → DEC-070). *Testes:* server `pickSocials` + `normalize` (Afrojack 8 socials) + d1 round-trip de socials; web `buildArtistDetail` (horários concretos: Sun Jul 19 22:00–23:00, etc.) + `uniqueActs` socials. *Golden path (Playwright):* Timetable → trocar dia (Sáb 18) → favoritar um set (`Add`→`Remove`, **sem** abrir o sheet) → Lineup → buscar "Afrojack" → abrir o ArtistSheet com **2 slots** (THE GREAT LIBRARY · W1 · Sun Jul 19 22:00–23:00 · MAINSTAGE · W2 · Sun Jul 26 19:40–20:40). Also: hero do Now e card do My Plan abrem o sheet; o `⋮` do My Plan abre o menu de edição **sem** abrir o sheet. *Regressão verificada:* math de domínio (`actKey`/`uniqueActs`/`imageByActKey`/janelas) e API do `<ArtistPhoto>` **intactas**; favoritar **nunca** abre o sheet (`sheetOpenedByHeart=false`); migração aditiva + ingestão idempotente (`festivals.test` re-ingest = no_changes); edição do My Plan ainda acessível (`editMenuFromMoreVert=true`, `editDidNotOpenArtistSheet=true`).
+
+---
+
 ## Review-Remediation Pass (2026-06-24) — ACTIVE
 
 > Execution truth: `brain/documents/2026-06-24-v1-review-remediation-orchestrator.md`. Order: R0→R11 (P0 first,

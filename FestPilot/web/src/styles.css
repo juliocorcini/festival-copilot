@@ -418,6 +418,36 @@ a { color: inherit; text-decoration: none; }
 .stage-sheet .stage-sheet-photo.sm { width: 30px; height: 30px; }
 .stage-sheet .stage-sheet-photo.artphoto-ph { font-size: 13px; }
 
+/* POI amenity layer (DEC-065) — small emoji medallions through the affine, a filter legend + a sheet */
+.poi-pin { pointer-events: auto; cursor: pointer; }
+.poi-pin-shadow { fill: rgba(0, 0, 0, 0.4); }
+.poi-pin-disc { stroke: #08070a; stroke-width: 1.4; opacity: 0.96; }
+.poi-pin.is-open .poi-pin-disc { stroke: #fff; stroke-width: 1.8; }
+.poi-pin-glyph { font-size: 5.4px; }
+
+.poi-legend {
+  position: absolute; left: 12px; right: 64px;
+  top: calc(max(12px, var(--safe-top)) + 56px);
+  display: flex; gap: 7px; overflow-x: auto; padding: 2px; scrollbar-width: none;
+}
+.poi-legend::-webkit-scrollbar { display: none; }
+.poi-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--line); background: var(--scrim); backdrop-filter: blur(8px);
+  color: var(--ink); font-size: 12px; font-weight: 600;
+  box-shadow: 0 8px 22px -14px rgba(0, 0, 0, 0.8);
+}
+.poi-chip.is-off { opacity: 0.42; }
+.poi-chip span { font-size: 13px; line-height: 1; }
+
+.poi-sheet-glyph {
+  width: 30px; height: 30px; border-radius: 10px; flex: none;
+  display: grid; place-items: center; font-size: 16px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+.poi-sheet-body { display: flex; align-items: center; gap: 8px; }
+
 /* =============================================================================
    Onboarding flow (#17) — festival → weekend → days → swipe favorites
    ============================================================================= */
@@ -431,6 +461,9 @@ a { color: inherit; text-decoration: none; }
 .ob-dots .sd { width: 7px; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); transition: all 0.2s ease; }
 .ob-dots .sd.on { width: 22px; background: var(--accent); }
 .ob-body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px 22px 0; overflow-y: auto; }
+/* OBV-3 (DEC-068): the swipe step is full-height — its card fits via OBV-1, so the body must NOT
+   scroll (scrolling is exactly what pushed the artist name below the fold on iOS). Grid still scrolls. */
+.ob-body.is-swipe { overflow: hidden; }
 .ob-head { padding: 6px 0 18px; }
 .ob-head h1 { font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: -0.01em;
   font-size: 30px; font-weight: 700; line-height: 1.1; margin: 6px 0 0; }
@@ -496,11 +529,15 @@ a { color: inherit; text-decoration: none; }
 .art-card .art-stage { font-size: 12px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; }
 .art-card .art-day { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.4); }
 .art-card .art-name { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700;
-  font-size: 38px; line-height: 0.95; }
+  /* OBV-4 (DEC-068): clamp so the name shrinks with a height-scaled card on small phones, never clipped. */
+  font-size: clamp(26px, 8vw, 38px); line-height: 0.95; }
 .art-card .art-note { font-size: 12px; color: var(--muted); margin-top: 10px; font-style: italic; }
 
 /* swipe gesture (R5.1): drag the card right=keep / left=skip; the buttons stay as a fallback. */
-.swipe-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+.swipe-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+/* OBV-1 (DEC-068): on short iOS/Safari viewports the swipe card must scale by available HEIGHT, not
+   width, so the whole card — including the artist name at its foot — stays visible without scrolling. */
+.swipe-stage .art-card { height: 100%; max-height: 100%; width: auto; max-width: 100%; aspect-ratio: 4 / 5; margin-inline: auto; }
 .art-card { touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none;
   will-change: transform; transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .art-card.dragging { transition: none; cursor: grabbing; }
@@ -511,7 +548,9 @@ a { color: inherit; text-decoration: none; }
   border: 3px solid currentColor; pointer-events: none; }
 .swipe-stamp.keep { right: 18px; color: var(--accent); transform: rotate(8deg); }
 .swipe-stamp.skip { left: 18px; color: #ff6b6b; transform: rotate(-8deg); }
-.swipe-cue { position: absolute; bottom: 2px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+/* OBV-1 side-effect: the card now fills the stage height, so the hint must sit ABOVE the name (was
+   bottom:2px, which landed right on the name). It still only shows before the first drag. */
+.swipe-cue { position: absolute; bottom: 76px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
   color: var(--muted); background: rgba(0, 0, 0, 0.35); padding: 6px 12px; border-radius: 999px;
   animation: swipeCue 1.6s ease-in-out infinite; }
 .swipe-cue .ms { font-size: 16px; color: var(--accent); }
@@ -529,6 +568,17 @@ a { color: inherit; text-decoration: none; }
 .swipe-undo.sm { position: absolute; top: -2px; right: 0; margin-top: 0; padding: 5px 11px; font-size: 12px;
   color: var(--accent); background: rgba(245, 166, 35, 0.12); border-color: rgba(245, 166, 35, 0.32); }
 .swipe-undo:disabled { opacity: 0; pointer-events: none; }
+
+/* OBV-2 (DEC-068): on short viewports (small iPhones / Safari with its chrome bars) compress the
+   swipe header so the toggle + card + name + actions all fit at once, without scrolling. */
+@media (max-height: 720px) {
+  .ob-body.is-swipe .pick-toggle { margin-bottom: 4px; padding: 3px; }
+  .ob-body.is-swipe .pt-seg { padding: 6px; }
+  .ob-body.is-swipe .swipe-head { padding: 0 0 4px; }
+  .ob-body.is-swipe .swipe-q { padding: 6px 0 4px; }
+  .ob-body.is-swipe .swipe-q .hint { display: none; }
+  .swipe-actions { padding: 10px 0 calc(12px + var(--safe-bottom)); }
+}
 
 /* Shared artist photo (DEC-061 / R5.4): one element for every surface, with a branded
    initials fallback when there's no image or it fails to load. */
@@ -1772,3 +1822,40 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .map-editor-cp-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .map-stage-active > td { background: rgba(124, 92, 255, 0.1); }
 @media (max-width: 900px) { .map-editor { grid-template-columns: 1fr; } .map-editor-canvas { position: static; } }
+
+/* ART-5 (DEC-069): Artist Detail Sheet — big photo, name (Oswald), social row, and every set's
+   place/time (stage-colour dot + day/date + start–end, weekend tag only when the artist spans both). */
+.artist-sheet { max-height: 88%; }
+.artist-sheet-head { justify-content: flex-end; padding-bottom: 0; }
+.artist-sheet-body { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 0; }
+.artist-sheet-hero { width: min(58vw, 220px); aspect-ratio: 1 / 1; border-radius: 24px; overflow: hidden;
+  border: 1px solid var(--border); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); background: #1c1812; position: relative; }
+.artist-sheet-hero .artphoto { width: 100%; height: 100%; }
+.artist-sheet-name { font-family: "Oswald", sans-serif; font-weight: 700; font-size: clamp(26px, 8vw, 40px);
+  line-height: 1; text-align: center; text-transform: uppercase; letter-spacing: 0.01em; margin: 0; }
+.artist-sheet-socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.artist-sheet-social { width: 42px; height: 42px; border-radius: 50%; display: inline-flex; align-items: center;
+  justify-content: center; color: var(--accent); background: var(--glass); border: 1px solid var(--border);
+  transition: transform 0.12s ease, background 0.12s ease; }
+.artist-sheet-social:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--accent) 14%, var(--glass)); }
+.artist-sheet-slots { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.artist-sheet-slot { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px;
+  background: var(--glass); border: 1px solid var(--border); }
+.artist-sheet-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04); }
+.artist-sheet-slot-text { min-width: 0; }
+.artist-sheet-stage { font-weight: 700; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.artist-sheet-wk { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 999px; padding: 2px 7px; }
+.artist-sheet-when { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.artist-sheet-empty { color: var(--muted); font-size: 14px; text-align: center; padding: 8px 0 4px; }
+
+/* ART-6 (DEC-069): photo/name tap targets that open the Artist Detail Sheet. Favoriting/editing
+   stay on their own controls (heart, more_vert) — these wrappers only carry the "open artist" hit. */
+.tappable { cursor: pointer; }
+.tappable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
+.art-row-tap { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0; margin: 0;
+  background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 12px; }
+.art-row-tap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.plan-state-ico-btn { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0; padding: 10px; margin: -10px -6px -10px 0; cursor: pointer; color: inherit; border-radius: 12px; }
+.plan-state-ico-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

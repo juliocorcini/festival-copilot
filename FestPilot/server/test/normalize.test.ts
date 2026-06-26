@@ -4,9 +4,17 @@ import {
   buildNormalizedLineup,
   floorSeconds,
   overlaps,
+  pickSocials,
   toInstant,
 } from "../src/lineup/normalize";
-import type { Performance, SourceConfig, SourceStages, SourceWeekendFile } from "../src/lineup/types";
+import { ARTIST_SOCIAL_KEYS } from "../src/lineup/types";
+import type {
+  Performance,
+  SourceArtist,
+  SourceConfig,
+  SourceStages,
+  SourceWeekendFile,
+} from "../src/lineup/types";
 import { buildFixturePayload } from "./fixtures";
 
 function normalizedFromFixtures() {
@@ -44,8 +52,62 @@ describe("toInstant", () => {
   });
 });
 
+// Afrojack carries all eight social links in the real TL26BE capture — the maximal case (ART-2).
+const AFROJACK_SOCIALS = {
+  instagram: "https://www.instagram.com/afrojack",
+  spotify: "https://open.spotify.com/artist/4D75GcNG95ebPtNvoNVXhz",
+  soundcloud: "https://soundcloud.com/afrojack",
+  facebook: "https://www.facebook.com/djafrojack",
+  tiktok: "https://www.tiktok.com/@afrojack",
+  youtube: "https://www.youtube.com/user/afrojacktv",
+  website: "https://afrojack.com/",
+  twitter: "https://twitter.com/afrojack",
+} as const;
+
+describe("pickSocials (ART-2 — capture the source socials)", () => {
+  it("keeps every present link and emits them in the known display order", () => {
+    const afrojack = { id: "1261857121", name: "Afrojack", ...AFROJACK_SOCIALS } as SourceArtist;
+    const socials = pickSocials(afrojack);
+    expect(socials).toEqual(AFROJACK_SOCIALS);
+    // Data-driven order (instagram → twitter), not source/object insertion order.
+    expect(Object.keys(socials)).toEqual([...ARTIST_SOCIAL_KEYS]);
+  });
+
+  it("omits absent links entirely — no undefined keys polluting the object", () => {
+    const partial = {
+      id: "x",
+      name: "Vintage Culture",
+      instagram: "https://www.instagram.com/vintageculture/",
+    } as SourceArtist;
+    expect(pickSocials(partial)).toEqual({ instagram: "https://www.instagram.com/vintageculture/" });
+    expect(Object.keys(pickSocials(partial))).toEqual(["instagram"]);
+  });
+
+  it("returns an empty object for a social-less artist (graceful absence)", () => {
+    const bare = { id: "y", name: "MTBA" } as SourceArtist;
+    expect(pickSocials(bare)).toEqual({});
+    expect(Object.keys(pickSocials(bare))).toHaveLength(0);
+  });
+
+  it("treats empty-string links as absent (no blank socials persisted)", () => {
+    const blanks = { id: "z", name: "Blank", instagram: "", spotify: "" } as SourceArtist;
+    expect(pickSocials(blanks)).toEqual({});
+  });
+});
+
 describe("buildNormalizedLineup on real fixtures", () => {
   const lineup = normalizedFromFixtures();
+
+  it("preserves Afrojack's eight social links through normalization (ART-2)", () => {
+    const afrojack = lineup.performances
+      .flatMap((p) => p.artists)
+      .find((a) => a.name === "Afrojack");
+    expect(afrojack).toBeDefined();
+    // Every concrete URL survives the source → normalized hop (nothing dropped, nothing invented).
+    for (const key of ARTIST_SOCIAL_KEYS) {
+      expect(afrojack![key]).toBe(AFROJACK_SOCIALS[key]);
+    }
+  });
 
   it("has two weekends and a non-trivial set of stages and performances", () => {
     expect(lineup.weekends.map((w) => w.name).sort()).toEqual(["W1", "W2"]);

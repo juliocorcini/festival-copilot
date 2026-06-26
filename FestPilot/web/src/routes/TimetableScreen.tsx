@@ -18,6 +18,7 @@ import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
 
 type Zoom = "2h" | "1h";
 const PIXELS_PER_HOUR: Record<Zoom, number> = { "2h": 180, "1h": 360 };
@@ -28,6 +29,7 @@ export function TimetableScreen(): JSX.Element {
   const navigate = useNavigate();
   const { onboarding } = useOnboarding();
   const favorites = useFavorites(lineup?.festival.id);
+  const { openArtist } = useArtistSheet();
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [zoom, setZoom] = useState<Zoom>("2h");
@@ -180,7 +182,14 @@ export function TimetableScreen(): JSX.Element {
                       } as CSSProperties;
                       return (
                         <div key={set.id} className={`set${set.isFav ? " fav" : ""}`} style={cardStyle}>
-                          <div className="set-inner">
+                          <div
+                            className="set-inner tappable"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`View ${set.label}`}
+                            onClick={() => openArtist(set.actKey)}
+                            onKeyDown={openOnActivate(() => openArtist(set.actKey))}
+                          >
                             <ArtistPhoto
                               src={photoByKey.get(set.actKey) ?? null}
                               name={set.label}

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Shell final — Timetable + Lineup (interativo)</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.12)}
+*{box-sizing:border-box}
+body{background:radial-gradient(120% 80% at 50% -10%,#19130b 0%,#0b0a07 60%,#08070a 100%);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;padding:30px 24px 44px;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle;line-height:1}
+.head{max-width:560px;text-align:center;margin-bottom:20px}
+.k{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:800;text-transform:uppercase}
+h1{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em;font-size:24px;margin:6px 0 4px}
+.lead{color:var(--muted);font-size:13px;line-height:1.5}
+.lead b{color:var(--ink)}
+/* phone */
+.phone{width:390px;height:780px;border-radius:34px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,#100d09,#0b0907);box-shadow:0 36px 80px -34px #000;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.hdr{padding:16px 16px 8px;flex-shrink:0;position:relative;z-index:20}
+.eyebrow{font-size:11px;letter-spacing:.16em;color:var(--muted);font-weight:800;text-transform:uppercase;margin-bottom:10px}
+.eyebrow .view{color:var(--accent);font-family:"Oswald",sans-serif;letter-spacing:.04em}
+.bar{display:flex;align-items:center;gap:8px}
+.spacer{flex:1 1 auto}
+/* day dropdown trigger */
+.dsel{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 8px 0 12px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:800;font-size:13.5px;cursor:pointer;flex:0 0 auto}
+.dsel .cal{font-size:18px;color:var(--accent2)}
+.dsel .cv{font-size:20px;color:var(--muted);transition:transform .15s}
+.dsel.open{border-color:rgba(245,166,35,.6);background:rgba(245,166,35,.1)}
+.dsel.open .cv{color:var(--accent2);transform:rotate(180deg)}
+/* search (lineup primary) */
+.search{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--muted);font-size:13.5px}.search .ms{font-size:19px}
+/* controls */
+.ctrls{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.ic{width:36px;height:36px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}.ic .ms{font-size:19px}
+.lk{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:999px;font-family:inherit;font-weight:800;font-size:13px;color:var(--bg);background:linear-gradient(135deg,var(--accent),var(--accent2));padding:9px 14px;white-space:nowrap;cursor:pointer}.lk .ms{font-size:17px}
+.seg{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border)}
+.seg button{width:32px;height:28px;border:none;border-radius:999px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.seg button .ms{font-size:18px}.seg button.on{background:var(--accent);color:var(--bg)}
+/* lineup filters */
+.filters{display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none;-webkit-mask:linear-gradient(90deg,#000 0,#000 90%,transparent);mask:linear-gradient(90deg,#000 0,#000 90%,transparent)}.filters::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:700;font-size:12.5px;padding:7px 12px;border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;cursor:pointer}.chip .ms{font-size:15px}.chip.on{background:var(--accent);color:var(--bg);border-color:transparent}
+/* dropdown */
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:10}
+.dd{position:absolute;left:16px;top:92px;z-index:30;width:280px;border-radius:18px;border:1px solid var(--border);background:rgba(22,17,11,.98);backdrop-filter:blur(18px);box-shadow:0 28px 56px -18px #000;overflow:hidden}
+.dd .ti{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;padding:13px 16px 8px}
+.opt{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-top:1px solid rgba(255,255,255,.05)}
+.opt.on{background:linear-gradient(90deg,rgba(245,166,35,.18),rgba(245,166,35,.02))}
+.dn{font-size:10px;color:var(--muted);font-weight:800;width:36px;flex:0 0 auto;letter-spacing:.03em}.opt.on .dn{color:var(--accent2)}
+.wd{font-weight:800;font-size:15px;line-height:1.15}.dt{font-size:12px;color:var(--muted)}
+.rmeta{margin-left:auto;display:flex;align-items:center;gap:10px}
+.fav{font-size:11.5px;color:var(--accent2);display:inline-flex;align-items:center;gap:3px;font-weight:700}.fav .ms{font-size:13px}
+.ck{color:var(--accent);font-size:20px;opacity:0}.opt.on .ck{opacity:1}
+/* axis + tt body */
+.axis{display:flex;padding:9px 16px 4px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;flex-shrink:0}.axis span{flex:0 0 96px}
+.body{flex:1;overflow:hidden}
+.stage{padding:2px 16px 0}
+.slabel{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);margin:9px 0 5px}
+.sdot{width:7px;height:7px;border-radius:999px;background:rgb(var(--c))}
+.star{color:var(--accent2);font-size:10.5px;display:inline-flex;align-items:center;gap:2px}
+.lane{display:flex;gap:8px;overflow-x:hidden}
+.set{flex:0 0 auto;display:flex;align-items:center;gap:10px;height:48px;border-radius:999px;padding:4px 18px 4px 4px;min-width:196px;
+  background:linear-gradient(150deg,rgba(var(--c),.44),rgba(var(--c),.12) 62%,rgba(12,10,7,.55)),rgba(14,11,8,.5);
+  border:1px solid rgba(var(--c),.5);backdrop-filter:blur(12px);box-shadow:0 8px 18px -12px rgba(0,0,0,.8)}
+.ph{width:40px;height:40px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;background-color:rgba(var(--c),.85)}
+.txt{min-width:0}.nm{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tm{font-size:11.5px;color:rgba(255,255,255,.72)}
+/* lineup grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:13px 16px 0}
+.gc{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1.04;background:linear-gradient(158deg,rgba(var(--c),.96),rgba(var(--c),.52) 64%,rgba(10,8,6,.7));border:1px solid rgba(var(--c),.5)}
+.gi{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Oswald",sans-serif;font-size:50px;font-weight:700;color:rgba(255,255,255,.92)}
+.scrim{position:absolute;left:0;right:0;bottom:0;height:56%;background:linear-gradient(180deg,transparent,rgba(8,6,4,.82))}
+.gn{position:absolute;left:11px;right:11px;bottom:30px;font-weight:800;font-size:14px}
+.gs{position:absolute;left:11px;bottom:11px;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:rgba(0,0,0,.35);padding:3px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}.gs .sdot{width:6px;height:6px}
+.gh{position:absolute;top:9px;right:9px;width:30px;height:30px;border-radius:999px;background:rgba(10,8,6,.5);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}.gh .ms{font-size:16px;color:#fff}
+.gc.fav .gh{background:var(--accent2)}.gc.fav .gh .ms{color:var(--bg)}
+/* dock */
+.dock{position:absolute;left:0;right:0;bottom:0;padding:16px 0 18px;display:flex;justify-content:center;background:linear-gradient(180deg,transparent,rgba(8,7,6,.9) 45%);z-index:8}
+.switch{display:inline-flex;background:rgba(20,16,10,.85);border:1px solid var(--border);border-radius:999px;padding:5px;gap:4px;backdrop-filter:blur(14px)}
+.switch button{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-family:inherit;font-weight:700;font-size:13.5px;padding:9px 18px;cursor:pointer}
+.switch button.on{background:var(--accent);color:var(--bg)}.switch .ms{font-size:18px}
+.hint{margin-top:16px;font-size:12px;color:var(--muted);max-width:440px;text-align:center;line-height:1.5}.hint b{color:var(--accent2)}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="k">FestPilot · Shell final</div>
+    <h1>Uma tela só · Timetable + Lineup</h1>
+    <p class="lead">Protótipo <b>interativo</b>: o <b>switch embaixo</b> troca as views (mesma casca, só o miolo muda); no Timetable, o <b>botão do dia</b> abre o dropdown. Lock in com o ícone <span class="ms" style="font-size:14px">playlist_add_check</span> e sempre com texto.</p>
+  </div>
+  <div class="phone" id="app"></div>
+  <p class="hint">Toque em <b>Sáb 25 ▾</b> para abrir o seletor de dia · toque em <b>Lineup / Timetable</b> embaixo para alternar.</p>
+
+<script>
+const STAGES=[
+ {name:"Mainstage",c:"225,82,72",fav:1,sets:[["CW","Charlotte de Witte","22:00"],["DV","Dimitri V.","23:30"]]},
+ {name:"Freedom",c:"56,150,222",fav:1,sets:[["MP","Maceo Plex","22:00"],["AB","Adam Beyer","23:30"]]},
+ {name:"Cage",c:"201,162,39",fav:0,sets:[["LP","Lilly Palmer","22:00"],["AL","Amelie Lens","23:30"]]},
+ {name:"Elixir",c:"139,92,246",fav:1,sets:[["AD","Adriatique","22:00"],["TU","Tale of Us","23:30"]]},
+];
+const DAYS=[
+ {dn:"Dia 1",wd:"Sexta",dt:"24 de julho",fav:2},
+ {dn:"Dia 2",wd:"Sábado",dt:"25 de julho",fav:5},
+ {dn:"Dia 3",wd:"Domingo",dt:"26 de julho",fav:3},
+];
+const ARTISTS=[
+ {ini:"CW",nm:"Charlotte de Witte",st:"Mainstage",c:"225,82,72",fav:1},
+ {ini:"AL",nm:"Amelie Lens",st:"Cage",c:"201,162,39",fav:0},
+ {ini:"TU",nm:"Tale of Us",st:"Elixir",c:"139,92,246",fav:1},
+ {ini:"AB",nm:"Adam Beyer",st:"Freedom",c:"56,150,222",fav:0},
+ {ini:"BB",nm:"Ben Böhmer",st:"Core",c:"74,160,98",fav:1},
+ {ini:"MP",nm:"Maceo Plex",st:"Freedom",c:"56,150,222",fav:0},
+];
+let mode="tt", dd=false, selDay=1;
+
+const ttBody=()=>STAGES.map(s=>`
+  <div class="stage" style="--c:${s.c}">
+    <div class="slabel"><span class="sdot"></span>${s.name.toUpperCase()} ${s.fav?`<span class="star"><span class="ms" style="font-size:11px">star</span>${s.fav}</span>`:""}</div>
+    <div class="lane">${s.sets.map(([ini,nm,tm])=>`<div class="set"><div class="ph">${ini}</div><div class="txt"><div class="nm">${nm}</div><div class="tm">${tm} – +1h30</div></div></div>`).join("")}</div>
+  </div>`).join("");
+const luGrid=()=>`<div class="grid">${ARTISTS.map(a=>`
+  <div class="gc ${a.fav?'fav':''}" style="--c:${a.c}">
+    <div class="gi">${a.ini}</div><div class="scrim"></div>
+    <div class="gn">${a.nm}</div>
+    <div class="gs"><span class="sdot" style="background:rgb(${a.c})"></span>${a.st}</div>
+    <div class="gh"><span class="ms">${a.fav?'favorite':'favorite_border'}</span></div>
+  </div>`).join("")}</div>`;
+
+const ctrlsTT=()=>`<div class="ctrls">
+  <button class="ic"><span class="ms">search</span></button>
+  <button class="ic"><span class="ms">grid_view</span></button>
+  <button class="ic"><span class="ms">favorite</span></button>
+  <button class="lk"><span class="ms">playlist_add_check</span>Lock in</button></div>`;
+const trigger=()=>`<button class="dsel ${dd?'open':''}" id="dayBtn"><span class="ms cal">calendar_month</span>${DAYS[selDay].wd.slice(0,3)} ${DAYS[selDay].dt.split(" ")[0]}<span class="ms cv">expand_more</span></button>`;
+const dropdown=()=>`<div class="backdrop" id="bd"></div><div class="dd">
+  <div class="ti">Escolha o dia</div>
+  ${DAYS.map((d,i)=>`<div class="opt ${i===selDay?'on':''}" data-day="${i}">
+    <div class="dn">${d.dn}</div>
+    <div><div class="wd">${d.wd}</div><div class="dt">${d.dt}</div></div>
+    <div class="rmeta"><span class="fav"><span class="ms">star</span>${d.fav}</span><span class="ms ck">check</span></div>
+  </div>`).join("")}
+</div>`;
+
+function view(){
+  const eyebrow=`<div class="eyebrow">TOMORROWLAND <span class="view">${mode==="tt"?"TIMETABLE":"LINEUP"}</span></div>`;
+  if(mode==="tt"){
+    return `<div class="hdr">${eyebrow}
+        <div class="bar">${trigger()}<div class="spacer"></div>${ctrlsTT()}</div>
+      </div>
+      ${dd?dropdown():""}
+      <div class="axis"><span>21:00</span><span>22:00</span><span>23:00</span><span>00:00</span></div>
+      <div class="body">${ttBody()}</div>`;
+  }
+  return `<div class="hdr">${eyebrow}
+      <div class="bar">
+        <div class="search"><span class="ms">search</span>Buscar artistas…</div>
+        <div class="ctrls"><div class="seg"><button class="on"><span class="ms">grid_view</span></button><button><span class="ms">view_comfy</span></button></div></div>
+      </div>
+      <div class="filters">
+        <button class="chip"><span class="ms">star</span>Favoritos</button>
+        <button class="chip on">Todos os dias</button>
+        <button class="chip">Sex 17</button><button class="chip">Sáb 18</button><button class="chip">Dom 19</button>
+      </div>
+    </div>
+    <div class="body">${luGrid()}</div>`;
+}
+const dock=()=>`<div class="dock"><div class="switch">
+  <button class="${mode==="tt"?"on":""}" data-mode="tt"><span class="ms">calendar_month</span>Timetable</button>
+  <button class="${mode==="lu"?"on":""}" data-mode="lu"><span class="ms">groups</span>Lineup</button></div></div>`;
+
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML=view()+dock();
+  app.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;dd=false;render();});
+  const t=document.getElementById("dayBtn"); if(t) t.onclick=()=>{dd=!dd;render();};
+  const bd=document.getElementById("bd"); if(bd) bd.onclick=()=>{dd=false;render();};
+  app.querySelectorAll("[data-day]").forEach(o=>o.onclick=()=>{selDay=+o.dataset.day;dd=false;render();});
+}
+render();
+</script>
+</body>
+</html>

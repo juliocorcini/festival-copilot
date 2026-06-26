@@ -1,6 +1,10 @@
 // API response DTOs (camelCase). The web client mirrors these types.
 // Source of truth lives here in the server.
 
+import type { ArtistSocials } from "../lineup/types";
+
+export type { ArtistSocials };
+
 export interface FestivalDto {
   id: string;
   name: string;
@@ -41,6 +45,8 @@ export interface ArtistDto {
   id: string;
   name: string;
   imageUrl: string | null;
+  /** Social links present on the source artist (ART-3); omitted entirely when the artist has none. */
+  socials?: ArtistSocials;
 }
 
 export interface PerformanceDto {

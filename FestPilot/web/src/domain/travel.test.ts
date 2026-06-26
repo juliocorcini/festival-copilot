@@ -1,6 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { bearingDegrees, buildTravelMatrix, compassPoint, coordToStage, metersBetween, type LatLng } from "./travel";
+import {
+  bearingDegrees,
+  buildTravelMatrix,
+  compassPoint,
+  coordToStage,
+  metersBetween,
+  travelPairKey,
+  type LatLng,
+} from "./travel";
 
 describe("metersBetween", () => {
   it("measures east-west distance at the equator (k = 1)", () => {
@@ -73,6 +81,44 @@ describe("buildTravelMatrix", () => {
   it("falls back when either stage has no coordinates", () => {
     expect(travel.minutesBetween("a", "z")).toBe(8);
     expect(travel.minutesBetween(null, "a")).toBe(8);
+  });
+});
+
+describe("buildTravelMatrix with operator overrides (DEC-065)", () => {
+  const coords = new Map<string, LatLng>([
+    ["a", { lat: 0, lng: 0 }],
+    ["b", { lat: 0, lng: 0.003 }], // 333.96 m east → coord estimate = 6 min
+  ]);
+  const overrides = new Map<string, number>([[travelPairKey("a", "b"), 15]]);
+  const travel = buildTravelMatrix(coords, {
+    metersPerMinute: 67,
+    detour: 1.3,
+    minMinutes: 2,
+    fallbackMinutes: 8,
+    overrides,
+  });
+
+  it("prefers a stored pair over the coord estimate (the real path the admin measured)", () => {
+    expect(travel.minutesBetween("a", "b")).toBe(15); // override wins over the 6-min estimate
+  });
+
+  it("is directional — the reverse pair is not overridden, so it uses the coord estimate", () => {
+    expect(travel.minutesBetween("b", "a")).toBe(6);
+  });
+
+  it("an override still loses to the same-stage zero", () => {
+    const selfOverride = new Map<string, number>([[travelPairKey("a", "a"), 9]]);
+    const m = buildTravelMatrix(coords, { overrides: selfOverride });
+    expect(m.minutesBetween("a", "a")).toBe(0);
+  });
+
+  it("an override can stand in for missing coords (pair with no geometry)", () => {
+    const m = buildTravelMatrix(new Map(), {
+      fallbackMinutes: 8,
+      overrides: new Map([[travelPairKey("x", "y"), 12]]),
+    });
+    expect(m.minutesBetween("x", "y")).toBe(12);
+    expect(m.minutesBetween("y", "x")).toBe(8); // no override + no coords → fallback
   });
 });
 

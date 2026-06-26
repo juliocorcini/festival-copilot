@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>V4 · Hero Control — FestPilot Bottom-Switch Refine</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:16px;padding:30px 24px 40px}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1;vertical-align:middle}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none;-ms-overflow-style:none}
+.headline{text-align:center;max-width:800px}
+.headline .k{font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:800;text-transform:uppercase}
+.headline h2{font-family:"Oswald",sans-serif;font-size:23px;margin:7px 0 5px;color:var(--ink)}
+.headline p{font-size:13px;color:var(--muted);line-height:1.55;margin:0}
+.pair{display:flex;gap:30px;align-items:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;gap:9px}
+.col .label{font-size:10px;letter-spacing:.18em;font-weight:800;color:var(--muted)}
+.phone{width:356px;height:732px;border-radius:40px;overflow:hidden;position:relative;background:var(--bg);box-shadow:0 40px 80px -34px rgba(245,166,35,.22);display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.06)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:9px 18px 16px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border);margin-top:auto}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--muted)}
+.navitem .ms{font-size:21px}.navitem.active{color:var(--accent)}
+.view-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border);flex-shrink:0}
+.vs-seg{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 13px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-size:12.5px;font-weight:650;cursor:pointer;white-space:nowrap;font-family:inherit;line-height:1}
+.vs-seg .ms{font-size:15px}.vs-seg.on{background:var(--accent);color:var(--bg)}
+.eyebrow{font-size:9.5px;letter-spacing:.2em;color:var(--muted);font-weight:700;text-transform:uppercase}
+.rail{display:flex;align-items:center;gap:6px;overflow-x:auto}
+.pill{font-size:12px;font-weight:650;padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--ink);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;cursor:pointer}
+.pill .ms{font-size:14px}.pill.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.pill.lockin{font-weight:800;color:var(--bg);border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.sep{width:1px;height:16px;background:var(--border);flex-shrink:0}
+.search{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--border)}
+.search .ms{color:var(--muted);font-size:18px}.search .ph{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{border:1px solid var(--border);background:var(--glass);color:var(--muted);font-weight:600;font-size:12px;padding:6px 12px;border-radius:999px;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.chip .ms{font-size:13px}.chip.on{background:linear-gradient(135deg,rgba(245,166,35,.18),rgba(255,208,96,.04));border-color:rgba(245,166,35,.5);color:var(--accent2)}
+.tt-scroll{flex:1;min-height:0;overflow:auto;position:relative}
+.tt-content{position:relative;width:200%;padding:4px 0 14px}
+.time-row{position:sticky;top:0;z-index:30;height:22px;background:linear-gradient(180deg,var(--bg) 70%,transparent)}
+.time-row .t{position:absolute;top:5px;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--muted);white-space:nowrap}
+.stage{position:relative;margin-bottom:9px}
+.stage-name{position:sticky;left:8px;z-index:25;display:inline-flex;align-items:center;gap:6px;margin-bottom:4px;padding:3px 9px 3px 7px;border-radius:99px;background:rgba(20,17,12,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)}
+.stage-name .pin{width:7px;height:7px;border-radius:50%}
+.stage-name .nm{font-size:9.5px;font-weight:800;letter-spacing:.05em}
+.stage-name .ct{font-size:9px;font-weight:800;color:var(--accent)}
+.track{position:relative;width:100%;height:50px}
+.set{position:absolute;top:2px;bottom:2px;border-radius:999px;padding-right:36px;background:linear-gradient(155deg,rgba(var(--c),.46),rgba(var(--c),.14) 60%,rgba(12,10,7,.6)),rgba(14,11,8,.5);border:1px solid rgba(var(--c),.5);backdrop-filter:blur(11px);box-shadow:0 7px 16px -12px rgba(0,0,0,.8)}
+.set-inner{position:sticky;left:0;display:inline-flex;align-items:center;gap:8px;height:100%;padding-right:5px;width:max-content;max-width:100%}
+.set .photo{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:"Oswald",sans-serif;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(150deg,rgb(var(--c)),#0c0a07 96%);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.set .info{min-width:0;overflow:hidden}
+.set .name{font-family:"Oswald",sans-serif;text-transform:uppercase;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.set .meta{font-size:8px;font-weight:700;color:rgba(255,255,255,.74);margin-top:2px;white-space:nowrap}
+.set.live{border-color:rgba(255,255,255,.16)}
+.set.live::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:.8px;z-index:5;pointer-events:none;background:linear-gradient(95deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0) 34%,rgba(255,255,255,.5) 66%,rgba(255,255,255,.98) 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.set.fav{background:linear-gradient(135deg,rgba(255,216,128,.97),rgba(245,166,35,.85));border-color:rgba(255,222,150,.9)}
+.set.fav .name{color:#231703}.set.fav .meta{color:#5a3d09}
+.set.fav .photo{background:linear-gradient(150deg,#fff,#dca641);color:#5a3d09}
+.heart{position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:6;width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(20,16,10,.42);border:1px solid rgba(255,255,255,.22);color:#fff;backdrop-filter:blur(8px)}
+.heart .ms{font-size:13px}.set.fav .heart{background:rgba(0,0,0,.1);border-color:rgba(0,0,0,.14);color:#8a4500}
+.lu-scroll{flex:1;min-height:0;overflow:auto;padding:0 12px 12px}
+.sec{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--muted);padding:12px 2px 8px}
+.density{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border);letter-spacing:0}
+.density button{width:26px;height:22px;border:none;border-radius:999px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.density button .ms{font-size:15px}.density button.on{background:var(--accent);color:var(--bg)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gc{position:relative;aspect-ratio:3/4;border-radius:16px;overflow:hidden;cursor:pointer;border:1px solid var(--border);padding:0;font-family:inherit;background:linear-gradient(150deg,rgb(var(--c)),#0c0a07 92%)}
+.gc-init{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Oswald",sans-serif;font-size:38px;font-weight:700;color:rgba(255,255,255,.92);text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.gc-gloss{position:absolute;inset:0;background:radial-gradient(80% 45% at 72% 10%,rgba(255,255,255,.32),transparent 55%);mix-blend-mode:overlay}
+.gc-scrim{position:absolute;left:0;right:0;bottom:0;text-align:left;padding:26px 10px 10px;background:linear-gradient(0deg,rgba(8,7,6,.94),rgba(8,7,6,.45) 58%,transparent)}
+.gc-name{font-family:"Oswald",sans-serif;text-transform:uppercase;font-size:13.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.05}
+.gc-chip{display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:8.5px;font-weight:700;color:#fff;background:rgba(var(--c),.55);border:1px solid rgba(255,255,255,.2);padding:2px 8px;border-radius:99px}
+.gc-chip .dot{width:5px;height:5px;border-radius:50%;background:#fff}
+.gc-heart{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(15,13,9,.5);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);color:#fff;z-index:2}
+.gc-heart .ms{font-size:15px}
+.gc.on .gc-heart{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg);border-color:transparent}
+.gc.on{border-color:rgba(245,166,35,.6)}
+/* ==== V shells common ==== */
+.eyebrow-line{display:flex;gap:8px;align-items:center;font-size:9.5px;letter-spacing:.2em;color:var(--muted);font-weight:700;text-transform:uppercase;padding:12px 14px 0;flex-shrink:0}
+.eyebrow-line .ey-view{color:var(--accent)}
+.hdr-row{display:flex;align-items:center;gap:10px;padding:11px 12px 2px;flex-shrink:0}
+.hdr-row.one{padding-bottom:6px}
+.ctrl-row{display:flex;align-items:center;gap:8px;padding:7px 12px 6px;flex-shrink:0}
+.ctrl-row .rail{flex:1;min-width:0}
+.ctrl-row .lockin{margin-left:auto;flex-shrink:0}
+.title-block{flex-shrink:0;max-width:42%}
+.title-block .eyebrow{font-size:9px}
+.htitle6{margin:1px 0 0;font-size:17px;font-weight:700;line-height:1;white-space:nowrap}
+.hdr-row .days-rail,.hdr-row .hdr-search{flex:1;min-width:0}
+.hdr-search{padding:8px 11px}
+.iconbtn{flex-shrink:0;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--glass);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn .ms{font-size:17px}.iconbtn.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.icon-ctrls{display:flex;gap:6px;flex:0 0 auto}
+.day-hero{display:flex;align-items:center;gap:6px;padding:8px 12px 2px;flex-shrink:0}
+.dh-arrow{flex-shrink:0;width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--glass);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dh-arrow .ms{font-size:18px}
+.dh-seg{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;justify-content:center}
+.search-hero{margin:8px 12px 2px;flex-shrink:0}
+.context-bar{display:flex;align-items:center;gap:6px;margin:7px 12px 2px;padding:4px 5px;border-radius:12px;background:var(--glass);border:1px solid var(--border);flex-shrink:0;min-height:44px}
+.bottom-fade{position:absolute;left:0;right:0;bottom:58px;height:66px;background:linear-gradient(180deg,rgba(15,13,9,0),var(--bg) 80%);pointer-events:none;z-index:34}
+.switch-dock{position:absolute;left:0;right:0;bottom:70px;display:flex;justify-content:center;z-index:40;pointer-events:none}
+.switch-dock .view-switch{pointer-events:auto;background:rgba(22,18,12,.94);backdrop-filter:blur(18px);box-shadow:0 14px 34px -8px rgba(0,0,0,.7);border-color:rgba(255,255,255,.14)}
+.view-switch.float .vs-seg{padding:8px 17px;font-size:13px}
+.tt-scroll{padding-bottom:74px}.lu-scroll{padding-bottom:74px}
+</style>
+</head>
+<body>
+<div class="headline"><div class="k">Bottom-Switch · V4</div><h2>Controle primário como herói</h2>
+<p>A ação principal de cada tela vira protagonista: no Timetable, um <b style="color:var(--ink)">seletor de dia</b> grande (com setas) ocupa a linha 1; no Lineup, uma <b style="color:var(--ink)">busca grande</b>. Os secundários (zoom/grade/favs ou filtros) ficam discretos na linha 2. Foco total no que importa em cada view.</p></div>
+<div class="pair">
+  <div class="col"><span class="label">VIEW: TIMETABLE</span><div class="phone" id="tt"></div></div>
+  <div class="col"><span class="label">VIEW: LINEUP</span><div class="phone" id="lu"></div></div>
+</div>
+<script>
+const STAGES=[
+ {n:"MAINSTAGE",c:"#FF5A36",ct:1,sets:[{a:"Charlotte de Witte",l:2,w:32,i:"CW",fav:1},{a:"Dimitri Vegas",l:37,w:30,i:"DV",live:1},{a:"Steve Aoki",l:69,w:27,i:"SA"}]},
+ {n:"FREEDOM",c:"#0EA5E9",ct:1,sets:[{a:"Maceo Plex",l:2,w:27,i:"MP"},{a:"Adam Beyer",l:32,w:33,i:"AB",fav:1,live:1},{a:"Pig&Dan",l:68,w:28,i:"PD"}]},
+ {n:"CAGE",c:"#F59E0B",ct:0,sets:[{a:"Lilly Palmer",l:2,w:25,i:"LP"},{a:"Amelie Lens",l:30,w:25,i:"AL",live:1},{a:"FJAAK",l:58,w:31,i:"FJ"}]},
+ {n:"ELIXIR",c:"#7C3AED",ct:1,sets:[{a:"Adriatique",l:2,w:31,i:"AD"},{a:"Tale Of Us",l:36,w:38,i:"TU",fav:1}]},
+ {n:"CORE",c:"#16A34A",ct:0,sets:[{a:"Ben Böhmer",l:2,w:28,i:"BB"},{a:"Stephan Bodzin",l:33,w:30,i:"SB",live:1}]}
+];
+const ART=[
+ {n:"Charlotte de Witte",st:"MAINSTAGE",c:"#FF5A36",i:"CW",fav:1},
+ {n:"Amelie Lens",st:"CAGE",c:"#F59E0B",i:"AL",fav:1},
+ {n:"Tale Of Us",st:"ELIXIR",c:"#7C3AED",i:"TU",fav:1},
+ {n:"Adam Beyer",st:"FREEDOM",c:"#0EA5E9",i:"AB"},
+ {n:"Maceo Plex",st:"FREEDOM",c:"#0EA5E9",i:"MP"},
+ {n:"Ben Böhmer",st:"CORE",c:"#16A34A",i:"BB"}
+];
+const rgb=h=>`${parseInt(h.slice(1,3),16)},${parseInt(h.slice(3,5),16)},${parseInt(h.slice(5,7),16)}`;
+function setEl(s,c){return `<div class="set${s.fav?' fav':''}${s.live?' live':''}" style="--c:${rgb(c)};left:${s.l}%;width:${s.w}%"><div class="set-inner"><div class="photo">${s.i}</div><div class="info"><div class="name">${s.a}</div><div class="meta">22:00 – 23:30</div></div></div><button class="heart"><span class="ms">${s.fav?'favorite':'favorite_border'}</span></button></div>`;}
+function ttBody(){let h='<div class="time-row">';for(let t=21;t<=27;t++){const x=t===21?'left:3%':'left:'+(((t-21)/6*100).toFixed(1))+'%';h+=`<span class="t" style="${x}">${String(t%24).padStart(2,'0')}:00</span>`;}h+='</div>';STAGES.forEach(s=>{h+=`<div class="stage"><div class="stage-name"><span class="pin" style="background:${s.c}"></span><span class="nm" style="color:${s.c}">${s.n}</span>${s.ct?`<span class="ct">★ ${s.ct}</span>`:''}</div><div class="track">${s.sets.map(x=>setEl(x,s.c)).join('')}</div></div>`;});return h;}
+function luGrid(){return ART.map(a=>`<button class="gc${a.fav?' on':''}" style="--c:${rgb(a.c)}"><div class="gc-init">${a.i}</div><div class="gc-gloss"></div><span class="gc-heart"><span class="ms">${a.fav?'favorite':'favorite_border'}</span></span><div class="gc-scrim"><div class="gc-name">${a.n}</div><span class="gc-chip"><span class="dot"></span>${a.st}</span></div></button>`).join('');}
+function vswitch(view,cls){return `<div class="view-switch ${cls||''}"><button class="vs-seg ${view==='timetable'?'on':''}"><span class="ms">calendar_month</span>Timetable</button><button class="vs-seg ${view==='lineup'?'on':''}"><span class="ms">groups</span>Lineup</button></div>`;}
+function body(view){return view==='timetable'?`<div class="tt-scroll"><div class="tt-content">${ttBody()}</div></div>`:`<div class="lu-scroll"><div class="sec"><span>ALL ARTISTS · 6</span><div class="density"><button class="on"><span class="ms">grid_view</span></button><button><span class="ms">view_module</span></button><button><span class="ms">view_comfy</span></button></div></div><div class="grid">${luGrid()}</div></div>`;}
+function navBar(){return `<nav class="nav"><div class="navitem"><span class="ms">bolt</span>Now</div><div class="navitem active"><span class="ms">calendar_month</span>Plan</div><div class="navitem"><span class="ms">map</span>Map</div><div class="navitem"><span class="ms">group</span>Squad</div><div class="navitem"><span class="ms">person</span>Me</div></nav>`;}
+function bottomBar(view){return `<div class="bottom-fade"></div><div class="switch-dock">${vswitch(view,'float')}</div>${navBar()}`;}
+function renderPhone(view){
+ const eb=`<div class="eyebrow-line"><span>TOMORROWLAND</span><span class="ey-view">${view==='timetable'?'TIMETABLE':'LINEUP'}</span></div>`;
+ let hero,r2;
+ if(view==='timetable'){
+  hero=`<div class="day-hero"><button class="dh-arrow"><span class="ms">chevron_left</span></button><div class="dh-seg"><button class="pill on">Sat 18</button><button class="pill">Sun 19</button><button class="pill">Mon 20</button></div><button class="dh-arrow"><span class="ms">chevron_right</span></button></div>`;
+  r2=`<div class="ctrl-row"><div class="rail icon-ctrls"><button class="iconbtn"><span class="ms">zoom_in</span></button><button class="iconbtn on"><span class="ms">grid_on</span></button><button class="iconbtn"><span class="ms">favorite</span></button></div><button class="pill lockin"><span class="ms">lock</span>Lock in</button></div>`;
+ }else{
+  hero=`<div class="search search-hero"><span class="ms">search</span><span class="ph">Search artists…</span></div>`;
+  r2=`<div class="ctrl-row"><div class="rail"><button class="chip"><span class="ms">star</span>Favorites</button><button class="chip on">All days</button><button class="chip">Sat 18</button><button class="chip">Sun 19</button></div></div>`;
+ }
+ return eb+hero+r2+body(view)+bottomBar(view);
+}
+function mount(el,view){el.dataset.view=view;el.innerHTML=renderPhone(view);el.querySelectorAll('.vs-seg').forEach((b,i)=>b.addEventListener('click',()=>mount(el,i===0?'timetable':'lineup')));}
+mount(document.getElementById('tt'),'timetable');
+mount(document.getElementById('lu'),'lineup');
+</script>
+</body>
+</html>

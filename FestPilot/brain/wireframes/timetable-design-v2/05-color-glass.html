@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>N5 · Color Glass — FestPilot Timetable (real chrome)</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+body{background:#08070a;font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+.poster{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em}
+.ms{font-family:"Material Symbols Rounded";font-variation-settings:"FILL" 0,"wght" 400;line-height:1;vertical-align:middle}
+*::-webkit-scrollbar{display:none}*{scrollbar-width:none;-ms-overflow-style:none}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);box-shadow:0 50px 100px -30px rgba(245,166,35,.25);display:flex;flex-direction:column}
+
+/* ===== REAL CHROME ===== */
+.tt-top{display:flex;flex-direction:column;gap:6px;padding:34px 16px 6px;flex-shrink:0}
+.tt-top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tt-top h1{margin:0;font-size:21px;font-weight:700;line-height:1}
+.view-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border);flex-shrink:0}
+.vs-seg{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:650;cursor:pointer;line-height:1;white-space:nowrap;font-family:inherit}
+.vs-seg .ms{font-size:16px}
+.vs-seg.on{background:var(--accent);color:var(--bg)}
+.tt-days{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto}
+.pill{font-size:13px;font-weight:650;padding:6px 12px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;user-select:none;border:1px solid var(--border);font-family:inherit;white-space:nowrap}
+.tt-day{flex:none;background:var(--glass);color:var(--ink)}
+.pill.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.tt-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 16px 8px;flex-shrink:0}
+.tt-controls-left{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+.tt-toggle{cursor:pointer;background:var(--glass);color:var(--ink)}
+.tt-toggle .ms{font-size:15px}
+.tt-lockin{cursor:pointer;font-weight:800;color:var(--bg);border-color:transparent;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.tt-lockin .ms{font-size:15px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 22px;flex-shrink:0;background:rgba(15,13,9,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer}
+.navitem .ms{font-size:23px}.navitem.active{color:var(--accent)}
+
+/* ===== TIMETABLE GRID ===== */
+.tt-scroll{flex:1;min-height:0;overflow:auto;position:relative}
+.tt-content{position:relative;width:1080px;padding:0 0 14px;transition:width .25s ease}
+.time-row{position:sticky;top:0;z-index:30;height:28px;background:linear-gradient(180deg,var(--bg) 72%,transparent)}
+.time-row .t{position:absolute;top:8px;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap}
+.time-row .t.now{color:var(--accent)}
+.tt-grid{position:absolute;top:28px;left:0;right:0;bottom:0;z-index:0;pointer-events:none}
+.tt-grid.off{display:none}
+.tt-grid .gl{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.05)}
+.tt-grid .gl.half{background:rgba(255,255,255,.024)}
+.stage{position:relative;margin-bottom:11px}
+.stage-name{position:sticky;left:10px;z-index:25;display:inline-flex;align-items:center;gap:7px;margin-bottom:5px;padding:4px 11px 4px 9px;border-radius:99px;background:rgba(20,17,12,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);box-shadow:0 2px 10px -4px rgba(0,0,0,.6)}
+.stage-name .pin{width:8px;height:8px;border-radius:50%}
+.stage-name .nm{font-size:10.5px;font-weight:800;letter-spacing:.05em}
+.stage-name .ct{display:inline-flex;align-items:center;gap:2px;font-size:9.5px;font-weight:800;color:var(--accent)}
+.now-line{position:absolute;top:28px;bottom:0;width:2px;background:var(--accent);z-index:15;box-shadow:0 0 10px rgba(245,166,35,.7)}
+.now-line::before{content:"NOW 22:40";position:absolute;top:-1px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:800;color:#0F0D09;background:var(--accent);padding:1px 6px;border-radius:99px;white-space:nowrap}
+.jump{position:absolute;right:14px;bottom:14px;z-index:40;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--bg);background:linear-gradient(135deg,var(--accent),var(--accent2));padding:8px 13px;border-radius:99px;box-shadow:0 8px 20px -6px rgba(245,166,35,.6);cursor:pointer}
+.heart{position:absolute;right:7px;top:50%;transform:translateY(-50%);z-index:6;width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(20,16,10,.42);border:1px solid rgba(255,255,255,.22);color:#fff;backdrop-filter:blur(8px)}
+.heart .ms{font-size:16px}
+.tt-content.filtered .stage:not(.has-fav){display:none}.tt-content.filtered .set:not(.fav){display:none}
+.track{position:relative;width:100%;height:60px}
+
+/* ===== N5 — COLOR GLASS : stage color as a TINTED glass (color + depth). Big photo tile. Live = WHITE ring. Fav = full gold. ===== */
+.set{position:absolute;top:1px;bottom:1px;border-radius:13px;cursor:pointer;padding-right:42px;
+  background:linear-gradient(155deg,rgba(var(--c),.46),rgba(var(--c),.14) 60%,rgba(12,10,7,.6)),rgba(14,11,8,.5);
+  border:1px solid rgba(var(--c),.5);backdrop-filter:blur(16px);box-shadow:0 9px 22px -13px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.set-inner{position:sticky;left:0;display:inline-flex;align-items:center;gap:10px;height:100%;width:max-content;max-width:100%}
+.set .photo{width:50px;align-self:stretch;border-radius:13px 0 0 13px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-family:"Oswald",sans-serif;font-size:14px;font-weight:700;color:rgba(255,255,255,.97);text-shadow:0 1px 4px rgba(0,0,0,.55);
+  background:linear-gradient(150deg,rgb(var(--c)),#0c0a07 96%);position:relative}
+.set .photo::after{content:"";position:absolute;inset:0;background:radial-gradient(75% 60% at 70% 16%,rgba(255,255,255,.4),transparent 60%);mix-blend-mode:overlay}
+.set .info{min-width:0;overflow:hidden}
+.set .name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.set .meta{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.74);margin-top:2px;white-space:nowrap}
+.set.live{box-shadow:0 0 0 1.5px rgba(255,255,255,.92),0 9px 22px -13px rgba(0,0,0,.8)}
+.set.fav{background:linear-gradient(135deg,rgba(255,216,128,.97),rgba(245,166,35,.85));border-color:rgba(255,222,150,.9)}
+.set.fav .name{color:#231703;text-shadow:none}.set.fav .meta{color:#5a3d09}
+.set.fav .photo{background:linear-gradient(150deg,#fff,#d39a2e);color:#3a2705;text-shadow:none}
+.set.fav .photo::after{opacity:.5}
+.set.fav .heart{background:rgba(0,0,0,.1);border-color:rgba(0,0,0,.14);color:#8a4500}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="tt-top">
+    <div class="tt-top-row">
+      <h1 class="poster">Timetable</h1>
+      <div class="view-switch">
+        <button class="vs-seg on"><span class="ms">calendar_month</span>Timetable</button>
+        <button class="vs-seg"><span class="ms">groups</span>Lineup</button>
+      </div>
+    </div>
+    <div class="tt-days">
+      <button class="pill tt-day on">Sat 18</button>
+      <button class="pill tt-day">Sun 19</button>
+    </div>
+  </header>
+  <div class="tt-controls">
+    <div class="tt-controls-left">
+      <button class="pill tt-toggle" id="zoomT"><span class="ms">zoom_in</span><span id="zoomL">2h</span> view</button>
+      <button class="pill tt-toggle" id="favT"><span class="ms">favorite</span>Only my favs</button>
+      <button class="pill tt-toggle on" id="gridT"><span class="ms">grid_on</span>Grid</button>
+    </div>
+    <button class="pill tt-lockin"><span class="ms">lock</span>Lock in</button>
+  </div>
+  <div class="tt-scroll" id="scroll">
+    <div class="tt-content" id="content"></div>
+    <div class="jump" id="jump"><span class="ms" style="font-size:14px">my_location</span>Now</div>
+  </div>
+  <nav class="nav">
+    <div class="navitem"><span class="ms">bolt</span>Now</div>
+    <div class="navitem active"><span class="ms">calendar_month</span>Timetable</div>
+    <div class="navitem"><span class="ms">event_available</span>My Plan</div>
+    <div class="navitem"><span class="ms">map</span>Map</div>
+    <div class="navitem"><span class="ms">group</span>Squad</div>
+  </nav>
+</div>
+<script>
+const STAGES=[
+ {name:"MAINSTAGE",color:"#FF5A36",sets:[{a:"Charlotte de Witte",s:"21:00",e:"23:00",fav:true,i:"CW"},{a:"Dimitri Vegas",s:"23:15",e:"01:00",i:"DV"},{a:"Steve Aoki",s:"01:15",e:"03:00",i:"SA"}]},
+ {name:"FREEDOM",color:"#0EA5E9",sets:[{a:"Maceo Plex",s:"21:00",e:"22:45",i:"MP"},{a:"Adam Beyer",s:"23:00",e:"01:00",fav:true,i:"AB"},{a:"Pig&Dan",s:"01:30",e:"03:00",i:"PD"}]},
+ {name:"CAGE",color:"#F59E0B",sets:[{a:"Lilly Palmer",s:"21:00",e:"22:30",i:"LP"},{a:"Amelie Lens",s:"23:15",e:"00:30",fav:true,i:"AL"},{a:"FJAAK",s:"00:45",e:"02:00",i:"FJ"}]},
+ {name:"CORE",color:"#16A34A",sets:[{a:"Ben Böhmer",s:"21:00",e:"22:30",i:"BB"},{a:"Stephan Bodzin",s:"22:45",e:"00:15",i:"SB"},{a:"Reinier Z.",s:"00:30",e:"02:00",i:"RZ"}]},
+ {name:"ELIXIR",color:"#7C3AED",sets:[{a:"Adriatique",s:"21:00",e:"23:00",i:"AD"},{a:"Tale Of Us",s:"23:15",e:"01:30",fav:true,i:"TU"},{a:"Innellea",s:"01:45",e:"03:00",i:"IN"}]},
+ {name:"ROSE GARDEN",color:"#EC4899",sets:[{a:"Sofi Tukker",s:"21:00",e:"22:30",i:"ST"},{a:"Peggy Gou",s:"22:45",e:"00:30",fav:true,i:"PG"},{a:"Honey Dijon",s:"00:45",e:"02:30",i:"HD"}]},
+ {name:"RISE",color:"#EAB308",sets:[{a:"Hardwell",s:"21:30",e:"23:30",i:"HW"},{a:"Martin Garrix",s:"23:45",e:"01:30",fav:true,i:"MG"}]},
+ {name:"ATMOSPHERE",color:"#06B6D4",sets:[{a:"Boris Brejcha",s:"21:30",e:"23:15",i:"BR"},{a:"Solomun",s:"23:30",e:"01:30",i:"SO"}]}
+];
+const WIN_START=21*60,WIN_END=27*60,NOW=22*60+40,GAP=5;
+const rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(",");
+const toMin=t=>{let[h,m]=t.split(":").map(Number);if(h<12)h+=24;return h*60+m;};
+const pct=min=>(min-WIN_START)/(WIN_END-WIN_START)*100;
+function renderSet(se){
+  return `<div class="set-inner"><div class="photo">${se.i}</div><div class="info"><div class="name">${se.a}</div><div class="meta">${se.s} – ${se.e}</div></div></div>
+    <button class="heart"><span class="ms">${se.fav?"favorite":"favorite_border"}</span></button>`;
+}
+const content=document.getElementById("content");
+let tr='<div class="time-row">';
+for(let h=21;h<=27;h++){const isNow=NOW>=h*60&&NOW<(h+1)*60;const edge=h===21?"transform:none;left:6px":`left:${pct(h*60)}%`;tr+=`<span class="t${isNow?" now":""}" style="${edge}">${String(h%24).padStart(2,"0")}:00</span>`;}
+tr+='</div><div class="tt-grid" id="grid">';
+for(let m=WIN_START;m<=WIN_END;m+=30) tr+=`<div class="gl${(m/30)%2?" half":""}" style="left:${pct(m)}%"></div>`;
+tr+='</div>';
+let html=tr+`<div class="now-line" style="left:${pct(NOW)}%"></div>`;
+STAGES.forEach(st=>{const favN=st.sets.filter(x=>x.fav).length;
+  html+=`<div class="stage${favN?" has-fav":""}"><div class="stage-name"><span class="pin" style="background:${st.color}"></span><span class="nm" style="color:${st.color}">${st.name}</span>${favN?`<span class="ct">★ ${favN}</span>`:""}</div><div class="track">`;
+  st.sets.forEach(se=>{const l=pct(toMin(se.s)),w=pct(toMin(se.e))-l,live=NOW>=toMin(se.s)&&NOW<toMin(se.e);
+    html+=`<div class="set${se.fav?" fav":""}${live?" live":""}" data-fav="${!!se.fav}" style="--c:${rgb(st.color)};left:${l}%;width:calc(${w}% - ${GAP}px)">`+renderSet(se)+`</div>`;});
+  html+='</div></div>';});
+content.innerHTML=html;
+content.querySelectorAll(".heart").forEach(h=>h.addEventListener("click",e=>{e.stopPropagation();const c=h.closest(".set");const on=c.classList.toggle("fav");c.dataset.fav=on;const ic=h.querySelector(".ms");if(ic)ic.textContent=on?"favorite":"favorite_border";const stg=c.closest(".stage");stg.classList.toggle("has-fav",!!stg.querySelector(".set.fav"));}));
+const favT=document.getElementById("favT");favT.addEventListener("click",()=>{const on=content.classList.toggle("filtered");favT.classList.toggle("on",on);});
+const gridT=document.getElementById("gridT");gridT.addEventListener("click",()=>{const off=document.getElementById("grid").classList.toggle("off");gridT.classList.toggle("on",!off);});
+const zoomT=document.getElementById("zoomT"),zoomL=document.getElementById("zoomL");let z="2h";
+zoomT.addEventListener("click",()=>{z=z==="2h"?"1h":"2h";content.style.width=z==="1h"?"2160px":"1080px";zoomL.textContent=z;});
+const scroll=document.getElementById("scroll");function jumpNow(){scroll.scrollTo({left:content.offsetWidth*pct(NOW)/100-150,behavior:"smooth"});}
+document.getElementById("jump").addEventListener("click",jumpNow);setTimeout(jumpNow,200);
+</script>
+</body>
+</html>

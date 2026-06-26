@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Shell unificado — gêmeos Timetable + Lineup</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Albert+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0D09;--accent:#F5A623;--accent2:#FFD060;--ink:#F5F0E6;--muted:#9C9080;--glass:rgba(255,190,60,.06);--border:rgba(255,255,255,.12)}
+*{box-sizing:border-box}
+body{background:radial-gradient(120% 80% at 50% -10%,#19130b 0%,#0b0a07 60%,#08070a 100%);font-family:"Albert Sans",system-ui,sans-serif;color:var(--ink);margin:0;padding:28px 24px 46px}
+.ms{font-family:"Material Symbols Rounded";vertical-align:middle;line-height:1}
+h1{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:-.01em;font-size:25px;margin:0 0 4px}
+.k{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:800;text-transform:uppercase}
+.lead{color:var(--muted);font-size:13.5px;line-height:1.55;max-width:820px;margin:8px 0 4px}
+.rules{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 24px}
+.rule{font-size:11px;color:var(--muted);background:var(--glass);border:1px solid var(--border);border-radius:999px;padding:5px 11px}
+.rule b{color:var(--accent2)}
+.row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.col{width:330px}
+.cap{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px}.cap b{color:var(--ink)}
+.phone{height:600px;border-radius:30px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,#100d09,#0b0907);box-shadow:0 30px 70px -30px #000;overflow:hidden;display:flex;flex-direction:column;position:relative}
+/* shared header skeleton */
+.hdr{padding:14px 14px 8px;flex-shrink:0}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;color:var(--muted);font-weight:800;text-transform:uppercase;margin-bottom:9px}
+.eyebrow .view{color:var(--accent);font-family:"Oswald",sans-serif;letter-spacing:.04em}
+.bar{display:flex;align-items:center;gap:8px}
+/* primary flexible slot */
+.days{display:flex;gap:6px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:none;-webkit-mask:linear-gradient(90deg,#000 0,#000 88%,transparent);mask:linear-gradient(90deg,#000 0,#000 88%,transparent)}
+.days::-webkit-scrollbar{display:none}
+.day{flex:0 0 auto;border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:700;font-size:12.5px;padding:7px 12px;border-radius:999px;white-space:nowrap;cursor:pointer}
+.day.on{background:var(--accent);color:var(--bg);border-color:transparent}
+.search{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--muted);font-size:13px}
+.search .ms{font-size:18px}
+/* fixed controls cluster */
+.ctrls{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.ic{width:34px;height:34px;border-radius:999px;border:1px solid var(--border);background:var(--glass);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ic .ms{font-size:18px}
+.lk{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:999px;font-family:inherit;font-weight:800;font-size:12.5px;color:var(--bg);background:linear-gradient(135deg,var(--accent),var(--accent2));padding:8px 13px;white-space:nowrap;cursor:pointer}
+.lk .ms{font-size:16px}
+.seg{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border)}
+.seg button{width:30px;height:26px;border:none;border-radius:999px;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.seg button .ms{font-size:17px}.seg button.on{background:var(--accent);color:var(--bg)}
+/* secondary filter row (lineup) */
+.filters{display:flex;gap:6px;overflow-x:auto;margin-top:9px;scrollbar-width:none;-webkit-mask:linear-gradient(90deg,#000 0,#000 90%,transparent);mask:linear-gradient(90deg,#000 0,#000 90%,transparent)}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--border);background:var(--glass);color:var(--ink);font-weight:700;font-size:12px;padding:6px 11px;border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.chip .ms{font-size:14px}.chip.on{background:var(--accent);color:var(--bg);border-color:transparent}
+/* timetable axis + body */
+.axis{display:flex;padding:8px 14px 4px;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.04em;flex-shrink:0}
+.axis span{flex:0 0 92px}
+.tt{flex:1;overflow:hidden}
+.stage{padding:2px 14px 0}
+.slabel{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);margin:8px 0 5px}
+.dot{width:7px;height:7px;border-radius:999px;background:rgb(var(--c))}
+.star{color:var(--accent2);font-size:10px;display:inline-flex;align-items:center;gap:2px}
+.lane{display:flex;gap:8px;overflow-x:hidden}
+.set{flex:0 0 auto;display:flex;align-items:center;gap:9px;height:46px;border-radius:999px;padding:4px 16px 4px 4px;min-width:182px;
+  background:linear-gradient(150deg,rgba(var(--c),.44),rgba(var(--c),.12) 62%,rgba(12,10,7,.55)),rgba(14,11,8,.5);
+  border:1px solid rgba(var(--c),.5);backdrop-filter:blur(12px);box-shadow:0 8px 18px -12px rgba(0,0,0,.8)}
+.ph{width:38px;height:38px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;background-color:rgba(var(--c),.85)}
+.txt{min-width:0}.nm{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tm{font-size:11px;color:rgba(255,255,255,.72)}
+/* lineup grid */
+.grid{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 0}
+.gc{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:1/1.04;
+  background:linear-gradient(158deg,rgba(var(--c),.96),rgba(var(--c),.52) 64%,rgba(10,8,6,.7));border:1px solid rgba(var(--c),.5)}
+.gc .gi{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Oswald",sans-serif;font-size:46px;font-weight:700;color:rgba(255,255,255,.92)}
+.gc .scrim{position:absolute;left:0;right:0;bottom:0;height:56%;background:linear-gradient(180deg,transparent,rgba(8,6,4,.82))}
+.gc .gn{position:absolute;left:10px;right:10px;bottom:28px;font-weight:800;font-size:13px}
+.gc .gs{position:absolute;left:10px;bottom:10px;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:rgba(0,0,0,.35);padding:3px 7px;border-radius:999px;display:inline-flex;align-items:center;gap:4px}
+.gc .gs .dot{width:6px;height:6px}
+.gc .gh{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:999px;background:rgba(10,8,6,.5);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.gc .gh .ms{font-size:15px;color:#fff}
+.gc.fav .gh{background:var(--accent2)}.gc.fav .gh .ms{color:var(--bg)}
+/* bottom switch — identical in both */
+.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 0 16px;display:flex;justify-content:center;background:linear-gradient(180deg,transparent,rgba(8,7,6,.88) 45%)}
+.switch{display:inline-flex;background:rgba(20,16,10,.82);border:1px solid var(--border);border-radius:999px;padding:5px;gap:4px;backdrop-filter:blur(14px)}
+.switch button{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-family:inherit;font-weight:700;font-size:13px;padding:8px 16px;cursor:pointer}
+.switch button.on{background:var(--accent);color:var(--bg)}.switch .ms{font-size:17px}
+.legend{max-width:820px;margin:22px auto 0;font-size:12px;color:var(--muted);background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:13px 15px;line-height:1.55}
+.legend b{color:var(--ink)}
+</style>
+</head>
+<body>
+  <div class="k">FestPilot · Shell unificado</div>
+  <h1>Uma tela só — gêmeos Timetable ↔ Lineup</h1>
+  <p class="lead">A mesma casca nas duas: <b style="color:var(--ink)">sobrancelha igual</b> em cima, <b style="color:var(--ink)">switch igual</b> embaixo, e a primeira barra sempre no padrão <b style="color:var(--ink)">"primário flexível + controles fixos à direita"</b>. Ao trocar, só o miolo muda — os dias viram busca, os controles do tempo viram filtros, a grade vira cards. O olho não se reorienta.</p>
+  <div class="rules">
+    <span class="rule">Sobrancelha <b>idêntica</b></span>
+    <span class="rule">Switch <b>no mesmo lugar</b></span>
+    <span class="rule">Primário flex + <b>controles fixos</b></span>
+    <span class="rule">Dias ↔ busca · controles ↔ filtros</span>
+    <span class="rule">Lock in = <b>playlist_add_check</b></span>
+  </div>
+  <div class="row" id="row"></div>
+  <div class="legend"><b>Como a transição se sente:</b> imagine tocar o switch embaixo — a palavra da sobrancelha troca (TIMETABLE↔LINEUP), o trilho de dias vira a barra de busca <i>no mesmo lugar</i>, o cluster de controles à direita troca de conteúdo mas mantém forma e posição, e o miolo cross-fade entre grade-horária e grade-de-cards. Mesma moldura, conteúdo diferente.</div>
+
+<script>
+const STAGES=[
+ {name:"Mainstage",c:"225,82,72",fav:1,sets:[["CW","Charlotte de Witte","22:00"],["DV","Dimitri V.","23:30"]]},
+ {name:"Freedom",c:"56,150,222",fav:1,sets:[["MP","Maceo Plex","22:00"],["AB","Adam Beyer","23:30"]]},
+ {name:"Cage",c:"201,162,39",fav:0,sets:[["LP","Lilly Palmer","22:00"],["AL","Amelie Lens","23:30"]]},
+ {name:"Elixir",c:"139,92,246",fav:1,sets:[["AD","Adriatique","22:00"],["TU","Tale of Us","23:30"]]},
+];
+const ARTISTS=[
+ {ini:"CW",nm:"Charlotte de Witte",st:"Mainstage",c:"225,82,72",fav:1},
+ {ini:"AL",nm:"Amelie Lens",st:"Cage",c:"201,162,39",fav:0},
+ {ini:"TU",nm:"Tale of Us",st:"Elixir",c:"139,92,246",fav:1},
+ {ini:"AB",nm:"Adam Beyer",st:"Freedom",c:"56,150,222",fav:0},
+ {ini:"BB",nm:"Ben Böhmer",st:"Core",c:"74,160,98",fav:1},
+ {ini:"MP",nm:"Maceo Plex",st:"Freedom",c:"56,150,222",fav:0},
+];
+function ttBody(){
+  return STAGES.map(s=>`
+   <div class="stage" style="--c:${s.c}">
+     <div class="slabel"><span class="dot"></span>${s.name.toUpperCase()} ${s.fav?`<span class="star"><span class="ms" style="font-size:11px">star</span>${s.fav}</span>`:""}</div>
+     <div class="lane">${s.sets.map(([ini,nm,tm])=>`<div class="set"><div class="ph">${ini}</div><div class="txt"><div class="nm">${nm}</div><div class="tm">${tm} – +1h30</div></div></div>`).join("")}</div>
+   </div>`).join("");
+}
+function luGrid(){
+  return ARTISTS.map(a=>`
+   <div class="gc ${a.fav?'fav':''}" style="--c:${a.c}">
+     <div class="gi">${a.ini}</div><div class="scrim"></div>
+     <div class="gn">${a.nm}</div>
+     <div class="gs"><span class="dot" style="background:rgb(${a.c})"></span>${a.st}</div>
+     <div class="gh"><span class="ms">${a.fav?'favorite':'favorite_border'}</span></div>
+   </div>`).join("");
+}
+const dock = on => `<div class="dock"><div class="switch">
+  <button class="${on==='tt'?'on':''}"><span class="ms">calendar_month</span>Timetable</button>
+  <button class="${on==='lu'?'on':''}"><span class="ms">groups</span>Lineup</button></div></div>`;
+
+const timetable = `
+ <div class="col">
+   <p class="cap"><b>Timetable</b> — primário = dias (rolam) · controles fixos + Lock in</p>
+   <div class="phone">
+     <div class="hdr">
+       <div class="eyebrow">TOMORROWLAND <span class="view">TIMETABLE</span></div>
+       <div class="bar">
+         <div class="days">
+           <button class="day">Sex 17</button><button class="day on">Sáb 18</button><button class="day">Dom 19</button>
+         </div>
+         <div class="ctrls">
+           <button class="ic"><span class="ms">search</span></button>
+           <button class="ic"><span class="ms">grid_view</span></button>
+           <button class="ic"><span class="ms">favorite</span></button>
+           <button class="lk"><span class="ms">playlist_add_check</span>Lock in</button>
+         </div>
+       </div>
+     </div>
+     <div class="axis"><span>21:00</span><span>22:00</span><span>23:00</span><span>00:0</span></div>
+     <div class="tt">${ttBody()}</div>
+     ${dock('tt')}
+   </div>
+ </div>`;
+
+const lineup = `
+ <div class="col">
+   <p class="cap"><b>Lineup</b> — primário = busca · controles fixos (densidade) · filtros embaixo</p>
+   <div class="phone">
+     <div class="hdr">
+       <div class="eyebrow">TOMORROWLAND <span class="view">LINEUP</span></div>
+       <div class="bar">
+         <div class="search"><span class="ms">search</span>Buscar artistas…</div>
+         <div class="ctrls">
+           <div class="seg"><button class="on"><span class="ms">grid_view</span></button><button><span class="ms">view_comfy</span></button></div>
+         </div>
+       </div>
+       <div class="filters">
+         <button class="chip"><span class="ms">star</span>Favoritos</button>
+         <button class="chip on">Todos os dias</button>
+         <button class="chip">Sex 17</button><button class="chip">Sáb 18</button><button class="chip">Dom 19</button>
+       </div>
+     </div>
+     <div class="grid">${luGrid()}</div>
+     ${dock('lu')}
+   </div>
+ </div>`;
+
+document.getElementById("row").innerHTML = timetable + lineup;
+</script>
+</body>
+</html>

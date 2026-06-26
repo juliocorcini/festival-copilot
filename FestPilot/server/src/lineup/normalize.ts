@@ -3,9 +3,12 @@
 // midnight-crossing sets (a 00:30 set belongs to the previous festival day).
 // Ported from spikes/lineup-ingestion/src/normalize.ts.
 
+import { ARTIST_SOCIAL_KEYS } from "./types";
 import type {
+  ArtistSocials,
   NormalizedLineup,
   Performance,
+  SourceArtist,
   SourceConfig,
   SourcePerformance,
   SourceStages,
@@ -43,6 +46,20 @@ export function floorSeconds(raw: string): { iso: string; fixed: boolean } {
 
 const PLACEHOLDER = /more to be announced/i;
 
+/**
+ * Extract only the social links actually present on a source artist, in the known display order.
+ * Data-driven over ARTIST_SOCIAL_KEYS so a new key never needs new branching; absent keys are
+ * omitted entirely (no `undefined` pollution) so the persisted JSON and the DTO stay clean.
+ */
+export function pickSocials(a: SourceArtist): ArtistSocials {
+  const out: ArtistSocials = {};
+  for (const key of ARTIST_SOCIAL_KEYS) {
+    const value = a[key];
+    if (typeof value === "string" && value.length > 0) out[key] = value;
+  }
+  return out;
+}
+
 export function normalizePerformance(p: SourcePerformance, weekend: string): Performance {
   const startAt = toInstant(p.startTime);
   const end = floorSeconds(p.endTime);
@@ -55,7 +72,9 @@ export function normalizePerformance(p: SourcePerformance, weekend: string): Per
   return {
     sourceId: p.id,
     name: p.name,
-    artists: p.artists.map((a) => ({ id: a.id, name: a.name, image: a.image })),
+    // Carry the artist's social links forward (ART-2): spread only the present ones, so a
+    // social-less artist stays exactly { id, name, image } as before (no behaviour change there).
+    artists: p.artists.map((a) => ({ id: a.id, name: a.name, image: a.image, ...pickSocials(a) })),
     stageId: p.stage.id,
     stageName: p.stage.name,
     weekend,

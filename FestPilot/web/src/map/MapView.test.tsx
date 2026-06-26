@@ -32,6 +32,8 @@ vi.mock("../data/api", () => {
     api: {
       listFestivals: vi.fn().mockResolvedValue([lineup.festival]),
       getLineup: vi.fn().mockResolvedValue(lineup),
+      // POI layer (DEC-065) reads through the api too; an empty list draws no amenity overlay.
+      listPois: vi.fn().mockResolvedValue([]),
       // No squad: the map must fall back to an honest empty state, never invented friends.
       listMyGroups: vi.fn().mockResolvedValue([]),
       getGroupPresence: vi.fn().mockResolvedValue(null),

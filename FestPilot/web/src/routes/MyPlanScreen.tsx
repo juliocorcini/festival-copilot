@@ -18,6 +18,7 @@ import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
 import { SharePlanSheet } from "./share/SharePlanSheet";
 import type { PlannableSet, PlanSlot } from "../domain/types";
 
@@ -340,14 +341,25 @@ function PlanSetRow({
   photoUrl: string | null;
   onMenu: () => void;
 }): JSX.Element {
+  const { openArtist } = useArtistSheet();
   const { slot, status, endMs } = item;
   const start = timeInZone(new Date(slot.startMs).toISOString(), tz);
   const end = timeInZone(new Date(endMs).toISOString(), tz);
   const color = stageColor(slot.stageName);
+  // The card body opens the Artist Detail Sheet (ART-6); editing (swap/remove/map) moves to the
+  // explicit `more_vert` button so the two actions never collide. stopPropagation keeps the edit
+  // tap from also opening the sheet.
   return (
     <div className="plan-row">
       <span className={`plan-dot ${status}`} />
-      <button className={`glass plan-card ${status}`} onClick={onMenu} aria-label={`Edit ${slot.label}`}>
+      <div
+        className={`glass plan-card tappable ${status}`}
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${slot.label}`}
+        onClick={() => openArtist(slot.actKey)}
+        onKeyDown={openOnActivate(() => openArtist(slot.actKey))}
+      >
         <ArtistPhoto src={photoUrl} name={slot.label} width={PHOTO_WIDTH.list} className="plan-photo" />
         <div className="plan-card-main">
           <div className={`plan-when ${status}`}>
@@ -362,8 +374,18 @@ function PlanSetRow({
             {slot.stageName}
           </div>
         </div>
-        <span className="ms plan-state-ico" aria-hidden="true">more_vert</span>
-      </button>
+        <button
+          type="button"
+          className="plan-state-ico-btn"
+          aria-label={`Edit ${slot.label}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onMenu();
+          }}
+        >
+          <span className="ms plan-state-ico" aria-hidden="true">more_vert</span>
+        </button>
+      </div>
     </div>
   );
 }

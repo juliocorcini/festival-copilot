@@ -19,6 +19,7 @@ import { daysForWeekends } from "../lib/festival";
 import { dayLabel, daysUntil, stageColor, timeInZone } from "../lib/format";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
 
 const ms = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
@@ -188,6 +189,7 @@ function NowHero({
   now: number;
   onRoute: () => void;
 }): JSX.Element {
+  const { openArtist } = useArtistSheet();
   const { hero, next, isLive } = vm;
   const heroIso = new Date(hero.startMs).toISOString();
   const daysAhead = daysUntil(heroIso);
@@ -201,7 +203,16 @@ function NowHero({
         {isLive ? <span className="live" /> : <span className="ms" style={{ fontSize: 14 }}>schedule</span>}
         {isLive ? "NOW" : "NEXT UP"}
       </div>
-      <div className="now-title poster">{hero.label}</div>
+      <div
+        className="now-title poster tappable"
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${hero.label}`}
+        onClick={() => openArtist(hero.actKey)}
+        onKeyDown={openOnActivate(() => openArtist(hero.actKey))}
+      >
+        {hero.label}
+      </div>
       <div className="now-stage">
         <span className="dot" style={{ background: stageColor(hero.stageName) }} />
         {hero.stageName || "TBA"}
@@ -266,11 +277,20 @@ function NowHero({
 }
 
 function NowList({ rows, tz, label }: { rows: HomeSet[]; tz: string; label: string }): JSX.Element {
+  const { openArtist } = useArtistSheet();
   return (
     <section className="glass list-card">
       <span className="label">{label}</span>
       {rows.map((r) => (
-        <div key={`${r.actKey}-${r.startMs}`} className="lineup-row">
+        <div
+          key={`${r.actKey}-${r.startMs}`}
+          className="lineup-row tappable"
+          role="button"
+          tabIndex={0}
+          aria-label={`View ${r.label}`}
+          onClick={() => openArtist(r.actKey)}
+          onKeyDown={openOnActivate(() => openArtist(r.actKey))}
+        >
           <span className="t">{timeInZone(new Date(r.startMs).toISOString(), tz)}</span>
           <ArtistPhoto src={r.imageUrl} name={r.label} width={PHOTO_WIDTH.avatar} className="row-photo" />
           <span className="dot" style={{ background: stageColor(r.stageName) }} />
