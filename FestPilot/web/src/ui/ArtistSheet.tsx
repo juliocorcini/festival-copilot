@@ -131,7 +131,9 @@ export function ArtistSheet({
     const previouslyFocused = (typeof document !== "undefined" ? document.activeElement : null) as
       | HTMLElement
       | null;
-    closeRef.current?.focus();
+    // preventScroll: the sheet animates up from translateY(100%); focusing without it makes the
+    // browser scroll the background (the timetable) to reveal the off-screen button — a visible jump.
+    closeRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === "Escape") onClose();
     };
@@ -174,7 +176,7 @@ export function ArtistSheet({
             <ArtistPhoto
               src={detail.imageUrl}
               name={detail.name}
-              width={PHOTO_WIDTH.detail}
+              width={PHOTO_WIDTH.grid}
               className="artist-sheet-photo"
             />
           </div>

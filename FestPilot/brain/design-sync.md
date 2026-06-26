@@ -451,21 +451,21 @@ cai **abaixo da dobra**. Rolando, o toggle/heads saem de cena e o nome aparece �
 
 | Gate | Change set | Escopo | Status |
 |---|---|---|---|
-| ICON | ICON-1 | Lock in `lock` → `playlist_add_check` | ☐ pendente |
-| TT | TT-1 | `.set` cápsula color-glass | ☐ pendente |
-| TT | TT-2 | `.photo` círculo na cor | ☐ pendente |
-| TT | TT-3 | estado live (anel degradê) | ☐ pendente |
-| TT | TT-4 | ★ contagem de favoritos por palco | ☐ pendente |
-| TT | TT-5 | margem do 1º card (sem deslocar a grade) | ☐ pendente |
-| TT | TT-6 | heart branco + fav fino | ☐ pendente |
-| LU | LU-1 | grid de cards imersivos | ☐ pendente |
-| LU | LU-2 | densidade 2/3/4 col + controle | ☐ pendente |
-| DAY | DAY-1 | componente `DayDropdown` | ☐ pendente |
-| DAY | DAY-2 | favoritos por dia (helper puro + teste) | ☐ pendente |
-| DAY | DAY-3 | header usa dropdown (remove pills) | ☐ pendente |
-| SH | SH-1 | `ViewSwitch` → dock flutuante (mesma posição) | ☐ pendente |
-| SH | SH-2 | header espelhado (sobrancelha + barra) | ☐ pendente |
-| SH | SH-3 | respiro pro dock flutuante | ☐ pendente |
+| ICON | ICON-1 | Lock in `lock` → `playlist_add_check` | ☑ aplicado e verificado |
+| TT | TT-1 | `.set` cápsula color-glass | ☑ aplicado e verificado |
+| TT | TT-2 | `.photo` círculo na cor | ☑ aplicado e verificado |
+| TT | TT-3 | estado live (anel degradê) | ☑ aplicado e verificado |
+| TT | TT-4 | ★ contagem de favoritos por palco | ☑ aplicado e verificado |
+| TT | TT-5 | margem do 1º card (sem deslocar a grade) | ☑ aplicado e verificado |
+| TT | TT-6 | heart branco + fav fino | ☑ aplicado e verificado |
+| LU | LU-1 | grid de cards imersivos | ☑ aplicado e verificado |
+| LU | LU-2 | densidade 2/3/4 col + controle | ☑ aplicado e verificado |
+| DAY | DAY-1 | componente `DayDropdown` | ☑ aplicado e verificado |
+| DAY | DAY-2 | favoritos por dia (helper puro + teste) | ☑ aplicado e verificado |
+| DAY | DAY-3 | header usa dropdown (remove pills) | ☑ aplicado e verificado |
+| SH | SH-1 | `ViewSwitch` → dock flutuante (mesma posição) | ☑ aplicado e verificado |
+| SH | SH-2 | header espelhado (sobrancelha + barra) | ☑ aplicado e verificado |
+| SH | SH-3 | respiro pro dock flutuante | ☑ aplicado e verificado |
 | IMG | IMG-1 | `ArtistPhoto` à prova de corrida (key + reset) | ☑ aplicado e verificado |
 | IMG | IMG-2 | fila de pré-carga (helper puro + teste) | ☑ aplicado e verificado |
 | IMG | IMG-3 | prefetch no onboarding (5 à frente) | ☑ aplicado e verificado |
@@ -484,7 +484,9 @@ cai **abaixo da dobra**. Rolando, o toggle/heads saem de cena e o nome aparece �
 | ART | ART-6 | wire dos pontos de clique | ☑ aplicado e verificado |
 | ART | ART-7 | gênero/bio: DEC-070 pendente (fora do V1) | ☑ decisão registrada (DEC-070; sem código) |
 
-_Legenda: ☐ pendente · ◐ em progresso · ☑ aplicado e verificado._```text
+_Legenda: ☐ pendente · ◐ em progresso · ☑ aplicado e verificado._
+
+```text
 Você vai implementar o LOTE DE CAMPO 25/06 do FestPilot, orquestrado em
 FestPilot/brain/design-sync.md — gates IMG (fotos: buffer + cache + fim da "foto errada"),
 OBV (onboarding Safari/iPhone: nome do artista sempre visível) e ART (Artist Detail Sheet + socials).

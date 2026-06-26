@@ -32,6 +32,14 @@ export function SettingsScreen(): JSX.Element {
             </span>
             <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
           </button>
+          <button className="row" style={rowButton} onClick={() => navigate("/settings/festival")}>
+            <span className="ms">festival</span>
+            <span className="row-main">
+              <span className="row-title">{t("settings.festival")}</span>
+              <span className="row-sub">{t("settings.festivalSub")}</span>
+            </span>
+            <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
+          </button>
           <button className="row" style={rowButton} onClick={() => navigate("/settings/offline")}>
             <span className="ms">cloud_done</span>
             <span className="row-main">

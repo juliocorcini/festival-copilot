@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.15.0";
+export const APP_VERSION = "0.19.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,59 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.19.0",
+    date: "2026-06-26",
+    title: "Always the latest — auto-updates",
+    icon: "system_update",
+    whatsNew: [
+      "FestPilot now keeps itself current: when a new version goes live, the installed app notices on its own and slides in a gold 'New version available' bar — one tap and you're on the latest.",
+      "It checks quietly in the background — when you reopen the app, when your signal comes back, and every so often while it's open — so you're never stuck on a stale build during the festival.",
+      "In a hurry or think you're behind? Settings → Offline & install now has a 'Force update' that pulls the freshest build right away.",
+    ],
+    howToTest: [
+      "After this release ships, reopen the installed app once a newer build is published → a gold bar appears at the top; 'Update' reloads straight into the new version, 'Dismiss' hides it until next time.",
+      "Settings → Offline & install → 'Check for updates' still reports your version; tap 'Force update' below it to reload into the freshest build on demand.",
+      "Switch away from the app and back (or toggle airplane mode off) → it silently re-checks; with a new build live, the bar shows up on its own.",
+    ],
+  },
+  {
+    version: "0.18.0",
+    date: "2026-06-26",
+    title: "The Squad screen, answered at a glance",
+    icon: "diversity_3",
+    whatsNew: [
+      "Your Squad screen now answers the big questions without a tap: 'Where is everyone' groups your squad by stage with their faces, so you can see the crowd's split at a glance — and 'Ping all' nudges anyone who's gone quiet.",
+      "Active meeting points are front and centre with a live compass: the real distance and direction to the spot, plus a one-tap 'Go' to walk there.",
+      "Your pinned board rides along too — the latest notes are right there, with 'Add note' a tap away.",
+      "Everything else you rely on stays put: the squad switcher, the safety banner, the shared plan, 'I'm lost', members and invite.",
+    ],
+    howToTest: [
+      "Open Squad with a few squadmates sharing → 'Where is everyone' clusters them by stage (your stage reads '· with you'); tap it to open the live map.",
+      "With an active meeting point, the card shows '120 m · NE' style distance + a compass arrow → 'Go' opens turn-free navigation (allow location).",
+      "The board preview shows your latest pins → 'Add note' jumps to the board; empty squads get calm 'nothing yet' prompts instead of blank cards.",
+      "Top-right is now invite (person_add); Settings still lives under the avatar menu on Now & Next.",
+    ],
+  },
+  {
+    version: "0.17.0",
+    date: "2026-06-26",
+    title: "Your weekend, your zoom, instant artist cards",
+    icon: "tune",
+    whatsNew: [
+      "The Lineup now respects the weekend you picked: you only see the artists, days and set times for your weekend — favorite someone and you won't get the other weekend's slot by mistake.",
+      "Changed your mind? Settings → Festival & weekend lets you switch your weekend (or days) anytime, and the whole app re-scopes instantly.",
+      "Tapping an artist is instant now: the photo you already saw stays put (no reload) and the screen behind it no longer jumps.",
+      "Pinch to zoom — spread two fingers on the timetable to zoom in, or on the lineup to resize the artist grid.",
+      "Clearer timetable controls: the hour-lines button finally looks like what it does.",
+    ],
+    howToTest: [
+      "Pick a single weekend in onboarding (or Settings → Festival & weekend) → the Lineup days, favorites and an artist's set times only show that weekend.",
+      "Settings → Festival & weekend → switch W1 / W2 / Both and toggle days → the Lineup and timetable follow immediately.",
+      "Tap an artist already visible on a card → the sheet opens with the same photo instantly and the background stays still.",
+      "On a touch screen, pinch the Timetable (zoom in/out) and the Lineup (2–4 columns).",
+    ],
+  },
   {
     version: "0.15.0",
     date: "2026-06-25",

@@ -11,18 +11,23 @@ import { useLineup } from "../data/useLineup";
 import { buildTimetable } from "../domain/timetable";
 import { festivalDataState } from "../domain/dataState";
 import { imageByActKey } from "../domain/lineup";
-import { daysForWeekends, type DayInfo } from "../lib/festival";
+import { countFavoritesPerDay, daysForWeekends, type DayInfo } from "../lib/festival";
 import { stageColor, stageColorRgb, timeInZone } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
+import { DayDropdown } from "../ui/DayDropdown";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { usePinch } from "../lib/usePinch";
 import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
 
 type Zoom = "2h" | "1h";
 const PIXELS_PER_HOUR: Record<Zoom, number> = { "2h": 180, "1h": 360 };
 const HOUR_MS = 3_600_000;
+// TT-5: left inset (px) for a card glued to the window start, so the first card unsticks from the
+// border WITHOUT moving the time grid (its right edge stays anchored by shrinking the width).
+const EDGE = 9;
 
 export function TimetableScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
@@ -36,6 +41,9 @@ export function TimetableScreen(): JSX.Element {
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [now, setNow] = useState(() => Date.now());
+
+  // Pinch to zoom: spread → 1-hour (zoomed in), pinch → 2-hour (zoomed out).
+  const pinchRef = usePinch((dir) => setZoom(dir === "out" ? "1h" : "2h"));
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -60,6 +68,10 @@ export function TimetableScreen(): JSX.Element {
   }, [lineup, favorites.keys, dayKey, weekendIds, tz]);
 
   const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
+  const favByDay = useMemo(
+    () => countFavoritesPerDay(lineup?.performances ?? [], favorites.keys, days),
+    [lineup, favorites.keys, days]
+  );
 
   // Data-state (DEC-052): a lineup-only festival defaults straight to the Lineup (no dead timetable);
   // a not-yet-announced festival shows an honest empty state on both views.
@@ -72,7 +84,7 @@ export function TimetableScreen(): JSX.Element {
   if (status === "error" || !lineup || !model) {
     return (
       <div className="tt-screen">
-        <TimetableHeader days={[]} dayKey={null} tz={tz} onSelectDay={setSelectedDay} />
+        <TimetableHeader days={[]} dayKey={null} tz={tz} favByDay={favByDay} festivalName={lineup?.festival.name ?? ""} onSelectDay={setSelectedDay} />
         <ErrorState message={error ?? "Could not load the timetable."} onRetry={reload} />
       </div>
     );
@@ -82,7 +94,7 @@ export function TimetableScreen(): JSX.Element {
   if (dataState === "nothing") {
     return (
       <div className="tt-screen">
-        <TimetableHeader days={[]} dayKey={null} tz={tz} onSelectDay={setSelectedDay} />
+        <TimetableHeader days={[]} dayKey={null} tz={tz} favByDay={favByDay} festivalName={lineup?.festival.name ?? ""} onSelectDay={setSelectedDay} />
         <EmptyState
           icon="event_busy"
           title="No lineup announced yet"
@@ -97,40 +109,61 @@ export function TimetableScreen(): JSX.Element {
   const nowVisible = !model.isEmpty && nowPct >= 0 && nowPct <= 100;
   const label = (ms: number): string => timeInZone(new Date(ms).toISOString(), tz);
 
+  const controls = (
+    <div className="tt-ctrls">
+      <button
+        type="button"
+        className="tt-ic"
+        onClick={() => setZoom((z) => (z === "2h" ? "1h" : "2h"))}
+        aria-label={zoom === "2h" ? "Zoom in to 1-hour view" : "Zoom out to 2-hour view"}
+        title={zoom === "2h" ? "1-hour view" : "2-hour view"}
+      >
+        <span className="ms">{zoom === "2h" ? "zoom_in" : "zoom_out"}</span>
+      </button>
+      <button
+        type="button"
+        className={`tt-ic${onlyFavs ? " on" : ""}`}
+        onClick={() => setOnlyFavs((v) => !v)}
+        aria-pressed={onlyFavs}
+        aria-label="Show only my favorites"
+        title="Only my favs"
+      >
+        <span className="ms">favorite</span>
+      </button>
+      <button
+        type="button"
+        className={`tt-ic${showGrid ? " on" : ""}`}
+        onClick={() => setShowGrid((v) => !v)}
+        aria-pressed={showGrid}
+        aria-label={showGrid ? "Hide hour lines" : "Show hour lines"}
+        title="Hour lines"
+      >
+        <span className="ms">straighten</span>
+      </button>
+      <button
+        type="button"
+        className="tt-lk"
+        onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
+      >
+        <span className="ms">playlist_add_check</span>
+        Lock in
+      </button>
+    </div>
+  );
+
   return (
     <div className="tt-screen">
-      <TimetableHeader days={days} dayKey={dayKey} tz={tz} onSelectDay={setSelectedDay} />
+      <TimetableHeader
+        days={days}
+        dayKey={dayKey}
+        tz={tz}
+        favByDay={favByDay}
+        festivalName={lineup.festival.name}
+        onSelectDay={setSelectedDay}
+        controls={controls}
+      />
 
       <LineupUpdateBanner />
-
-      <div className="tt-controls">
-        <div className="tt-controls-left">
-          <button className="pill tt-toggle" onClick={() => setZoom((z) => (z === "2h" ? "1h" : "2h"))}>
-            <span className="ms" style={{ fontSize: 15 }}>zoom_in</span>
-            {zoom} view
-          </button>
-          <button className={`pill tt-toggle${onlyFavs ? " on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>
-            <span className="ms" style={{ fontSize: 15 }}>favorite</span>
-            Only my favs
-          </button>
-          <button
-            className={`pill tt-toggle${showGrid ? " on" : ""}`}
-            onClick={() => setShowGrid((v) => !v)}
-            aria-pressed={showGrid}
-            aria-label="Toggle time gridlines"
-          >
-            <span className="ms" style={{ fontSize: 15 }}>grid_on</span>
-            Grid
-          </button>
-        </div>
-        <button
-          className="pill tt-lockin"
-          onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
-        >
-          <span className="ms" style={{ fontSize: 15 }}>lock</span>
-          Lock in
-        </button>
-      </div>
 
       {model.isEmpty ? (
         <EmptyState
@@ -139,7 +172,7 @@ export function TimetableScreen(): JSX.Element {
           message="No performances are scheduled for this day in the published lineup."
         />
       ) : (
-        <div className="tt-scroll">
+        <div className="tt-scroll" ref={pinchRef}>
           <div className={`tt-content${onlyFavs ? " filtered" : ""}`} style={{ width: contentWidth }}>
             <div className="time-row">
               {model.hourMarks.map((mark) => {
@@ -164,6 +197,7 @@ export function TimetableScreen(): JSX.Element {
 
             {model.stages.map((stage) => {
               const color = stageColor(stage.name);
+              const favCount = stage.sets.filter((s) => s.isFav).length;
               return (
                 <div key={stage.id} className={`stage${stage.hasFav ? " has-fav" : ""}`}>
                   <div className="stage-name">
@@ -171,17 +205,27 @@ export function TimetableScreen(): JSX.Element {
                     <span className="nm" style={{ color }}>
                       {stage.name}
                     </span>
+                    {favCount > 0 && <span className="ct">★ {favCount}</span>}
                   </div>
                   <div className="track">
                     {stage.sets.map((set) => {
+                      const isLive = now >= set.startMs && now < set.endMs;
+                      // TT-5: only the card glued to the window start (leftPct 0) gets the EDGE inset.
+                      const atWindowStart = set.startMs === model.windowStartMs;
                       const cardStyle = {
-                        left: `${set.leftPct}%`,
+                        left: atWindowStart ? `${EDGE}px` : `${set.leftPct}%`,
                         // R7.3: a hairline inset so back-to-back sets (endMs == nextStartMs) never glue.
-                        width: `calc(${set.widthPct}% - 3px)`,
+                        width: atWindowStart
+                          ? `calc(${set.widthPct}% - ${EDGE}px - 3px)`
+                          : `calc(${set.widthPct}% - 3px)`,
                         "--c": stageColorRgb(stage.name),
                       } as CSSProperties;
                       return (
-                        <div key={set.id} className={`set${set.isFav ? " fav" : ""}`} style={cardStyle}>
+                        <div
+                          key={set.id}
+                          className={`set${set.isFav ? " fav" : ""}${isLive ? " live" : ""}`}
+                          style={cardStyle}
+                        >
                           <div
                             className="set-inner tappable"
                             role="button"
@@ -220,6 +264,10 @@ export function TimetableScreen(): JSX.Element {
           </div>
         </div>
       )}
+
+      <div className="view-switch-dock">
+        <ViewSwitch active="timetable" />
+      </div>
     </div>
   );
 }
@@ -228,37 +276,33 @@ function TimetableHeader({
   days,
   dayKey,
   tz,
+  favByDay,
+  festivalName,
   onSelectDay,
+  controls,
 }: {
   days: DayInfo[];
   dayKey: string | null;
   tz: string;
+  favByDay: Map<string, number>;
+  festivalName: string;
   onSelectDay: (key: string) => void;
+  controls?: JSX.Element;
 }): JSX.Element {
+  const hasBar = days.length > 0 || Boolean(controls);
   return (
     <header className="tt-top">
-      <div className="tt-top-row">
-        <h1 className="poster">Timetable</h1>
-        <ViewSwitch active="timetable" />
+      <div className="shell-eyebrow">
+        {festivalName} <span className="view">TIMETABLE</span>
       </div>
-      {days.length > 0 && (
-        <div className="tt-days">
-          {days.map((day) => (
-            <button
-              key={day.key}
-              className={`pill tt-day${day.key === dayKey ? " on" : ""}`}
-              onClick={() => onSelectDay(day.key)}
-            >
-              {day.weekdayShort} {dayOfMonth(day.startMs, tz)}
-            </button>
-          ))}
+      {hasBar && (
+        <div className="tt-bar">
+          {days.length > 0 && (
+            <DayDropdown days={days} dayKey={dayKey} tz={tz} favByDay={favByDay} onSelect={onSelectDay} />
+          )}
+          {controls}
         </div>
       )}
     </header>
   );
-}
-
-function dayOfMonth(startMs: number, timeZone: string): string {
-  if (!Number.isFinite(startMs)) return "";
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone }).format(startMs);
 }

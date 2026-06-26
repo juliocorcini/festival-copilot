@@ -24,6 +24,21 @@ export function actKey(performance: PerformanceDto): string {
   return performance.artists[0]?.id ?? performance.id;
 }
 
+/**
+ * Restrict performances to the chosen weekend(s) (DEC-048). Everything the user browses — Lineup,
+ * favorites, the artist sheet — must honour the weekend picked at onboarding, exactly like the
+ * timetable does, so a W2 attendee never sees a W1-only set (or its day tag). An empty selection
+ * means "no filter" (all weekends); performances with no weekendId are always kept.
+ */
+export function performancesForWeekends(
+  performances: PerformanceDto[],
+  weekendIds: string[]
+): PerformanceDto[] {
+  if (weekendIds.length === 0) return performances;
+  const scope = new Set(weekendIds);
+  return performances.filter((performance) => !performance.weekendId || scope.has(performance.weekendId));
+}
+
 export function actLabel(performance: PerformanceDto): string {
   const name = performance.name?.trim();
   if (name) return name;

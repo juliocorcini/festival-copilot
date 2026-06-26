@@ -114,3 +114,59 @@ export function pingKindFor(m: PresenceMemberDto): "locate" | "nudge" | null {
   if (m.shareMode === "ghost" || !m.presence) return "nudge";
   return m.presence.stale ? "locate" : null;
 }
+
+/** A coarse "place" the squad-home overview groups the live roster into (#23.7 redesign). */
+export interface RosterPlace {
+  key: string;
+  /** Display label: a stage name, "A & B" for between, or a venue / off fallback. */
+  label: string;
+  kind: "stage" | "between" | "venue" | "off";
+  /** Primary stage to colour the dot; null for the venue / off buckets. */
+  stageName: string | null;
+  hasYou: boolean;
+  members: PresenceMemberDto[];
+}
+
+const PLACE_KIND_RANK: Record<RosterPlace["kind"], number> = { stage: 0, between: 1, venue: 2, off: 3 };
+
+/** Classify one member into a coarse place. Ghost / no-fix / stale all fall to the muted "off" bucket. */
+function placeOf(m: PresenceMemberDto): Pick<RosterPlace, "kind" | "key" | "label" | "stageName"> {
+  const p = m.presence;
+  if (m.shareMode === "ghost" || !p || p.stale) {
+    return { kind: "off", key: "off", label: "Location off", stageName: null };
+  }
+  if (p.coarseLabel === "between") {
+    const a = p.stageName ?? "—";
+    const b = p.betweenStageName ?? "—";
+    return { kind: "between", key: `between:${a}|${b}`, label: `${a} & ${b}`, stageName: p.stageName };
+  }
+  if (p.coarseLabel === "none" || !p.stageName) {
+    return { kind: "venue", key: "venue", label: "In the venue", stageName: null };
+  }
+  return { kind: "stage", key: `stage:${p.stageName}`, label: p.stageName, stageName: p.stageName };
+}
+
+/**
+ * Group the live roster by coarse place for the squad-home "Where is everyone" card — stages first
+ * (busiest first), then between-pairs, a vague-venue bucket, and finally everyone whose location is
+ * off. Pure + non-mutating so it's unit-tested; the card just renders dots + avatar clusters from it.
+ */
+export function groupRosterByStage(members: PresenceMemberDto[]): RosterPlace[] {
+  const byKey = new Map<string, RosterPlace>();
+  for (const m of members) {
+    const place = placeOf(m);
+    const existing = byKey.get(place.key);
+    if (existing) {
+      existing.members.push(m);
+      existing.hasYou = existing.hasYou || m.isYou;
+    } else {
+      byKey.set(place.key, { ...place, hasYou: m.isYou, members: [m] });
+    }
+  }
+  return [...byKey.values()].sort((a, b) => {
+    const k = PLACE_KIND_RANK[a.kind] - PLACE_KIND_RANK[b.kind];
+    if (k !== 0) return k;
+    if (a.members.length !== b.members.length) return b.members.length - a.members.length;
+    return a.label.localeCompare(b.label);
+  });
+}

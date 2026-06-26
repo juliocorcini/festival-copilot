@@ -36,8 +36,9 @@ export function usePhotoPrefetch(
   }, [urls, index, width, size]);
 }
 
-/** Widths at which a favorite's photo is pinned offline — the surfaces that show favorites (IMG-5). */
-const KEEP_WIDTHS = [PHOTO_WIDTH.detail, PHOTO_WIDTH.list] as const;
+/** Widths at which a favorite's photo is pinned offline — the surfaces that show favorites (IMG-5):
+ *  Lineup grid and the artist sheet (grid=220), Timetable/My Plan rows (list=160). */
+const KEEP_WIDTHS = [PHOTO_WIDTH.grid, PHOTO_WIDTH.list] as const;
 
 /**
  * Ask the service worker to pin these photo URLs in its never-evicted keep cache (IMG-5). No-op when

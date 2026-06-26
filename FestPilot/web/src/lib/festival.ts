@@ -1,6 +1,7 @@
 /** Presentation helpers for festival weekends and days, derived from lineup DTOs. */
 import type { LineupDto, PerformanceDto, WeekendDto } from "../data/types";
 import { assignFestivalDays } from "../domain/festivalDay";
+import { actKey, performancesForWeekends } from "../domain/lineup";
 
 export interface DayInfo {
   key: string;
@@ -18,11 +19,7 @@ export interface DayInfo {
  */
 export function daysForWeekends(lineup: LineupDto, weekendIds: string[]): DayInfo[] {
   const tz = lineup.festival.timezone;
-  const scope = new Set(weekendIds);
-  const scoped =
-    weekendIds.length === 0
-      ? lineup.performances
-      : lineup.performances.filter((p) => !p.weekendId || scope.has(p.weekendId));
+  const scoped = performancesForWeekends(lineup.performances, weekendIds);
 
   const blocks = assignFestivalDays(scoped);
   if (blocks.length === 0) return legacyDaysByLabel(scoped);
@@ -120,4 +117,36 @@ export function initials(label: string): string {
   if (words.length === 0) return "?";
   if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase();
   return (words[0]![0]! + words[words.length - 1]![0]!).toUpperCase();
+}
+
+/** Day-of-month number in the festival tz (e.g. "25"); shared by the day dropdown trigger (DAY-1). */
+export function dayOfMonth(startMs: number, timeZone: string): string {
+  if (!Number.isFinite(startMs)) return "";
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone }).format(startMs);
+}
+
+/**
+ * Favorited acts per day key (DAY-2), for the ★ badge in the day dropdown. An act that plays on two
+ * days counts once on each; the same act twice in one day counts once. Days with no favorite are
+ * absent from the map. Pure — keyed by the weekend-agnostic source day, matching how plans are keyed.
+ */
+export function countFavoritesPerDay(
+  performances: PerformanceDto[],
+  favoriteKeys: ReadonlySet<string>,
+  days: DayInfo[]
+): Map<string, number> {
+  const validKeys = new Set(days.map((day) => day.key));
+  const actsByDay = new Map<string, Set<string>>();
+  for (const performance of performances) {
+    const day = performance.day;
+    if (!day || !validKeys.has(day)) continue;
+    const key = actKey(performance);
+    if (!favoriteKeys.has(key)) continue;
+    const bucket = actsByDay.get(day) ?? new Set<string>();
+    bucket.add(key);
+    actsByDay.set(day, bucket);
+  }
+  const counts = new Map<string, number>();
+  for (const [day, keys] of actsByDay) counts.set(day, keys.size);
+  return counts;
 }

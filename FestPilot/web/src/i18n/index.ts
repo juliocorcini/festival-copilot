@@ -37,6 +37,17 @@ const EN = {
   "settings.autoShareSub": "Offer to share your plan + favorites when you join",
   "settings.about": "About & what's new",
   "settings.aboutSub": "Version, the story, and the update history",
+  "settings.festival": "Festival & weekend",
+  "settings.festivalSub": "Change the weekend and days you're attending",
+
+  // Festival & weekend screen
+  "festival.weekendQ": "Which weekend?",
+  "festival.weekendNote": "Pick the weekend you're attending — we'll only show artists you can actually see.",
+  "festival.both": "Both weekends",
+  "festival.bothSub": "The full festival",
+  "festival.daysQ": "Which days?",
+  "festival.daysNote": "Pick the days you'll be there.",
+  "festival.saved": "Saved",
 
   // Appearance & language screen
   "appearance.appearance": "Appearance",
@@ -86,6 +97,11 @@ const EN = {
   "update.ready": "A new version is ready.",
   "update.reload": "Reload to update",
   "update.unsupported": "Update checks aren't available in this browser.",
+  "update.bannerTitle": "New version available",
+  "update.now": "Update",
+  "update.later": "Dismiss",
+  "update.force": "Force update",
+  "update.forcing": "Updating\u2026",
 
   // Shared palette words (used inside templated copy)
   "palette.day": "day",
@@ -115,6 +131,16 @@ const PT: Partial<Record<MessageKey, string>> = {
   "settings.autoShareSub": "Oferece compartilhar seu plano + favoritos ao entrar",
   "settings.about": "Sobre e novidades",
   "settings.aboutSub": "Versão, a história e o histórico de novidades",
+  "settings.festival": "Festival e fim de semana",
+  "settings.festivalSub": "Troque o fim de semana e os dias que você vai",
+
+  "festival.weekendQ": "Qual fim de semana?",
+  "festival.weekendNote": "Escolha o fim de semana que você vai — só mostramos artistas que você pode ver.",
+  "festival.both": "Os dois fins de semana",
+  "festival.bothSub": "O festival completo",
+  "festival.daysQ": "Quais dias?",
+  "festival.daysNote": "Escolha os dias em que você vai estar lá.",
+  "festival.saved": "Salvo",
 
   "appearance.appearance": "Aparência",
   "appearance.auto": "Auto",
@@ -160,6 +186,11 @@ const PT: Partial<Record<MessageKey, string>> = {
   "update.ready": "Uma nova versão está pronta.",
   "update.reload": "Recarregar para atualizar",
   "update.unsupported": "Verificação de atualização indisponível neste navegador.",
+  "update.bannerTitle": "Nova versão disponível",
+  "update.now": "Atualizar",
+  "update.later": "Dispensar",
+  "update.force": "Forçar atualização",
+  "update.forcing": "Atualizando\u2026",
 
   "palette.day": "dia",
   "palette.night": "noite",

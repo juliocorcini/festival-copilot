@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { StackHeader } from "../../app/StackHeader";
 import { useLineup } from "../../data/useLineup";
 import { useInstallPrompt } from "../../app/pwaInstall";
-import { applyUpdate, checkForUpdate, type UpdateStatus } from "../../app/registerSW";
+import { applyUpdate, checkForUpdate, forceUpdate, type UpdateStatus } from "../../app/registerSW";
 import { useT, type TranslateFn } from "../../i18n";
 import { APP_VERSION } from "../../data/changelog";
 import { getOfflineStatus, primeOffline, type OfflineStatus } from "../../data/offline";
@@ -106,7 +106,13 @@ export function OfflineScreen(): JSX.Element {
           </button>
         )}
 
-        <UpdateControl t={t} check={check} onCheck={() => void runUpdateCheck()} onApply={() => void applyUpdate()} />
+        <UpdateControl
+          t={t}
+          check={check}
+          onCheck={() => void runUpdateCheck()}
+          onApply={() => void applyUpdate()}
+          onForce={() => void forceUpdate()}
+        />
 
         <p className="src" style={{ textAlign: "center" }}>{t("offline.blurb")}</p>
       </div>
@@ -152,11 +158,13 @@ function UpdateControl({
   check,
   onCheck,
   onApply,
+  onForce,
 }: {
   t: TranslateFn;
   check: CheckState;
   onCheck: () => void;
   onApply: () => void;
+  onForce: () => void;
 }): JSX.Element {
   if (check === "updated") {
     return (
@@ -180,6 +188,10 @@ function UpdateControl({
       {message && (
         <p className="src" style={{ textAlign: "center" }}>{message}</p>
       )}
+      {/* Last-resort: pull the freshest build even when the worker hasn't flagged one (long-open session). */}
+      <button className="link-btn" style={{ alignSelf: "center" }} onClick={onForce}>
+        <span className="ms" style={{ fontSize: 16 }}>sync</span> {t("update.force")}
+      </button>
     </>
   );
 }

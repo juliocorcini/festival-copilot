@@ -18,8 +18,9 @@ import {
   type ReactNode,
 } from "react";
 import type { LineupDto } from "../data/types";
-import { uniqueActs, type Act } from "../domain/lineup";
+import { performancesForWeekends, uniqueActs, type Act } from "../domain/lineup";
 import { buildArtistDetail, type ArtistDetail } from "../domain/artistDetail";
+import { useOnboarding } from "../data/localStore";
 import { ArtistSheet } from "./ArtistSheet";
 
 interface ArtistSheetApi {
@@ -54,12 +55,19 @@ export function ArtistSheetProvider({
   children: ReactNode;
 }): JSX.Element {
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const { onboarding } = useOnboarding();
 
+  // The sheet's "where & when" must mirror the chosen weekend(s): only show the slots that belong to
+  // the festival the user is actually attending (DEC-048), so a W2 attendee never sees a W1 set time.
+  const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
   const actByKey = useMemo(() => {
     const map = new Map<string, Act>();
-    if (lineup) for (const act of uniqueActs(lineup.performances)) map.set(act.actKey, act);
+    if (lineup) {
+      const scoped = performancesForWeekends(lineup.performances, weekendIds);
+      for (const act of uniqueActs(scoped)) map.set(act.actKey, act);
+    }
     return map;
-  }, [lineup]);
+  }, [lineup, weekendIds]);
 
   const detail = useMemo<ArtistDetail | null>(() => {
     if (!openKey || !lineup) return null;

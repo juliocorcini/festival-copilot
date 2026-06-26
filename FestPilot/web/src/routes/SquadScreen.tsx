@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { api } from "../data/api";
+import { useBoard } from "../data/board";
 import { useMyGroups, useGroup } from "../data/groups";
 import { useMeetingPoints, useSafety } from "../data/meetingPoints";
 import { useGroupPresence } from "../data/presence";
@@ -15,6 +16,7 @@ import { useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
+import { BoardPreviewCard, MeetingCompassCard, WhereEveryoneCard } from "./squad/squadHomeCards";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
 /** Remembers the last squad the user was looking at, so a multi-squad user lands back where they left. */
@@ -105,13 +107,12 @@ function GroupHome({
   const { points } = useMeetingPoints(group.id);
   const { points: safetyPoints } = useSafety(group.id);
   const { presence } = useGroupPresence(group.id);
+  const { notes, status: boardStatus } = useBoard(group.id);
   const [leaving, setLeaving] = useState(false);
 
-  // Live squad state for the "Where's the squad" card (DEC-015 coarse-only — never a coordinate).
-  const liveMembers = (presence?.members ?? []).filter((m) => m.live && m.presence && !m.presence.stale);
-  const liveCount = presence?.liveCount ?? liveMembers.length;
-  const whereSub =
-    liveCount > 0 ? `${liveCount} sharing now · who's at which stage` : "Live map · who's at which stage";
+  // The freshest active "come to me" point gets the rich compass card; the rest stay as compact rows.
+  const primaryPoint = points[0] ?? null;
+  const restPoints = points.slice(1);
 
   const count = group.memberCount;
   const leave = async (): Promise<void> => {
@@ -134,8 +135,8 @@ function GroupHome({
         eyebrow={`${group.emoji ? `${group.emoji} ` : ""}${group.name} · ${count} ${count === 1 ? "person" : "people"}`}
         title="Squad"
         right={
-          <button className="ava" aria-label="Squad settings" onClick={() => navigate("/settings")}>
-            <span className="ms">settings</span>
+          <button className="ava" aria-label="Invite to squad" onClick={() => navigate(`/squad/invite/${group.id}`)}>
+            <span className="ms">person_add</span>
           </button>
         }
       />
@@ -178,6 +179,36 @@ function GroupHome({
           </button>
         )}
 
+        <WhereEveryoneCard groupId={group.id} presence={presence} />
+
+        {primaryPoint ? (
+          <MeetingCompassCard groupId={group.id} point={primaryPoint} />
+        ) : (
+          <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/meet`)}>
+            <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #F5A623, #FFD060)" }}>
+              <span className="ms">flag</span>
+            </div>
+            <div className="squad-plan-main">
+              <div className="squad-plan-title">Set a meeting point</div>
+              <div className="squad-plan-sub">Drop a spot for the squad to regroup</div>
+            </div>
+            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+          </button>
+        )}
+
+        {restPoints.map((p) => (
+          <MeetingPointCard key={p.id} groupId={group.id} point={p} />
+        ))}
+
+        {primaryPoint && (
+          <button className="squad-inline-add" onClick={() => navigate(`/squad/${group.id}/meet`)}>
+            <span className="ms" aria-hidden="true">add_location_alt</span>
+            Set another meeting point
+          </button>
+        )}
+
+        <BoardPreviewCard groupId={group.id} notes={notes} loading={boardStatus === "loading"} />
+
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">
             <span className="ms">event_available</span>
@@ -188,40 +219,6 @@ function GroupHome({
           </div>
           <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>
-
-        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/where`)}>
-          <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #16A34A, #0EA5E9)" }}>
-            <span className="ms">share_location</span>
-          </div>
-          <div className="squad-plan-main">
-            <div className="squad-plan-title">Where's the squad</div>
-            <div className="squad-plan-sub">{whereSub}</div>
-          </div>
-          {liveMembers.length > 0 ? (
-            <div className="squad-live-stack" aria-label={`${liveCount} sharing now`}>
-              {liveMembers.slice(0, 3).map((m) => (
-                <Avatar key={m.userId} color={m.avatarColor} name={m.displayName} size={28} ring />
-              ))}
-            </div>
-          ) : (
-            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
-          )}
-        </button>
-
-        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/meet`)}>
-          <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #F5A623, #FFD060)" }}>
-            <span className="ms">flag</span>
-          </div>
-          <div className="squad-plan-main">
-            <div className="squad-plan-title">Set a meeting point</div>
-            <div className="squad-plan-sub">Drop a spot for the squad to regroup</div>
-          </div>
-          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
-        </button>
-
-        {points.map((p) => (
-          <MeetingPointCard key={p.id} groupId={group.id} point={p} />
-        ))}
 
         {!hasSos && (
           <button className="glass squad-plan-cta squad-lost-cta" onClick={() => navigate(`/squad/${group.id}/safety`)}>
@@ -235,17 +232,6 @@ function GroupHome({
             <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
           </button>
         )}
-
-        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/board`)}>
-          <div className="squad-plan-icon" style={{ background: "linear-gradient(135deg, #8B5CF6, #6366F1)" }}>
-            <span className="ms">push_pin</span>
-          </div>
-          <div className="squad-plan-main">
-            <div className="squad-plan-title">Squad board</div>
-            <div className="squad-plan-sub">Pinned notes, meet points, shout-outs</div>
-          </div>
-          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
-        </button>
 
         <section className="glass members-card">
           <div className="members-head">

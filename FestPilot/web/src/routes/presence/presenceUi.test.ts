@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ago, mmss, pingKindFor, presenceLine, rosterRank, sortRoster } from "./presenceUi";
+import { ago, groupRosterByStage, mmss, pingKindFor, presenceLine, rosterRank, sortRoster } from "./presenceUi";
 import type { CoarsePresenceDto, PresenceMemberDto } from "../../data/types";
 
 const FRESH: CoarsePresenceDto = {
@@ -151,5 +151,66 @@ describe("pingKindFor", () => {
   it("locates a stale sharer but leaves fresh ones alone", () => {
     expect(pingKindFor(member({}, { ...FRESH, stale: true }))).toBe("locate");
     expect(pingKindFor(member({}, { ...FRESH, stale: false }))).toBeNull();
+  });
+});
+
+describe("groupRosterByStage", () => {
+  it("clusters members by coarse stage, busiest first, and flags the group that has you", () => {
+    const you = member({ userId: "you", isYou: true }, { ...FRESH, stageName: "MAINSTAGE" });
+    const ana = member({ userId: "ana" }, { ...FRESH, stageName: "MAINSTAGE" });
+    const theo = member({ userId: "theo" }, { ...FRESH, stageName: "MAINSTAGE" });
+    const lu = member({ userId: "lu" }, { ...FRESH, coarseLabel: "near", stageName: "CAGE" });
+
+    const places = groupRosterByStage([lu, you, ana, theo]);
+
+    expect(places.map((p) => p.label)).toEqual(["MAINSTAGE", "CAGE"]);
+    expect(places[0]!.members.map((m) => m.userId)).toEqual(["you", "ana", "theo"]);
+    expect(places[0]!.hasYou).toBe(true);
+    expect(places[1]!.hasYou).toBe(false);
+    expect(places[1]!.stageName).toBe("CAGE");
+  });
+
+  it("labels a between-pair and orders it after stages", () => {
+    const onStage = member({ userId: "s" }, { ...FRESH, stageName: "CORE" });
+    const between = member(
+      { userId: "b" },
+      { ...FRESH, coarseLabel: "between", stageName: "CAGE", betweenStageName: "FREEDOM" }
+    );
+
+    const places = groupRosterByStage([between, onStage]);
+
+    expect(places.map((p) => p.kind)).toEqual(["stage", "between"]);
+    expect(places[1]!.label).toBe("CAGE & FREEDOM");
+  });
+
+  it("sinks ghosts, no-fix and stale members into a single muted 'Location off' bucket, last", () => {
+    const fresh = member({ userId: "f" }, { ...FRESH, stageName: "MAINSTAGE" });
+    const ghost = member({ userId: "g", shareMode: "ghost" }, null);
+    const noFix = member({ userId: "n" }, null);
+    const stale = member({ userId: "s" }, { ...FRESH, stale: true });
+
+    const places = groupRosterByStage([fresh, ghost, noFix, stale]);
+
+    const off = places.at(-1)!;
+    expect(off.kind).toBe("off");
+    expect(off.label).toBe("Location off");
+    expect(off.members.map((m) => m.userId).sort()).toEqual(["g", "n", "s"]);
+    expect(off.stageName).toBeNull();
+  });
+
+  it("buckets a resolved-but-stageless fix as 'In the venue'", () => {
+    const venue = member({ userId: "v" }, { ...FRESH, coarseLabel: "none", stageName: null });
+    const places = groupRosterByStage([venue]);
+    expect(places).toHaveLength(1);
+    expect(places[0]!.kind).toBe("venue");
+    expect(places[0]!.label).toBe("In the venue");
+  });
+
+  it("returns nothing for an empty roster and never mutates the input", () => {
+    const input = [member({ userId: "a" }, { ...FRESH }), member({ userId: "b" }, null)];
+    const snapshot = input.map((m) => m.userId);
+    groupRosterByStage(input);
+    expect(groupRosterByStage([])).toEqual([]);
+    expect(input.map((m) => m.userId)).toEqual(snapshot);
   });
 });

@@ -4,8 +4,8 @@
  * spaces, e.g. ".../233262902-Presspic Bassbrain - 4.jpg"). Pure + unit-tested.
  */
 
-/** Per-surface widths (≈ the rendered px, allowing for 2x): list/grid, cards, detail. */
-export const PHOTO_WIDTH = { avatar: 96, list: 160, grid: 220, card: 360, detail: 560 } as const;
+/** Per-surface widths (≈ the rendered px, allowing for 2x): avatar, list, grid, card. */
+export const PHOTO_WIDTH = { avatar: 96, list: 160, grid: 220, card: 360 } as const;
 
 export function artistPhotoSrc(url: string, width: number): string {
   const encoded = encodeUriIdempotent(url.trim());

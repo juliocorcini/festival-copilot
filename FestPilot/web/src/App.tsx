@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./app/AppLayout";
+import { UpdateBanner } from "./app/UpdateBanner";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
 import { NowScreen } from "./routes/NowScreen";
@@ -36,6 +37,7 @@ import { SettingsScreen } from "./routes/settings/SettingsScreen";
 import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
 import { OfflineScreen } from "./routes/settings/OfflineScreen";
 import { AboutScreen } from "./routes/settings/AboutScreen";
+import { FestivalScreen } from "./routes/settings/FestivalScreen";
 import { AdminGate } from "./admin/AdminGate";
 import { AdminLayout } from "./admin/AdminLayout";
 import { AdminFestivalsScreen } from "./admin/AdminFestivalsScreen";
@@ -49,6 +51,7 @@ import { AdminMapEditorScreen } from "./admin/AdminMapEditorScreen";
 export function App(): JSX.Element {
   return (
     <BrowserRouter>
+      <UpdateBanner />
       <Routes>
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route element={<RequireOnboarding />}>
@@ -86,6 +89,7 @@ export function App(): JSX.Element {
             <Route path="squad/join/:token" element={<JoinScreen />} />
             <Route path="j/:token" element={<JoinScreen />} />
             <Route path="settings" element={<SettingsScreen />} />
+            <Route path="settings/festival" element={<FestivalScreen />} />
             <Route path="settings/appearance" element={<AppearanceScreen />} />
             <Route path="settings/offline" element={<OfflineScreen />} />
             <Route path="settings/privacy" element={<LocationPrivacyScreen />} />

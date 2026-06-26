@@ -3,21 +3,64 @@
  * favorites/day, and heart acts. Favorites persist locally (DEC-041) and an act appears once
  * even if it plays multiple days.
  */
-import { useMemo, useState } from "react";
-import { useFavorites } from "../data/localStore";
+import { useMemo, useState, type CSSProperties } from "react";
+import { useFavorites, useOnboarding } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { festivalDataState } from "../domain/dataState";
-import { uniqueActs, type Act } from "../domain/lineup";
+import { festivalDayIdByPerformanceId } from "../domain/festivalDay";
+import { performancesForWeekends, uniqueActs, type Act } from "../domain/lineup";
 import { daysForWeekends, type DayInfo } from "../lib/festival";
+import { stageColorRgb } from "../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
+import { usePinch } from "../lib/usePinch";
 import { useArtistSheet } from "../ui/useArtistSheet";
+
+// LU-2: grid density (2/3/4 columns) persists locally (DEC-041), self-contained to this screen.
+type Cols = 2 | 3 | 4;
+const COLS_KEY = "fp.lineup.cols";
+function loadCols(): Cols {
+  try {
+    const v = Number(localStorage.getItem(COLS_KEY));
+    if (v === 2 || v === 3 || v === 4) return v;
+  } catch {
+    /* storage unavailable */
+  }
+  return 2;
+}
+
+const DENSITY_OPTIONS: { c: Cols; icon: string; label: string }[] = [
+  { c: 2, icon: "grid_view", label: "2 columns" },
+  { c: 3, icon: "view_module", label: "3 columns" },
+  { c: 4, icon: "view_comfy", label: "4 columns" },
+];
+
+function DensityControl({ cols, onChange }: { cols: Cols; onChange: (c: Cols) => void }): JSX.Element {
+  return (
+    <div className="density" role="group" aria-label="Grid density">
+      {DENSITY_OPTIONS.map((o) => (
+        <button
+          key={o.c}
+          type="button"
+          className={o.c === cols ? "on" : ""}
+          aria-pressed={o.c === cols}
+          aria-label={o.label}
+          title={o.label}
+          onClick={() => onChange(o.c)}
+        >
+          <span className="ms">{o.icon}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function LineupScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
+  const { onboarding } = useOnboarding();
   const festivalId = lineup?.festival.id;
   const favorites = useFavorites(festivalId);
   const { openArtist } = useArtistSheet();
@@ -25,15 +68,42 @@ export function LineupScreen(): JSX.Element {
   const [query, setQuery] = useState("");
   const [dayFilter, setDayFilter] = useState<string | "all">("all");
   const [favOnly, setFavOnly] = useState(false);
+  const [cols, setColsState] = useState<Cols>(loadCols);
+  const setCols = (c: Cols): void => {
+    setColsState(c);
+    try {
+      localStorage.setItem(COLS_KEY, String(c));
+    } catch {
+      /* storage unavailable */
+    }
+  };
+  // Pinch to set density: spread → fewer/bigger columns, pinch → more/smaller columns.
+  const clampCols = (c: number): Cols => (c < 2 ? 2 : c > 4 ? 4 : (c as Cols));
+  const pinchRef = usePinch((dir) => setCols(clampCols(dir === "out" ? cols - 1 : cols + 1)));
 
-  const days = useMemo<DayInfo[]>(() => (lineup ? daysForWeekends(lineup, []) : []), [lineup]);
+  // Scope everything (days, acts, favorites, day tags) to the weekend(s) chosen at onboarding —
+  // otherwise a W2 attendee sees W1-only acts and wrong day chips (the source `day` label is shared
+  // across weekends). Empty selection = all weekends.
+  const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
+  const scopedPerformances = useMemo(
+    () => (lineup ? performancesForWeekends(lineup.performances, weekendIds) : []),
+    [lineup, weekendIds]
+  );
+
+  const days = useMemo<DayInfo[]>(() => (lineup ? daysForWeekends(lineup, weekendIds) : []), [lineup, weekendIds]);
   const stageName = useMemo(() => {
     const map = new Map<string, string>();
     lineup?.stages.forEach((s) => map.set(s.id, s.name));
     return map;
   }, [lineup]);
 
-  const acts = useMemo(() => (lineup ? uniqueActs(lineup.performances) : []), [lineup]);
+  // Tag each act with the same festival-day id the timetable/day-chips use (DEC-048), so the day
+  // filter matches and a post-midnight set is attributed to the night it belongs to.
+  const acts = useMemo(() => {
+    if (!lineup) return [];
+    const dayById = festivalDayIdByPerformanceId(scopedPerformances);
+    return uniqueActs(scopedPerformances, { dayOf: (p) => dayById.get(p.id) ?? p.day });
+  }, [lineup, scopedPerformances]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -70,24 +140,27 @@ export function LineupScreen(): JSX.Element {
     return [stage, dayLabels].filter(Boolean).join(" · ");
   };
 
-  const renderRow = (act: Act): JSX.Element => {
+  const renderCard = (act: Act): JSX.Element => {
     const on = favorites.isFavorite(act.actKey);
+    const stage = stageName.get(act.stageIds[0] ?? "") ?? "";
+    const cardStyle = { "--c": stageColorRgb(stage) } as CSSProperties;
     return (
-      <div className="art-row" key={act.actKey}>
+      <div className={`gc${on ? " on" : ""}`} key={act.actKey} style={cardStyle}>
         <button
           type="button"
-          className="art-row-tap"
+          className="gc-tap"
           aria-label={`View ${act.label}`}
           onClick={() => openArtist(act.actKey)}
         >
-          <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.list} className="art-photo" />
-          <div className="art-info">
-            <div className="nm">{act.label}</div>
-            <div className="mt">{meta(act)}</div>
-          </div>
+          <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.grid} className="gc-photo" />
+          <span className="gc-gloss" aria-hidden="true" />
+          <span className="gc-scrim">
+            <span className="gc-name">{act.label}</span>
+            <span className="gc-chip"><span className="dot" aria-hidden="true" />{meta(act)}</span>
+          </span>
         </button>
         <button
-          className={`heart-btn${on ? " on" : ""}`}
+          className="gc-heart"
           aria-pressed={on}
           aria-label={on ? `Remove ${act.label} from favorites` : `Add ${act.label} to favorites`}
           onClick={() => favorites.toggle(act.actKey)}
@@ -99,22 +172,14 @@ export function LineupScreen(): JSX.Element {
   };
 
   return (
-    <div className="screen" style={{ paddingTop: "calc(10px + var(--safe-top))" }}>
-      {dataState === "timetable" && (
-        <div className="lineup-switch-row">
-          <ViewSwitch active="lineup" />
-        </div>
-      )}
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <div className="eyebrow" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--muted)", fontWeight: 700 }}>
-            {lineup.festival.name.toUpperCase()}
-          </div>
-          <h1 className="poster" style={{ fontSize: 26, fontWeight: 700, margin: "2px 0 0" }}>Lineup</h1>
-        </div>
-        <div className="fav-count">
-          <div className="n">{favorites.count}</div>
-          <div className="l">favorites</div>
+    <div
+      ref={pinchRef}
+      className={`screen cols-${cols}${dataState === "timetable" ? " has-view-dock" : ""}`}
+      style={{ paddingTop: "calc(8px + var(--safe-top))", paddingInline: 16 }}
+    >
+      <header className="lu-top">
+        <div className="shell-eyebrow">
+          {lineup.festival.name} <span className="view">LINEUP</span>
         </div>
       </header>
       {dataState === "lineup_only" && (
@@ -163,15 +228,27 @@ export function LineupScreen(): JSX.Element {
 
       {favoriteActs.length > 0 && (
         <>
-          <div className="sec">YOUR FAVORITES · {favoriteActs.length}</div>
-          {favoriteActs.map(renderRow)}
+          <div className="sec">
+            <span>YOUR FAVORITES · {favoriteActs.length}</span>
+            <DensityControl cols={cols} onChange={setCols} />
+          </div>
+          <div className="grid">{favoriteActs.map(renderCard)}</div>
         </>
       )}
       {otherActs.length > 0 && (
         <>
-          <div className="sec">ALL ARTISTS · {otherActs.length}</div>
-          {otherActs.map(renderRow)}
+          <div className="sec">
+            <span>ALL ARTISTS · {otherActs.length}</span>
+            {favoriteActs.length === 0 && <DensityControl cols={cols} onChange={setCols} />}
+          </div>
+          <div className="grid">{otherActs.map(renderCard)}</div>
         </>
+      )}
+
+      {dataState === "timetable" && (
+        <div className="view-switch-dock">
+          <ViewSwitch active="lineup" />
+        </div>
       )}
     </div>
   );

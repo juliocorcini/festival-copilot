@@ -1,7 +1,16 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { PerformanceDto, StageDto } from "../data/types";
-import { actKey, actLabel, favoriteSets, imageByActKey, nearbySets, toPlannableSets, uniqueActs } from "./lineup";
+import {
+  actKey,
+  actLabel,
+  favoriteSets,
+  imageByActKey,
+  nearbySets,
+  performancesForWeekends,
+  toPlannableSets,
+  uniqueActs,
+} from "./lineup";
 
 const stages: StageDto[] = [
   { id: "stage-main", sourceStageId: "1", name: "MAINSTAGE", sortOrder: 0 },
@@ -61,6 +70,26 @@ describe("act identity", () => {
     expect(actLabel(perf({ name: "Amelie Lens" }))).toBe("Amelie Lens");
     expect(actLabel(perf({ name: "", artists: [{ id: "x", name: "Solomun", imageUrl: null }] }))).toBe("Solomun");
     expect(actLabel(perf({ name: "", artists: [] }))).toBe("To be announced");
+  });
+});
+
+describe("performancesForWeekends", () => {
+  const w1 = perf({ id: "p-w1", weekendId: "W1", artists: [{ id: "a-1", name: "One", imageUrl: null }] });
+  const w2 = perf({ id: "p-w2", weekendId: "W2", artists: [{ id: "a-2", name: "Two", imageUrl: null }] });
+  const undated = perf({ id: "p-none", weekendId: undefined, artists: [{ id: "a-3", name: "Three", imageUrl: null }] });
+
+  it("returns every performance when no weekend is selected", () => {
+    expect(performancesForWeekends([w1, w2, undated], [])).toEqual([w1, w2, undated]);
+  });
+
+  it("keeps only performances of the chosen weekend (plus weekend-less ones)", () => {
+    const result = performancesForWeekends([w1, w2, undated], ["W2"]);
+    expect(result.map((p) => p.id)).toEqual(["p-w2", "p-none"]);
+  });
+
+  it("supports selecting multiple weekends", () => {
+    const result = performancesForWeekends([w1, w2, undated], ["W1", "W2"]);
+    expect(result.map((p) => p.id)).toEqual(["p-w1", "p-w2", "p-none"]);
   });
 });
 

@@ -6,6 +6,96 @@
 
 ---
 
+## Squad redesign 26/06 — home content-first (Fases A+B+C) ✅ DEPLOYED — v0.18.0
+
+> Redesign completo do Squad home seguindo `brain/wireframes/directions/20-amber-squad.html`, decidido por **conselho inline**
+> (Strategist/Architect/Critic/Advocate → plano faseado A+B+C). Loop orquestrado inline, sem subagentes:
+> `tsc --noEmit` limpo · `npm run test` **293** 0 falhas · `vite build` ok · screenshot headless com **grupo real semeado** (owner +
+> 4 membros, presença por palco, meeting point, board) e **geolocalização do Playwright** · deploy `--branch=master` → `festpilot.pages.dev`.
+
+### Current State (this batch)
+- **Squad home reescrito "content-first"** e no ar (**v0.18.0**). As 3 perguntas da galera respondidas sem tap: **Where is everyone** (roster agrupado por palco + Ping all), **Meeting point com bússola ao vivo** (distância/direção reais + Go), **Pinned board** (últimas notas + Add note). Estados vazios calmos em cada card.
+- **Paridade preservada (Fase C):** switcher de squads (tab-row), banner de SOS/safety, "Build the squad plan", "I'm lost", members + **invite movido pro topo-direito** (`person_add`, fiel ao wireframe; Settings segue no menu do avatar do Now & Next), Leave.
+- **Tests:** web **293** unit (39 files; **+6** em `presence/presenceUi.test.ts` p/ `groupRosterByStage`) · `tsc` limpo · build OK (~538 KiB / 162 KiB gz). **Server não tocado.**
+- **Verificação visual:** harness `e2e/.output/squad-shot.mjs` (gitignored) cria um squad descartável na API live (mesma técnica dos e2e), semeia presença em palcos reais (coords do `/map`), board e meeting point, **geolocaliza o browser ~120 m a NE do spot** e screenshota `/squad` (top+bottom) no preview local **e** em produção. Conferido: bússola mostra **"120 m · NE"** ao vivo, MAINSTAGE "· with you" com cluster JU/AN/TH, FREEDOM BY BUD + LU, "Location off" + RA.
+
+### Reuso > código novo (Fase B = quase tudo reaproveitado)
+- **Geo:** `domain/travel.ts` já tinha `metersBetween`/`bearingDegrees`/`compassPoint` → **zero helper novo**. Extraí `useHeading`/`useMyFix` da `MeetNavScreen` p/ **`lib/useGeo.ts`** (mesmo comportamento) e a MeetNav passou a importar de lá — agora compartilhados com o card da home.
+- **Dados:** `useGroupPresence`, `useMeetingPoints`/`useSafety`, **`useBoard`** (já existia) reusados; cards são **apresentacionais** (dados descem por props; só sensores do device — GPS/compass — são lidos no card que de fato mostra distância).
+- **UI:** `PresenceAvatar`, `.squad-live-stack`, `stageColor`, `formatMeters`/`closesInLabel`, `ago` reaproveitados.
+
+### Fases (uma entrada por fase)
+- **Fase A — cards content-first.** Novo `routes/squad/squadHomeCards.tsx` com `WhereEveryoneCard` (roster por palco, dots com cor do palco, "· with you", cluster de até 4 + "+N", **Ping all** que só aparece havendo alguém "pingável" e dispara `api.sendPing` nos stale/ghost com flash "Pinged"), `MeetingCompassCard` e `BoardPreviewCard` (top 3 notas, "Add note", `relativeTime` via `ago`). Cada um com empty-state navegável (role=button + teclado Enter/Espaço).
+- **Fase B — bússola/distância ao vivo.** `MeetingCompassCard` usa `useMyFix`+`useHeading` (de `lib/useGeo`) e `metersBetween`/`bearingDegrees`/`compassPoint`; seta gira por `bearing − heading` (north-up sem bússola), degrada p/ "Locating…/Location off". Helper **puro** novo `groupRosterByStage` em `presenceUi.tsx` (palcos primeiro/mais cheios, depois between, venue, e "Location off" por último) + **6 testes** com casos concretos.
+- **Fase C — ações + paridade.** Header `right` = **invite** (`person_add`); ordem nova: switcher → SOS → Where → Meeting(compass)/CTA "Set a meeting point" → demais points → "Set another" → Board → Plan → I'm lost → Members(+Invite) → Leave. **Decisão de escopo:** o switcher fica na **tab-row existente** (não no eyebrow) p/ **não** alterar a API compartilhada do `AppHeader` (string-only) — mesma função, risco menor.
+
+### Escopo (arquivos)
+- **Novos:** `lib/useGeo.ts`, `routes/squad/squadHomeCards.tsx`.
+- **Editados:** `routes/SquadScreen.tsx` (GroupHome reorganizado; old "Where's the squad" CTA e `liveMembers/whereSub` removidos), `routes/presence/presenceUi.tsx`(+`.test.ts`), `routes/meet/MeetNavScreen.tsx` (importa os hooks extraídos), `styles.css` (cards/compass/where rows/board preview), `data/changelog.ts` + `web/package.json` (**0.18.0**).
+
+---
+
+## Pós-V9 26/06 — Correções de feedback + novos controles ✅ DEPLOYED — v0.17.0
+
+> Feedback do usuário após o shell V9, em **2 change sets orquestrados** (inline, sem subagentes). Cada um fechou em
+> `tsc --noEmit` limpo · `npm run test` **288** 0 falhas · `vite build` ok · screenshot headless conferido (preview local
+> `:4173`, app servido do `dist` + dados da API live) · deploy `--branch=master` → `festpilot.pages.dev`.
+
+### Current State (this batch)
+- **6 itens fechados e no ar** (2 deploys): **ícone das linhas**, **Lineup por fim de semana**, **ArtistSheet (imagem instantânea + sem pulo do fundo)**, **Settings → Festival & weekend**, **pinch-to-zoom**. Versão consolidada **v0.17.0** (`package.json` + `APP_VERSION` + entrada de changelog).
+- **Tests:** web **288** unit (39 files; +3 em `domain/lineup.test.ts` p/ `performancesForWeekends`) · `tsc` limpo · build OK (~531 KiB / 160 KiB gz). Server não tocado.
+- **Verificação visual:** preview local serve o `dist` novo e a API cai no worker de prod (`API_BASE` default). Conferidos: header do TT com o ícone `straighten` (linhas on/âmbar), ArtistSheet (foto idêntica à do card, fundo parado), **prova do escopo W2** (favoritos 10→2, sheet só com o slot da W2), Settings (linha "Festival & weekend") e a tela `/settings/festival` (W1 selecionado → dias Jul 17/18/19).
+
+### Change set 1 — fixes (ícone + Lineup/semana + ArtistSheet) ✅ DEPLOYED
+- **Ícone das linhas de horário (conselho inline).** `grid_on` passava ideia de "modo grade"; trocado por **`straighten`** (régua = marcações ao longo do eixo de tempo). `aria-label` dinâmico ("Show/Hide hour lines"), `title="Hour lines"`. *Arquivo:* `routes/TimetableScreen.tsx`.
+- **Lineup respeita o(s) fim(ns) de semana do onboarding (DEC-048).** Novo helper **puro** `performancesForWeekends(perfs, weekendIds)` em `domain/lineup.ts` (vazio = todos; mantém perfs sem `weekendId`); `daysForWeekends` refatorado p/ usá-lo. `LineupScreen` e `ArtistSheetProvider` (`useArtistSheet`) agora lêem `onboarding.weekendIds` e escopam **performances → dias, acts, favoritos e os slots do sheet**. *Antes:* W2 via acts/dias/slots da W1 (ex.: domingo mostrava 36 "favoritos" da W1). *Arquivos:* `domain/lineup.ts`(+`.test.ts` +3), `lib/festival.ts`, `routes/LineupScreen.tsx`, `ui/useArtistSheet.ts`.
+- **ArtistSheet — imagem instantânea.** Hero passou de `PHOTO_WIDTH.detail` (560) p/ `PHOTO_WIDTH.grid` (220) → reaproveita o cache da foto do card tocado (mesmo `?width=`); `KEEP_WIDTHS` do offline alinhado p/ `grid` e a largura morta `detail` removida do mapa. *Arquivos:* `ui/ArtistSheet.tsx`, `lib/usePhotoPrefetch.ts`, `lib/photo.ts`.
+- **ArtistSheet — fim do "pulo" do fundo.** `closeRef.focus({ preventScroll:true })` evita o browser rolar o timetable atrás ao abrir o sheet. *Arquivo:* `ui/ArtistSheet.tsx`.
+
+### Change set 2 — novos controles (settings de semana + pinch) ✅ DEPLOYED
+- **Settings → Festival & weekend (trocar a escolha pós-onboarding).** Nova tela `routes/settings/FestivalScreen.tsx` (rota `settings/festival`) + linha em `SettingsScreen` (ícone `festival`). Reusa o padrão `.opt` do onboarding: escolhe W1/W2/Both e os dias; **aplica na hora** (como Appearance) com flash "Saved", recomputa `dayKeys` ao trocar de semana e preserva `seenActKeys`. i18n EN+PT (`settings.festival*`, `festival.*`). *Arquivos:* novo `FestivalScreen.tsx`, `SettingsScreen.tsx`, `App.tsx`, `i18n/index.ts`, `styles.css` (`.save-flash`).
+- **Pinch-to-zoom.** Novo hook `lib/usePinch.ts` (gesto de 2 dedos discreto e multi-step; **callback ref** p/ anexar quando o conteúdo monta após o load; `preventDefault` só no gesto de 2 dedos). **Timetable**: spread→`1h` / pinch→`2h`. **Lineup**: spread→menos colunas / pinch→mais (clamp 2–4). *Arquivos:* novo `usePinch.ts`, `routes/TimetableScreen.tsx`, `routes/LineupScreen.tsx`.
+
+### Pendente (planejamento, sem código neste lote)
+- ~~**Squad redesign → `brain/wireframes/directions/20-amber-squad.html`**~~ — **✅ FEITO** no lote abaixo "Squad redesign 26/06" (v0.18.0).
+
+---
+
+## Lote de Skin 26/06 — ICON / TT / LU / DAY / SH (orquestrado por `brain/design-sync.md`) ✅ DEPLOYED (DEC-066)
+
+> Os 5 gates de redesign do `design-sync.md` aplicados, testados e **publicados** no Cloudflare Pages (um deploy por gate).
+> Loop inline, sem subagentes. Cada gate fechou em: `tsc --noEmit` + `npm run -w web test` 0 falhas · `vite build` ok ·
+> screenshot headless bate com o alvo (N6/L5/V8/V9) · `git diff --stat` só os arquivos do gate · tabela de Status atualizada.
+
+### Current State (this batch)
+- **5 gates fechados ✅ e no ar** — **ICON** (Lock-in `lock`→`playlist_add_check`), **TT** (cápsula color-glass + foto círculo 56px + estado live + ★/palco + heart), **LU** (grid de cards imersivos + densidade 2/3/4 col persistida), **DAY** (`DayDropdown` + `countFavoritesPerDay` puro/testado, remove as pills), **SH** (shell unificado: `ViewSwitch` em dock flutuante + eyebrow espelhado + respiro).
+- **Tests:** web **285** unit (39 files; +9 em `lib/festival.test.ts` — 6 originais restaurados + DAY-2/DAY-1) · `tsc --noEmit` limpo · `vite build` OK (~524 KiB / 158 KiB gz). Server **não tocado** neste lote.
+- **Verificação visual:** Playwright headless (`web/e2e/.output/skin-shot.mjs`, gitignored) semeia onboarding completo + 10 favoritos reais (via API live) em 390×844 e screenshota cada deploy. Conferidos: N6 (cápsulas/fotos/★/hearts), L5 (grid 2 e 4 col), V8 (dropdown aberto: Day N · dia · data · ★/dia · check), V9 (eyebrow espelhado + dock idêntico nas duas telas).
+- **Deploy:** publicado a cada gate em `festpilot.pages.dev`; consolidado em **v0.16.0** e refinado para o V9 em **v0.16.1** (ver "Refino V9 26/06"). Branch de produção do projeto Pages é **`master`** (não `main`) — deploys vão para `--branch=master`. A bottom-nav (5 tabs) segue acima do dock (z-index) e acessível.
+- **Escopo (só estes arquivos):** `routes/TimetableScreen.tsx`, `routes/LineupScreen.tsx`, `styles.css`, `lib/festival.ts`(+`.test.ts`), **novo** `ui/DayDropdown.tsx`, `brain/design-sync.md` (Status) + `decision-log.md`/`dev-log.md` (registro). O WIP **pré-existente do DEC-065** segue não-tocado.
+
+### Gates (uma entrada por gate)
+
+- **ICON ✅ (DEC-066.2)** — *Feito:* glifo do "Lock in" `lock`→`playlist_add_check` (rótulo "Lock in" intacto, DEC-005). *Arquivo:* `routes/TimetableScreen.tsx`. *Regressão:* navegação `/lockin` e estado de dia inalterados.
+
+- **TT ✅ (DEC-066 / N6)** — *Feito:* TT-1 `.set` vira cápsula color-glass (`border-radius:999px`, tint `rgba(var(--c)…)`, blur); TT-2 `.photo` círculo 56px (gradiente do palco + iniciais com gloss; foto real quando existe); TT-3 estado `live` (anel degradê mascarado via `::before`); TT-4 ★ contagem de favoritos por palco (`.stage-name .ct`); TT-5 `EDGE=9px` descola **só** o card colado ao início da janela (`set.startMs === windowStartMs`) sem mexer na grade (encolhe a largura); TT-6 heart branco + fav fino. *Arquivos:* `styles.css`, `routes/TimetableScreen.tsx`. *INVARIANTE respeitada:* `set-inner` sticky e a math de `domain/timetable.ts` **intactas** (mudou só apresentação + leitura de `isFav`/`isLive`).
+
+- **LU ✅ (DEC-066 / L5)** — *Feito:* LU-1 `renderRow`→`renderCard`: cards-pôster (`aspect-ratio:3/4`, gradiente do palco, `ArtistPhoto className="gc-photo"` full-bleed `width=grid`, scrim + nome Oswald + chip `STAGE · day`, heart **separado** do alvo que abre o ArtistSheet — INVARIANTE ART-6); LU-2 densidade 2/3/4 col com segmented control ancorado à direita do **1º** `.sec` visível, persistido em `localStorage` (`fp.lineup.cols`, self-contained na tela). *Arquivos:* `routes/LineupScreen.tsx`, `styles.css`. *Regressão:* chrome (busca/filtros) inalterado; favoritar nunca abre o sheet.
+
+- **DAY ✅ (DEC-066.3 / V8)** — *Feito:* DAY-1 novo `ui/DayDropdown.tsx` (gatilho compacto `📅 {wd} {dia} ▾` + painel vertical: `Day N` · dia-da-semana · data · ★/dia · check; fecha em backdrop/Esc/seleção; a11y `aria-haspopup`/`role="listbox"`/`role="option"`); DAY-2 `countFavoritesPerDay` **puro** em `lib/festival.ts` (act em 2 dias = 1 em cada; mesmo act 2× no dia = 1; dia sem fav ausente do mapa) + **7 testes** com números concretos; `dayOfMonth` **movido** do `TimetableScreen` p/ `lib/festival.ts` (reuso, não duplica) + 2 testes; DAY-3 header passa a usar o dropdown e **remove** as pills `.tt-days/.tt-day` (CSS órfão removido). *Regressão:* trocar de dia continua chamando `onSelectDay` → `model` recalcula igual; **sem** mudança de domínio; 6 testes originais de `festival.test.ts` restaurados.
+
+- **SH ✅ (DEC-066.1 / V9)** — *Feito:* SH-1 `ViewSwitch` sai dos dois headers e vira **dock fixo** (`.view-switch-dock`, `position:fixed`, centralizado, `bottom:calc(78px+safe)`, z **acima** do conteúdo e **abaixo** da bottom-nav que ganhou `z-index:20`) — só quando `dataState==="timetable"`, **componente inalterado**; SH-2 **eyebrow espelhado** (`.shell-eyebrow`: `{festival.name}` + view em accent/Oswald) nas duas telas, substituindo o `h1 "Timetable"` e o `h1 "Lineup"`+badge de contagem (convergência ao V9); SH-3 respiro: `padding-bottom` no `.tt-content` e no `.screen.has-view-dock` p/ a última linha rolar acima do dock. *Arquivos:* ambos os screens, `styles.css`. *Decisão de escopo:* a densidade do Lineup **fica no `.sec`** (como o LU-2 definiu), não foi movida pro header; o badge "X favorites" do header do Lineup foi **removido** p/ espelhar o V9 (contagem segue no filtro Favorites e em My Plan). *Regressão:* alternar Timetable↔Lineup não move o switch; bottom-nav acessível; ArtistSheet (z-40) ainda cobre tudo.
+
+### Refino V9 26/06 (pixel sign-off do shell) ✅ DEPLOYED — v0.16.1
+
+> Dois ajustes finos após comparar produção × V9 (`brain/wireframes/unified-shell-v2/V9-final-shell.html`). `tsc` limpo · **285** unit ok · build ok · medição headless confirma · deploy `master` (`festpilot.pages.dev`).
+
+- **Barra de contexto do Timetable → estrutura exata do V9.** Antes o dia ficava numa linha (`.tt-day-row`) e os controles numa **2ª linha** separada (`.tt-controls`, pills de texto "2h view / Only my favs / Grid / Lock in"). Agora tudo numa **única barra** `.tt-bar` = `[DayDropdown] … [ícones] [Lock in]`: os 3 controles secundários viram **botões-ícone compactos** `.tt-ic` (zoom_in/zoom_out · favorite · grid_on — funções reais; o "search" do mock é placeholder e não existe no TT) empurrados à direita (`margin-left:auto`), e o **Lock in** vira `.tt-lk` (gradiente, **com texto** — invariante "Lock in nunca corta"). `TimetableHeader` ganhou prop opcional `controls?: JSX.Element` (composição, sem inchar props). Bloco `.tt-controls/.tt-controls-left/.tt-toggle/.tt-lockin` e `.tt-day-row` removidos (CSS órfão limpo).
+- **Sobrancelha pixel-idêntica nas duas telas (fim do "pulo" ao trocar).** Igualados o offset de topo e o inset: `.tt-top` → `padding: calc(8px+safe) 16px 8px; gap:12` e o `.screen` do Lineup → `paddingTop: calc(8px+safe)` + `paddingInline:16` (alinha ao inset 16 do TT/V9, isolado na tela, sem mexer no `.screen` global). **Medição headless** (`e2e/.output/measure.mjs`, gitignored): ambos `top=8 · left=16 · bottom=20 · gap=12` → zero deslocamento vertical **e** horizontal ao alternar Timetable↔Lineup.
+- *Arquivos:* `routes/TimetableScreen.tsx`, `routes/LineupScreen.tsx`, `styles.css`, `web/package.json` (→ **0.16.1**). *Regressão:* zoom/favs/grid/Lock-in mantêm `onClick`/estado/`aria`; densidade do Lineup e grid intactos (só deslocam 2px junto); 285 testes seguem verdes.
+
+---
+
 ## Lote de Campo 25/06 — IMG / OBV / ART (orquestrado por `brain/design-sync.md`) ✅
 
 > Loop + INVARIANTES + gates em `brain/design-sync.md`. Inline, sem subagentes (constituição de custo).

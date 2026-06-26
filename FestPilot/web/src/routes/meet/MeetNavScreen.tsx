@@ -5,11 +5,12 @@
  * no compass it falls back to a north-up arrow. Distance + walk ETA come from the live GPS fix. Every
  * piece degrades on its own so the screen is always useful (worst case: the landmark to walk toward).
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useMeetingPoint } from "../../data/meetingPoints";
 import { bearingDegrees, compassPoint, metersBetween } from "../../domain/travel";
+import { useHeading, useMyFix } from "../../lib/useGeo";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { formatMeters } from "./meetUi";
 
@@ -20,75 +21,6 @@ function walkMinutes(meters: number): number {
 
 /** You're effectively at the spot inside this radius — switch the arrow for an "arrived" celebration. */
 const ARRIVED_RADIUS_M = 15;
-
-interface Fix {
-  lat: number;
-  lng: number;
-  accuracy: number | null;
-}
-
-/** Live device heading (degrees clockwise from north), best-effort across iOS/Android with graceful gaps. */
-function useHeading(): { heading: number | null; needsPermission: boolean; request: () => void } {
-  const [heading, setHeading] = useState<number | null>(null);
-  const [granted, setGranted] = useState(false);
-  const needsPermission =
-    typeof window !== "undefined" &&
-    typeof (window.DeviceOrientationEvent as unknown as { requestPermission?: unknown })?.requestPermission ===
-      "function";
-
-  useEffect(() => {
-    if (needsPermission && !granted) return;
-    const onOrient = (e: DeviceOrientationEvent): void => {
-      const webkit = (e as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading;
-      if (typeof webkit === "number" && !Number.isNaN(webkit)) setHeading(webkit);
-      else if (e.absolute && e.alpha != null) setHeading((360 - e.alpha) % 360);
-    };
-    window.addEventListener("deviceorientationabsolute", onOrient as EventListener);
-    window.addEventListener("deviceorientation", onOrient as EventListener);
-    return () => {
-      window.removeEventListener("deviceorientationabsolute", onOrient as EventListener);
-      window.removeEventListener("deviceorientation", onOrient as EventListener);
-    };
-  }, [needsPermission, granted]);
-
-  const request = (): void => {
-    const req = (window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> })
-      ?.requestPermission;
-    if (typeof req === "function") req().then((r) => r === "granted" && setGranted(true)).catch(() => {});
-    else setGranted(true);
-  };
-
-  return { heading, needsPermission, request };
-}
-
-/** Live GPS fix while the screen is open (watchPosition); null until the first fix / when denied. */
-function useMyFix(): { fix: Fix | null; denied: boolean } {
-  const [fix, setFix] = useState<Fix | null>(null);
-  const [denied, setDenied] = useState(false);
-  const watch = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setDenied(true);
-      return;
-    }
-    watch.current = navigator.geolocation.watchPosition(
-      (pos) =>
-        setFix({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null,
-        }),
-      () => setDenied(true),
-      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 20_000 }
-    );
-    return () => {
-      if (watch.current != null) navigator.geolocation.clearWatch(watch.current);
-    };
-  }, []);
-
-  return { fix, denied };
-}
 
 export function MeetNavScreen(): JSX.Element {
   const { id, mpId } = useParams<{ id: string; mpId: string }>();

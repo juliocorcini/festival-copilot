@@ -1,7 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import type { LineupDto, PerformanceDto } from "../data/types";
-import { daysForWeekends, initials, weekendDates } from "./festival";
+import type { ArtistDto, LineupDto, PerformanceDto } from "../data/types";
+import {
+  countFavoritesPerDay,
+  dayOfMonth,
+  daysForWeekends,
+  initials,
+  weekendDates,
+  type DayInfo,
+} from "./festival";
 
 describe("initials", () => {
   it("takes first + last initials, single words, and handles empties", () => {
@@ -66,5 +73,86 @@ describe("daysForWeekends", () => {
 
   it("includes every weekend's days when no weekend filter is given", () => {
     expect(daysForWeekends(lineup, []).map((d) => d.key)).toEqual(["d1", "d2", "d3"]);
+  });
+});
+
+function artist(id: string): ArtistDto {
+  return { id, name: id, imageUrl: null };
+}
+
+function day(key: string): DayInfo {
+  return { key, weekendId: null, startMs: 0, weekdayShort: key, weekdayLong: key, dateLabel: "" };
+}
+
+describe("countFavoritesPerDay (DAY-2)", () => {
+  const days = [day("FRIDAY"), day("SATURDAY"), day("SUNDAY")];
+
+  it("counts a favorited act once on each day it plays", () => {
+    const performances = [
+      perf({ id: "p1", day: "FRIDAY", artists: [artist("afrojack")] }),
+      perf({ id: "p2", day: "SATURDAY", artists: [artist("afrojack")] }),
+    ];
+    const counts = countFavoritesPerDay(performances, new Set(["afrojack"]), days);
+    expect(counts.get("FRIDAY")).toBe(1);
+    expect(counts.get("SATURDAY")).toBe(1);
+  });
+
+  it("ignores non-favorited acts", () => {
+    const performances = [
+      perf({ id: "p1", day: "FRIDAY", artists: [artist("afrojack")] }),
+      perf({ id: "p2", day: "FRIDAY", artists: [artist("stranger")] }),
+    ];
+    const counts = countFavoritesPerDay(performances, new Set(["afrojack"]), days);
+    expect(counts.get("FRIDAY")).toBe(1);
+  });
+
+  it("omits days with no favorites from the map", () => {
+    const performances = [perf({ id: "p1", day: "FRIDAY", artists: [artist("afrojack")] })];
+    const counts = countFavoritesPerDay(performances, new Set(["afrojack"]), days);
+    expect(counts.has("SATURDAY")).toBe(false);
+    expect(counts.has("SUNDAY")).toBe(false);
+    expect(counts.size).toBe(1);
+  });
+
+  it("counts the same act twice in one day only once", () => {
+    const performances = [
+      perf({ id: "p1", day: "FRIDAY", artists: [artist("afrojack")] }),
+      perf({ id: "p2", day: "FRIDAY", artists: [artist("afrojack")] }),
+    ];
+    const counts = countFavoritesPerDay(performances, new Set(["afrojack"]), days);
+    expect(counts.get("FRIDAY")).toBe(1);
+  });
+
+  it("counts distinct favorited acts per day", () => {
+    const performances = [
+      perf({ id: "p1", day: "SATURDAY", artists: [artist("afrojack")] }),
+      perf({ id: "p2", day: "SATURDAY", artists: [artist("charlotte")] }),
+      perf({ id: "p3", day: "SATURDAY", artists: [artist("amelie")] }),
+    ];
+    const counts = countFavoritesPerDay(performances, new Set(["afrojack", "charlotte", "amelie"]), days);
+    expect(counts.get("SATURDAY")).toBe(3);
+  });
+
+  it("excludes performances on days outside the provided day list", () => {
+    const performances = [perf({ id: "p1", day: "MONDAY", artists: [artist("afrojack")] })];
+    const counts = countFavoritesPerDay(performances, new Set(["afrojack"]), days);
+    expect(counts.size).toBe(0);
+  });
+
+  it("falls back to the performance id when the act has no artist", () => {
+    const performances = [perf({ id: "p1", day: "SUNDAY", artists: [] })];
+    const counts = countFavoritesPerDay(performances, new Set(["p1"]), days);
+    expect(counts.get("SUNDAY")).toBe(1);
+  });
+});
+
+describe("dayOfMonth (DAY-1)", () => {
+  it("formats the day-of-month in the festival tz", () => {
+    const ms = Date.parse("2026-07-25T20:00:00Z");
+    expect(dayOfMonth(ms, "Europe/Brussels")).toBe("25");
+  });
+
+  it("returns an empty string for a non-finite start", () => {
+    expect(dayOfMonth(Number.POSITIVE_INFINITY, "UTC")).toBe("");
   });
 });
