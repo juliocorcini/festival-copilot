@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-26 (native-polish roadmap **Phases 5–10 COMPLETE** + **8 council-guided improvement rounds R1–R8**; app **v0.31.6**, fully deployed to Production. See `FestPilot/dev-log.md` for the live per-round detail.)
+> Last updated: 2026-06-26 (native-polish roadmap **Phases 5–10 COMPLETE** + **9 council-guided improvement rounds R1–R9**; app **v0.31.6**, fully deployed to Production; e2e suite now **deterministic (30/30, zero flaky)**. See `FestPilot/dev-log.md` for the live per-round detail.)
 
 ## Native-polish roadmap + improvement rounds (2026-06-26) — COMPLETE & DEPLOYED
 
@@ -8,7 +8,7 @@ Source roadmap: `brain/documents/2026-06-26-native-polish-and-features-roadmap.m
 
 **Phases 5–10 (native polish & features) — shipped, v0.24.0 → v0.30.0:** group events (`group_event`, fixed-time squad commitments, D1 migration **0015**), a personal **+ squad home** (gated "Squad now" card), unified **toasts/feedback** (favorite, lock, errors), and an **a11y/perf/responsive audit** with P0–P2 fixes + report (Phase 10a `v0.29.0`, 10b `v0.30.0`). Post-phase **general review**: server + web suites, builds, 3-flow smoke, zero regressions, group-lock guardrail (e2e 30/30).
 
-**8 council-guided improvement rounds (R1–R8) — additive, no regressions, nothing removed:**
+**9 council-guided improvement rounds (R1–R9) — additive, no regressions, nothing removed:**
 - **R1** PERF code-split per cluster (initial bundle 555→~360 kB) · `v0.31.0`
 - **R2** `StagePickSheet` drag-to-dismiss (full sheet parity) · `v0.31.1`
 - **R3** touch a11y (≈44px tap targets) · `v0.31.2`
@@ -17,10 +17,11 @@ Source roadmap: `brain/documents/2026-06-26-native-polish-and-features-roadmap.m
 - **R6** SPA-navigation a11y (route announcer + skip-to-content + per-route title) · `v0.31.5`
 - **R7** e2e hardening (shared freeze fixture via `addInitScript` → killed the `addStyleTag`/SW-reload race across 18 specs) · test-only, no bump
 - **R8** A11y: keyboard **focus-trap** in the base `Sheet` (completes the WAI-ARIA modal-dialog pattern; benefits every sheet) · `v0.31.6`
+- **R9** e2e determinism: SW-settle in the shared fixture (wait for the worker to control the page after `goto`, fidelity-preserving) + a resolver-load guard in the myplan spec → **killed the last flake** (suite 30/30 with zero flaky, no longer leaning on `retries:1`) · test-only, no bump
 
-**Production (deployed 2026-06-26, verified):** web **v0.31.6** at `festpilot.pages.dev` (deploy `d276f936`); Worker at `festpilot.trippilot.workers.dev` (healthy); D1 through migration **0015**. Prod smoke green (`/api/health`, `/festivals/:id/lineup|stages|map`, SPA routes 200). Tests: **web 411 unit · e2e 30/30 (1 retry-recovered SW-interaction flake, deferred R8.A) · builds OK**.
+**Production (deployed 2026-06-26, verified):** web **v0.31.6** at `festpilot.pages.dev` (deploy `d276f936`); Worker at `festpilot.trippilot.workers.dev` (healthy); D1 through migration **0015**. Prod smoke green (`/api/health`, `/festivals/:id/lineup|stages|map`, SPA routes 200). Tests: **web 411 unit · e2e 30/30 with zero flaky (R9 closed the last race) · builds OK**.
 
-**Next (needs Julio):** safe-polish ceiling reached — the highest-value remaining work is **product** (e.g. lineup search/filters — a new feature requiring a decision-log entry), or closing the last e2e flake (**R8.A**: wait for the SW to settle after `goto`, fidelity-preserving).
+**Next (needs Julio):** safe-polish ceiling reached and the e2e suite is now deterministic (no known flake left). The highest-value remaining work is **product** — e.g. lineup search/filters — which is a new feature requiring a decision-log entry, so it needs Julio's call rather than another autonomous polish round.
 
 ---
 
