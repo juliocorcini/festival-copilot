@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.2";
+export const APP_VERSION = "0.31.3";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,19 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.3",
+    date: "2026-06-26",
+    title: "Map and Squad open instantly",
+    icon: "bolt",
+    whatsNew: [
+      "After the app settles, it quietly gets the Map and Squad tabs ready in the background, so tapping them feels instant — no little loading flash.",
+      "It's considerate with your data: if your phone is on a data-saver or a slow connection, FestPilot skips this and loads them only when you tap.",
+    ],
+    howToTest: [
+      "Open the app, wait a couple of seconds, then tap Map or Squad — it should appear immediately rather than showing a brief spinner.",
+    ],
+  },
   {
     version: "0.31.2",
     date: "2026-06-26",

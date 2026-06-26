@@ -1,7 +1,8 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { RouteFallback } from "./RouteFallback";
+import { prefetchPrimaryTabs } from "./prefetchRoutes";
 import { useLineup } from "../data/useLineup";
 import { useFavorites } from "../data/localStore";
 import { imageByActKey } from "../domain/lineup";
@@ -19,6 +20,12 @@ export function AppLayout(): JSX.Element {
     [lineup]
   );
   useKeepFavoritePhotos(imageByKey, favorites.keys);
+
+  // Warm the lazy Map/Squad tab chunks on idle so their first tap is instant (completes the
+  // v0.31.0 code-split). Respects Save-Data / 2g and runs once — see prefetchRoutes.
+  useEffect(() => {
+    prefetchPrimaryTabs();
+  }, []);
 
   // Re-key the scroll container by route so each tab fades in (route-fade) and starts at the top,
   // instead of a hard cut. Keying `<main>` (not a wrapper) keeps the height chain intact for

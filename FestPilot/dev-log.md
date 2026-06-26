@@ -6,6 +6,25 @@
 
 ---
 
+## Rodada de melhoria R4 26/06 — PERF: prefetch em idle das abas lazy (completa o R1) ✅ — v0.31.3
+
+> Quarta rodada. Conselho: a resiliência (erros/retry/empty/skeleton/reconnect) **já é forte** — não é gap. O item de maior valor restante é **completar o R1**: remover seu único custo (flash de fallback no 1º toque das abas lazy Map/Squad).
+> **Mudança (frontend puro, só timing de carga):** `app/prefetchRoutes.ts` — `prefetchPrimaryTabs()` aquece, em **idle** (após o 1º paint), os chunks de `MapScreen` e `SquadScreen` usando os **mesmos** specifiers do `lazy()` do `App.tsx` (Vite serve o mesmo chunk; nunca baixa 2×). Chamado uma vez via `useEffect` no `AppLayout`. **Festival-aware:** pula se `navigator.connection.saveData` ou `effectiveType` 2g (não gasta dado de quem nunca abre Map/Squad). `requestIdleCallback` (timeout 3s) com fallback `setTimeout(1.5s)`.
+> **Efeito:** 1º toque em Map/Squad fica instantâneo (sem o `RouteFallback`), preservando o ganho do R1 (esses chunks seguem **fora** do bundle inicial — build confirma `MapScreen` 12 kB / `SquadScreen` 16 kB separados; main 361 kB sem aviso de 500 kB).
+> **Verificação:** myplan (a única flaky no run paralelo) passou 3/3 isolada (`--repeat-each=3`) — flakiness é carga de máquina, não a mudança (R4 só adiciona prefetch). `tsc` limpo · `vite build` verde · **e2e 30/30**.
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.3):** abas Map/Squad abrem instantâneas após o app assentar; respeita data-saver/rede lenta. **Sem mudança de comportamento; nada removido; chunks do R1 preservados.**
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo:** rodada a definir (4 rodadas de melhoria entregues; bom ponto p/ o Julio revisar).
+
+### Escopo (arquivos)
+- **Novos (web):** `app/prefetchRoutes.ts`.
+- **Editados (web):** `app/AppLayout.tsx` (useEffect → prefetch), `data/changelog.ts` + `web/package.json` (**0.31.3**).
+- **Guardrail intacto:** nada de domínio/backend; só aquece cache de chunk; `buildSquadPlan`/lock intocados.
+
+---
+
 ## Rodada de melhoria R3 26/06 — A11y de toque: hit-area dos close × ≥44px ✅ — v0.31.2
 
 > Terceira rodada, conselho HOW rápido (Critic/Maintainability + Advocate). Fecha o item P3 da auditoria 10b (× do toast 26px) ampliado numa **varredura** dos close × mais reusados.
