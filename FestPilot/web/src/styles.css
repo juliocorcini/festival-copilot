@@ -2062,3 +2062,36 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .plan-state-ico-btn { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
   background: none; border: 0; padding: 10px; margin: -10px -6px -10px 0; cursor: pointer; color: inherit; border-radius: 12px; }
 .plan-state-ico-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Native-feel press feedback (native polish · phase 2) ──────────────────────────
+   A consistent, snappy "press" response on interactive controls, paired with the
+   phase-1 haptic so a tap both buzzes and depresses like a native app. Curated class
+   list (not a blanket button selector) so we never clobber the richer transitions on
+   cards that already animate border/shadow (.gcard, .pick) or their own :active. The
+   transition is a superset of each control's animated props, so adding transform is
+   purely additive. All scale transforms are gated on prefers-reduced-motion so the
+   effect disappears for users who ask for less motion. */
+button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs-seg,
+.heart-btn, .gc-heart, .seg button, .link-btn, .update-banner-btn, .safety-action,
+.squad-plan-cta {
+  touch-action: manipulation; /* kills the 300ms tap delay + double-tap zoom on controls */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs-seg, .seg button, .link-btn,
+  .update-banner-btn, .safety-action, .squad-plan-cta {
+    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease,
+      border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .heart-btn, .gc-heart, .tt-content .heart {
+    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.15s ease,
+      border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn:active, .chip:active, .opt:active, .tt-ic:active, .tt-lk:active, .dsel:active,
+  .vs-seg:active, .seg button:active, .link-btn:active, .update-banner-btn:active,
+  .safety-action:active, .squad-plan-cta:active { transform: scale(0.965); }
+  .btn:disabled:active, .opt:disabled:active, .update-banner-btn:disabled:active,
+  .chip:disabled:active { transform: none; } /* disabled controls don't depress */
+  .navitem:active { transform: scale(0.88); }
+  .heart-btn:active, .gc-heart:active { transform: scale(0.8); }
+  .tt-content .heart:active { transform: translateY(-50%) scale(0.8); } /* preserve vertical centering */
+}

@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.20.0";
+export const APP_VERSION = "0.21.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.21.0",
+    date: "2026-06-26",
+    title: "Buttons that press back",
+    icon: "touch_app",
+    whatsNew: [
+      "Every button, chip and tab now gently presses in when you tap it — paired with the buzz from last update, taps feel physical instead of flat.",
+      "Hearts give a quick squeeze when you favorite, and the bottom tabs dip as you switch — small touches that make the whole app feel alive.",
+      "Taps register instantly: we removed the old half-second delay phones add, so controls respond the moment you touch them.",
+      "Respectful of your settings: if your phone is set to 'reduce motion', the press effect quietly turns itself off.",
+    ],
+    howToTest: [
+      "Open Timetable and press-and-hold any button (Lock in, a day chip, a heart, the Now/Timetable tabs) — it should visibly shrink while held and spring back on release.",
+      "The heart gives the biggest squeeze; the bottom tabs dip noticeably; CTAs press in subtly.",
+      "Turn on 'Reduce Motion' in your phone's accessibility settings — the shrink effect disappears (taps still buzz).",
+    ],
+  },
   {
     version: "0.20.0",
     date: "2026-06-26",

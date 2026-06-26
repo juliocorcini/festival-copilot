@@ -6,6 +6,47 @@
 
 ---
 
+## Native polish 2/7 26/06 — toque tátil / micro-interações (press) ✅ DEPLOYED — v0.21.0
+
+> O par **visual** do haptic da fase 1: todos os controles **afundam** ao toque e voltam com mola, e o atraso de ~300 ms do navegador some.
+> Conselho rápido inline (Architect + Critic): **lista curada** (não `button` global, p/ não pisar transições ricas de `.gcard`/`.pick`), transição
+> **superset** das props já animadas (transform additivo), tudo **dentro de `@media (prefers-reduced-motion: no-preference)`**. Loop inline, sem subagentes:
+> `tsc --noEmit` limpo · `npm run test` **307** 0 falhas · `vite build` ok (bundle `index-frzunNtR.js` / css `index-CnREThSe.css`) ·
+> **prova visual+computada** (harness `e2e/.output/press-shot.mjs`, desktop p/ `mouse.down` acionar `:active`): transform computado ao vivo =
+> nav `matrix(0.88…)`, view-switch `0.965`, heart `0.8` (com `translateY(-50%)` preservado → `…,-13.5`), lock-in `0.965` · deploy `--branch=master`.
+
+### Current State (this batch)
+- **Press feedback no ar (v0.21.0).** CSS-only. Pareado com o buzz da fase 1, cada tap agora **afunda** o controle: CTAs/chips/opções/segs `scale(.965)`, **bottom-nav** `scale(.88)` (mergulha mais), **hearts** `scale(.8)` (aperto). `touch-action: manipulation` global nos controles mata o atraso de ~300 ms e o zoom de duplo-toque.
+- **Acessibilidade:** todos os `:active{transform}` ficam sob `prefers-reduced-motion: no-preference` → quem pede menos movimento não vê o shrink (o tap ainda vibra). Botões `:disabled` não afundam.
+- **Sem regressão de layout:** lista curada + transição superset (transform + background/border/color/box-shadow/opacity), `.gcard`/`.pick`/`.swipe-undo` (que já tinham `:active`) **intocados**; o heart do timetable preserva a centralização (`translateY(-50%) scale(.8)`).
+- **Tests:** web **307** unit (40 files; sem novos — mudança é CSS) · `tsc` limpo · build OK (~546 KiB / 165 KiB gz). **Server não tocado.**
+
+### Escopo (arquivos)
+- **Editados:** `styles.css` (bloco "Native-feel press feedback" no fim: `touch-action` + transições + `:active` por controle), `data/changelog.ts` + `web/package.json` (**0.21.0**), `dev-log.md` (esta entrada + backfill v0.20.0).
+- **Harness (gitignored):** `e2e/.output/press-shot.mjs`.
+
+---
+
+## Native polish 1/7 26/06 — haptics (vibração) ✅ DEPLOYED — v0.20.0  _(backfill)_
+
+> Primeira fase do "feel like a real app". O app **responde ao toque** com vibração sutil. Conselho inline (Strategist/Architect/Critic/Advocate)
+> → **híbrido**: delegate global de `pointerdown` dá um `light` em todo controle (`button`/`[role=button]`), com `data-haptic` p/ customizar (`select`,
+> `medium`) ou desligar (`off`); e chamadas **imperativas** semânticas nos momentos de resultado (`success` no lock-in, `warning` no "I'm lost").
+> Degrada com elegância: `canVibrate()` → no-op onde não há Web Vibration API (iOS Safari). Controle do usuário: toggle em Settings → Appearance (default ON).
+> Commit `60c8c01` · deploy `--branch=master`. _(Entrada registrada retroativamente — o commit do feature não atualizou o dev-log.)_
+
+### Current State (this batch)
+- **Haptics no ar (v0.20.0).** `lib/haptics.ts` encapsula a Web Vibration API com padrões semânticos (`light/select/medium/heavy/success/warning/error`). `initHaptics()` (chamado no `main.tsx`) instala um delegate `pointerdown` em captura: todo `button`/`[role=button]` recebe `light` salvo `data-haptic` (custom/`off`).
+- **Semântica imperativa:** `success` ao resolver clashes (`LockInScreen`), `warning` no broadcast "I'm lost" (`SafetyScreen`), `select` ao favoritar (Timetable/Lineup hearts), `medium` no Update do banner.
+- **Controle + honestidade:** toggle "Haptic feedback" em Appearance (preview `success` ao ligar); mensagem honesta de que iPhones não vibram em web apps.
+- **Tests:** web **307** unit (40 files; **+10** em `lib/haptics.test.ts`) · `tsc` limpo.
+
+### Escopo (arquivos)
+- **Novos:** `lib/haptics.ts` (+`.test.ts`).
+- **Editados:** `main.tsx` (`initHaptics`), `app/settings.ts` (`useHaptics`/`hapticsEnabled`), `routes/settings/AppearanceScreen.tsx` (toggle), `routes/{TimetableScreen,LineupScreen}.tsx` (`data-haptic="select"`), `routes/lockin/LockInScreen.tsx` (`success`), `routes/meet/SafetyScreen.tsx` (`warning`), `app/UpdateBanner.tsx` (`medium`), `i18n/index.ts` (haptics.*), `data/changelog.ts` + `web/package.json` (**0.20.0**).
+
+---
+
 ## PWA auto-updates 26/06 — descoberta automática + banner + força ✅ DEPLOYED — v0.19.0
 
 > O app instalado passa a **procurar novas versões sozinho** e a oferecer a atualização sem o usuário ir nas configurações.
