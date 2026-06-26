@@ -53,18 +53,17 @@ test.describe("Phase 2 — onboarding + lineup favorites", () => {
     await page.locator(".ob-skip").click();
     await expect(page.locator(".appbar h1")).toHaveText("Now & Next", { timeout: 20_000 });
 
-    // Lineup shows the favorites we just built.
+    // Lineup shows the favorites we just built (grid of `.gc` cards, favorited → `.gc.on`).
     await page.goto("/lineup");
     await page.addStyleTag({ content: FREEZE });
-    await expect(page.locator(".fav-count .n")).not.toHaveText("0", { timeout: 20_000 });
+    await expect(page.locator(".gc.on").first()).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".sec").first()).toContainText("YOUR FAVORITES");
-    await expect(page.locator(".heart-btn.on").first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase2-lineup.png" });
 
-    // Toggling a favorite off updates the counter live.
-    const before = Number(await page.locator(".fav-count .n").textContent());
-    await page.locator(".art-row .heart-btn.on").first().click();
-    await expect(page.locator(".fav-count .n")).toHaveText(String(before - 1));
+    // Toggling a favorite off updates the YOUR FAVORITES grid live.
+    const before = await page.locator(".gc.on").count();
+    await page.locator(".gc.on .gc-heart").first().click();
+    await expect(page.locator(".gc.on")).toHaveCount(before - 1);
   });
 
   // R5.2: the "Grid" pick mode is an alternative to the swipe deck and writes the same favorites.
@@ -94,6 +93,6 @@ test.describe("Phase 2 — onboarding + lineup favorites", () => {
 
     await page.goto("/lineup");
     await page.addStyleTag({ content: FREEZE });
-    await expect(page.locator(".fav-count .n")).toHaveText("2", { timeout: 20_000 });
+    await expect(page.locator(".gc.on")).toHaveCount(2, { timeout: 20_000 });
   });
 });

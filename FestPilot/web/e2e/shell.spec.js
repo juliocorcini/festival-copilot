@@ -31,7 +31,8 @@ test.describe("Phase 1 — app shell", () => {
 
     // Tab navigation + live data path: the Timetable grid (Gate 2.2) renders its header and real stages.
     await page.locator(".nav .navitem", { hasText: "Timetable" }).click();
-    await expect(page.locator(".tt-top h1")).toHaveText("Timetable");
+    // The Timetable header is an eyebrow (festival name + "TIMETABLE" view tag), not an <h1>.
+    await expect(page.locator(".tt-top .view")).toHaveText("TIMETABLE");
     await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
 
     await page.locator(".nav .navitem", { hasText: "Map" }).click();

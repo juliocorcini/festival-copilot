@@ -41,12 +41,13 @@ test.describe("R6 — now & next is sourced, never arbitrary", () => {
     // row, which then jumps into the favorites section). Seeded once, so this survives goto("/").
     await page.goto("/lineup");
     await page.addStyleTag({ content: FREEZE });
-    await expect(page.locator(".art-row").first()).toBeVisible({ timeout: 20_000 });
+    // Lineup is a grid of `.gc` cards (favorited → `.gc.on`, jumps into the YOUR FAVORITES grid).
+    await expect(page.locator(".gc").first()).toBeVisible({ timeout: 20_000 });
     for (let i = 1; i <= 6; i++) {
-      await page.locator(".heart-btn:not(.on)").first().click();
-      await expect(page.locator(".fav-count .n")).toHaveText(String(i));
+      await page.locator(".gc:not(.on) .gc-heart").first().click();
+      await expect(page.locator(".gc.on")).toHaveCount(i);
     }
-    const favNames = await page.locator(".art-row:has(.heart-btn.on) .nm").allTextContents();
+    const favNames = await page.locator(".gc.on .gc-name").allTextContents();
     expect(favNames.length).toBe(6);
 
     // Now & Next: a real hero, explicitly labelled as favorites-sourced.
