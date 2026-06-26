@@ -37,6 +37,13 @@ import {
   listMeetingPoints,
   setMyMeetingStatus,
 } from "./meetingPoints";
+import {
+  createGroupEvent,
+  deleteGroupEvent,
+  getGroupEvent,
+  listGroupEvents,
+  markEventSeen,
+} from "./groupEvents";
 import type { PingKind } from "../domain/presence";
 
 export const groups = new Hono<{ Bindings: Env }>();
@@ -442,6 +449,86 @@ groups.post("/:id/meeting-points/:mpId/end", async (c) => {
   if (!point) return c.json({ error: "not found" }, 404);
   await notifyGroup(c.env, m.group.id, "meeting");
   return c.json({ meetingPoint: point });
+});
+
+// --- Group events (Phase 8, roadmap D2/Q5/Q6). A fixed-time squad commitment ("photo at 16:00") —
+// a layer ALONGSIDE the squad plan, never fed into the set aggregation or any personal lock. Any
+// member creates one; the creator OR the squad owner deletes it. Fanned out via the "events" topic. ---
+
+// The squad's upcoming + live events (not-yet-ended), earliest first.
+groups.get("/:id/events", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const events = await listGroupEvents(
+    c.env.DB,
+    m.group.festivalId,
+    m.group.id,
+    m.user.id,
+    m.group.role === "owner",
+    new Date().toISOString()
+  );
+  return c.json({ events });
+});
+
+// Create an event (any member, Q6). Body: { title, startsAtUtc, endsAtUtc?, stageId?, note? }.
+groups.post("/:id/events", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const title = readString(body.title, 80);
+  const startsAtUtc = readString(body.startsAtUtc, 40);
+  if (!title || !startsAtUtc || !Number.isFinite(Date.parse(startsAtUtc))) {
+    return c.json({ error: "title and a valid startsAtUtc are required" }, 400);
+  }
+  const endsRaw = readString(body.endsAtUtc, 40);
+  const event = await createGroupEvent(
+    c.env.DB,
+    m.group.festivalId,
+    m.group.id,
+    m.user.id,
+    {
+      title,
+      note: readString(body.note, 280),
+      stageId: readString(body.stageId, 64),
+      startsAtUtc,
+      endsAtUtc: endsRaw && Number.isFinite(Date.parse(endsRaw)) ? endsRaw : null,
+    },
+    new Date().toISOString()
+  );
+  await notifyGroup(c.env, m.group.id, "events");
+  return c.json({ event }, 201);
+});
+
+// Tick "✓ seen" on an event (any member — the optional V1 acknowledgement).
+groups.post("/:id/events/:eventId/seen", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const event = await markEventSeen(
+    c.env.DB,
+    m.group.festivalId,
+    m.group.id,
+    c.req.param("eventId"),
+    m.user.id,
+    m.group.role === "owner",
+    new Date().toISOString()
+  );
+  if (!event) return c.json({ error: "not found" }, 404);
+  await notifyGroup(c.env, m.group.id, "events");
+  return c.json({ event });
+});
+
+// Delete an event — creator OR squad owner (Q6). 404 if it isn't this group's; 403 if not allowed.
+groups.delete("/:id/events/:eventId", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const eventId = c.req.param("eventId");
+  const isOwner = m.group.role === "owner";
+  const existing = await getGroupEvent(c.env.DB, m.group.festivalId, m.group.id, eventId, m.user.id, isOwner, new Date().toISOString());
+  if (!existing) return c.json({ error: "not found" }, 404);
+  if (!existing.canDelete) return c.json({ error: "only the creator or squad owner can delete this" }, 403);
+  await deleteGroupEvent(c.env.DB, m.group.id, eventId, m.user.id, isOwner);
+  await notifyGroup(c.env, m.group.id, "events");
+  return c.json({ ok: true });
 });
 
 // Realtime subscription — forwarded to the group's Durable Object. Members only.

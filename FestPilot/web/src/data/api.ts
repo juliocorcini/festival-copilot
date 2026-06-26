@@ -6,10 +6,12 @@
  */
 import type {
   BoardNoteDto,
+  CreateGroupEventInput,
   CreateMeetingPointInput,
   FestivalDto,
   FestivalMapDto,
   GroupDto,
+  GroupEventDto,
   GroupMemberDto,
   GroupPresenceDto,
   InvitePreviewDto,
@@ -502,5 +504,43 @@ export const api = {
       signal,
     });
     return data.safetyPoints ?? [];
+  },
+
+  // Group events (Phase 8 — fixed-time squad commitments, roadmap D2/Q5/Q6). A layer alongside the
+  // squad plan; never fed into the set aggregation. Any member creates one; the creator/owner deletes.
+  /** The squad's upcoming + live events, earliest first. */
+  async listGroupEvents(groupId: string, signal?: AbortSignal): Promise<GroupEventDto[]> {
+    const data = await authedJson<{ events: GroupEventDto[] }>(`/api/groups/${groupId}/events`, {
+      method: "GET",
+      signal,
+    });
+    return data.events ?? [];
+  },
+
+  /** Create a fixed-time event (any member). The server validates/clamps the window. */
+  async createGroupEvent(groupId: string, input: CreateGroupEventInput, signal?: AbortSignal): Promise<GroupEventDto> {
+    const data = await authedJson<{ event: GroupEventDto }>(`/api/groups/${groupId}/events`, {
+      method: "POST",
+      body: input,
+      signal,
+    });
+    return data.event;
+  },
+
+  /** Tick "✓ seen" on an event (the optional V1 acknowledgement). */
+  async markEventSeen(groupId: string, eventId: string, signal?: AbortSignal): Promise<GroupEventDto> {
+    const data = await authedJson<{ event: GroupEventDto }>(`/api/groups/${groupId}/events/${eventId}/seen`, {
+      method: "POST",
+      signal,
+    });
+    return data.event;
+  },
+
+  /** Delete an event — creator or squad owner only (the server enforces it). */
+  async deleteGroupEvent(groupId: string, eventId: string, signal?: AbortSignal): Promise<void> {
+    await authedJson<{ ok: boolean }>(`/api/groups/${groupId}/events/${eventId}`, {
+      method: "DELETE",
+      signal,
+    });
   },
 };

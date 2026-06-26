@@ -2240,3 +2240,61 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
   .count-pop { animation: fp-fade 0.32s ease; }
 }
 @keyframes fp-rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+
+/* --- Group events / Squad agenda (Phase 8 — fixed-time squad moments, roadmap D2) --------------- */
+
+.squad-events { display: flex; flex-direction: column; gap: 12px; }
+.squad-events .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.squad-events-add { margin-top: 4px; }
+
+.event-list { display: flex; flex-direction: column; gap: 10px; }
+.event-card { display: flex; gap: 12px; padding: 14px; align-items: flex-start; }
+.event-card.is-live { border-color: rgba(22, 163, 74, 0.4); background: rgba(22, 163, 74, 0.08); }
+.event-card-time { display: flex; flex-direction: column; align-items: flex-start; min-width: 56px; }
+.event-card-clock { font-size: 19px; line-height: 1.05; }
+.event-card-dash { font-size: 12px; color: var(--muted); font-weight: 600; }
+.event-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.event-card-head { display: flex; align-items: center; gap: 8px; }
+.event-card-title { font-weight: 800; font-size: 15px; flex: 1; min-width: 0; }
+.event-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.event-card-stage { display: inline-flex; align-items: center; gap: 5px; }
+.event-card-note { font-size: 13px; color: var(--ink); opacity: 0.9; font-style: italic; }
+.event-card-actions { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.event-seen { display: inline-flex; align-items: center; gap: 5px; appearance: none; border: 1px solid var(--border); background: var(--glass); color: var(--muted); font-weight: 700; font-size: 12px; padding: 6px 11px; border-radius: 999px; cursor: pointer; }
+.event-seen .ms { font-size: 16px; }
+.event-seen.on { color: #5fd08a; border-color: rgba(22, 163, 74, 0.4); background: rgba(22, 163, 74, 0.12); }
+.event-seen-count { color: var(--muted); font-weight: 600; }
+.event-map-link { display: inline-flex; align-items: center; gap: 4px; appearance: none; border: 0; background: none; color: var(--accent); font-weight: 700; font-size: 12px; cursor: pointer; }
+.event-map-link .ms { font-size: 16px; }
+.event-delete { margin-left: auto; appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 4px; }
+.event-delete .ms { font-size: 19px; }
+.event-delete:active { color: #ff6b6b; }
+
+/* Create sheet extras (reuses .block-field / .block-input / .chip from My Plan) */
+.event-durations, .event-stages { display: flex; flex-wrap: wrap; gap: 8px; }
+.event-stages { max-height: 132px; overflow-y: auto; }
+.event-end-preview { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 8px; }
+
+/* Squad-home agenda card rows (compact, countdown-only) */
+.agenda-rows { display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 0; }
+.agenda-row { display: flex; align-items: center; gap: 8px; }
+.agenda-row.is-live .agenda-row-title { color: #5fd08a; }
+.agenda-row-title { font-weight: 700; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-row-stage { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+.agenda-row-badge { flex-shrink: 0; }
+
+/* Squad-plan agenda band (alongside the set blocks — never inside the aggregation) */
+.squad-agenda-band { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; padding: 13px 14px; }
+.squad-agenda-band-head { display: flex; align-items: center; gap: 8px; }
+.squad-agenda-band-head > .ms:first-child { font-size: 18px; color: var(--accent); }
+.squad-agenda-band-title { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); flex: 1; }
+.squad-agenda-band-chev { color: var(--accent); font-size: 20px; }
+.squad-agenda-band-rows { display: flex; flex-direction: column; gap: 7px; }
+.squad-agenda-chip { display: flex; align-items: center; gap: 9px; }
+.squad-agenda-chip.is-live .squad-agenda-chip-title { color: #5fd08a; }
+.squad-agenda-chip-time { font-weight: 800; font-size: 13px; min-width: 42px; }
+.squad-agenda-chip-title { font-weight: 600; font-size: 13px; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .event-card, .squad-agenda-band { animation: fp-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+}

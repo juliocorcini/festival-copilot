@@ -22,6 +22,7 @@ import { SquadBlockScreen } from "./routes/squad/SquadBlockScreen";
 import { SquadSplitScreen } from "./routes/squad/SquadSplitScreen";
 import { SquadOverrideScreen } from "./routes/squad/SquadOverrideScreen";
 import { SquadBoardScreen } from "./routes/squad/SquadBoardScreen";
+import { SquadEventsScreen } from "./routes/squad/SquadEventsScreen";
 import { PresenceConsentScreen } from "./routes/presence/PresenceConsentScreen";
 import { WhereScreen } from "./routes/presence/WhereScreen";
 import { PreciseSharingScreen } from "./routes/presence/PreciseSharingScreen";
@@ -72,6 +73,7 @@ export function App(): JSX.Element {
             <Route path="squad/invite/:id" element={<InviteScreen />} />
             <Route path="squad/:id/share" element={<ShareMyPlanScreen />} />
             <Route path="squad/:id/board" element={<SquadBoardScreen />} />
+            <Route path="squad/:id/events" element={<SquadEventsScreen />} />
             <Route path="squad/:id/plan" element={<SquadPlanScreen />} />
             <Route path="squad/:id/plan/:perfId" element={<SquadBlockScreen />} />
             <Route path="squad/:id/plan/:perfId/split" element={<SquadSplitScreen />} />

@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.26.0";
+export const APP_VERSION = "0.27.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.27.0",
+    date: "2026-06-26",
+    title: "Squad agenda — plan moments together",
+    icon: "event",
+    whatsNew: [
+      "Your squad can now pin fixed-time moments everyone shows up for — a photo at 16:00, dinner at 8, catching the headliner together — each with a live countdown.",
+      "Anyone in the squad can add one; tap 'Got it' so the group knows you're in the loop. The creator (or the squad owner) can remove it.",
+      "It sits next to your shared plan, never on top of it — the squad timetable is still built purely from everyone's locked sets.",
+    ],
+    howToTest: [
+      "Open Squad → 'Squad agenda' card → 'Add', name a moment, pick a start + length and (optionally) a stage, then send it. It appears for the whole squad with an 'in 25m / live now' countdown.",
+      "On the squad plan screen you'll see an 'Squad agenda' band above the set blocks. Tap it to open the full agenda.",
+      "Tap 'Got it' on an event to mark it seen (the tally shows e.g. 2/5). Creators and the owner see a delete button; other members don't.",
+    ],
+  },
   {
     version: "0.26.0",
     date: "2026-06-26",

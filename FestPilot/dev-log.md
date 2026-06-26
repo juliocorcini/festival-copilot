@@ -6,6 +6,33 @@
 
 ---
 
+## Fase 8 26/06 — Eventos de grupo (hora fixa) · `group_event` (D2 / Q5 / Q6) ✅ — v0.27.0
+
+> Fase 8 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`). **A única fase desta leva que toca backend.** O squad agora combina **momentos de hora fixa** ("foto às 16h no Mainstage") que aparecem **para todos** com contagem regressiva — uma **camada paralela** ao plano de grupo, **nunca** dentro da agregação de sets nem do lock pessoal (guardrail §5).
+> **Decisões travadas:** **Q5 = entidade nova `group_event`** (semântica limpa, reusa a *plumbing* das meeting points: rotas/socket/hook) · **Q6 = qualquer membro cria** (delete só do criador **ou** do owner do squad).
+> **Backend (Cloudflare Worker + D1):**
+> - `migrations/0015_group_event.sql`: tabela `group_event` (id, group_id, created_by, title, note?, stage_id?, starts/ends_at_utc, created_at) + `group_event_seen` (✓ vi, aditivo) + índice por grupo.
+> - `domain/groupEvent.ts` (**puro**): `normalizeEventWindow` (valida/clampa a janela: fim sempre > início, mín 5min / máx 12h) + `eventLifecycle` (upcoming→soon→live→past, derivado do relógio) + `isLiveEvent`.
+> - `api/groupEvents.ts`: `create/get/list/delete/markSeen`. `list` = eventos não-passados (ends > now), `starts ASC`; `delete` = criador **ou** owner (404 vs 403 resolvido na rota); stage name derivado via `listStages`; `seenCount`/`mySeen`/`memberCount` no DTO; `canDelete` calculado com o `role` do chamador.
+> - Rotas em `groups-routes.ts`: `GET/POST /:id/events`, `POST /:id/events/:eventId/seen`, `DELETE /:id/events/:eventId` — fanout `notifyGroup("events")` (DO inalterado; topic novo já funciona, `useGroupLive` recarrega em qualquer "changed").
+> **Cliente:** `data/types.ts` (`GroupEventDto`/`CreateGroupEventInput`/`GroupEventLifecycle`) · `data/api.ts` (4 métodos) · `data/groupEvents.ts` (`useGroupEvents` — mesmo contrato socket+focus+tick 30s) · `routes/squad/eventsUi.ts` (puro: `eventLifecycleFromIso`/`eventCountdown`/`durationLabel`/`eventBadge`, re-derivados no tick como o `closesInLabel`).
+> **UI:** `SquadEventsScreen` (`squad/:id/events`) — lista com countdown ao vivo, chip de palco + "no mapa", "✓ Got it" (tally N/total), delete (só `canDelete`), e **sheet de criação** reusando o `ui/Sheet` base da Fase 7 (título + `datetime-local` + chips de duração + palco opcional + nota) · card **"Squad agenda"** na home do squad (`squadHomeCards`) · **faixa "Squad agenda"** no `SquadPlanScreen` acima dos blocos (ao lado da agregação, nunca dentro).
+> **Guardrail testado:** `getSquadPlanData` é **byte-for-byte idêntico** antes/depois de criar vários eventos (teste de regressão em `test/groupEvents.test.ts`).
+> `tsc` limpo (web+server) · **server 231 testes** (+16: 9 domínio + 7 repo/regressão) · **web 380 testes** (+9 `eventsUi`) · `vite build` ok (`index-DbxlDqpn.js`) · worker `--dry-run` ok (216 KiB).
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.27.0):** squad combina momentos de hora fixa; todos veem com countdown; qualquer membro cria; criador/owner apaga; "✓ vi" opcional. **Camada separada — plano de grupo segue só os sets.**
+- **Deploy pendente (precisa da sessão Cloudflare do Julio):** `wrangler deploy` (worker) + `wrangler d1 migrations apply festpilot --remote` (migração 0015) + deploy do web (Pages). Tudo validado localmente (build/dry-run verdes).
+
+### Escopo (arquivos)
+- **Novos (server):** `migrations/0015_group_event.sql`, `src/domain/groupEvent.ts`, `src/api/groupEvents.ts`, `test/groupEvent-domain.test.ts`, `test/groupEvents.test.ts`.
+- **Editados (server):** `src/api/dto.ts` (+`GroupEventDto`/`GroupEventLifecycle`), `src/api/groups-routes.ts` (import + 4 rotas + notify "events").
+- **Novos (web):** `data/groupEvents.ts`, `routes/squad/eventsUi.ts` (+`eventsUi.test.ts`), `routes/squad/SquadEventsScreen.tsx`.
+- **Editados (web):** `data/types.ts`, `data/api.ts`, `routes/squad/squadHomeCards.tsx` (+`SquadAgendaCard`), `routes/squad/SquadPlanScreen.tsx` (+`AgendaBand`), `routes/SquadScreen.tsx` (wire card+refresh), `App.tsx` (rota), `styles.css` (eventos/agenda/faixa), `data/changelog.ts` + `web/package.json` (**0.27.0**).
+- **Guardrail intacto:** `buildSquadPlan`/`squadPlan`/`slotToShareInput` **não tocados**; `group_event` nunca entra na agregação (provado por teste).
+
+---
+
 ## Native polish 7/10 26/06 — Drag-to-dismiss sheets + base `Sheet` + nav indicator + number pop (D3+D5.2) ✅ — v0.26.0
 
 > Fase 7 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`). **Todo bottom sheet fecha arrastando pra baixo**, seguindo o dedo 1:1 (flick rápido ou >25% da altura fecha; abaixo volta com mola), com haptic no dismiss e **reduced-motion = corte**.

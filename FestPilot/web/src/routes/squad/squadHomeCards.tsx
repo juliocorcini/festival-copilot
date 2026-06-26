@@ -8,15 +8,16 @@
  * presentational: data is fetched by the parent (presence / meeting points / board hooks) and passed
  * in; only device sensors (GPS + compass) are read here, where a live fix is actually shown.
  */
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../data/api";
 import { bearingDegrees, compassPoint, metersBetween } from "../../domain/travel";
 import { stageColor } from "../../lib/format";
 import { useHeading, useMyFix } from "../../lib/useGeo";
-import type { BoardNoteDto, GroupPresenceDto, MeetingPointDto } from "../../data/types";
+import type { BoardNoteDto, GroupEventDto, GroupPresenceDto, MeetingPointDto } from "../../data/types";
 import { ago, groupRosterByStage, pingKindFor, PresenceAvatar } from "../presence/presenceUi";
 import { closesInLabel, convergenceSummary, formatMeters, lifecycleBadge } from "../meet/meetUi";
+import { eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
 
 const MAX_AVATARS = 4;
 
@@ -218,6 +219,62 @@ export function BoardPreviewCard({
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** "SQUAD AGENDA" — the next fixed-time group moments (Phase 8), each with a live countdown. */
+export function SquadAgendaCard({ groupId, events }: { groupId: string; events: GroupEventDto[] }): JSX.Element {
+  const navigate = useNavigate();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+  const open = (): void => navigate(`/squad/${groupId}/events`);
+  const top = events.slice(0, 2);
+
+  return (
+    <section className="glass squad-card">
+      <header className="squad-card-head">
+        <span className="squad-card-eyebrow">Squad agenda</span>
+        <button className="squad-add" onClick={(e) => { stop(e); open(); }}>
+          <span className="ms" aria-hidden="true">add</span>
+          Add
+        </button>
+      </header>
+
+      {top.length === 0 ? (
+        <div className="squad-card-empty" role="button" tabIndex={0} onClick={open} onKeyDown={onCardKey(open)}>
+          <span className="ms" aria-hidden="true">event</span>
+          <div className="squad-card-empty-main">
+            <div className="squad-card-empty-title">No squad moments yet</div>
+            <div className="squad-card-empty-sub">Pin a time everyone shows up — a photo, a meal, the headliner</div>
+          </div>
+          <span className="ms squad-card-chev" aria-hidden="true">chevron_right</span>
+        </div>
+      ) : (
+        <div className="agenda-rows" role="button" tabIndex={0} onClick={open} onKeyDown={onCardKey(open)}>
+          {top.map((ev) => {
+            const lifecycle = eventLifecycleFromIso(ev.startsAtUtc, ev.endsAtUtc, now);
+            const badge = eventBadge(lifecycle);
+            return (
+              <div className={`agenda-row${lifecycle === "live" ? " is-live" : ""}`} key={ev.id}>
+                <span className="agenda-row-title">{ev.title}</span>
+                {ev.stageName && (
+                  <span className="agenda-row-stage">
+                    <span className="dot" style={{ background: stageColor(ev.stageName) }} />
+                    {ev.stageName}
+                  </span>
+                )}
+                <span className={`pill meet-badge meet-badge-${badge.tone} agenda-row-badge`}>
+                  {eventCountdown(ev.startsAtUtc, ev.endsAtUtc, now)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

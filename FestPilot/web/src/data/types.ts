@@ -342,3 +342,40 @@ export interface CreateMeetingPointInput {
   /** Mark this as a safety / "I'm lost" broadcast (Gate 6.3) — long-lived, surfaced in the safety lane. */
   isSafety?: boolean;
 }
+
+// Group events (Phase 8, roadmap D2/Q5/Q6). A fixed-time squad commitment ("photo at 16:00"). Mirrors
+// the server GroupEventDto. It is a layer ALONGSIDE the squad plan — never fed into the set
+// aggregation (buildSquadPlan) nor any personal lock. Any member creates it; the creator OR the
+// squad owner deletes it. The lifecycle is derived from the window; the client re-derives the live
+// countdown as the clock ticks (see routes/squad/eventsUi).
+export type GroupEventLifecycle = "upcoming" | "soon" | "live" | "past";
+
+export interface GroupEventDto {
+  id: string;
+  groupId: string;
+  createdByUserId: string;
+  createdByName: string | null;
+  isMine: boolean;
+  /** The caller may delete this event (created it OR owns the squad). */
+  canDelete: boolean;
+  title: string;
+  note: string | null;
+  stageId: string | null;
+  stageName: string | null;
+  startsAtUtc: string;
+  endsAtUtc: string;
+  createdAtUtc: string;
+  lifecycle: GroupEventLifecycle;
+  seenCount: number;
+  memberCount: number;
+  mySeen: boolean;
+}
+
+/** The create-sheet payload. `endsAtUtc` omitted/null → the server floors a minimum window. */
+export interface CreateGroupEventInput {
+  title: string;
+  startsAtUtc: string;
+  endsAtUtc?: string | null;
+  stageId?: string | null;
+  note?: string | null;
+}

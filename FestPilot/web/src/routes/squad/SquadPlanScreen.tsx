@@ -7,13 +7,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGroup } from "../../data/groups";
+import { useGroupEvents } from "../../data/groupEvents";
 import { useOnboarding } from "../../data/localStore";
 import { useSquadPlan } from "../../data/squadPlan";
 import { useLineup } from "../../data/useLineup";
 import type { SquadBlock } from "../../domain/squadPlan";
+import type { GroupEventDto } from "../../data/types";
 import { daysForWeekends } from "../../lib/festival";
 import { stageColor, timeInZone } from "../../lib/format";
 import { ErrorState, LoadingState } from "../../ui/states";
+import { eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
 import { blockSummary, StatusPill } from "./squadUi";
 
 export function SquadPlanScreen(): JSX.Element {
@@ -33,6 +36,7 @@ export function SquadPlanScreen(): JSX.Element {
 
   const dayKey = params.get("day") ?? days[0]?.key;
   const { plan, raw, status, timezone, reload } = useSquadPlan(id, dayKey);
+  const { events } = useGroupEvents(id);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -99,6 +103,8 @@ export function SquadPlanScreen(): JSX.Element {
           </div>
         )}
         <p className="squad-plan-hint">Auto-built from everyone's locked picks · tap a block to adjust</p>
+
+        {events.length > 0 && <AgendaBand events={events} timezone={timezone} now={now} onOpen={() => navigate(`/squad/${id}/events`)} />}
 
         {!meShared && (
           <button className="squad-share-cta" onClick={() => navigate(`/squad/${id}/share`)}>
@@ -184,6 +190,43 @@ function BlockRow({
         <div className="squad-block-sub">{blockSummary(block, memberCount)}</div>
       </div>
       <StatusPill block={block} />
+    </button>
+  );
+}
+
+/** A glanceable strip of the squad's fixed-time moments (Phase 8). A layer ALONGSIDE the set plan —
+ *  it renders next to the blocks, never inside the aggregation. Tap opens the full agenda. */
+function AgendaBand({
+  events,
+  timezone,
+  now,
+  onOpen,
+}: {
+  events: GroupEventDto[];
+  timezone: string;
+  now: number;
+  onOpen: () => void;
+}): JSX.Element {
+  return (
+    <button className="glass squad-agenda-band" onClick={onOpen}>
+      <div className="squad-agenda-band-head">
+        <span className="ms" aria-hidden="true">event</span>
+        <span className="squad-agenda-band-title">Squad agenda</span>
+        <span className="ms squad-agenda-band-chev" aria-hidden="true">chevron_right</span>
+      </div>
+      <div className="squad-agenda-band-rows">
+        {events.slice(0, 3).map((ev) => {
+          const lifecycle = eventLifecycleFromIso(ev.startsAtUtc, ev.endsAtUtc, now);
+          const badge = eventBadge(lifecycle);
+          return (
+            <div className={`squad-agenda-chip${lifecycle === "live" ? " is-live" : ""}`} key={ev.id}>
+              <span className="squad-agenda-chip-time">{timeInZone(ev.startsAtUtc, timezone)}</span>
+              <span className="squad-agenda-chip-title">{ev.title}</span>
+              <span className={`pill meet-badge meet-badge-${badge.tone}`}>{eventCountdown(ev.startsAtUtc, ev.endsAtUtc, now)}</span>
+            </div>
+          );
+        })}
+      </div>
     </button>
   );
 }

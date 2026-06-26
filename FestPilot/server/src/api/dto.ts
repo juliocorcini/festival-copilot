@@ -334,3 +334,37 @@ export interface MeetingPointDto {
    *  spot so the squad can converge to help. Surfaces in its own lane, never auto-fades, ends on "I'm okay". */
   isSafety: boolean;
 }
+
+// Group events (Phase 8, roadmap D2/Q5/Q6). A fixed-time squad commitment ("photo at 16:00"). It is
+// a layer ALONGSIDE the squad plan — never fed into the set aggregation (buildSquadPlan) nor any
+// personal lock. Any member creates it; the creator OR the squad owner can delete it. The lifecycle
+// is DERIVED from the window + now (see domain/groupEvent), so it stays honest as the clock moves.
+export type GroupEventLifecycle = "upcoming" | "soon" | "live" | "past";
+
+export interface GroupEventDto {
+  id: string;
+  groupId: string;
+  createdByUserId: string;
+  createdByName: string | null;
+  /** The caller created this event. */
+  isMine: boolean;
+  /** The caller may delete this event — true when they created it OR they own the squad (Q6). */
+  canDelete: boolean;
+  title: string;
+  note: string | null;
+  /** Optional venue stage this event happens at; null = no stage. */
+  stageId: string | null;
+  /** Derived stage name for the chip + "see on map"; null when no/unknown stage. */
+  stageName: string | null;
+  startsAtUtc: string;
+  endsAtUtc: string;
+  createdAtUtc: string;
+  /** Derived live state (upcoming → soon → live → past), computed at read with the server clock. */
+  lifecycle: GroupEventLifecycle;
+  /** How many squad members ticked "✓ seen" (optional V1 acknowledgement). */
+  seenCount: number;
+  /** The squad size, so the agenda can read "3 of 5 saw this". */
+  memberCount: number;
+  /** The caller ticked "✓ seen". */
+  mySeen: boolean;
+}

@@ -11,13 +11,14 @@ import { api } from "../data/api";
 import { useBoard } from "../data/board";
 import { useMyGroups, useGroup } from "../data/groups";
 import { useMeetingPoints, useSafety } from "../data/meetingPoints";
+import { useGroupEvents } from "../data/groupEvents";
 import { useGroupPresence } from "../data/presence";
 import { useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
-import { BoardPreviewCard, MeetingCompassCard, WhereEveryoneCard } from "./squad/squadHomeCards";
+import { BoardPreviewCard, MeetingCompassCard, SquadAgendaCard, WhereEveryoneCard } from "./squad/squadHomeCards";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
 /** Remembers the last squad the user was looking at, so a multi-squad user lands back where they left. */
@@ -109,6 +110,7 @@ function GroupHome({
   const { points: safetyPoints, reload: reloadSafety } = useSafety(group.id);
   const { presence, reload: reloadPresence } = useGroupPresence(group.id);
   const { notes, status: boardStatus, reload: reloadBoard } = useBoard(group.id);
+  const { events, reload: reloadEvents } = useGroupEvents(group.id);
   const [leaving, setLeaving] = useState(false);
 
   // Pull-to-refresh fans out to every live source on the home (server is source of truth).
@@ -118,6 +120,7 @@ function GroupHome({
     reloadSafety();
     reloadPresence();
     reloadBoard();
+    reloadEvents();
     onChanged();
   };
 
@@ -220,6 +223,8 @@ function GroupHome({
         )}
 
         <BoardPreviewCard groupId={group.id} notes={notes} loading={boardStatus === "loading"} />
+
+        <SquadAgendaCard groupId={group.id} events={events} />
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">
