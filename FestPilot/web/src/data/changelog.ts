@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.30.0";
+export const APP_VERSION = "0.31.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.0",
+    date: "2026-06-26",
+    title: "Opens faster on festival Wi-Fi",
+    icon: "bolt",
+    whatsNew: [
+      "FestPilot now opens noticeably lighter — the parts you don't need right away (the map, the whole squad area, settings) load only the moment you first open them.",
+      "That means a faster first paint, which matters most on a packed festival network with everyone online at once.",
+      "Nothing moved and nothing was removed — every screen is exactly where it was.",
+    ],
+    howToTest: [
+      "Open the app fresh: the home appears sooner than before.",
+      "The first time you tap Map, Squad or Settings you may see a brief loading flash while that part loads, then it's instant from then on.",
+    ],
+  },
   {
     version: "0.30.0",
     date: "2026-06-26",

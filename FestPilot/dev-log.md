@@ -6,6 +6,25 @@
 
 ---
 
+## Rodada de melhoria R1 26/06 — PERF: code-split por cluster (route-level lazy) ✅ — v0.31.0
+
+> Primeira rodada de melhoria pós-fases, guiada por **conselho inline** (sem subagents). Conselho de triagem (WHAT/IF, 4 papéis + red team) elegeu **carga inicial** como o ganho de maior alavancagem/menor risco (contexto: festival = rede saturada; bundle inicial acima do aviso de 500 kB); conselho HOW (Architect+Critic) fechou em **lazy puro + Suspense, sem `manualChunks`** (evita acoplar o squad-eager: `NowScreen` importa `SquadNowCard`).
+> **Mudança (frontend puro, só carregamento):** os clusters não-hot-path agora são `React.lazy` — `MapScreen`, `RouteScreen`, `LockInScreen`, **todo** o squad (`squad/*`), presence (`presence/*`), meet (`meet/*`) e settings (`settings/*`). Hot path **eager**: Now/Timetable/Lineup/MyPlan + Onboarding + shells/gates. Os dois layouts (`AppLayout`, `StackLayout`) ganharam um `Suspense` com `RouteFallback` (full-height → sem CLS; spin neutralizado pelo safeguard global de reduced-motion). `App.tsx` ganhou um helper `named()` p/ os lazy de export nomeado (DRY também nos 7 admin já split).
+> **Resultado medido:** bundle inicial **555.62 kB → 359.18 kB** (gzip **170.21 → 116.14 kB**, −32%); **aviso de >500 kB eliminado**. Cada cluster virou chunk sob demanda (squad 16 kB, lockin 13.6 kB, map 12 kB, invite 26.8 kB — QR sob demanda) + chunks compartilhados hoistados pelo Rollup (`squadPlan`, `squadUi`, `meetUi`, `usePanZoom`, `transform`, `useGeo`).
+> `tsc` limpo · **web 396 testes** (sem regressão) · `vite build` verde · **e2e 30/30** (gate real do lazy routing — navegação resolve os chunks transparentemente).
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.0):** abre mais leve (−35% no JS inicial); 1º toque em Map/Squad/Settings carrega o chunk daquela área e segue instantâneo. **Zero mudança de comportamento/feature; nada removido — só reorganização de carregamento.**
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo:** R2 — `StagePickSheet` → drag-to-dismiss (fecha dívida da Fase 7).
+
+### Escopo (arquivos)
+- **Novos (web):** `app/RouteFallback.tsx`.
+- **Editados (web):** `App.tsx` (lazy dos clusters + helper `named`), `app/AppLayout.tsx` + `app/StackLayout.tsx` (Suspense + fallback), `styles.css` (`.route-fallback`), `data/changelog.ts` + `web/package.json` (**0.31.0**).
+- **Guardrail intacto:** nada de domínio/backend; `buildSquadPlan`/lock/`slotToShareInput` intocados; só mudou **quando** o código carrega.
+
+---
+
 ## Fase 10b 26/06 — Auditoria a11y/perf/responsivo + correções P0–P2 (parte 2 de 2) ✅ — v0.30.0
 
 > Fechamento da Fase 10 (e da leva 5–10). Auditoria **inline** (sem subagents) de a11y/perf/responsivo do `FestPilot/web`. Relatório completo: `.cursor/docs/reports/2026-06-26-phase-10b-a11y-perf-responsive-audit.md` (+ INDEX).

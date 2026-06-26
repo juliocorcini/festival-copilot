@@ -1,69 +1,64 @@
-import { lazy } from "react";
+import { lazy, type ComponentType } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./app/AppLayout";
 import { UpdateBanner } from "./app/UpdateBanner";
 import { Toaster } from "./ui/Toaster";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
+import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
+// Hot path stays eager (first paint for a solo day-1 user): the 4 primary tabs + onboarding +
+// shells. Every other cluster (map, lock-in, the whole squad/presence/meet flow, settings, admin)
+// is code-split so it only costs bytes when first reached. Layouts wrap their <Outlet/> in a
+// Suspense boundary, so the lazy screens below need no per-route fallback.
 import { NowScreen } from "./routes/NowScreen";
 import { TimetableScreen } from "./routes/TimetableScreen";
 import { LineupScreen } from "./routes/LineupScreen";
 import { MyPlanScreen } from "./routes/MyPlanScreen";
-import { MapScreen } from "./routes/MapScreen";
-import { SquadScreen } from "./routes/SquadScreen";
-import { LockInScreen } from "./routes/lockin/LockInScreen";
-import { RouteScreen } from "./routes/RouteScreen";
-import { SignInScreen } from "./routes/squad/SignInScreen";
-import { ProfileScreen } from "./routes/squad/ProfileScreen";
-import { CreateSquadScreen } from "./routes/squad/CreateSquadScreen";
-import { InviteScreen } from "./routes/squad/InviteScreen";
-import { JoinScreen } from "./routes/squad/JoinScreen";
-import { ShareMyPlanScreen } from "./routes/squad/ShareMyPlanScreen";
-import { SquadPlanScreen } from "./routes/squad/SquadPlanScreen";
-import { SquadBlockScreen } from "./routes/squad/SquadBlockScreen";
-import { SquadSplitScreen } from "./routes/squad/SquadSplitScreen";
-import { SquadOverrideScreen } from "./routes/squad/SquadOverrideScreen";
-import { SquadBoardScreen } from "./routes/squad/SquadBoardScreen";
-import { SquadEventsScreen } from "./routes/squad/SquadEventsScreen";
-import { PresenceConsentScreen } from "./routes/presence/PresenceConsentScreen";
-import { WhereScreen } from "./routes/presence/WhereScreen";
-import { PreciseSharingScreen } from "./routes/presence/PreciseSharingScreen";
-import { VisibilityScreen } from "./routes/presence/VisibilityScreen";
-import { LocationPrivacyScreen } from "./routes/presence/LocationPrivacyScreen";
-import { MeetSpotScreen } from "./routes/meet/MeetSpotScreen";
-import { MeetDetailsScreen } from "./routes/meet/MeetDetailsScreen";
-import { MeetDetailScreen } from "./routes/meet/MeetDetailScreen";
-import { MeetNavScreen } from "./routes/meet/MeetNavScreen";
-import { SafetyScreen } from "./routes/meet/SafetyScreen";
-import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
-import { SettingsScreen } from "./routes/settings/SettingsScreen";
-import { AppearanceScreen } from "./routes/settings/AppearanceScreen";
-import { OfflineScreen } from "./routes/settings/OfflineScreen";
-import { AboutScreen } from "./routes/settings/AboutScreen";
-import { FestivalScreen } from "./routes/settings/FestivalScreen";
 import { AdminGate } from "./admin/AdminGate";
 import { AdminLayout } from "./admin/AdminLayout";
 
-// The admin back-office is gated behind /admin + an auth check and is never loaded by festival-goers,
-// so it's code-split out of the initial bundle (Phase 10b perf audit). AdminLayout wraps its <Outlet/>
-// in a Suspense boundary, so these lazy screens need no per-route fallback.
-const AdminFestivalsScreen = lazy(() =>
-  import("./admin/AdminFestivalsScreen").then((m) => ({ default: m.AdminFestivalsScreen }))
-);
-const AdminLineupScreen = lazy(() => import("./admin/AdminLineupScreen").then((m) => ({ default: m.AdminLineupScreen })));
-const AdminDataSourceScreen = lazy(() =>
-  import("./admin/AdminDataSourceScreen").then((m) => ({ default: m.AdminDataSourceScreen }))
-);
-const AdminMetricsScreen = lazy(() => import("./admin/AdminMetricsScreen").then((m) => ({ default: m.AdminMetricsScreen })));
-const AdminTestConsoleScreen = lazy(() =>
-  import("./admin/AdminTestConsoleScreen").then((m) => ({ default: m.AdminTestConsoleScreen }))
-);
-const AdminSuggestionsScreen = lazy(() =>
-  import("./admin/AdminSuggestionsScreen").then((m) => ({ default: m.AdminSuggestionsScreen }))
-);
-const AdminMapEditorScreen = lazy(() =>
-  import("./admin/AdminMapEditorScreen").then((m) => ({ default: m.AdminMapEditorScreen }))
-);
+const named = <T extends Record<string, unknown>, K extends keyof T>(p: Promise<T>, key: K) =>
+  p.then((m) => ({ default: m[key] as unknown as ComponentType }));
+
+const MapScreen = lazy(() => named(import("./routes/MapScreen"), "MapScreen"));
+const SquadScreen = lazy(() => named(import("./routes/SquadScreen"), "SquadScreen"));
+const LockInScreen = lazy(() => named(import("./routes/lockin/LockInScreen"), "LockInScreen"));
+const RouteScreen = lazy(() => named(import("./routes/RouteScreen"), "RouteScreen"));
+const SignInScreen = lazy(() => named(import("./routes/squad/SignInScreen"), "SignInScreen"));
+const ProfileScreen = lazy(() => named(import("./routes/squad/ProfileScreen"), "ProfileScreen"));
+const CreateSquadScreen = lazy(() => named(import("./routes/squad/CreateSquadScreen"), "CreateSquadScreen"));
+const InviteScreen = lazy(() => named(import("./routes/squad/InviteScreen"), "InviteScreen"));
+const JoinScreen = lazy(() => named(import("./routes/squad/JoinScreen"), "JoinScreen"));
+const ShareMyPlanScreen = lazy(() => named(import("./routes/squad/ShareMyPlanScreen"), "ShareMyPlanScreen"));
+const SquadPlanScreen = lazy(() => named(import("./routes/squad/SquadPlanScreen"), "SquadPlanScreen"));
+const SquadBlockScreen = lazy(() => named(import("./routes/squad/SquadBlockScreen"), "SquadBlockScreen"));
+const SquadSplitScreen = lazy(() => named(import("./routes/squad/SquadSplitScreen"), "SquadSplitScreen"));
+const SquadOverrideScreen = lazy(() => named(import("./routes/squad/SquadOverrideScreen"), "SquadOverrideScreen"));
+const SquadBoardScreen = lazy(() => named(import("./routes/squad/SquadBoardScreen"), "SquadBoardScreen"));
+const SquadEventsScreen = lazy(() => named(import("./routes/squad/SquadEventsScreen"), "SquadEventsScreen"));
+const PresenceConsentScreen = lazy(() => named(import("./routes/presence/PresenceConsentScreen"), "PresenceConsentScreen"));
+const WhereScreen = lazy(() => named(import("./routes/presence/WhereScreen"), "WhereScreen"));
+const PreciseSharingScreen = lazy(() => named(import("./routes/presence/PreciseSharingScreen"), "PreciseSharingScreen"));
+const VisibilityScreen = lazy(() => named(import("./routes/presence/VisibilityScreen"), "VisibilityScreen"));
+const LocationPrivacyScreen = lazy(() => named(import("./routes/presence/LocationPrivacyScreen"), "LocationPrivacyScreen"));
+const MeetSpotScreen = lazy(() => named(import("./routes/meet/MeetSpotScreen"), "MeetSpotScreen"));
+const MeetDetailsScreen = lazy(() => named(import("./routes/meet/MeetDetailsScreen"), "MeetDetailsScreen"));
+const MeetDetailScreen = lazy(() => named(import("./routes/meet/MeetDetailScreen"), "MeetDetailScreen"));
+const MeetNavScreen = lazy(() => named(import("./routes/meet/MeetNavScreen"), "MeetNavScreen"));
+const SafetyScreen = lazy(() => named(import("./routes/meet/SafetyScreen"), "SafetyScreen"));
+const SettingsScreen = lazy(() => named(import("./routes/settings/SettingsScreen"), "SettingsScreen"));
+const AppearanceScreen = lazy(() => named(import("./routes/settings/AppearanceScreen"), "AppearanceScreen"));
+const OfflineScreen = lazy(() => named(import("./routes/settings/OfflineScreen"), "OfflineScreen"));
+const AboutScreen = lazy(() => named(import("./routes/settings/AboutScreen"), "AboutScreen"));
+const FestivalScreen = lazy(() => named(import("./routes/settings/FestivalScreen"), "FestivalScreen"));
+
+const AdminFestivalsScreen = lazy(() => named(import("./admin/AdminFestivalsScreen"), "AdminFestivalsScreen"));
+const AdminLineupScreen = lazy(() => named(import("./admin/AdminLineupScreen"), "AdminLineupScreen"));
+const AdminDataSourceScreen = lazy(() => named(import("./admin/AdminDataSourceScreen"), "AdminDataSourceScreen"));
+const AdminMetricsScreen = lazy(() => named(import("./admin/AdminMetricsScreen"), "AdminMetricsScreen"));
+const AdminTestConsoleScreen = lazy(() => named(import("./admin/AdminTestConsoleScreen"), "AdminTestConsoleScreen"));
+const AdminSuggestionsScreen = lazy(() => named(import("./admin/AdminSuggestionsScreen"), "AdminSuggestionsScreen"));
+const AdminMapEditorScreen = lazy(() => named(import("./admin/AdminMapEditorScreen"), "AdminMapEditorScreen"));
 
 export function App(): JSX.Element {
   return (

@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
+import { RouteFallback } from "./RouteFallback";
 import { useLineup } from "../data/useLineup";
 import { useFavorites } from "../data/localStore";
 import { imageByActKey } from "../domain/lineup";
@@ -31,7 +32,9 @@ export function AppLayout(): JSX.Element {
     <div className="app">
       <ArtistSheetProvider lineup={lineup}>
         <main className="scr route-fade" key={pathname}>
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
         <BottomNav />
       </ArtistSheetProvider>
