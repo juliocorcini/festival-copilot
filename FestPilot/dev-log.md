@@ -15,7 +15,7 @@
 > **R8.A (sinalizada, deferida):** flake de interação do SW (`controllerchange→reload` limpa estado no meio de `fill`/multi-step; ~1 por suíte, recuperado pelo `retries:1`). Fix candidato sem perder fidelidade: esperar o SW **assentar** após o `goto`. Rodada futura, se o Julio quiser fechar o último flaky.
 
 ### Current State (this batch)
-- **Pronto p/ deploy (v0.31.6):** com um teclado, qualquer painel (detalhe de artista, picker de palco, compartilhar plano) mantém o foco dentro dele; Esc fecha e devolve o foco. Aditivo; invisível no toque/mobile. **Não deployado** (Julio testando; deploy ofertado).
+- **No ar (v0.31.6, deploy `d276f936`):** com um teclado, qualquer painel (detalhe de artista, picker de palco, compartilhar plano) mantém o foco dentro dele; Esc fecha e devolve o foco. Aditivo; invisível no toque/mobile. **Produção sincronizada com o repo** — `festpilot.pages.dev` serve `index-CooOZCJR.js` (v0.31.6); worker + D1 (0015) intactos e saudáveis. (1ª tentativa de deploy subiu os 66 arquivos mas travou no passo "Deploying…" por stall de rede — o re-run finalizou na hora, "0 files / 66 already uploaded".)
 - **Próximo:** teto de polish atingido — o maior valor restante é de **produto** (ex.: busca/filtros no lineup) e precisa de decisão do Julio (brain/decision-log), ou fechar o último flaky de e2e (R8.A). Bom ponto de revisão.
 
 ### Escopo (arquivos)
