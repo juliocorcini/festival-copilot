@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.21.0";
+export const APP_VERSION = "0.21.1";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,19 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.21.1",
+    date: "2026-06-26",
+    title: "Haptics only on real taps",
+    icon: "do_not_touch",
+    whatsNew: [
+      "Fixed: scrolling the Timetable or Lineup no longer buzzes. Haptics now fire only on a genuine tap — never when you drag or scroll your finger over the cards.",
+    ],
+    howToTest: [
+      "With haptics ON, scroll up and down the Timetable and Lineup — it should stay silent while scrolling.",
+      "Tapping a card, heart, chip or tab still gives its little buzz.",
+    ],
+  },
   {
     version: "0.21.0",
     date: "2026-06-26",

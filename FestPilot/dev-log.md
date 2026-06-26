@@ -6,6 +6,19 @@
 
 ---
 
+## Fix 26/06 — haptic só em tap genuíno (não em scroll) ✅ — v0.21.1
+
+> Bug reportado: rolar/arrastar o dedo no Timetable/Lineup **já vibrava** (os cards são botões, e o delegate estava em `pointerdown`,
+> que dispara no início do toque, inclusive num scroll). Conselho rápido (Architect+Critic): trocar o delegate de `pointerdown` → **`click`**
+> — o browser só emite `click` num **tap confirmado** (down+up no mesmo alvo, sem virar scroll/arrasto), então zero falso-positivo ao rolar.
+> Capture-phase mantido (roda antes dos handlers); `data-haptic`/disabled idênticos. `tsc` limpo · **308** testes (+1 regressão: `pointerdown` não vibra, `click` vibra).
+> `navigator.vibrate()` substitui a vibração anterior → o "light" do delegate + `success` imperativo do lock-in colapsam em só "success" (sem buzz duplo perceptível).
+
+### Escopo (arquivos)
+- **Editados:** `lib/haptics.ts` (`pointerdown` → `click`, docstring), `lib/haptics.test.ts` (`tap` via `click` + teste de regressão), `data/changelog.ts` + `web/package.json` (**0.21.1**).
+
+---
+
 ## Native polish 2/7 26/06 — toque tátil / micro-interações (press) ✅ DEPLOYED — v0.21.0
 
 > O par **visual** do haptic da fase 1: todos os controles **afundam** ao toque e voltam com mola, e o atraso de ~300 ms do navegador some.

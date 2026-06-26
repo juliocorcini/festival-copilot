@@ -3,9 +3,12 @@
  * API, gated on a user setting. Pulses are deliberately short so they read as confirmation, not buzz.
  *
  * Coverage is hybrid (decided by inline council):
- *  - a global, capture-phase `pointerdown` delegate gives every real control (`button`,
- *    `[role=button]`) an immediate light tap — opt a control out with `data-haptic="off"`, or
- *    upgrade it with `data-haptic="select|success|…"`.
+ *  - a global, capture-phase `click` delegate gives every real control (`button`,
+ *    `[role=button]`) a light tap — opt a control out with `data-haptic="off"`, or upgrade it
+ *    with `data-haptic="select|success|…"`. We delegate on `click` (not `pointerdown`) on purpose:
+ *    the browser only emits `click` for a *genuine tap*, so scrolling/dragging a finger across
+ *    button-like cards (timetable/lineup) never buzzes. The visual press covers the touch-down
+ *    moment; the buzz lands on the confirmed tap.
  *  - result-time moments (lock-in done, errors, SOS) call `haptic(kind)` imperatively.
  *
  * iOS Safari has no Vibration API (verified), so every call is a safe no-op there. Haptics is always
@@ -43,14 +46,16 @@ export function haptic(kind: Haptic = "light"): void {
 const CONTROL_SELECTOR = "button, [role='button']";
 
 /**
- * Install the global tap delegate (call once at boot). A capture-phase, passive `pointerdown` so the
- * pulse lands the instant a control is pressed — the most native-feeling moment. The pattern is read
- * from the control's `data-haptic` attribute (`off` skips; otherwise the named kind; default light).
+ * Install the global tap delegate (call once at boot). A capture-phase `click` listener: the browser
+ * only fires `click` for a confirmed tap (down + up on the same target without a scroll/drag), so a
+ * finger dragged across button-like cards never buzzes. Capture runs before element handlers, so the
+ * pulse is never swallowed by a handler that stops propagation. The pattern is read from the control's
+ * `data-haptic` attribute (`off` skips; otherwise the named kind; default light).
  */
 export function initHaptics(): void {
   if (typeof document === "undefined") return;
   document.addEventListener(
-    "pointerdown",
+    "click",
     (event) => {
       const target = event.target as Element | null;
       const control = target?.closest?.(CONTROL_SELECTOR) as HTMLElement | null;
@@ -59,7 +64,7 @@ export function initHaptics(): void {
       if (attr === "off") return;
       haptic(isHaptic(attr) ? attr : "light");
     },
-    { passive: true, capture: true }
+    { capture: true }
   );
 }
 

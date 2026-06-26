@@ -66,16 +66,31 @@ describe("haptic", () => {
 describe("initHaptics (global tap delegate)", () => {
   beforeAll(() => initHaptics());
 
-  const press = (el: Element): void => {
-    el.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  // A genuine tap = a `click` (the browser only emits it for down+up on the same target, not a scroll).
+  const tap = (el: Element): void => {
+    el.dispatchEvent(new Event("click", { bubbles: true }));
   };
 
-  it("taps lightly on a plain button press", () => {
+  it("taps lightly on a plain button click", () => {
     const vibrate = vi.fn();
     setVibrate(vibrate);
     const btn = document.createElement("button");
     document.body.appendChild(btn);
-    press(btn);
+    tap(btn);
+    expect(vibrate).toHaveBeenCalledWith(8);
+  });
+
+  it("does NOT buzz on pointerdown (scroll/drag) — only on a confirmed tap", () => {
+    const vibrate = vi.fn();
+    setVibrate(vibrate);
+    const btn = document.createElement("button");
+    document.body.appendChild(btn);
+    // Starting a touch (pointerdown) that turns into a scroll must stay silent…
+    btn.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(vibrate).not.toHaveBeenCalled();
+    // …only the resulting click (a real tap) buzzes.
+    tap(btn);
+    expect(vibrate).toHaveBeenCalledTimes(1);
     expect(vibrate).toHaveBeenCalledWith(8);
   });
 
@@ -85,7 +100,7 @@ describe("initHaptics (global tap delegate)", () => {
     const btn = document.createElement("button");
     btn.setAttribute("data-haptic", "select");
     document.body.appendChild(btn);
-    press(btn);
+    tap(btn);
     expect(vibrate).toHaveBeenCalledWith(12);
   });
 
@@ -95,7 +110,7 @@ describe("initHaptics (global tap delegate)", () => {
     const btn = document.createElement("button");
     btn.setAttribute("data-haptic", "off");
     document.body.appendChild(btn);
-    press(btn);
+    tap(btn);
     expect(vibrate).not.toHaveBeenCalled();
   });
 
@@ -106,8 +121,8 @@ describe("initHaptics (global tap delegate)", () => {
     btn.disabled = true;
     const div = document.createElement("div");
     document.body.append(btn, div);
-    press(btn);
-    press(div);
+    tap(btn);
+    tap(div);
     expect(vibrate).not.toHaveBeenCalled();
   });
 });
