@@ -34,8 +34,10 @@ export function useSheetDrag(
     const sheet = sheetRef.current;
     if (!sheet) return;
     // The inner scroller that must be at the top before a drag arms; short sheets have none → always
-    // armed (querySelector returns null and the scroll guard is skipped).
-    const scroller = sheet.querySelector<HTMLElement>(".sheet-body");
+    // armed (querySelector returns null and the scroll guard is skipped). `.sheet-body` is the base
+    // Sheet's scroller; `.sheet-scroll` is an unstyled opt-in marker for sheets that keep their own
+    // markup (e.g. StagePickSheet's `.stage-sheet-list`) but still want the scroll guard.
+    const scroller = sheet.querySelector<HTMLElement>(".sheet-body, .sheet-scroll");
 
     let startY = 0;
     let lastY = 0;

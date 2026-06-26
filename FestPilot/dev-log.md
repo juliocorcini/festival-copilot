@@ -6,6 +6,24 @@
 
 ---
 
+## Rodada de melhoria R2 26/06 — Consistência: StagePickSheet → drag-to-dismiss ✅ — v0.31.1
+
+> Segunda rodada, conselho HOW rápido (Architect+Critic). Fecha a dívida deliberada da Fase 7: o `StagePickSheet` (responder ping com palco / escolher palco de encontro) era o **único** bottom sheet sem arrastar-pra-fechar — só tap no scrim/×.
+> **Achado que mudou a abordagem:** a classe `.stage-sheet` é **compartilhada** com o overlay de info-do-palco do mapa (dois blocos CSS) e o sheet é `position:fixed`/`z-200` sobre o mapa. Converter pro `Sheet` base (`position:absolute`/`z-40` + desemaranhar CSS) seria risco de regressão. **Escolha:** **reusar o hook `useSheetDrag`** no markup próprio (provado sobre o mapa), sem tocar posição/z-index/CSS.
+> **Mudança:** `StagePickSheet` ganhou refs (section + scrim) + `useSheetDrag(sheetRef, scrimRef, onClose)` + marcador **`sheet-scroll`** na `.stage-sheet-list`. O hook teve o seletor de scroller **ampliado** de `.sheet-body` → `.sheet-body, .sheet-scroll` (aditivo: os 8 sheets base seguem casando `.sheet-body` primeiro). Agora segue o dedo 1:1, flick/>25% fecha, mola se aquém, haptic no dismiss, reduced-motion = corte — paridade total com os outros sheets.
+> `tsc` limpo · **web 396 testes** (sem regressão; `sheetDrag` math + `Sheet` DOM intactos) · `vite build` 359.87 kB (sem aviso 500 kB) · **e2e 30/30** (cobre o `StagePickSheet` em presence "Which stage are you at?" + meeting "A stage", e os 8 sheets base via myplan/lockin).
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.1):** todo bottom sheet do app — agora **inclusive** o de palco sobre o mapa — fecha arrastando. **Zero mudança de feature; CSS/posição/z-index do sheet do mapa intocados.**
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo:** R3 — alvo de toque do `×` do toast ≥44px + varredura de alvos < 44px.
+
+### Escopo (arquivos)
+- **Editados (web):** `routes/presence/StagePickSheet.tsx` (refs + hook + `sheet-scroll`), `ui/useSheetDrag.ts` (seletor ampliado, aditivo), `data/changelog.ts` + `web/package.json` (**0.31.1**).
+- **Guardrail intacto:** nada de domínio/backend; CSS `.stage-sheet` (compartilhada com o mapa) **não tocada**; só comportamento de arrastar.
+
+---
+
 ## Rodada de melhoria R1 26/06 — PERF: code-split por cluster (route-level lazy) ✅ — v0.31.0
 
 > Primeira rodada de melhoria pós-fases, guiada por **conselho inline** (sem subagents). Conselho de triagem (WHAT/IF, 4 papéis + red team) elegeu **carga inicial** como o ganho de maior alavancagem/menor risco (contexto: festival = rede saturada; bundle inicial acima do aviso de 500 kB); conselho HOW (Architect+Critic) fechou em **lazy puro + Suspense, sem `manualChunks`** (evita acoplar o squad-eager: `NowScreen` importa `SquadNowCard`).

@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.0";
+export const APP_VERSION = "0.31.1";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,18 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.1",
+    date: "2026-06-26",
+    title: "The stage picker closes with a swipe",
+    icon: "swipe_down",
+    whatsNew: [
+      "The panel for telling your squad which stage you're at — and the one for picking a meeting stage — now closes when you swipe it down, following your finger just like every other panel in FestPilot.",
+    ],
+    howToTest: [
+      "Open 'Where's the squad' and answer a ping, or in 'Meet up' tap 'A stage'. Drag the panel downward: it follows your finger and slides away; a small flick closes it too.",
+    ],
+  },
   {
     version: "0.31.0",
     date: "2026-06-26",
