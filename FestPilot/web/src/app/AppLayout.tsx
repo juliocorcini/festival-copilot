@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteFallback } from "./RouteFallback";
 import { prefetchPrimaryTabs } from "./prefetchRoutes";
 import { useLineup } from "../data/useLineup";
@@ -39,9 +40,11 @@ export function AppLayout(): JSX.Element {
     <div className="app">
       <ArtistSheetProvider lineup={lineup}>
         <main className="scr route-fade" key={pathname}>
-          <Suspense fallback={<RouteFallback />}>
-            <Outlet />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
         <BottomNav />
       </ArtistSheetProvider>

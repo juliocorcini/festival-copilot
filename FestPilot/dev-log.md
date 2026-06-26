@@ -6,6 +6,25 @@
 
 ---
 
+## Rodada de melhoria R5 26/06 — RESILIÊNCIA: error boundary (fim da tela branca em chunk lazy que falha) ✅ — v0.31.4
+
+> Quinta rodada. **Conselho (O QUE/SE):** triagem honesta de candidatos — (A) error boundary p/ falha de chunk lazy, (B) foco/skip-link a11y na navegação SPA, (C) varredura Lighthouse, (D) poda de CSS morto. Vencedor por **impacto × risco × evidência: (A)**. Evidência: `rg` confirma **zero** ErrorBoundary no app; R1/R4 introduziram `import()` dinâmico em ~40 rotas; `<Suspense>` cobre o *pending* mas **relança** uma lazy *rejeitada* → sem boundary acima, a árvore desmonta em **tela branca**. Num festival (sinal ruim no campo) isso = "o app morreu". Fecha um risco que o **próprio** code-split (R1/R4) abriu. Red team ("o SW já cacheia") refutado: o SW só serve o que já baixou — um cluster nunca aberto (Map/Settings) sob sinal ruim na 1ª visita falha.
+> **Conselho (COMO):** classe `ErrorBoundary` (só classe captura erro de render) **reusando** o `ErrorState` canônico (`ui/states.tsx`) — **zero CSS novo**. Predicado **puro** `lib/chunkError.ts` (testado com as strings reais de Vite/Chromium/Firefox/Safari/webpack) decide a copy ("Couldn't load this section" vs "Something went wrong"). Recuperação = **reload** (uma promise de `lazy()` rejeitada é memoizada; só um reload rebusca o chunk — o SW pode até servir do cache). Montado **2×**: no topo (`main.tsx`, catch-all) e **dentro** de cada layout, **acima** do `<Suspense>` (`AppLayout`/`StackLayout`) — assim a falha de uma aba mostra a recuperação **dentro** da casca (bottom-nav permanece; trocar de aba remonta o boundary via `key={pathname}` do `<main>` → erro some sem reload).
+> **Happy path = invisível:** sem erro o boundary devolve `children` direto (**nenhum** nó DOM extra) → zero impacto em layout/route-fade/dock fixo/Artist Sheet. **Nada removido; nenhuma feature mudou.** Admin cai no boundary de topo (escopo enxuto; não toquei no AdminLayout).
+> **Verificação:** `tsc` limpo · **web tests 401 verde** (49 arquivos; novo `lib/chunkError.test.ts`, 5 casos: Vite/Firefox/Safari/webpack/CSS-chunk + não-disparo em erro comum/valor não-erro) · `vite build` verde (main **363 kB** / gzip 117 kB, **sem** aviso de 500 kB; `MapScreen`/`SquadScreen` seguem chunks separados — code-split do R1/R4 preservado) · **e2e 30/30**. (No 1º run paralelo o `timetable` flakou com a corrida pré-existente "execution context destroyed" no `addStyleTag` pós-`goto`; isolado deu **6/6** com `--repeat-each=3` e o re-run completo `--workers=2` deu **30/30** — flakiness de carga, não regressão. Rota `/timetable` é eager, sem chunk.)
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.4):** falha ao baixar um trecho do app vira uma tela amigável com **Reload** (ou recupera ao trocar de aba) — nunca mais tela branca. Cobre o cenário real de conectividade ruim no festival.
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo:** rodada a definir pelo conselho (5 rodadas entregues; bom ponto p/ o Julio revisar).
+
+### Escopo (arquivos)
+- **Novos (web):** `lib/chunkError.ts` (puro) + `lib/chunkError.test.ts`, `app/ErrorBoundary.tsx`.
+- **Editados (web):** `main.tsx` (boundary no topo), `app/AppLayout.tsx` + `app/StackLayout.tsx` (boundary acima do `Suspense`), `data/changelog.ts` + `web/package.json` (**0.31.4**).
+- **Guardrail intacto:** reusa `ErrorState` (sem CSS novo); happy path sem DOM extra; admin coberto pelo boundary de topo; nada de domínio/backend.
+
+---
+
 ## Rodada de melhoria R4 26/06 — PERF: prefetch em idle das abas lazy (completa o R1) ✅ — v0.31.3
 
 > Quarta rodada. Conselho: a resiliência (erros/retry/empty/skeleton/reconnect) **já é forte** — não é gap. O item de maior valor restante é **completar o R1**: remover seu único custo (flash de fallback no 1º toque das abas lazy Map/Squad).

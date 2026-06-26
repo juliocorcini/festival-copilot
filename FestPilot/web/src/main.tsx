@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { ErrorBoundary } from "./app/ErrorBoundary";
 import { registerServiceWorker } from "./app/registerSW";
 import { initInstallCapture } from "./app/pwaInstall";
 import { initHaptics } from "./lib/haptics";
@@ -14,7 +15,9 @@ initHaptics();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );
 

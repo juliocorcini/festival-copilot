@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.3";
+export const APP_VERSION = "0.31.4";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,19 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.4",
+    date: "2026-06-26",
+    title: "Never a blank screen on bad signal",
+    icon: "shield",
+    whatsNew: [
+      "If a part of the app can't load because your signal dropped — common in a packed festival field — you now get a friendly screen with a Reload button instead of a blank page.",
+      "Tapping another tab recovers on its own too, so a momentary connection hiccup never leaves you stuck.",
+    ],
+    howToTest: [
+      "In your browser's dev tools set the network to Offline, then tap a tab you haven't opened yet (e.g. Map or a Settings page): you'll see a 'Couldn't load this section' card with Reload — not a white screen. Switch the network back on and reload (or tap another tab) and it works again.",
+    ],
+  },
   {
     version: "0.31.3",
     date: "2026-06-26",
