@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.27.0";
+export const APP_VERSION = "0.28.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.28.0",
+    date: "2026-06-26",
+    title: "Your squad, right on your home",
+    icon: "diversity_3",
+    whatsNew: [
+      "Now & Next now shows a 'Squad now' card under your hero — where your squad is right this second (e.g. '3 at FREEDOM · 1 between A & B') and the next thing you've planned together, with a live countdown.",
+      "It only shows up if you're actually in a squad — on your own, your home is exactly as before.",
+      "Tap the card to jump straight into your squad.",
+    ],
+    howToTest: [
+      "On your own (no squad), open the Now & Next tab — it looks exactly as before, no new card.",
+      "Join or create a squad, then go back to Now & Next: a 'Squad now' card appears under the hero (or at the top when you've no set times yet). It shows who's where + the next group event or meeting point.",
+      "Have a squad-mate share their location or add a group event — the card updates, and tapping it opens the Squad.",
+    ],
+  },
   {
     version: "0.27.0",
     date: "2026-06-26",

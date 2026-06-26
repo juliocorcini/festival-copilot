@@ -6,6 +6,26 @@
 
 ---
 
+## Fase 9 26/06 — Home = pessoal + squad · card "Squad now" (D4) ✅ — v0.28.0
+
+> Fase 9 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`). **Frontend puro — zero backend** (reusa hooks existentes). Traz um pedaço do squad pra home pessoal (Now & Next): um card **"Squad now"** abaixo do hero com **onde o squad está agora** (resumo de presença, ex.: "3 at FREEDOM · 1 between A & B") + **o próximo combinado** (group event ao vivo/futuro; senão um meeting point ativo) com countdown, e **abre o Squad ao tocar**.
+> **Auto-gated em 2 camadas (solo intocado):** (1) **sem conta → `null` antes de qualquer chamada de rede** (a maioria dos solo nunca bate na API de grupos); (2) com conta mas **sem squad → `null`** assim que a lista volta vazia (sem layout shift). Com squad: skeleton in-card no 1º load da presença (já sabemos que há squad).
+> **Lente do squad ativo:** lê a mesma chave `fp.activeGroup.v1` que o `SquadScreen` grava, então a home espelha o squad que o usuário viu por último (senão o primeiro).
+> **Reuso, sem novas abstrações:** `groupRosterByStage` (presença), `eventBadge`/`eventCountdown`/`eventLifecycleFromIso` (Fase 8), tons `meet-badge`, `.glass`/`.tappable`/`.shimmer`. Lógica com ramificação isolada em `routes/squad/squadNowUi.ts` (**puro**): `presenceSummary` (top-2 lugares + overflow "+N more", bucket off ignorado, fallback mudo) · `pointBadge` (safety > all-here > wrapping-up > default) · `firstActivePoint`.
+> **Montagem:** `SquadNowCard` (gate de conta) → `SquadNowGate` (gate de squad + escolhe ativo) → `SquadNowInner` (hooks `useGroupPresence`/`useGroupEvents`/`useMeetingPoints`). Plugado no `NowScreen` **abaixo do hero** e também no topo do estado vazio (squad com set times ainda não saídos continua vendo o squad).
+> `tsc` limpo · **web 388 testes** (+8 `squadNowUi`: resumo top-2/overflow/off/fallback, badges de ponto, primeiro ativo) · `vite build` ok (`index-zVEyV_R-.js`).
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.28.0):** Now & Next mostra "Squad now" pra quem tem squad (presença + próximo combinado + countdown), toca → Squad. **Solo: home idêntica à de antes** (nenhum card, nenhuma chamada de rede extra).
+- **Deploy pendente (sessão Cloudflare do Julio):** só web (Pages) — **sem mudança de worker/D1 nesta fase**. Validado localmente (tsc/test/build verdes).
+
+### Escopo (arquivos)
+- **Novos (web):** `routes/squad/SquadNowCard.tsx`, `routes/squad/squadNowUi.ts` (+`squadNowUi.test.ts`).
+- **Editados (web):** `routes/NowScreen.tsx` (import + card abaixo do hero + no topo do estado vazio), `styles.css` (`.squad-now*` + reduced-motion), `data/changelog.ts` + `web/package.json` (**0.28.0**).
+- **Guardrail intacto:** nada no backend; o card **só lê** hooks existentes — nunca escreve, nunca alimenta `buildSquadPlan` nem lock pessoal.
+
+---
+
 ## Fase 8 26/06 — Eventos de grupo (hora fixa) · `group_event` (D2 / Q5 / Q6) ✅ — v0.27.0
 
 > Fase 8 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`). **A única fase desta leva que toca backend.** O squad agora combina **momentos de hora fixa** ("foto às 16h no Mainstage") que aparecem **para todos** com contagem regressiva — uma **camada paralela** ao plano de grupo, **nunca** dentro da agregação de sets nem do lock pessoal (guardrail §5).

@@ -2295,6 +2295,22 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
 .squad-agenda-chip-time { font-weight: 800; font-size: 13px; min-width: 42px; }
 .squad-agenda-chip-title { font-weight: 600; font-size: 13px; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* --- "Squad now" home bridge (Phase 9 — D4: Home = personal + squad) -------------------------- */
+.squad-now { padding: 13px 15px; display: flex; flex-direction: column; gap: 9px; }
+.squad-now-head { display: flex; align-items: center; gap: 8px; }
+.squad-now-emoji { font-size: 17px; line-height: 1; flex-shrink: 0; }
+.squad-now-name { font-weight: 700; font-size: 14px; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.squad-now-live { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+.squad-now-chev { font-size: 20px; color: var(--muted); flex-shrink: 0; }
+.squad-now-body { display: flex; flex-direction: column; gap: 8px; }
+.squad-now-presence { margin: 0; display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); }
+.squad-now-presence .ms { font-size: 16px; color: var(--accent); flex-shrink: 0; }
+.squad-now-presence.is-muted { color: var(--muted); }
+.squad-now-agenda { display: flex; align-items: center; gap: 8px; }
+.squad-now-agenda-icon { font-size: 16px; color: var(--accent); flex-shrink: 0; }
+.squad-now-agenda-title { font-weight: 600; font-size: 13px; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.squad-now-agenda-meta { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
-  .event-card, .squad-agenda-band { animation: fp-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+  .event-card, .squad-agenda-band, .squad-now { animation: fp-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 }

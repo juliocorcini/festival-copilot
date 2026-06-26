@@ -21,6 +21,7 @@ import { dayLabel, daysUntil, stageColor, timeInZone } from "../lib/format";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
 import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
+import { SquadNowCard } from "./squad/SquadNowCard";
 
 const ms = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
@@ -146,11 +147,14 @@ export function NowScreen(): JSX.Element {
       <>
         <AppHeader eyebrow={shorten(festivalName)} title="Now & Next" />
         <PullToRefresh onRefresh={reload} />
-        <NowEmpty
-          favCount={favorites.count}
-          hasTimetable={lineup.hasTimetable}
-          onBrowse={() => navigate("/lineup")}
-        />
+        <div className="screen">
+          <SquadNowCard />
+          <NowEmpty
+            favCount={favorites.count}
+            hasTimetable={lineup.hasTimetable}
+            onBrowse={() => navigate("/lineup")}
+          />
+        </div>
       </>
     );
   }
@@ -174,6 +178,7 @@ export function NowScreen(): JSX.Element {
           now={now}
           onRoute={() => navigate(`/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
         />
+        <SquadNowCard />
         {vm.later.length > 0 && <NowList rows={vm.later} tz={tz} label={laterLabel} />}
         <p className="src" style={{ textAlign: "center" }}>{srcLine}</p>
       </div>
