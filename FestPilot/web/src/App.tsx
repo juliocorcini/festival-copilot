@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./app/AppLayout";
 import { UpdateBanner } from "./app/UpdateBanner";
@@ -42,13 +43,27 @@ import { AboutScreen } from "./routes/settings/AboutScreen";
 import { FestivalScreen } from "./routes/settings/FestivalScreen";
 import { AdminGate } from "./admin/AdminGate";
 import { AdminLayout } from "./admin/AdminLayout";
-import { AdminFestivalsScreen } from "./admin/AdminFestivalsScreen";
-import { AdminLineupScreen } from "./admin/AdminLineupScreen";
-import { AdminDataSourceScreen } from "./admin/AdminDataSourceScreen";
-import { AdminMetricsScreen } from "./admin/AdminMetricsScreen";
-import { AdminTestConsoleScreen } from "./admin/AdminTestConsoleScreen";
-import { AdminSuggestionsScreen } from "./admin/AdminSuggestionsScreen";
-import { AdminMapEditorScreen } from "./admin/AdminMapEditorScreen";
+
+// The admin back-office is gated behind /admin + an auth check and is never loaded by festival-goers,
+// so it's code-split out of the initial bundle (Phase 10b perf audit). AdminLayout wraps its <Outlet/>
+// in a Suspense boundary, so these lazy screens need no per-route fallback.
+const AdminFestivalsScreen = lazy(() =>
+  import("./admin/AdminFestivalsScreen").then((m) => ({ default: m.AdminFestivalsScreen }))
+);
+const AdminLineupScreen = lazy(() => import("./admin/AdminLineupScreen").then((m) => ({ default: m.AdminLineupScreen })));
+const AdminDataSourceScreen = lazy(() =>
+  import("./admin/AdminDataSourceScreen").then((m) => ({ default: m.AdminDataSourceScreen }))
+);
+const AdminMetricsScreen = lazy(() => import("./admin/AdminMetricsScreen").then((m) => ({ default: m.AdminMetricsScreen })));
+const AdminTestConsoleScreen = lazy(() =>
+  import("./admin/AdminTestConsoleScreen").then((m) => ({ default: m.AdminTestConsoleScreen }))
+);
+const AdminSuggestionsScreen = lazy(() =>
+  import("./admin/AdminSuggestionsScreen").then((m) => ({ default: m.AdminSuggestionsScreen }))
+);
+const AdminMapEditorScreen = lazy(() =>
+  import("./admin/AdminMapEditorScreen").then((m) => ({ default: m.AdminMapEditorScreen }))
+);
 
 export function App(): JSX.Element {
   return (

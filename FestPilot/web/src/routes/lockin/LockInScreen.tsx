@@ -484,7 +484,12 @@ function AddSheet({
       </div>
       <div className="search">
         <span className="ms" style={{ color: "var(--muted)", fontSize: 20 }}>search</span>
-        <input placeholder="Search any artist…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input
+          placeholder="Search any artist…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search any artist"
+        />
       </div>
       <div className="sheet-body">
         <div className="sheet-section">NEARBY THIS TIME</div>

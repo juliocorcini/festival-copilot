@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAdminAuth } from "./AdminGate";
 
@@ -52,7 +53,9 @@ export function AdminLayout(): JSX.Element {
         </div>
       </aside>
       <main className="admin-main">
-        <Outlet />
+        <Suspense fallback={<div className="admin-state">Loading…</div>}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

@@ -50,7 +50,7 @@
 * { box-sizing: border-box; }
 *::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
-html, body, #root { height: 100%; margin: 0; }
+html, body, #root { height: 100%; margin: 0; background: var(--bg); }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -2345,3 +2345,19 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
 .toast-success .toast-ico { color: #5fd08a; }
 .toast-error { border-color: rgba(220, 38, 38, 0.45); }
 .toast-error .toast-ico { color: var(--danger-ink); }
+
+/* --- A11y safeguard (Phase 10b audit · P1) ---------------------------------------------------- */
+/* A global "reduce" net so EVERY animation/transition is honoured — the older INFINITE ones
+   (loading shimmer, onboarding swipe cue, live presence + safety pulses, spinners) predate the
+   per-rule `prefers-reduced-motion: no-preference` gating and were always-on. This complements,
+   not replaces, those gates: motion-sensitive users get a still, instant UI everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

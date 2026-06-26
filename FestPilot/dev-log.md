@@ -6,6 +6,30 @@
 
 ---
 
+## Fase 10b 26/06 — Auditoria a11y/perf/responsivo + correções P0–P2 (parte 2 de 2) ✅ — v0.30.0
+
+> Fechamento da Fase 10 (e da leva 5–10). Auditoria **inline** (sem subagents) de a11y/perf/responsivo do `FestPilot/web`. Relatório completo: `.cursor/docs/reports/2026-06-26-phase-10b-a11y-perf-responsive-audit.md` (+ INDEX).
+> **Resultado:** app já estava forte (alt em toda `<img>`, inputs rotulados, `:focus-visible`, safe-areas, chrome PWA completo). **Zero P0.** Achados e correções:
+> - **A11Y-1 (P1) — corrigido:** animações **infinitas** (shimmer, swipeCue, presence-pulse avatar+pin, `.pulse` do mapa, safetyPulse, adminSpin) eram sempre-on, fora do gate `no-preference`. Adicionado **safeguard global** `@media (prefers-reduced-motion: reduce)` que zera duração/iteração de toda animação/transição. Complementa (não substitui) os gates existentes.
+> - **A11Y-2 (P2) — corrigido:** busca do **Lock-in** só tinha `placeholder` → `aria-label="Search any artist"` (consistência com Lineup/My Plan).
+> - **PERF-1 (P2) — parcial:** bundle único ~593 kB. **Code-split do admin** (7 telas via `React.lazy` + um `Suspense` no `AdminLayout`): principal → **555 kB (170 kB gzip)**, admin carrega sob demanda (chunks por tela). Restante (>500 kB) **deferido** (split por rota de map/squad) p/ rodada futura — evita risco no hot path.
+> - **CHROME-1 (P3) — corrigido:** `html` sem background → `background: var(--bg)` em `html,body,#root` (evita flash no overscroll/pré-paint).
+> - **A11Y-3 (P3) — aceito:** `×` do toast 26px (alvo secundário; auto-dismiss é o caminho primário). Registrado.
+> - **Responsivo:** revisado 320–480px + frame desktop — fluido, ellipsis, safe-areas; sem P0–P2.
+> `tsc` limpo · **web 396 testes** (sem regressão) · `vite build` verde com chunks de admin separados.
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.30.0):** reduced-motion respeitado em todo o app; start mais leve (admin fora do bundle inicial); polish a11y/chrome. **Nenhuma mudança de comportamento/feature.**
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Leva 5–10 COMPLETA.** Próximo: revisão geral pós-fases + rodadas de melhoria guiadas por conselho.
+
+### Escopo (arquivos)
+- **Novos:** `.cursor/docs/reports/2026-06-26-phase-10b-a11y-perf-responsive-audit.md` (+ INDEX).
+- **Editados (web):** `styles.css` (safeguard reduced-motion + `html` bg), `routes/lockin/LockInScreen.tsx` (aria-label), `App.tsx` (lazy admin) + `admin/AdminLayout.tsx` (Suspense), `data/changelog.ts` + `web/package.json` (**0.30.0**).
+- **Guardrail intacto:** mudanças só de apresentação/carregamento; domínio/backend/`buildSquadPlan`/lock intocados; 396 testes verdes.
+
+---
+
 ## Fase 10a 26/06 — Toasts unificados + feedback (parte 1 de 2) ✅ — v0.29.0
 
 > Fase 10 do roadmap (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`), **dividida em 10a (chrome+toasts, v0.29.0)** e **10b (auditoria a11y/perf/resp., v0.30.0)**. Frontend puro.

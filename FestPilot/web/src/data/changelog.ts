@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.29.0";
+export const APP_VERSION = "0.30.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.30.0",
+    date: "2026-06-26",
+    title: "Faster start + gentler on the eyes",
+    icon: "tune",
+    whatsNew: [
+      "If you've turned on 'reduce motion', FestPilot now holds still everywhere — even the looping bits like loading shimmers and the live 'pulse' on your squad's locations.",
+      "The app starts a little leaner: the behind-the-scenes admin tools no longer load for everyday use.",
+      "A quick polish pass on accessibility and small-screen layouts, with no change to how anything works.",
+    ],
+    howToTest: [
+      "Turn on 'reduce motion' in your phone settings, then open the app — loading placeholders and live pulses stay static instead of animating.",
+      "Everything else looks and behaves exactly as before — this release is about feel, speed and accessibility, not new screens.",
+    ],
+  },
   {
     version: "0.29.0",
     date: "2026-06-26",
