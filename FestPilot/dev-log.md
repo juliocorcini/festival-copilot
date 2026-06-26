@@ -6,6 +6,23 @@
 
 ---
 
+## Rodada de melhoria R10 26/06 — rede de regressão: testes para a lógica pura ainda descoberta (planSlot, format, ulid) ✅ — sem bump (só-de-teste)
+
+> Décima rodada. **Conselho (O QUE/SE — `/assess`):** com o último flaky fechado (R9) e o teto de polish user-facing atingido, a melhoria de maior valor **que não exige decisão de produto** é reforçar a rede que protege o requisito-mãe do Julio ("não fazer regressões"). Auditei domínio+lib (`Glob` de `*.ts` × `*.test.ts`) e achei lacunas **reais** (não enchi linguiça): **`domain/planSlot.ts`** (o "intervalo efetivo" usado em TODO check de overlap/clash, Now & Next, edição de plano e filtro de squad) e **`lib/format.ts`** (cor de palco + hora/dia no fuso do festival, puro e usado em todo lugar) estavam **sem teste** — e ambas as docstrings de `planSlot.ts`/`types.ts` **afirmavam** "exhaustively unit-tested" (mismatch doc×realidade). `lib/ulid.ts` (ID de auth, 26-char base32) também sem teste. Lente dominante = **Risk** (cobrir a matemática de borda corta risco de regressão silenciosa). Hooks `useGeo`/`usePinch`/`usePhotoPrefetch` ficam de fora por design (boundary/React; a regra manda testar lógica pura e mockar só boundaries).
+> **Conselho (COMO):** seguir o padrão do repo (`// @vitest-environment node` p/ puro, `describe`/`it`, asserts numéricos concretos com a conta no comentário). **planSlot:** fronteiras estritas de `effectiveStart`/`effectiveEnd` (== início/fim **não** aplicam; dentro aplica) + `effectiveInterval` compondo as duas escolhas, incluindo o caso de janela invertida (each bound validado contra o **agendado**, não um contra o outro — pinado p/ tornar qualquer clamp futuro uma decisão consciente). **format:** offset de fuso real (`20:30Z` → UTC `20:30`, Brussels `22:30`, São Paulo `17:30`), rollover de dia na fronteira do fuso, 24h, e `stageColorRgb("MAINSTAGE") === "255, 90, 54"` (#ff5a36). **ulid:** base32 big-endian verificado na conta (`ulid(31)` → `…Z`, `ulid(32)` → `…10`), prefixo monotônico/sortable, sufixo aleatório difere no mesmo instante.
+> **Decisão de risco (Critic):** **só-de-teste** → **sem** bump/changelog/redeploy (igual R7/R9; não pode cache-bustar o SW). **Zero** arquivo de produção tocado (3 `*.test.ts` novos e nada mais). Nenhum teste/assert removido.
+> **Verificação:** `tsc --noEmit` limpo · **unit 439 verde** (53 arquivos; +28: planSlot **11**, format **13**, ulid **4**; era 411) · sem mudança em build/produção. `ulid.test.ts` roda no jsdom padrão (tem `crypto.getRandomValues`); os de fuso usam `Intl` com `timeZone` explícito (determinístico).
+
+### Current State (this batch)
+- **Sem mudança de produto/produção** — produção segue em **v0.31.6** (`d276f936`). Só a rede de regressão ficou mais densa: 3 unidades puras críticas que estavam descobertas agora têm testes matemáticos.
+- **Próximo:** sem flaky e com a lógica pura crítica coberta. O maior valor restante é **produto** (ex.: busca/filtros no lineup — feature nova, exige decisão no brain). Bom ponto de revisão do Julio.
+
+### Escopo (arquivos)
+- **Novos (web, só-de-teste):** `src/domain/planSlot.test.ts`, `src/lib/format.test.ts`, `src/lib/ulid.test.ts`.
+- **Guardrail intacto:** zero produção/domínio/UI; nenhum assert/teste removido; sem bump (só-de-teste). As docstrings que diziam "exhaustively unit-tested" agora são verdade para `planSlot`.
+
+---
+
 ## Rodada de melhoria R9 26/06 — e2e determinístico: SW-settle no `goto` + espera do resolver no myplan (mata o último flaky) ✅ — sem bump (só-de-teste)
 
 > Nona rodada. **Conselho (O QUE/SE — `/assess`):** fecha o item deferido em R8.A (último flaky, ~1 por suíte, recuperado por `retries:1`). O conselho do R8 deferiu por crer que "o único fix limpo bloqueia o SW e sacrifica a fidelidade as-shipped". **Fato re-verificado:** existe um fix **sem bloquear** o SW — esperar ele **assentar** após o `goto` (nomeado nas notas de R7/R8.A). Lente dominante = **Risk** (o ponto inteiro do R8 era fidelidade; este fix a preserva). Lean resistido: a tentação de só baixar flaky a qualquer custo (bloquear/desregistrar o SW) — proibida.
