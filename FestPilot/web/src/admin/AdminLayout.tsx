@@ -52,7 +52,7 @@ export function AdminLayout(): JSX.Element {
           </button>
         </div>
       </aside>
-      <main className="admin-main">
+      <main className="admin-main" id="main" tabIndex={-1}>
         <Suspense fallback={<div className="admin-state">Loading…</div>}>
           <Outlet />
         </Suspense>

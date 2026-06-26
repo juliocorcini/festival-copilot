@@ -9,7 +9,7 @@ export function StackLayout(): JSX.Element {
   const { pathname } = useLocation();
   return (
     <div className="app">
-      <main className="scr route-fade" key={pathname}>
+      <main className="scr route-fade" id="main" tabIndex={-1} key={pathname}>
         <ErrorBoundary>
           <Suspense fallback={<RouteFallback />}>
             <Outlet />

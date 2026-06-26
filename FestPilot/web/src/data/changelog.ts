@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.4";
+export const APP_VERSION = "0.31.5";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,19 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.31.5",
+    date: "2026-06-26",
+    title: "Smoother with a screen reader",
+    icon: "accessibility_new",
+    whatsNew: [
+      "FestPilot now announces each screen's name as you move between tabs, so people using a screen reader (VoiceOver/TalkBack) always know where they are.",
+      "Keyboard users get a 'Skip to content' shortcut, and your browser tab and history now show the screen name (e.g. 'Timetable · FestPilot').",
+    ],
+    howToTest: [
+      "Turn on VoiceOver (iOS) or TalkBack (Android) and switch tabs — each screen's name is spoken. On a computer, press Tab right after the page loads and a 'Skip to content' button appears; notice the browser tab title also changes per screen.",
+    ],
+  },
   {
     version: "0.31.4",
     date: "2026-06-26",

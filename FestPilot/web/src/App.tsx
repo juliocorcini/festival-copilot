@@ -2,6 +2,8 @@ import { lazy, type ComponentType } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./app/AppLayout";
 import { UpdateBanner } from "./app/UpdateBanner";
+import { RouteAnnouncer } from "./app/RouteAnnouncer";
+import { SkipLink } from "./app/SkipLink";
 import { Toaster } from "./ui/Toaster";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
@@ -63,6 +65,8 @@ const AdminMapEditorScreen = lazy(() => named(import("./admin/AdminMapEditorScre
 export function App(): JSX.Element {
   return (
     <BrowserRouter>
+      <SkipLink />
+      <RouteAnnouncer />
       <UpdateBanner />
       <Toaster />
       <Routes>

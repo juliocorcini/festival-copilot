@@ -6,6 +6,26 @@
 
 ---
 
+## Rodada de melhoria R6 26/06 — A11y de navegação SPA: route announcer + skip-link + título por rota ✅ — v0.31.5
+
+> Sexta rodada. **Conselho (O QUE/SE):** item herdado da synthesis da R5. Evidência (verificada): `rg` confirma **zero** skip-to-content, **zero** announcer global e **zero** `document.title` por rota — a Fase 10b auditou labels/reduced-motion mas **não** navegação. Aditivo, sem remover nada; AT (VoiceOver/TalkBack) é uso real em PWA; título por rota beneficia todos (aba/histórico).
+> **Conselho (COMO):** peças isoladas — helper **puro** `lib/routeTitle.ts` (`routeName`/`routeTitle`, data-driven, ordenado specific→generic) + 2 componentes burros (`RouteAnnouncer`, `SkipLink`) montados em `App` dentro do Router. `RouteAnnouncer` mantém `document.title` e fala o nome da tela num `<p class="sr-only" role=status aria-live=polite aria-atomic>` — **pula o 1º paint** (não duplica com o load do browser). `SkipLink` = `<a href="#main">` off-screen-até-`:focus`. Alvo `#main` + `tabIndex={-1}` nos `<main>` já existentes (App/Stack/Admin) — 1 atributo, sem novo DOM. **Decisão de risco (Critic):** **não** auto-mover foco a cada navegação (evita roubar foco/atritar com o route-fade); skip-link + announcer cobrem sem isso. `.sr-only` robusto (clip+1px, **não** `display:none`, senão o AT silencia).
+> **Happy path = invisível:** só +1 `<p>` sr-only e +1 `<a>` off-screen; zero impacto visual/layout/route-fade/dock/Artist Sheet. **Nada removido; nenhuma feature mudou.**
+> **Verificação:** `tsc` limpo · **web tests 407 verde** (50 arquivos; novo `routeTitle.test.ts`, 6 casos cobrindo as abas, stack, sub-flows de squad por sufixo, admin e fallback) · `vite build` verde (main 365 kB, sem aviso de 500 kB) · **e2e 30/30**.
+> **Bônus (commit separado b0f7183):** de-flake do `timetable.spec.js` — o FREEZE de animação saiu de `addStyleTag` pós-`goto` (que corria com o reload do SW → "execution context destroyed", ~10%/goto, 1/10 em isolamento) para `addInitScript` (presente desde o 1º init, sobrevive a reload). Estável: **16/16** com `--repeat-each=8`. **Dívida sinalizada:** ~40 outros `addStyleTag` pós-`goto` no e2e têm a mesma raiz → rodada dedicada de hardening de teste.
+
+### Current State (this batch)
+- **Pronto p/ deploy (v0.31.5):** leitor de tela anuncia a tela ao trocar de aba; "Skip to content" no teclado; título do navegador por tela. Aditivo.
+- **Deploy pendente (sessão Cloudflare):** só web (Pages). Sem backend.
+- **Próximo:** rodada a definir pelo conselho (6 rodadas entregues; bom ponto p/ o Julio revisar). Candidata viva: hardening dos ~40 `addStyleTag` do e2e (dívida pré-existente).
+
+### Escopo (arquivos)
+- **Novos (web):** `lib/routeTitle.ts` (puro) + `lib/routeTitle.test.ts`, `app/RouteAnnouncer.tsx`, `app/SkipLink.tsx`.
+- **Editados (web):** `App.tsx` (SkipLink + RouteAnnouncer), `app/AppLayout.tsx` + `app/StackLayout.tsx` + `admin/AdminLayout.tsx` (`#main` + `tabIndex`), `styles.css` (`.sr-only`/`.skip-link`/`main:focus`), `data/changelog.ts` + `web/package.json` (**0.31.5**). De-flake em `e2e/timetable.spec.js` foi commit à parte (b0f7183).
+- **Guardrail intacto:** sem auto-foco; reusa os `<main>` existentes; happy path +2 nós ocultos; nada de domínio/backend.
+
+---
+
 ## Rodada de melhoria R5 26/06 — RESILIÊNCIA: error boundary (fim da tela branca em chunk lazy que falha) ✅ — v0.31.4
 
 > Quinta rodada. **Conselho (O QUE/SE):** triagem honesta de candidatos — (A) error boundary p/ falha de chunk lazy, (B) foco/skip-link a11y na navegação SPA, (C) varredura Lighthouse, (D) poda de CSS morto. Vencedor por **impacto × risco × evidência: (A)**. Evidência: `rg` confirma **zero** ErrorBoundary no app; R1/R4 introduziram `import()` dinâmico em ~40 rotas; `<Suspense>` cobre o *pending* mas **relança** uma lazy *rejeitada* → sem boundary acima, a árvore desmonta em **tela branca**. Num festival (sinal ruim no campo) isso = "o app morreu". Fecha um risco que o **próprio** code-split (R1/R4) abriu. Red team ("o SW já cacheia") refutado: o SW só serve o que já baixou — um cluster nunca aberto (Map/Settings) sob sinal ruim na 1ª visita falha.

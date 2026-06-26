@@ -39,7 +39,7 @@ export function AppLayout(): JSX.Element {
   return (
     <div className="app">
       <ArtistSheetProvider lineup={lineup}>
-        <main className="scr route-fade" key={pathname}>
+        <main className="scr route-fade" id="main" tabIndex={-1} key={pathname}>
           <ErrorBoundary>
             <Suspense fallback={<RouteFallback />}>
               <Outlet />
