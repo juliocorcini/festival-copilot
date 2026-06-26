@@ -60,6 +60,9 @@ const EN = {
   "appearance.hintLine": "{hint} · currently showing the {palette} map.",
   "appearance.language": "Language",
   "appearance.languageNote": "English is the default. Português switches the app's navigation and settings.",
+  "haptics.title": "Haptic feedback",
+  "haptics.sub": "A subtle buzz on taps, favorites and key moments.",
+  "haptics.unsupported": "Your device or browser doesn't support vibration.",
 
   // Offline & data screen
   "offline.connection": "Connection",
@@ -152,6 +155,9 @@ const PT: Partial<Record<MessageKey, string>> = {
   "appearance.hintLine": "{hint} · mostrando o mapa de {palette} agora.",
   "appearance.language": "Idioma",
   "appearance.languageNote": "O inglês é o padrão. Português muda a navegação e os ajustes do app.",
+  "haptics.title": "Vibração (haptics)",
+  "haptics.sub": "Um leve toque ao tocar, favoritar e em momentos-chave.",
+  "haptics.unsupported": "Seu aparelho ou navegador não suporta vibração.",
 
   "offline.connection": "Conexão",
   "offline.online": "Online",

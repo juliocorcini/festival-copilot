@@ -20,6 +20,7 @@ import {
 } from "../../domain/resolver";
 import type { PlannableSet, PlanSlot } from "../../domain/types";
 import { daysForWeekends, initials } from "../../lib/festival";
+import { haptic } from "../../lib/haptics";
 import { dayLabel, stageColor, timeInZone } from "../../lib/format";
 import { EmptyState, ErrorState, LoadingState } from "../../ui/states";
 import { SharePlanSheet } from "../share/SharePlanSheet";
@@ -171,6 +172,7 @@ export function LockInScreen(): JSX.Element {
     setHistory((h) => [...h, { snapshot, picked: selected.label, gaveUp: dropped }]);
     setGiveUp({ picked: selected.label, gaveUp: dropped });
     setSnapshot(next);
+    haptic("success"); // a resolved clash is a real "done" moment
   };
 
   const addNearby = (set: PlannableSet): void => {

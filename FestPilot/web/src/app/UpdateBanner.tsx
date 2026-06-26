@@ -27,7 +27,7 @@ export function UpdateBanner(): JSX.Element | null {
     <div className="update-banner" role="status" aria-live="polite">
       <span className="ms update-banner-icon" aria-hidden="true">rocket_launch</span>
       <span className="update-banner-text">{t("update.bannerTitle")}</span>
-      <button className="update-banner-btn" disabled={updating} onClick={update}>
+      <button className="update-banner-btn" data-haptic="medium" disabled={updating} onClick={update}>
         {updating ? t("update.forcing") : t("update.now")}
       </button>
       <button className="update-banner-x" aria-label={t("update.later")} onClick={() => setDismissed(true)}>

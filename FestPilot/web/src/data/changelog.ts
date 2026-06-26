@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.19.0";
+export const APP_VERSION = "0.20.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.20.0",
+    date: "2026-06-26",
+    title: "Feels like a real app — haptics",
+    icon: "vibration",
+    whatsNew: [
+      "FestPilot now answers your touch: a subtle buzz confirms taps, a little 'pick' when you favorite an artist, a satisfying pulse when you lock in a clash, and a firmer one when you send an 'I'm lost' alert.",
+      "On by default, easy to turn off: Settings → Appearance → Haptic feedback (it gives a quick buzz so you feel what you chose).",
+      "Honest about limits: iPhones don't give web apps vibration, so it stays silent there — every action still has its visual cue.",
+    ],
+    howToTest: [
+      "On Android / the installed app: favorite an artist, lock in a clash, tap around — you feel short, distinct buzzes; the 'I'm lost' broadcast gives a stronger one.",
+      "Settings → Appearance → Haptic feedback: turn it off → taps go silent; turn it on → you get a confirmation buzz.",
+      "On iPhone the toggle shows an honest 'not supported' note instead of pretending.",
+    ],
+  },
   {
     version: "0.19.0",
     date: "2026-06-26",

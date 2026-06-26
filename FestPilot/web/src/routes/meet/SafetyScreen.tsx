@@ -146,7 +146,7 @@ export function SafetyScreen(): JSX.Element {
           </div>
         </div>
 
-        <button className="safety-action primary" onClick={triggerSafety} disabled={!fix || busy}>
+        <button className="safety-action primary" data-haptic="warning" onClick={triggerSafety} disabled={!fix || busy}>
           <span className="safety-action-icon">
             <span className="ms">share_location</span>
           </span>

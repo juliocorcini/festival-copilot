@@ -249,6 +249,7 @@ export function TimetableScreen(): JSX.Element {
                           </div>
                           <button
                             className="heart"
+                            data-haptic="select"
                             aria-label={set.isFav ? "Remove favorite" : "Add favorite"}
                             onClick={() => favorites.toggle(set.actKey)}
                           >

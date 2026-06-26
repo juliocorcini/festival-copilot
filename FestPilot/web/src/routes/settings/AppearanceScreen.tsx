@@ -1,5 +1,6 @@
 import { StackHeader } from "../../app/StackHeader";
-import { useAppearance, useLanguage, type AppearanceMode, type Language } from "../../app/settings";
+import { useAppearance, useHaptics, useLanguage, type AppearanceMode, type Language } from "../../app/settings";
+import { canVibrate, haptic } from "../../lib/haptics";
 import { useT, type MessageKey } from "../../i18n";
 
 const APPEARANCE: { id: AppearanceMode; label: MessageKey; hint: MessageKey }[] = [
@@ -17,7 +18,14 @@ export function AppearanceScreen(): JSX.Element {
   const t = useT();
   const { mode, setMode, palette } = useAppearance();
   const { language, setLanguage } = useLanguage();
+  const { haptics, setHaptics } = useHaptics();
   const activeHint = APPEARANCE.find((o) => o.id === mode)?.hint ?? "appearance.autoHint";
+
+  const toggleHaptics = (): void => {
+    const next = !haptics;
+    setHaptics(next);
+    if (next) haptic("success"); // let the user feel what they just turned on
+  };
 
   return (
     <>
@@ -60,7 +68,35 @@ export function AppearanceScreen(): JSX.Element {
             {t("appearance.languageNote")}
           </p>
         </section>
+
+        <section className="glass" style={{ overflow: "hidden" }}>
+          <button
+            className="row"
+            style={rowButton}
+            role="switch"
+            aria-checked={haptics}
+            data-haptic="off"
+            onClick={toggleHaptics}
+          >
+            <span className="ms">vibration</span>
+            <span className="row-main">
+              <span className="row-title">{t("haptics.title")}</span>
+              <span className="row-sub">{canVibrate() ? t("haptics.sub") : t("haptics.unsupported")}</span>
+            </span>
+            <span className={`toggle${haptics ? " on" : ""}`} aria-hidden="true" />
+          </button>
+        </section>
       </div>
     </>
   );
 }
+
+const rowButton: React.CSSProperties = {
+  appearance: "none",
+  background: "transparent",
+  border: "none",
+  width: "100%",
+  textAlign: "left",
+  cursor: "pointer",
+  color: "inherit",
+};

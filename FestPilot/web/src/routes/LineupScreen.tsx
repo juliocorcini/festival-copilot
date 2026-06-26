@@ -161,6 +161,7 @@ export function LineupScreen(): JSX.Element {
         </button>
         <button
           className="gc-heart"
+          data-haptic="select"
           aria-pressed={on}
           aria-label={on ? `Remove ${act.label} from favorites` : `Add ${act.label} to favorites`}
           onClick={() => favorites.toggle(act.actKey)}

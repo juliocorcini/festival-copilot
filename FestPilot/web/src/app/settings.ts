@@ -9,7 +9,12 @@ export type AppearanceMode = "auto" | "day" | "night";
 export type Palette = "day" | "night";
 export type Language = "en" | "pt";
 
-const KEYS = { appearance: "fp.appearance", language: "fp.language", autoShare: "fp.autoShareOnJoin" } as const;
+const KEYS = {
+  appearance: "fp.appearance",
+  language: "fp.language",
+  autoShare: "fp.autoShareOnJoin",
+  haptics: "fp.haptics",
+} as const;
 const SETTING_EVENT = "fp:setting";
 
 function read(key: string, fallback: string): string {
@@ -84,4 +89,15 @@ export function useAutoShareOnJoin(): { autoShare: boolean; setAutoShare: (on: b
 /** Non-React read of the auto-share-on-join preference (the join handler). Default ON (DEC-054). */
 export function autoShareOnJoinEnabled(): boolean {
   return read(KEYS.autoShare, "1") !== "0";
+}
+
+/** Haptic feedback toggle (R10.x native feel) — default ON, opt-out in Settings → Appearance. */
+export function useHaptics(): { haptics: boolean; setHaptics: (on: boolean) => void } {
+  const [value, set] = useSetting(KEYS.haptics, "1");
+  return { haptics: value !== "0", setHaptics: (on) => set(on ? "1" : "0") };
+}
+
+/** Non-React read of the haptics preference (the vibration layer gates every pulse on this). */
+export function hapticsEnabled(): boolean {
+  return read(KEYS.haptics, "1") !== "0";
 }
