@@ -3,7 +3,7 @@
  * (DEC-041). Favoriting is by act/person (DEC-026/028) and an act shown once even across days.
  */
 import { useCallback, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { PerformanceDto } from "../../data/types";
 import { api } from "../../data/api";
 import { useFavorites, useOnboarding, useProfile } from "../../data/localStore";
@@ -12,6 +12,7 @@ import { useLineup } from "../../data/useLineup";
 import { isValidEmail } from "../../lib/validate";
 import { cardDragStyle, swipeRelease, type SwipeOutcome } from "../../domain/swipe";
 import { haptic } from "../../lib/haptics";
+import { resolveOnboardingNext } from "../../app/onboardingRedirect";
 import { ArtistPhoto } from "../../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../../lib/photo";
 import { usePhotoPrefetch } from "../../lib/usePhotoPrefetch";
@@ -28,6 +29,7 @@ const TOTAL_STEPS = 4;
 export function OnboardingScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const onboarding = useOnboarding();
   const { profile, save: saveProfile } = useProfile();
   const identity = useIdentity();
@@ -129,7 +131,9 @@ export function OnboardingScreen(): JSX.Element {
       completed: true,
       seenActKeys,
     });
-    navigate("/", { replace: true });
+    // Resume a deep link captured before onboarding (e.g. a squad invite), auto-joining when it's an
+    // invite path; otherwise land on home (DEC-041).
+    navigate(resolveOnboardingNext(searchParams.get("next")), { replace: true });
   };
 
   const next = (): void => setStep((s) => Math.min(s + 1, TOTAL_STEPS));

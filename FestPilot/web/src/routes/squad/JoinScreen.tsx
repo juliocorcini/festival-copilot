@@ -7,8 +7,8 @@
  * `next` so they land back on the preview. QR *scanning* (camera) is a later add; the link is the
  * primary path and pasting a code covers the manual case.
  */
-import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { autoShareOnJoinEnabled } from "../../app/settings";
 import { api, ApiError } from "../../data/api";
@@ -66,11 +66,15 @@ function JoinEntry(): JSX.Element {
 
 function JoinPreview({ token }: { token: string }): JSX.Element {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Set by onboarding when the user arrived via an invite link: join without a second tap.
+  const autoJoin = searchParams.get("auto") === "1";
   const { user, hasProfile, ensure } = useIdentity();
   const [preview, setPreview] = useState<InvitePreviewDto | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "notfound" | "error">("loading");
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const autoTried = useRef(false);
 
   useEffect(() => {
     if (!user) void ensure();
@@ -97,14 +101,7 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
     };
   }, [token]);
 
-  // Guests must sign in + set a profile before joining (#23.6 caption). Carry the join path back.
-  if (!hasProfile) {
-    return <Navigate to={`/squad/signin?next=${encodeURIComponent(`/squad/join/${token}`)}`} replace />;
-  }
-
-  if (preview?.alreadyMember) return <Navigate to="/squad" replace />;
-
-  const join = async (): Promise<void> => {
+  const join = useCallback(async (): Promise<void> => {
     setJoining(true);
     setJoinError(null);
     try {
@@ -120,7 +117,24 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
           : "Could not join. Check your connection and try again."
       );
     }
-  };
+  }, [token, navigate]);
+
+  // Auto-join straight from an invite link (the user already opted in by opening it): once the preview
+  // is ready and they have a profile, join once without waiting for a tap. Falls back to the manual
+  // button if anything's off (no profile yet, already a member, error).
+  useEffect(() => {
+    if (autoJoin && hasProfile && status === "ready" && preview && !preview.alreadyMember && !autoTried.current) {
+      autoTried.current = true;
+      void join();
+    }
+  }, [autoJoin, hasProfile, status, preview, join]);
+
+  // Guests must sign in + set a profile before joining (#23.6 caption). Carry the join path back.
+  if (!hasProfile) {
+    return <Navigate to={`/squad/signin?next=${encodeURIComponent(`/squad/join/${token}`)}`} replace />;
+  }
+
+  if (preview?.alreadyMember) return <Navigate to="/squad" replace />;
 
   const youName = user?.displayName ?? "you";
 

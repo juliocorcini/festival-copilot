@@ -6,6 +6,26 @@
 
 ---
 
+## Feedback patch 26/06 — Link de convite atravessa o onboarding → auto-join no squad ✅ DEPLOYED — v0.25.2
+
+> Item mais pedido: quem clica num link de convite (`/j/:token`) sem ter o app **perdia o contexto** — o `RequireOnboarding` redirecionava pro `/onboarding` descartando o token, e o onboarding terminava em `/` (home). A pessoa nunca entrava no squad.
+> **Fix (3 pontos):**
+> 1. `RequireOnboarding` agora **carrega o destino tentado** como `?next=<path>` (com guarda anti open-redirect).
+> 2. `OnboardingScreen.finish()` **honra o `next`** via `resolveOnboardingNext()` — e para rotas de convite anexa `auto=1`.
+> 3. `JoinPreview` **auto-entra** quando `auto=1` + perfil pronto + preview ok (uma vez, via ref). Fallbacks intactos: sem perfil → signin (carrega o `next`); já membro → `/squad`; offline → botão Join manual. Usuário já onboarded vê o preview normal (sem auto), preservando o consentimento.
+> Helpers puros isolados em `app/onboardingRedirect.ts` (`safeNext`/`withAutoJoin`/`resolveOnboardingNext`).
+> `tsc` limpo · **354 testes** (+8 onboardingRedirect: same-origin, `//host`/absolute/js: rejeitados, flag de invite, merge de query, fallback home) · `vite build` ok (`index-lWE45tTD.js`) · deploy `--branch=master` → `festpilot.pages.dev`.
+
+### Current State (this batch)
+- **No ar (v0.25.2):** link de convite → onboarding → entra direto no squad. Link clicado por quem já tem o app continua mostrando o preview "Fulano convidou você".
+- **Fluxo:** `/j/TOKEN` (deslogado/novo) → `RequireOnboarding` → `/onboarding?next=%2Fj%2FTOKEN` → finish → `/j/TOKEN?auto=1` → `JoinPreview` auto-join → share/`squad`.
+
+### Escopo (arquivos)
+- **Novos:** `app/onboardingRedirect.ts` + `app/onboardingRedirect.test.ts`.
+- **Editados:** `app/RequireOnboarding.tsx` (useLocation + next), `routes/onboarding/OnboardingScreen.tsx` (useSearchParams + resolveOnboardingNext no finish), `routes/squad/JoinScreen.tsx` (auto-join: useSearchParams/useCallback/useRef), `data/changelog.ts` + `web/package.json` (**0.25.2**).
+
+---
+
 ## Feedback patch 26/06 — Onboarding: swipe por flick + haptics distintos + nome no grid + Undo reposicionado ✅ DEPLOYED — v0.25.1
 
 > Primeiro patch da cadência incremental (0.0.1 por feature/milestone, sem esperar fechar a fase). 4 itens de feedback do onboarding:

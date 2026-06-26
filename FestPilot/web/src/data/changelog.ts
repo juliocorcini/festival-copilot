@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.25.1";
+export const APP_VERSION = "0.25.2";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.25.2",
+    date: "2026-06-26",
+    title: "Invite links just work",
+    icon: "group_add",
+    whatsNew: [
+      "Tap a friend's squad invite link when you're new to FestPilot, and after the quick setup you're dropped right into their squad — no hunting for the link again, no code to type.",
+      "If you're already set up, the link still shows the friendly 'who invited you' preview before you join.",
+    ],
+    howToTest: [
+      "On a fresh phone (or after clearing the app), open a squad invite link (festpilot.app/j/CODE). You'll go through onboarding (name → festival → days → picks), and on finishing you land in that squad automatically.",
+      "Open the same link when you're already onboarded — you still see the invite preview with Join / Not now, exactly as before.",
+      "Open an invite link while offline mid-setup: it safely falls back to the preview with a single Join button instead of failing silently.",
+    ],
+  },
   {
     version: "0.25.1",
     date: "2026-06-26",
