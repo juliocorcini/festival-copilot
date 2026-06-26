@@ -6,6 +6,23 @@
 
 ---
 
+## Deploy de produção 26/06 — tudo das Fases 5–10 + R1–R6 no ar ✅ — v0.31.5
+
+> **Por quê:** o último deploy parou na Fase 7 (D1 remoto estava em 0014; Pages servia bundle antigo) — por isso o Julio não via as novidades no celular. Este deploy publica **tudo** que acumulou: Fases 8 (eventos de grupo), 9 (home pessoal+squad), 10a/10b (toasts+auditoria) e as 6 rodadas de melhoria (R1 code-split, R2 drag-to-dismiss, R3 a11y de toque, R4 prefetch idle, R5 ErrorBoundary, R6 a11y de navegação).
+> **Auth:** wrangler não-interativo via `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` do `.dev.vars` (conta Juliojcmedeiros@gmail.com).
+> **Web (Pages):** rebuild fresco do `web/dist` (embute **v0.31.5** + changelog R6 → bundle `index-B9sAHNKX.js`, main 366 kB / gzip 118 kB) → `wrangler pages deploy ../web/dist --project-name=festpilot --branch=master` → **https://festpilot.pages.dev** (55 arquivos novos).
+> **D1:** `wrangler d1 migrations apply festpilot --remote` aplicou a única pendente **`0015_group_event.sql`** (aditiva; 0001–0014 já remotas) — ✅.
+> **Worker (API):** `wrangler deploy` → **https://festpilot.trippilot.workers.dev** (Version `7ca6d861`), bindings OK: GROUP_ROOM (DO), DB `festpilot` (D1), MEDIA `festpilot-media` (R2), cron 0 */6.
+> **Smoke de produção (verificado):** `GET /api/health` → `{ok:true,service:"festpilot-api"}` · `GET /api/festivals` → Tomorrowland Belgium 2026 (`withTimetable:true`) · web `HTTP 200` servindo `index-B9sAHNKX.js` (o bundle recém-buildado). **Tudo live e testável no celular.**
+> **Sem deploy de DO novo:** Fase 8 guarda `group_event` no D1 (migration 0015), não no DO — a classe `GroupRoom` (tag v1) já estava migrada de deploys anteriores; `wrangler deploy` só atualizou o código do worker.
+
+### Current State (this batch)
+- **No ar:** `festpilot.pages.dev` (web v0.31.5) + `festpilot.trippilot.workers.dev` (worker `7ca6d861`) + D1 em 0015. Todas as notas "Deploy pendente" das rodadas abaixo estão **superadas** por esta entrada.
+- **Como testar no celular:** abrir **https://festpilot.pages.dev** (se o app já estava instalado/PWA, o banner dourado "New version available" aparece sozinho; senão, um reload pega a v0.31.5).
+- **Próximo:** rodada a definir pelo conselho (6 entregues; bom ponto de revisão). Candidata viva: hardening dos ~40 `addStyleTag` pós-`goto` no e2e (dívida de teste pré-existente).
+
+---
+
 ## Rodada de melhoria R6 26/06 — A11y de navegação SPA: route announcer + skip-link + título por rota ✅ — v0.31.5
 
 > Sexta rodada. **Conselho (O QUE/SE):** item herdado da synthesis da R5. Evidência (verificada): `rg` confirma **zero** skip-to-content, **zero** announcer global e **zero** `document.title` por rota — a Fase 10b auditou labels/reduced-motion mas **não** navegação. Aditivo, sem remover nada; AT (VoiceOver/TalkBack) é uso real em PWA; título por rota beneficia todos (aba/histórico).
