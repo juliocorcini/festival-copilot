@@ -6,6 +6,26 @@
 
 ---
 
+## PWA auto-updates 26/06 — descoberta automática + banner + força ✅ DEPLOYED — v0.19.0
+
+> O app instalado passa a **procurar novas versões sozinho** e a oferecer a atualização sem o usuário ir nas configurações.
+> Loop orquestrado inline, sem subagentes: `tsc --noEmit` limpo · `npm run test` **297** 0 falhas · `vite build` ok (~542 KiB / 163 KiB gz) ·
+> screenshot headless do banner + botão (preview `:4180`) · commit `b4b6576` · deploy `--branch=master` → `festpilot.pages.dev` (bundle `index-BEC46TVO.js`
+> verificado em produção: contém `0.19.0` + `fp:update-ready` + "New version available"; `sw.js?v=0.19.0` → 200).
+
+### Current State (this batch)
+- **Auto-update no ar (v0.19.0).** Antes só havia "Check for updates" manual (Settings → Offline); agora a descoberta é **proativa**: re-checa no launch, ao **voltar o foco** (`visibilitychange`), ao **reconectar** (`online`) e num **intervalo** (30 min). Dois gatilhos acendem o banner: worker **installed & waiting** OU o `index.html` publicado **não referenciar mais o bundle** desta aba (cobre sessões longas, onde a URL `?v=` do worker não muda).
+- **Banner global proativo** (`app/UpdateBanner.tsx`, montado no `App`): barra dourada "New version available" + **Update** (uma tap) + **Dismiss**. Fica acima do shell (`z-index:90`) e **abaixo** do artist sheet (200).
+- **Botão "Force update"** (Settings → Offline): `forceUpdate()` ativa o worker em espera (reload via `controllerchange`) **ou** faz reload de rede — garante o build mais novo mesmo quando o worker ainda não sinalizou.
+- **Tests:** web **297** unit (39 files; **+4** em `app/registerSW.test.ts` p/ `forceUpdate` e o sinal `onUpdateReady`/`hasWaitingUpdate`) · `tsc` limpo. Server não tocado.
+
+### Escopo (arquivos)
+- **Novos:** `app/UpdateBanner.tsx`.
+- **Editados:** `app/registerSW.ts` (`onUpdateReady`/`hasWaitingUpdate`/`forceUpdate` + `wireAutoUpdate` + `deployedDiffers`), `app/registerSW.test.ts` (+4), `App.tsx` (monta o banner), `routes/settings/OfflineScreen.tsx` (força), `i18n/index.ts` (EN+PT `update.bannerTitle/now/later/force/forcing`), `styles.css` (`.update-banner*`, `.link-btn`), `data/changelog.ts` + `web/package.json` (**0.19.0**).
+- **Nota:** este commit (`b4b6576`) consolidou também o lote de feedback (v0.16–0.17) e o redesign do Squad (v0.18.0), que estavam não-commitados desde o v0.15.0.
+
+---
+
 ## Squad redesign 26/06 — home content-first (Fases A+B+C) ✅ DEPLOYED — v0.18.0
 
 > Redesign completo do Squad home seguindo `brain/wireframes/directions/20-amber-squad.html`, decidido por **conselho inline**
