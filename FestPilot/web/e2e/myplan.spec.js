@@ -24,7 +24,16 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
       if (await hearts.count()) await hearts.first().click();
     }
 
-    await page.locator(".tt-lk").click();    let guard = 0;
+    await page.locator(".tt-lk").click();
+    // Wait for the resolver to actually render before polling it. The lock-in screen shows a
+    // LoadingState until the lineup is in hand (LockInScreen.tsx), so checking `.lk-clash-title`
+    // immediately can read 0 and exit the loop before any clash appears — then the celebration
+    // never comes. Same guard the stable lockin.spec uses.
+    await Promise.race([
+      page.locator(".lk-clash-title").waitFor({ state: "visible", timeout: 20_000 }),
+      page.locator(".celebrate-title").waitFor({ state: "visible", timeout: 20_000 }),
+    ]);
+    let guard = 0;
     while ((await page.locator(".lk-clash-title").count()) > 0 && guard++ < 40) {
       await page.locator(".lk-lock").click();
       await page.waitForTimeout(80);

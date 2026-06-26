@@ -6,6 +6,25 @@
 
 ---
 
+## Rodada de melhoria R9 26/06 — e2e determinístico: SW-settle no `goto` + espera do resolver no myplan (mata o último flaky) ✅ — sem bump (só-de-teste)
+
+> Nona rodada. **Conselho (O QUE/SE — `/assess`):** fecha o item deferido em R8.A (último flaky, ~1 por suíte, recuperado por `retries:1`). O conselho do R8 deferiu por crer que "o único fix limpo bloqueia o SW e sacrifica a fidelidade as-shipped". **Fato re-verificado:** existe um fix **sem bloquear** o SW — esperar ele **assentar** após o `goto` (nomeado nas notas de R7/R8.A). Lente dominante = **Risk** (o ponto inteiro do R8 era fidelidade; este fix a preserva). Lean resistido: a tentação de só baixar flaky a qualquer custo (bloquear/desregistrar o SW) — proibida.
+> **Conselho (COMO):** investiguei a raiz e achei **duas** causas distintas, não uma:
+> - **(1) reload do SW (onboarding):** no 1º acesso a página carrega sem controller; `registerSW.ts` registra no `load`, `sw.js` faz `clients.claim()` no activate → `controllerchange` → `location.reload()` ~centenas de ms depois, em cima do `fill`/`click`. **Fix:** a fixture compartilhada do R7 passa a **envolver `page.goto`** e, após navegar, espera `navigator.serviceWorker.controller != null` (claim+reload assentados) — `waitForFunction` é resiliente a navegação, então sobrevive ao reload (ao contrário do `addStyleTag` one-shot). **Não** bloqueia/desregistra o SW: ele instala/ativa/claim/reload exatamente como em produção (fidelidade offline/update intacta); só sincronizamos o teste ao estado estável. Best-effort com timeout 15s + catch → nunca pior que hoje.
+> - **(2) corrida de loading no lock-in (myplan):** comparando com o `lockin.spec` (estável), o myplan checava `.lk-clash-title` **imediatamente** após `.tt-lk`, mas o `LockInScreen` mostra `LoadingState` até o lineup chegar → contava **0** clashes, saía do `while` na hora e caía num `expect(.celebrate-title)` que nunca vinha (o resolver carregava depois mostrando o clash). **Fix:** espelhar o guard **já provado** do `lockin.spec` — `Promise.race` esperando `.lk-clash-title` **ou** `.celebrate-title` visível **antes** do loop. Intent-preserving; copia padrão existente do repo, não inventa lógica.
+> **Decisão de risco (Critic):** **só-de-teste** → **sem** bump de versão / changelog / redeploy (igual R7; uma mudança de teste não pode cache-bustar o SW nem disparar o banner "nova versão" no meio do teste do Julio no celular). Nenhum código de produção/domínio/UI tocado; nenhum assert/teste removido.
+> **Verificação (sem rede de segurança, `--retries=0`):** onboarding **10/10** (`--repeat-each=5`, antes a vítima canônica do reload) · myplan **6/6** (`--repeat-each=6`, e 4× mais rápido: ~6s vs ~22s de timeout antes) · **suíte cheia as-shipped: 30/30, ZERO flaky** (antes era 29 + 1 flaky-recuperado). A classe inteira de flaky de e2e (reload do SW + loading do resolver) foi **eliminada** — o sinal de "sem regressões" para rodadas futuras agora é honesto sem depender do `retries:1`.
+
+### Current State (this batch)
+- **Sem mudança de produto/produção** — só a malha e2e ficou determinística. **Nada deployado** (nenhum artefato de produção alterado); produção segue em **v0.31.6** (`d276f936`).
+- **Próximo:** sem flaky conhecido restante. O maior valor daqui é **produto** (ex.: busca/filtros no lineup — feature nova, exige decisão no brain/decision-log). Bom ponto de revisão do Julio.
+
+### Escopo (arquivos)
+- **Editados (e2e):** `web/e2e/fixtures.js` (+`waitForServiceWorkerSettled` no wrap de `page.goto`, mantendo o freeze via `addInitScript` do R7), `web/e2e/myplan.spec.js` (+`Promise.race` de settle do resolver antes do loop de lock-in).
+- **Guardrail intacto:** zero produção/domínio/UI; SW **não** bloqueado/desregistrado (fidelidade preservada); nenhum assert/teste removido; sem bump (só-de-teste). Screenshots regeneradas pelos runs **não** versionadas (ruído binário).
+
+---
+
 ## Rodada de melhoria R8 26/06 — A11y: focus-trap na base Sheet (completa o padrão de dialog modal) ✅ — v0.31.6
 
 > Oitava rodada. **Conselho (O QUE/SE):** triagem honesta no teto de polish. **(A)** matar o flake de interação do SW (test-only, já recuperado pelo `retries:1`; único fix limpo = bloquear o SW, que sacrifica a fidelidade "as-shipped" do gate e pode **mascarar** regressão de SW/offline) → **DEFER**. **(B)** focus-trap na base `Sheet` → **vencedor**: hoje a `Sheet` faz foco-no-open + Escape + `aria-modal` + restauração de foco, mas **não** prende o Tab — gap do padrão WAI-ARIA de dialog modal (WCAG 2.4.3). Aditivo, **1 arquivo**, beneficia **todos** os sheets (ArtistSheet, StagePick, MeetingPoint, Share… todos usam a base `Sheet`). **(C)** features (busca no lineup) → exigem decisão no brain, fora de polish. Lente dominante = **Architect** (correção contida e padrão).
