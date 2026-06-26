@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Phase 5 — live presence (#25). Visual + behaviour check of the three coarse-presence screens:
@@ -9,8 +9,6 @@ import { test, expect } from "@playwright/test";
  * map transform from the built preview, so coarse pins land on real georeferenced stages. Geolocation
  * is granted at the context level so the foreground sharing engine runs without a prompt.
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const GROUP_ID = "01KVVF5VVAGC7PAYZE127P2GZG";
 const FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
@@ -128,18 +126,14 @@ test.describe("Phase 5 — live presence", () => {
   });
 
   test("consent pre-prompt (#25.1)", async ({ page }) => {
-    await page.goto(`/squad/${GROUP_ID}/location`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Never lose your people")).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/location`);    await expect(page.getByText("Never lose your people")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("By default: just the stage")).toBeVisible();
     await expect(page.getByRole("button", { name: "Turn on location" })).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase5-consent.png" });
   });
 
   test("where's the squad roster (#25.4)", async ({ page }) => {
-    await page.goto(`/squad/${GROUP_ID}/where`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByRole("heading", { name: "Where's the squad" })).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/where`);    await expect(page.getByRole("heading", { name: "Where's the squad" })).toBeVisible({ timeout: 20_000 });
     // Coarse, honest labels — never a coordinate.
     await expect(page.getByText("at MAINSTAGE")).toBeVisible();
     await expect(page.getByText("near CORE")).toBeVisible();
@@ -153,9 +147,7 @@ test.describe("Phase 5 — live presence", () => {
   });
 
   test("precise sharing control (#25.5)", async ({ page }) => {
-    await page.goto(`/squad/${GROUP_ID}/precise`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Sharing precise location")).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/precise`);    await expect(page.getByText("Sharing precise location")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Auto-off in/)).toBeVisible();
     await expect(page.getByText("can see you")).toBeVisible();
     await expect(page.getByRole("button", { name: "Stop sharing now" })).toBeVisible();
@@ -164,9 +156,7 @@ test.describe("Phase 5 — live presence", () => {
   });
 
   test("sharing-mode picker (#25.3)", async ({ page }) => {
-    await page.goto(`/squad/${GROUP_ID}/visibility`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByRole("heading", { name: "How you appear" })).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/visibility`);    await expect(page.getByRole("heading", { name: "How you appear" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Sharing with Fam Juntos")).toBeVisible();
     await expect(page.getByText("Stage labels")).toBeVisible();
     await expect(page.getByText("Precise live pin")).toBeVisible();
@@ -186,9 +176,7 @@ test.describe("Phase 5 — live presence", () => {
   });
 
   test("location & privacy master switch (#25.6)", async ({ page }) => {
-    await page.goto("/settings/privacy");
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Share with my squads")).toBeVisible({ timeout: 20_000 });
+    await page.goto("/settings/privacy");    await expect(page.getByText("Share with my squads")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Default mode")).toBeVisible();
     await expect(page.getByText("Precise auto-expiry")).toBeVisible();
     await expect(page.getByText("Pause all sharing")).toBeVisible();
@@ -204,9 +192,7 @@ test.describe("Phase 5 — live presence", () => {
   test("where-is-everyone ping round-trip (#25.4)", async ({ page }) => {
     // Override the roster so Ana has pinged "you".
     await page.route("**/api/groups/*/presence", (route) => route.fulfill({ json: { presence: ROSTER_INBOX } }));
-    await page.goto(`/squad/${GROUP_ID}/where`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByRole("heading", { name: "Where's the squad" })).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/where`);    await expect(page.getByRole("heading", { name: "Where's the squad" })).toBeVisible({ timeout: 20_000 });
     // Incoming ping prompt.
     await expect(page.getByText("Ana asked where you are")).toBeVisible();
     // Stale member can be pinged; ghost can be nudged.

@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
 // Phase 3 / Gate 3.2-3.3: stage-to-stage routing (#29 B7.4/B7.5). With no locked plan the screen
@@ -19,8 +17,6 @@ test.describe("Phase 3 — stage routing", () => {
 
   test("routes between two stages and toggles walking guidance", async ({ page }) => {
     await page.goto("/route");
-    await page.addStyleTag({ content: FREEZE });
-
     await expect(page.locator(".route-mins")).toContainText("min", { timeout: 20_000 });
     await expect(page.locator(".route-sub")).toContainText("walk to");
     await expect(page.locator('select[aria-label="From stage"]')).toBeVisible();

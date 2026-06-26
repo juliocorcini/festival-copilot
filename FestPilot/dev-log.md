@@ -6,6 +6,25 @@
 
 ---
 
+## Rodada de melhoria R7 26/06 — hardening sistêmico do e2e (freeze via fixture, fim da corrida do addStyleTag) ✅ — sem bump (só-de-teste)
+
+> Sétima rodada. **Conselho (O QUE/SE):** triagem honesta num app já muito maduro. Candidatos user-facing **descartados por evidência**: `loading="lazy"` regrediria a estratégia de fotos (SW cache-first + `usePhotoPrefetch`/`useKeepFavoritePhotos`); a11y de sheet **já** existe (`Sheet` tem `role=dialog`+`aria-modal`+Escape+focus-trap+restauração); offline/PWA maduro; reduced-motion amplamente gated; busca no lineup = **feature nova** (exige decisão no brain, não cabe em polish). Vencedor por impacto×risco×evidência: **dívida de teste isolada** — 38 `page.addStyleTag({content:FREEZE})` pós-`goto` em 17 specs compartilhavam a corrida com o `controllerchange→reload` do SW ("Execution context was destroyed", ~10%/goto). Lente dominante = **Strategist** (ROI composto: o guardrail honesto protege o requisito-mãe do Julio — "sem regressões" — em toda rodada futura). Risco de produção = **zero** (só-de-teste).
+> **Conselho (COMO):** fixture Playwright compartilhada `e2e/fixtures.js` — `page` estendida injeta o FREEZE via **`addInitScript`** (roda em **toda** criação de documento → presente antes do 1º paint e **sobrevive ao reload**, ao contrário do `addStyleTag` pós-`goto`). Specs passam a importar `test`/`expect` da fixture. A chamada racy precisou **SAIR** (não basta adicionar a fixture — o `addStyleTag` ainda lançaria): removidos os 38. `timetable` consolidado (removido seu bloco `addInitScript` bespoke + const local, agora cobertos pela fixture). FREEZE definido **uma vez** (DRY).
+> **Decisão de risco (Critic):** **sem** bump de versão / changelog / redeploy — mudança só-de-teste **não** deve cache-bustar o SW nem disparar o banner "nova versão" (isso seria, ele mesmo, uma micro-regressão). Destoa do padrão das rodadas anteriores **por design**. Nada de domínio/UI/produção tocado; nenhum teste/assert removido (só relocado o mecanismo de freeze).
+> **Verificação:** grep confirma **zero** `addStyleTag` e **zero** `FREEZE` órfão fora da fixture · **2 suítes cheias** = 29✓ + 1 flaky-recuperado cada (verde, exit 0), e o flaky foi spec **diferente** a cada vez (onboarding→myplan) · **repeat-each=3** de 8 specs leves "goto+screenshot" (timetable/now/map/route/shell/about/squad-board/offline) = **30/30 limpo, zero flaky, zero "execution context destroyed"**. A classe de erro do `addStyleTag` foi **eliminada**.
+> **Achado → dívida R8 (sinalizada):** o flake remanescente é **outro e mais raro** (~1 por suíte cheia, sempre recuperado pelo `retries:1`): o reload do SW limpa **estado no meio de interações** (`fill`, fluxos multi-step) — visto em onboarding ("Let's go" segue `disabled` após o `fill`) e myplan (`.celebrate-title` some). Fix candidato: esperar o SW **assentar** após o `goto` (controller ativo) antes de interagir, ou bloquear o SW nos specs que **não** testam offline (preservando `offline.spec.js`, que cobre o SW de propósito). Rodada dedicada.
+
+### Current State (this batch)
+- **Sem mudança de produto/produção** — só a malha e2e ficou robusta: a corrida do `addStyleTag` (mais frequente e espalhada) foi eliminada; o sinal de regressão para as próximas rodadas é honesto. **Nada deployado** (não há artefato de produção alterado).
+- **Próximo:** R8 candidata = matar a corrida de interação do SW (settle pós-`goto` ou block seletivo) — fecha a última fonte de flaky. Ou rodada a definir pelo conselho. Bom ponto de revisão do Julio.
+
+### Escopo (arquivos)
+- **Novo (e2e):** `web/e2e/fixtures.js` (fixture com freeze via `addInitScript`, FREEZE único).
+- **Editados (e2e, 18 specs):** import → `./fixtures.js` + remoção do `const FREEZE` e dos `addStyleTag` em onboarding/shell/now/myplan/lockin/presence/squad/squad-split/about/meeting-points/safety/meeting-lifecycle/squad-board/squad-plan/offline/route/map; `timetable` consolidado (bloco bespoke removido). `a11y.spec.js` intacto (não usava freeze).
+- **Guardrail intacto:** zero produção/domínio/UI; nenhum assert/teste removido; só relocação do mecanismo de freeze. Sem bump de versão (só-de-teste).
+
+---
+
 ## Deploy de produção 26/06 — tudo das Fases 5–10 + R1–R6 no ar ✅ — v0.31.5
 
 > **Por quê:** o último deploy parou na Fase 7 (D1 remoto estava em 0014; Pages servia bundle antigo) — por isso o Julio não via as novidades no celular. Este deploy publica **tudo** que acumulou: Fases 8 (eventos de grupo), 9 (home pessoal+squad), 10a/10b (toasts+auditoria) e as 6 rodadas de melhoria (R1 code-split, R2 drag-to-dismiss, R3 a11y de toque, R4 prefetch idle, R5 ErrorBoundary, R6 a11y de navegação).

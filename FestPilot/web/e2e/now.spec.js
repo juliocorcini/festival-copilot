@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
 const seed = (favorites) => ({
@@ -24,8 +22,6 @@ test.describe("R6 — now & next is sourced, never arbitrary", () => {
   test("with no plan and no favorites: an honest empty state, not a random act", async ({ page }) => {
     await seedOnce(page, seed({}));
     await page.goto("/");
-    await page.addStyleTag({ content: FREEZE });
-
     await expect(page.locator(".appbar h1")).toHaveText("Now & Next", { timeout: 20_000 });
     // No hero is invented from the lineup; the user is pointed at picking artists instead.
     await expect(page.locator(".now-hero")).toHaveCount(0);
@@ -39,9 +35,7 @@ test.describe("R6 — now & next is sourced, never arbitrary", () => {
 
     // Build a handful of favorites through the Lineup UI (each click favorites the top "all artists"
     // row, which then jumps into the favorites section). Seeded once, so this survives goto("/").
-    await page.goto("/lineup");
-    await page.addStyleTag({ content: FREEZE });
-    // Lineup is a grid of `.gc` cards (favorited → `.gc.on`, jumps into the YOUR FAVORITES grid).
+    await page.goto("/lineup");    // Lineup is a grid of `.gc` cards (favorited → `.gc.on`, jumps into the YOUR FAVORITES grid).
     await expect(page.locator(".gc").first()).toBeVisible({ timeout: 20_000 });
     for (let i = 1; i <= 6; i++) {
       await page.locator(".gc:not(.on) .gc-heart").first().click();
@@ -51,9 +45,7 @@ test.describe("R6 — now & next is sourced, never arbitrary", () => {
     expect(favNames.length).toBe(6);
 
     // Now & Next: a real hero, explicitly labelled as favorites-sourced.
-    await page.goto("/");
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.locator(".now-hero")).toBeVisible({ timeout: 20_000 });
+    await page.goto("/");    await expect(page.locator(".now-hero")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".src")).toContainText("From your favorites");
 
     // The hero act MUST be one the user favorited — never an arbitrary lineup act.

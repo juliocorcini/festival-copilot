@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 // Phase 0 visual smoke: the De Schorre map base renders, the topbar shows the venue +
 // stage count, the day/night segment is present, the stages are a crisp tappable vector overlay
@@ -17,8 +17,6 @@ test.describe("Phase 0 — map bring-up", () => {
 
   test("renders the georeferenced map with overlay and controls", async ({ page }) => {
     await page.goto("/map");
-    await page.addStyleTag({ content: `*,*::before,*::after{animation:none!important;transition:none!important}` });
-
     const base = page.locator("img.base");
     await expect(base).toBeVisible();
     await expect.poll(async () => base.evaluate((img) => img.naturalWidth)).toBeGreaterThan(0);

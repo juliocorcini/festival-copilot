@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Phase 6 / Gate 6.2 — meeting-point lifecycle (#26.3 active detail, #26.4 reunion, UC-28). Opens a
@@ -9,8 +9,6 @@ import { test, expect } from "@playwright/test";
  * live Worker). The convergence map loads the REAL transform from the built preview; presence is empty
  * so only the flag pin shows. The SW is blocked so every fetch stays on the deterministic stubs.
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const GROUP_ID = "01KVVF5VVAGC7PAYZE127P2GZG";
 const FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
@@ -147,9 +145,7 @@ test.describe("Phase 6 — meeting lifecycle (Gate 6.2)", () => {
 
   test("active detail → 'I'm here' → everyone's here (#26.3/#26.4)", async ({ page }) => {
     // 1 · Open the convergence detail directly.
-    await page.goto(`/squad/${GROUP_ID}/meet/${MP_ID}`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Regroup at Cactus Bar 🌵")).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/meet/${MP_ID}`);    await expect(page.getByText("Regroup at Cactus Bar 🌵")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("On the way", { exact: true })).toBeVisible();
     // Roster honesty: a member with a live ETA, and one who hasn't answered (dimmed).
     await expect(page.getByText("Ana")).toBeVisible();
@@ -170,8 +166,6 @@ test.describe("Phase 6 — meeting lifecycle (Gate 6.2)", () => {
     // 3 · Everyone's committed and here → the reunion moment, with the creator's close action.
     await expect(page.getByText("The squad's back together")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Everyone made it to")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Close point" })).toBeVisible();
-    await page.addStyleTag({ content: FREEZE });
-    await page.screenshot({ path: "e2e/screenshots/phase6-meet-everyone-here.png" });
+    await expect(page.getByRole("button", { name: "Close point" })).toBeVisible();    await page.screenshot({ path: "e2e/screenshots/phase6-meet-everyone-here.png" });
   });
 });

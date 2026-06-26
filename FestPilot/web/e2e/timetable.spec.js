@@ -1,6 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 // Live Tomorrowland Belgium 2026 "W1" weekend id (stable D1 row) so the grid scopes to one weekend.
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
@@ -14,22 +13,6 @@ test.describe("Phase 2 — timetable grid", () => {
         JSON.stringify({ v: 1, onboarding: { festivalId: "x", weekendIds: [w1], dayKeys: [], completed: true }, favorites: {}, plans: {} })
       );
     }, W1);
-    // Inject the animation-freeze CSS from the first document init (not via a post-goto addStyleTag),
-    // so it's present before paint and survives an early reload — e.g. the service worker's
-    // controllerchange → location.reload(), which otherwise destroyed the execution context that a
-    // post-goto addStyleTag runs in ("Execution context was destroyed" flake, ~10% per goto).
-    await page.addInitScript((css) => {
-      const inject = () => {
-        const style = document.createElement("style");
-        style.textContent = css;
-        (document.head || document.documentElement).appendChild(style);
-      };
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", inject, { once: true });
-      } else {
-        inject();
-      }
-    }, FREEZE);
   });
 
   test("renders the grid, favorites a set, filters and zooms", async ({ page }) => {

@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 const API = "https://festpilot.trippilot.workers.dev";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
@@ -41,8 +39,6 @@ test.describe("Phase 4 — squad (Gate 4.1 identity + Gate 4.2 groups)", () => {
   test("owner: empty → sign in → profile → create → invite → group home", async ({ page }) => {
     await page.addInitScript(SEED_ONBOARDING, { festivalId: FESTIVAL_ID, w1: W1 });
     await page.goto("/squad");
-    await page.addStyleTag({ content: FREEZE });
-
     // 1 · empty hero
     await expect(
       page.getByRole("heading", { name: "Festivals are better together" })
@@ -106,8 +102,6 @@ test.describe("Phase 4 — squad (Gate 4.1 identity + Gate 4.2 groups)", () => {
 
     await page.addInitScript(SEED_ONBOARDING, { festivalId: FESTIVAL_ID, w1: W1 });
     await page.goto(`/j/${token}`);
-    await page.addStyleTag({ content: FREEZE });
-
     // Guest is gated through sign-in → profile (carrying the join path).
     await expect(page.getByRole("heading", { name: "Keep your squad across devices" })).toBeVisible({
       timeout: 20_000,

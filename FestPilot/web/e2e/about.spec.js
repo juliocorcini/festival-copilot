@@ -1,11 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * About + What's New (settings/about). Identity (what the app is, the maker, the version) + the human
  * changelog with a collapsible "How to test" block per release. Pure screen — API is stubbed empty.
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
@@ -39,8 +37,6 @@ test.describe("About & what's new", () => {
 
   test("renders identity, creator and the changelog (#about)", async ({ page }) => {
     await page.goto("/settings/about");
-    await page.addStyleTag({ content: FREEZE });
-
     // Identity (decoupled from any specific release so the changelog can grow freely).
     await expect(page.getByRole("heading", { name: "FestPilot" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Created by")).toBeVisible({ timeout: 10_000 });

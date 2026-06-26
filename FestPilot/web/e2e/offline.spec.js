@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
 // Phase 3 / Gate 3.3: the offline cache/sync contract (#28 B6.5). Surfaces what's cached for
@@ -17,8 +15,6 @@ test.describe("Phase 3 — offline & data", () => {
 
   test("lists cacheable data and saves it for offline", async ({ page }) => {
     await page.goto("/settings/offline");
-    await page.addStyleTag({ content: FREEZE });
-
     await expect(page.locator(".appbar h1")).toHaveText("Offline & data", { timeout: 20_000 });
     await expect(page.getByText("Lineup", { exact: true })).toBeVisible();
     await expect(page.getByText("Venue map", { exact: true })).toBeVisible();

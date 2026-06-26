@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 // Live Tomorrowland Belgium 2026 "W1" weekend id (stable D1 row) so the day scopes to one weekend.
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
@@ -18,9 +16,7 @@ test.describe("Phase 2 — lock-in clash resolver → my plan", () => {
   });
 
   test("resolves clashes and builds a clash-free My Plan", async ({ page }) => {
-    await page.goto("/timetable");
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
+    await page.goto("/timetable");    await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
 
     // Favorite the earliest sets across several stages — early sets overlap, guaranteeing clashes.
     const stages = page.locator(".tt-content .stage");
@@ -33,9 +29,7 @@ test.describe("Phase 2 — lock-in clash resolver → my plan", () => {
     expect(await page.locator(".set.fav").count()).toBeGreaterThan(0);
 
     // Into the resolver.
-    await page.locator(".tt-lk").click();
-    await page.addStyleTag({ content: FREEZE });
-    await Promise.race([
+    await page.locator(".tt-lk").click();    await Promise.race([
       page.locator(".lk-clash-title").waitFor({ state: "visible", timeout: 20_000 }),
       page.locator(".celebrate-title").waitFor({ state: "visible", timeout: 20_000 }),
     ]);
@@ -84,9 +78,7 @@ test.describe("Phase 2 — lock-in clash resolver → my plan", () => {
 
     // View My Plan → timeline of locked sets (clash-free).
     await page.locator(".celebrate-actions .btn-primary", { hasText: "View My Plan" }).click();
-    await expect(page).toHaveURL(/\/plan/);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.locator(".plan-tl")).toBeVisible({ timeout: 20_000 });
+    await expect(page).toHaveURL(/\/plan/);    await expect(page.locator(".plan-tl")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".plan-card").first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase2-myplan.png" });
 

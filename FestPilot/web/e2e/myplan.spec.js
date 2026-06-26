@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
 
 // R8: My Plan is editable without re-walking Lock-in. Build a clash-free plan, then remove / add /
@@ -19,8 +17,6 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
     // Build a plan: favorite a few sets across stages, lock in, view My Plan.
     await page.goto("/timetable");
     await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
-    await page.addStyleTag({ content: FREEZE });
-
     const stages = page.locator(".tt-content .stage");
     const stageCount = Math.min(await stages.count(), 5);
     for (let s = 0; s < stageCount; s++) {
@@ -28,9 +24,7 @@ test.describe("R8 — My Plan is editable (remove / add / swap), stays clash-fre
       if (await hearts.count()) await hearts.first().click();
     }
 
-    await page.locator(".tt-lk").click();
-    await page.addStyleTag({ content: FREEZE });
-    let guard = 0;
+    await page.locator(".tt-lk").click();    let guard = 0;
     while ((await page.locator(".lk-clash-title").count()) > 0 && guard++ < 40) {
       await page.locator(".lk-lock").click();
       await page.waitForTimeout(80);

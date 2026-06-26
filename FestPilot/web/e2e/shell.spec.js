@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
+import { test, expect } from "./fixtures.js";
 
 // Phase 1 smoke: the PWA shell boots, the bottom nav has exactly 5 tabs, the Now screen
 // renders the LIVE lineup from the API, tab navigation works, and Settings is reachable
@@ -18,8 +16,6 @@ test.describe("Phase 1 — app shell", () => {
 
   test("boots, renders live lineup, navigates tabs, opens settings", async ({ page }) => {
     await page.goto("/");
-    await page.addStyleTag({ content: FREEZE });
-
     await expect(page.locator(".appbar h1")).toHaveText("Now & Next");
     await expect(page.locator(".nav .navitem")).toHaveCount(5);
 

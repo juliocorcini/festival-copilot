@@ -1,11 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Gate 4.4 — group board (UC-39, DEC-013). Drives the real flow against the live Worker:
  * post a pinned note (#23.7 → board) → edit → pin → remove. Lightweight notes, not chat.
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const API = "https://festpilot.trippilot.workers.dev";
 
 let FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
@@ -71,8 +69,6 @@ test.describe("Gate 4.4 — group board", () => {
 
     await page.addInitScript(SEED, { token: owner.tok, user: owner.user, festivalId: FESTIVAL_ID, w1: W1 });
     await page.goto(`/squad/${group.id}/board`);
-    await page.addStyleTag({ content: FREEZE });
-
     // Empty state.
     await expect(page.getByText("Nothing pinned yet")).toBeVisible({ timeout: 20_000 });
     await page.screenshot({ path: "e2e/screenshots/phase4-board-empty.png" });

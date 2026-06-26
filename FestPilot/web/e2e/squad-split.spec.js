@@ -1,12 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Rich split view (#24.5). Seeds two squadmates onto two overlapping sets on different stages, so
  * the squad plan produces a contested block, then drives: squad plan → block detail → "See who's
  * where" → the per-stage split screen. Runs against the live Worker like the squad-plan gate.
- */
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
-const API = "https://festpilot.trippilot.workers.dev";
+ */const API = "https://festpilot.trippilot.workers.dev";
 
 let FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
 /** Two overlapping, different-stage timed sets on the same day (or null if the lineup has none). */
@@ -119,8 +117,6 @@ test.describe("Rich split view (#24.5)", () => {
     });
 
     await page.goto(`/squad/${group.id}/plan?day=${encodeURIComponent(PAIR.day)}`);
-    await page.addStyleTag({ content: FREEZE });
-
     // Block shows the contested winner with a split count.
     await expect(page.getByText(PAIR.a.label, { exact: false }).first()).toBeVisible({ timeout: 20_000 });
     await page.getByText(PAIR.a.label, { exact: false }).first().click();

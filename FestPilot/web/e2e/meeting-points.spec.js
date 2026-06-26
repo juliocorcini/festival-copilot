@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Phase 6 / Gate 6.1 — "come to me" meeting point (#26.1 pick-spot, #26.2 details, UC-27). Visual +
@@ -9,8 +9,6 @@ import { test, expect } from "@playwright/test";
  * live Worker), but the pick map loads the REAL map transform from the built preview, so the pin +
  * stage dots sit on real georeferenced stages. Geolocation is granted so "My spot" runs promptless.
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const GROUP_ID = "01KVVF5VVAGC7PAYZE127P2GZG";
 const FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
@@ -114,17 +112,13 @@ test.describe("Phase 6 — meeting points (Gate 6.1)", () => {
 
   test("create flow: squad home → pick spot → details → active card (#26.1/#26.2)", async ({ page }) => {
     // 1 · Squad home shows the meeting-point CTA (no active point yet).
-    await page.goto("/squad");
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Set a meeting point")).toBeVisible({ timeout: 20_000 });
+    await page.goto("/squad");    await expect(page.getByText("Set a meeting point")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Drop a spot for the squad to regroup")).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase6-squad-home.png" });
 
     // 2 · Pick the spot on the real festival map.
     await page.getByText("Set a meeting point").click();
-    await page.waitForURL(`**/squad/${GROUP_ID}/meet`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByRole("heading", { name: "Set a meeting point" })).toBeVisible({ timeout: 20_000 });
+    await page.waitForURL(`**/squad/${GROUP_ID}/meet`);    await expect(page.getByRole("heading", { name: "Set a meeting point" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("button", { name: /My spot/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /A stage/ })).toBeVisible();
     // Use my current spot (geolocation granted) so a pin is guaranteed, then continue.
@@ -134,9 +128,7 @@ test.describe("Phase 6 — meeting points (Gate 6.1)", () => {
 
     // 3 · Details — name / when / who / note.
     await page.getByRole("button", { name: "Use this spot" }).click();
-    await page.waitForURL(`**/squad/${GROUP_ID}/meet/new`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByRole("heading", { name: "Meeting point" })).toBeVisible({ timeout: 20_000 });
+    await page.waitForURL(`**/squad/${GROUP_ID}/meet/new`);    await expect(page.getByRole("heading", { name: "Meeting point" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("When", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "In 30 min" })).toBeVisible();
     await expect(page.getByText(/Whole squad/)).toBeVisible();
@@ -152,9 +144,7 @@ test.describe("Phase 6 — meeting points (Gate 6.1)", () => {
     expect(body.title).toContain("Regroup");
 
     // 5 · The active point card lands on the squad home.
-    await page.waitForURL("**/squad");
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Regroup at the bar 🍻")).toBeVisible({ timeout: 20_000 });
+    await page.waitForURL("**/squad");    await expect(page.getByText("Regroup at the bar 🍻")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("between FREEDOM BY BUD & CORE")).toBeVisible();
     await expect(page.getByText(/1 going/)).toBeVisible();
     await expect(page.getByText("Active")).toBeVisible();

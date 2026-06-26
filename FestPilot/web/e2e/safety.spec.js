@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Phase 6 / Gate 6.3 — "I'm lost" safety (#26.5 menu, #26.6 active broadcast) + compass navigation
@@ -9,8 +9,6 @@ import { test, expect } from "@playwright/test";
  * Group + meeting endpoints are stubbed (no deterministic squad against the live Worker). The map
  * transform loads from the real preview build, so the local "nearest landmark" + arrow are genuine.
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const GROUP_ID = "01KVVF5VVAGC7PAYZE127P2GZG";
 const FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
 const W1 = "01KVVF5VVAGC7PAYZE127P2GZG";
@@ -94,9 +92,7 @@ test.describe("Phase 6 — safety & navigation (Gate 6.3)", () => {
     });
 
     // 1 · The calm menu (#26.5).
-    await page.goto(`/squad/${GROUP_ID}/safety`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("It happens to everyone")).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/safety`);    await expect(page.getByText("It happens to everyone")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Share my location + alert squad")).toBeVisible();
     await expect(page.getByText("Find the nearest landmark")).toBeVisible();
     await expect(page.getByText("Medical / info / exit")).toBeVisible();
@@ -113,9 +109,7 @@ test.describe("Phase 6 — safety & navigation (Gate 6.3)", () => {
     await expect(page.getByText("Squad alerted · your live location is shared")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Ana")).toBeVisible();
     await expect(page.getByText("~2 min · 150m")).toBeVisible();
-    await expect(page.getByRole("button", { name: "I'm okay — stop sharing" })).toBeVisible();
-    await page.addStyleTag({ content: FREEZE });
-    await page.screenshot({ path: "e2e/screenshots/phase6-safety-active.png", fullPage: true });
+    await expect(page.getByRole("button", { name: "I'm okay — stop sharing" })).toBeVisible();    await page.screenshot({ path: "e2e/screenshots/phase6-safety-active.png", fullPage: true });
 
     // 4 · "I'm okay" → POST close → back to the calm menu.
     const end = page.waitForRequest((r) => r.url().endsWith(`/meeting-points/${SOS_ID}/end`) && r.method() === "POST");
@@ -131,9 +125,7 @@ test.describe("Phase 6 — safety & navigation (Gate 6.3)", () => {
       return route.fulfill({ json: {} });
     });
 
-    await page.goto(`/squad/${GROUP_ID}/meet/${MP_ID}/nav`);
-    await page.addStyleTag({ content: FREEZE });
-    await expect(page.getByText("Regroup at Cactus Bar 🌵")).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/squad/${GROUP_ID}/meet/${MP_ID}/nav`);    await expect(page.getByText("Regroup at Cactus Bar 🌵")).toBeVisible({ timeout: 20_000 });
     // A live ETA derived from the granted GPS fix (≈55 m away → ~1 min walk) + the compass arrow.
     await expect(page.getByText(/min walk/)).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".nav-arrow")).toBeVisible();

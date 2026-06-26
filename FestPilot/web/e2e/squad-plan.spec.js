@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.js";
 
 /**
  * Gate 4.3 — shared timetable. Drives the real flow against the live Worker:
@@ -6,8 +6,6 @@ import { test, expect } from "@playwright/test";
  * → owner override (#24.4). Server state is seeded over the API with real performance ids
  * (so the client's lineup-based aggregation actually resolves the blocks).
  */
-
-const FREEZE = `*,*::before,*::after{animation:none!important;transition:none!important}`;
 const API = "https://festpilot.trippilot.workers.dev";
 
 let FESTIVAL_ID = "01KVVF5VERH4AB28NAM6NM65VD";
@@ -121,8 +119,6 @@ test.describe("Gate 4.3 — shared timetable", () => {
     });
 
     await page.goto(`/squad/${group.id}/share`);
-    await page.addStyleTag({ content: FREEZE });
-
     // Share screen — intro + my locked plan preview row.
     await expect(page.getByRole("heading", { name: /Share your plan/ })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Share my locked plan")).toBeVisible();
@@ -155,8 +151,6 @@ test.describe("Gate 4.3 — shared timetable", () => {
     });
 
     await page.goto(`/squad/${group.id}/plan?day=${encodeURIComponent(PICK.day)}`);
-    await page.addStyleTag({ content: FREEZE });
-
     // Overview shows two people and the consensus block.
     await expect(page.getByText(/· 2 people/)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(PICK.label, { exact: false }).first()).toBeVisible({ timeout: 20_000 });
