@@ -6,6 +6,23 @@
 
 ---
 
+## Rodada de melhoria R11 26/06 — rede de regressão (servidor): testes para `sha256Hex` e o ULID `db/ids` ✅ — sem bump (só-de-teste)
+
+> Décima-primeira rodada — simétrica à R10, agora no backend. **Conselho (O QUE/SE — `/assess`):** auditei `server/src` × `server/test`. Os 3 domínios (`groupEvent`/`meeting`/`presence`) e `normalize`/`resolver`/`diff` já têm teste; as lacunas **puras** reais eram **`ingest/hash.ts`** (`sha256Hex` — usado na detecção de mudança da ingestão) e **`db/ids.ts`** (o ULID do servidor, **gêmeo** de `web/src/lib/ulid.ts` que a R10 cobriu, mas o lado servidor seguia sem teste direto). Lente dominante = **Risk**: a ingestão decide re-escrever o lineup com base no `configHash`/`stagesHash`; pinar o hash protege esse contrato. Não inventei alvos — hooks/IO/DO ficam de fora (boundary).
+> **Conselho (COMO):** seguir a convenção do servidor (`test/**`, import via `../src/...`, `environment: node` com `test/setup.ts` provendo Web Crypto). **hash:** vetores **canônicos NIST** pinados (`sha256Hex("")` e `sha256Hex("abc")`), 64 hex lowercase, determinismo e sensibilidade a colisão. **ids:** espelha exatamente a R10 (base32 big-endian verificado na conta — `ulid(31)`→`…Z`, `ulid(32)`→`…10` —, prefixo monotônico/sortable, sufixo aleatório). Comentário cruzado liga os dois ULID gêmeos.
+> **Decisão de risco (Critic):** **só-de-teste** → **sem** bump/changelog/redeploy. **Zero** produção tocada (2 `test/*.test.ts` novos). Nenhum teste/assert removido.
+> **Verificação:** `tsc --noEmit` (servidor) limpo · **server unit 238 verde** (27 arquivos; +7: hash **3**, ids **4**; era 231) · Web Crypto via `test/setup.ts` (polyfill `webcrypto` no Node). Combinado com a R10, as duas pontas do ULID e o hash de ingestão agora têm verificação matemática.
+
+### Current State (this batch)
+- **Sem mudança de produto/produção** — produção segue em **v0.31.6** (`d276f936`). Rede de regressão densificada nas **duas** pontas (web 439 + server 238 = **677 unit** no total) + e2e 30/30 determinístico.
+- **Próximo:** lógica pura crítica coberta em web e servidor; sem flaky. O maior valor restante é **produto** (feature nova → decisão no brain). Bom ponto de revisão do Julio.
+
+### Escopo (arquivos)
+- **Novos (server, só-de-teste):** `test/hash.test.ts`, `test/ids.test.ts`.
+- **Guardrail intacto:** zero produção/domínio; nenhum assert/teste removido; sem bump (só-de-teste).
+
+---
+
 ## Rodada de melhoria R10 26/06 — rede de regressão: testes para a lógica pura ainda descoberta (planSlot, format, ulid) ✅ — sem bump (só-de-teste)
 
 > Décima rodada. **Conselho (O QUE/SE — `/assess`):** com o último flaky fechado (R9) e o teto de polish user-facing atingido, a melhoria de maior valor **que não exige decisão de produto** é reforçar a rede que protege o requisito-mãe do Julio ("não fazer regressões"). Auditei domínio+lib (`Glob` de `*.ts` × `*.test.ts`) e achei lacunas **reais** (não enchi linguiça): **`domain/planSlot.ts`** (o "intervalo efetivo" usado em TODO check de overlap/clash, Now & Next, edição de plano e filtro de squad) e **`lib/format.ts`** (cor de palco + hora/dia no fuso do festival, puro e usado em todo lugar) estavam **sem teste** — e ambas as docstrings de `planSlot.ts`/`types.ts` **afirmavam** "exhaustively unit-tested" (mismatch doc×realidade). `lib/ulid.ts` (ID de auth, 26-char base32) também sem teste. Lente dominante = **Risk** (cobrir a matemática de borda corta risco de regressão silenciosa). Hooks `useGeo`/`usePinch`/`usePhotoPrefetch` ficam de fora por design (boundary/React; a regra manda testar lógica pura e mockar só boundaries).
