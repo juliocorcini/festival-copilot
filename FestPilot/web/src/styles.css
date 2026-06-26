@@ -2146,3 +2146,17 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
    layout than stacked bars, so the cold-load placeholder reads as "cards incoming". */
 .shimmer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .shimmer-grid .shimmer-card { height: auto; aspect-ratio: 3 / 4; border-radius: 18px; }
+
+/* ── Entry motion (native polish · phase 5) ───────────────────────────────────────
+   A short, staggered rise for freshly-mounted list/grid items (Lineup grid cards, the
+   Now "later" list, the My Plan timeline) and a gentle content fade when a bottom
+   sheet opens. CSS-only, transform/opacity (compositable), one-shot on mount, and
+   fully gated on prefers-reduced-motion. Each item carries a 0-based --i (clamped in
+   JS, and only applied to the first ~10 items) so only the on-screen rows cascade —
+   long lists never ripple for seconds. `backwards` holds opacity:0 through the delay
+   so nothing flashes before its turn. */
+@media (prefers-reduced-motion: no-preference) {
+  .fp-rise { animation: fp-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: calc(var(--i, 0) * 26ms); }
+  .sheet .sheet-body { animation: fp-fade 0.3s 0.08s ease both; }
+}
+@keyframes fp-rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }

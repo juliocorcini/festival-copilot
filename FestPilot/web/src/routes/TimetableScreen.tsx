@@ -37,9 +37,8 @@ export function TimetableScreen(): JSX.Element {
   const { openArtist } = useArtistSheet();
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [zoom, setZoom] = useState<Zoom>("2h");
+  const [zoom, setZoom] = useState<Zoom>("1h");
   const [onlyFavs, setOnlyFavs] = useState(false);
-  const [showGrid, setShowGrid] = useState(true);
   const [now, setNow] = useState(() => Date.now());
 
   // Pinch to zoom: spread → 1-hour (zoomed in), pinch → 2-hour (zoomed out).
@@ -132,16 +131,6 @@ export function TimetableScreen(): JSX.Element {
       </button>
       <button
         type="button"
-        className={`tt-ic${showGrid ? " on" : ""}`}
-        onClick={() => setShowGrid((v) => !v)}
-        aria-pressed={showGrid}
-        aria-label={showGrid ? "Hide hour lines" : "Show hour lines"}
-        title="Hour lines"
-      >
-        <span className="ms">straighten</span>
-      </button>
-      <button
-        type="button"
         className="tt-lk"
         onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
       >
@@ -185,13 +174,11 @@ export function TimetableScreen(): JSX.Element {
               })}
             </div>
 
-            {showGrid && (
-              <div className="tt-grid" aria-hidden="true">
-                {model.gridLines.map((line) => (
-                  <span key={line.ms} className={`gl${line.half ? " half" : ""}`} style={{ left: `${line.leftPct}%` }} />
-                ))}
-              </div>
-            )}
+            <div className="tt-grid" aria-hidden="true">
+              {model.gridLines.map((line) => (
+                <span key={line.ms} className={`gl${line.half ? " half" : ""}`} style={{ left: `${line.leftPct}%` }} />
+              ))}
+            </div>
 
             {nowVisible && <div className="now-line" style={{ left: `${nowPct}%` }} />}
 

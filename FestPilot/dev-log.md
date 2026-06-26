@@ -6,6 +6,26 @@
 
 ---
 
+## Native polish 5/10 26/06 — Timetable defaults (1h + linhas sempre on) + animações de entrada ✅ DEPLOYED — v0.24.0
+
+> Primeira fase do roadmap re-faseado (`brain/documents/2026-06-26-native-polish-and-features-roadmap.md`, conselho D1–D7, decisões Q1–Q8 travadas).
+> **D6 (Timetable):** abre em **1h por padrão** (set "respira", times legíveis), **linhas de hora sempre on** (removido o toggle `straighten`/`showGrid` que confundia com "modo grid"); zoom→2h e pinça mantidos.
+> **D5 parte 1 (animações de entrada):** **stagger-rise** CSS-only nos itens recém-montados (grid do Lineup, lista "later" do Now, timeline do My Plan) + **fade de conteúdo** ao abrir bottom sheet.
+> Conselho (inline, 1 request): CSS-first, **transform/opacity** (compositável), one-shot no mount, tudo **reduced-motion-gated**; `--i` clampado em JS e só nos ~10 primeiros itens → lista de 600 acts **nunca** ripple por segundos.
+> `tsc` limpo · **320** testes (sem novos — mudança é estado default + CSS) · `vite build` ok · e2e `timetable.spec` (2) verdes após atualizar seletores velhos · screenshot de prova (1h + linhas) · deploy `--branch=master`.
+
+### Current State (this batch)
+- **Timetable no ar (v0.24.0):** default `zoom="1h"` (era `"2h"`); `.tt-grid` renderiza **incondicional** (linhas sempre visíveis); estado `showGrid` + botão `straighten` **removidos**. Barra de controles fica sem buraco: [zoom_out] [favoritos] [Lock in].
+- **Animações de entrada:** keyframe `fp-rise` (opacity 0→1 + translateY(9px)→0, 260ms, `cubic-bezier(.22,1,.36,1)`, `backwards` p/ não flashar no delay); classe `.fp-rise` com `animation-delay: calc(var(--i)*26ms)`. Fade de conteúdo do sheet: `.sheet .sheet-body` usa `fp-fade` (300ms, delay 80ms) — segue o slide-up sem brigar com ele.
+- **Onde aplicado:** Lineup `renderCard` (só `index<10` cascateia; resto monta instantâneo); Now `NowList` (lista "later"); My Plan `PlanSetRow`/`PlanGapRow` (`--i` clampado a 11). Toggle de favorito move o card entre as grids → re-monta → "pop" agradável (sem custo).
+- **Acessibilidade/perf:** todo o pacote sob `@media (prefers-reduced-motion: no-preference)` → quem pede menos movimento vê tudo instantâneo. Só transform/opacity (sem reflow). Zero libs.
+- **E2E saneado:** `timetable.spec.js` referenciava `.tt-toggle`/"Only my favs"/`.poster "Lineup"` (velhos do header pré-redesign) → atualizado p/ ícones atuais (`getByRole`), assert de `.tt-grid` visível, e zoom 1h→2h agora **estreita** a grid (`toBeLessThan`).
+
+### Escopo (arquivos)
+- **Editados:** `routes/TimetableScreen.tsx` (default 1h, remove `showGrid`+botão, `.tt-grid` incondicional), `routes/LineupScreen.tsx` (`renderCard` index + `.fp-rise`), `routes/NowScreen.tsx` (`CSSProperties` + stagger na lista later), `routes/MyPlanScreen.tsx` (`CSSProperties` + `i` em `PlanSetRow`/`PlanGapRow`), `styles.css` (`@keyframes fp-rise` + `.fp-rise` + `.sheet .sheet-body` fade, reduced-motion-gated), `e2e/timetable.spec.js` (seletores atuais), `data/changelog.ts` + `web/package.json` (**0.24.0**).
+
+---
+
 ## Native polish 4/7 26/06 — pull-to-refresh + polish de scroll ✅ DEPLOYED — v0.23.0
 
 > Gesto-músculo de app real: **puxar pra baixo** do topo do Lineup / Now / Squad home **atualiza os dados**, com buzz no gatilho e spinner nativo.

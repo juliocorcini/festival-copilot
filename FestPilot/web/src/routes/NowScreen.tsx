@@ -6,7 +6,7 @@
  *   3. else an honest empty state (pick artists · set times not out · nothing coming up).
  * The chronology + leave-in math are pure (`domain/nowNext.ts`); this screen only renders the model.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
@@ -284,10 +284,11 @@ function NowList({ rows, tz, label }: { rows: HomeSet[]; tz: string; label: stri
   return (
     <section className="glass list-card">
       <span className="label">{label}</span>
-      {rows.map((r) => (
+      {rows.map((r, i) => (
         <div
           key={`${r.actKey}-${r.startMs}`}
-          className="lineup-row tappable"
+          className="lineup-row tappable fp-rise"
+          style={{ "--i": i } as CSSProperties}
           role="button"
           tabIndex={0}
           aria-label={`View ${r.label}`}

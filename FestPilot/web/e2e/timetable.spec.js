@@ -20,9 +20,10 @@ test.describe("Phase 2 — timetable grid", () => {
     await page.goto("/timetable");
     await page.addStyleTag({ content: FREEZE });
 
-    // Grid renders: stage rows + positioned set cards.
+    // Grid renders: stage rows + positioned set cards, with the hour lines always on (no toggle).
     await expect(page.locator(".tt-content .stage").first()).toBeVisible({ timeout: 20_000 });
     expect(await page.locator(".set").count()).toBeGreaterThan(0);
+    await expect(page.locator(".tt-grid").first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase2-timetable.png" });
 
     // Favoriting via a card heart turns it gold and flags its stage.
@@ -30,19 +31,19 @@ test.describe("Phase 2 — timetable grid", () => {
     await expect(page.locator(".set.fav").first()).toBeVisible();
     await expect(page.locator(".stage.has-fav").first()).toBeVisible();
 
-    // "Only my favs" filter hides non-favorite sets (still in DOM, but display:none).
-    await page.locator(".tt-toggle", { hasText: "Only my favs" }).click();
+    // "Only my favs" filter (icon button) hides non-favorite sets (still in DOM, but display:none).
+    await page.getByRole("button", { name: "Show only my favorites" }).click();
     await expect(page.locator(".tt-content.filtered")).toBeVisible();
     await expect(page.locator(".set:not(.fav)").first()).toBeHidden();
     await expect(page.locator(".set.fav").first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase2-timetable-favs.png" });
 
-    // Turn the filter back off, then zoom 2h → 1h changes the grid width.
-    await page.locator(".tt-toggle", { hasText: "Only my favs" }).click();
+    // Turn the filter back off, then zoom from the 1h default → 2h narrows the grid width.
+    await page.getByRole("button", { name: "Show only my favorites" }).click();
     const before = await page.locator(".tt-content").evaluate((el) => el.getBoundingClientRect().width);
-    await page.locator(".tt-toggle", { hasText: "view" }).click();
+    await page.getByRole("button", { name: "Zoom out to 2-hour view" }).click();
     const after = await page.locator(".tt-content").evaluate((el) => el.getBoundingClientRect().width);
-    expect(after).toBeGreaterThan(before);
+    expect(after).toBeLessThan(before);
   });
 
   // DEC-049: the Lineup is discoverable in ≤1 tap from the Timetable via the segmented switch.
@@ -54,7 +55,7 @@ test.describe("Phase 2 — timetable grid", () => {
     await page.locator(".view-switch .vs-seg", { hasText: "Lineup" }).click();
 
     await expect(page).toHaveURL(/\/lineup$/);
-    await expect(page.locator(".poster", { hasText: "Lineup" })).toBeVisible();
+    await expect(page.locator(".lu-top .view", { hasText: "LINEUP" })).toBeVisible();
     // And back to the Timetable in one tap.
     await page.locator(".view-switch .vs-seg", { hasText: "Timetable" }).click();
     await expect(page).toHaveURL(/\/timetable$/);

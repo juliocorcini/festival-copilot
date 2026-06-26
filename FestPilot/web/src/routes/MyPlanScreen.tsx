@@ -4,7 +4,7 @@
  * Reads the locally-saved plan (DEC-041); the timeline math is pure (`domain/plan.ts`). Empty days
  * route into Lock in. Share uses the Web Share API with a clipboard fallback.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
 import { useOnboarding, usePlan } from "../data/localStore";
@@ -155,12 +155,13 @@ export function MyPlanScreen(): JSX.Element {
                 <PlanSetRow
                   key={item.slot.setId}
                   item={item}
+                  i={Math.min(index, 11)}
                   tz={tz}
                   photoUrl={photoByKey.get(item.slot.actKey) ?? null}
                   onMenu={() => setMenuFor(item.slot)}
                 />
               ) : (
-                <PlanGapRow key={`gap-${index}`} item={item} onRoute={() => navigate(routeHref(dayKey))} />
+                <PlanGapRow key={`gap-${index}`} i={Math.min(index, 11)} item={item} onRoute={() => navigate(routeHref(dayKey))} />
               )
             )}
             <div className="plan-row">
@@ -332,11 +333,13 @@ function SetPickerSheet({
 
 function PlanSetRow({
   item,
+  i,
   tz,
   photoUrl,
   onMenu,
 }: {
   item: PlanSetItem;
+  i: number;
   tz: string;
   photoUrl: string | null;
   onMenu: () => void;
@@ -350,7 +353,7 @@ function PlanSetRow({
   // explicit `more_vert` button so the two actions never collide. stopPropagation keeps the edit
   // tap from also opening the sheet.
   return (
-    <div className="plan-row">
+    <div className="plan-row fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className={`plan-dot ${status}`} />
       <div
         className={`glass plan-card tappable ${status}`}
@@ -390,9 +393,9 @@ function PlanSetRow({
   );
 }
 
-function PlanGapRow({ item, onRoute }: { item: PlanGapItem; onRoute: () => void }): JSX.Element {
+function PlanGapRow({ item, i, onRoute }: { item: PlanGapItem; i: number; onRoute: () => void }): JSX.Element {
   return (
-    <div className="plan-row gap">
+    <div className="plan-row gap fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className="plan-dot mini" />
       <div className="plan-chips">
         {item.walkMinutes > 0 && (

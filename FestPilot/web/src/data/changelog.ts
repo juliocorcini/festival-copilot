@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.23.0";
+export const APP_VERSION = "0.24.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.24.0",
+    date: "2026-06-26",
+    title: "A timetable that opens detailed — and screens with life",
+    icon: "view_timeline",
+    whatsNew: [
+      "The Timetable now opens zoomed in to the 1-hour view by default, so each set 'breathes' and the times are easier to read — tap zoom out anytime for the wider 2-hour overview.",
+      "The faint hour lines are always on now: a steady time reference behind every set, with no extra button to fuss with.",
+      "Lists and cards arrive with a gentle cascade — the Lineup grid, your 'later tonight' list and your plan timeline ease in instead of snapping, so the app feels more alive.",
+      "Honors 'reduce motion': if your phone asks for less animation, everything appears instantly with no movement.",
+    ],
+    howToTest: [
+      "Open the Timetable — it starts in the 1-hour view with the hour lines showing, and the old 'lines' toggle is gone. Tap the zoom button for the 2-hour view; pinching still zooms too.",
+      "Open the Lineup on a fresh load — the first cards rise in a quick cascade; scroll down and the rest are already in place.",
+      "Now & Next 'later tonight' and the My Plan timeline ease in row by row; turn on 'Reduce Motion' in your phone settings and they appear with no animation.",
+    ],
+  },
   {
     version: "0.23.0",
     date: "2026-06-26",

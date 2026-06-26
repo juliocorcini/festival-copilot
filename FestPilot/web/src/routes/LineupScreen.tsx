@@ -141,12 +141,14 @@ export function LineupScreen(): JSX.Element {
     return [stage, dayLabels].filter(Boolean).join(" · ");
   };
 
-  const renderCard = (act: Act): JSX.Element => {
+  const renderCard = (act: Act, index: number): JSX.Element => {
     const on = favorites.isFavorite(act.actKey);
     const stage = stageName.get(act.stageIds[0] ?? "") ?? "";
-    const cardStyle = { "--c": stageColorRgb(stage) } as CSSProperties;
+    // Only the first rows cascade (the rest mount instantly) so a 600-act grid never ripples.
+    const rises = index < 10;
+    const cardStyle = { "--c": stageColorRgb(stage), ...(rises ? { "--i": index } : {}) } as CSSProperties;
     return (
-      <div className={`gc${on ? " on" : ""}`} key={act.actKey} style={cardStyle}>
+      <div className={`gc${on ? " on" : ""}${rises ? " fp-rise" : ""}`} key={act.actKey} style={cardStyle}>
         <button
           type="button"
           className="gc-tap"
