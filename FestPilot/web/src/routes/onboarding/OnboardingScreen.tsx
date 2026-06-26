@@ -10,7 +10,8 @@ import { useFavorites, useOnboarding, useProfile } from "../../data/localStore";
 import { useIdentity } from "../../data/identity";
 import { useLineup } from "../../data/useLineup";
 import { isValidEmail } from "../../lib/validate";
-import { cardDragStyle, swipeOutcome, type SwipeOutcome } from "../../domain/swipe";
+import { cardDragStyle, swipeRelease, type SwipeOutcome } from "../../domain/swipe";
+import { haptic } from "../../lib/haptics";
 import { ArtistPhoto } from "../../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../../lib/photo";
 import { usePhotoPrefetch } from "../../lib/usePhotoPrefetch";
@@ -528,11 +529,18 @@ function StepSwipe({
   const [flyOut, setFlyOut] = useState<SwipeOutcome>(null);
   const [hasDragged, setHasDragged] = useState(false);
   const startX = useRef(0);
+  // Velocity sampling for flick-to-commit: last pointer x + timestamp, and the latest px/ms speed.
+  const lastX = useRef(0);
+  const lastT = useRef(0);
+  const velocity = useRef(0);
   const committing = useRef(false);
 
   const commit = (outcome: Exclude<SwipeOutcome, null>): void => {
     if (committing.current) return;
     committing.current = true;
+    // Distinct buzz per outcome (DEC: onboarding feedback): "I'll see this" = a rich success triple,
+    // "skip" = a heavier discard pulse — so the hand knows the result without looking.
+    haptic(outcome === "keep" ? "success" : "warning");
     setFlyOut(outcome);
     window.setTimeout(() => {
       onSwipe(outcome === "keep");
@@ -547,16 +555,23 @@ function StepSwipe({
     setHasDragged(true);
     setDragging(true);
     startX.current = e.clientX;
+    lastX.current = e.clientX;
+    lastT.current = e.timeStamp;
+    velocity.current = 0;
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onPointerMove = (e: ReactPointerEvent): void => {
     if (!dragging) return;
+    const dt = e.timeStamp - lastT.current;
+    if (dt > 0) velocity.current = (e.clientX - lastX.current) / dt;
+    lastX.current = e.clientX;
+    lastT.current = e.timeStamp;
     setDx(e.clientX - startX.current);
   };
   const onPointerUp = (): void => {
     if (!dragging) return;
     setDragging(false);
-    const outcome = swipeOutcome(dx);
+    const outcome = swipeRelease(dx, velocity.current);
     if (outcome) commit(outcome);
     else setDx(0);
   };
@@ -592,10 +607,20 @@ function StepSwipe({
       <div className="ob-body is-swipe">
         {modeToggle}
         <div className="swipe-head">
-          <div className="count">
-            {dayProgress
-              ? `Day ${dayProgress.ordinal} of ${dayProgress.totalDays} · ${dayProgress.pct}%`
-              : `${total} acts`}
+          <div className="swipe-head-top">
+            <div className="count">
+              {dayProgress
+                ? `Day ${dayProgress.ordinal} of ${dayProgress.totalDays} · ${dayProgress.pct}%`
+                : `${total} acts`}
+            </div>
+            <button
+              className="swipe-undo sm"
+              onClick={onUndo}
+              disabled={!canUndo}
+              aria-label="Undo last swipe"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>undo</span> Undo
+            </button>
           </div>
           <div className="swipe-bar"><div style={{ width: `${progress}%` }} /></div>
           {dayProgress && (
@@ -604,14 +629,6 @@ function StepSwipe({
               {Math.min(dayProgress.withinDay + 1, dayProgress.dayCount)} of {dayProgress.dayCount}
             </div>
           )}
-          <button
-            className="swipe-undo sm"
-            onClick={onUndo}
-            disabled={!canUndo}
-            aria-label="Undo last swipe"
-          >
-            <span className="ms" style={{ fontSize: 15 }}>undo</span> Undo
-          </button>
         </div>
         <div className="swipe-q">
           <div className="q">Would you see this set?</div>
@@ -654,8 +671,8 @@ function StepSwipe({
         </div>
       </div>
       <div className="swipe-actions">
-        <button className="nah" onClick={() => onSwipe(false)}>Nah</button>
-        <button className="yes" onClick={() => onSwipe(true)}>I'd see this!</button>
+        <button className="nah" data-haptic="warning" onClick={() => onSwipe(false)}>Nah</button>
+        <button className="yes" data-haptic="success" onClick={() => onSwipe(true)}>I'd see this!</button>
       </div>
     </>
   );

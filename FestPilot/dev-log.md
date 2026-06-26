@@ -6,6 +6,24 @@
 
 ---
 
+## Feedback patch 26/06 — Onboarding: swipe por flick + haptics distintos + nome no grid + Undo reposicionado ✅ DEPLOYED — v0.25.1
+
+> Primeiro patch da cadência incremental (0.0.1 por feature/milestone, sem esperar fechar a fase). 4 itens de feedback do onboarding:
+> 1. **Swipe por velocidade (flick):** novo `swipeRelease(dx, vx)` no domínio — além do commit por distância (threshold **90→72px**), um **arremesso rápido** (`|vx| ≥ 0.55px/ms`, deslocamento ≥ 28px, mesma direção) já confirma. Puxar o dedo de volta no fim **cancela** (sinal de velocidade ≠ sinal do deslocamento). `StepSwipe` amostra velocidade em `onPointerMove` via `e.timeStamp`.
+> 2. **Haptics distintos:** keep = `success` `[12,28,18]`, skip = `warning` `[20,40,20]` — disparados no `commit()` e espelhados nos botões (`data-haptic` em Nah/Yes).
+> 3. **Nome no grid legível:** `.gcard` é `<button>` e não setava `color` → nome herdava preto. Agora `color: var(--ink)`.
+> 4. **Undo reposicionado:** era `position:absolute` colado na linha da %. Agora numa linha flex (`.swipe-head-top`): progresso à esquerda, Undo à direita; barra/dia abaixo.
+> `tsc` limpo · **346 testes** (swipe +5: distância vs flick vs jitter vs pull-back) · `vite build` ok (`index-BVu13ISx.js`) · deploy `--branch=master` → `62cf774c.festpilot.pages.dev` (alias `festpilot.pages.dev`).
+
+### Current State (this batch)
+- **No ar (v0.25.1):** onboarding swipe responde a flick rápido; vibração diferente pra keep/skip; nomes do grid legíveis; Undo fora da linha de progresso.
+- **Domínio:** `domain/swipe.ts` ganhou `SWIPE_VELOCITY`, `SWIPE_FLICK_MIN_DX`, `swipeRelease()` (threshold baixado pra 72). `swipeOutcome` mantido (back-compat).
+
+### Escopo (arquivos)
+- **Editados:** `domain/swipe.ts` (+`swipeRelease`/constantes), `domain/swipe.test.ts` (+5 testes de flick), `routes/onboarding/OnboardingScreen.tsx` (velocidade+haptics+head reestruturado+data-haptic), `styles.css` (`.gcard color`, `.swipe-head-top`, `.swipe-undo.sm` estático), `data/changelog.ts` + `web/package.json` (**0.25.1**).
+
+---
+
 ## Native polish 6/10 26/06 — My Plan editável + blocos pessoais + deslocamento inteligente (D1+D7) + update descobrível ✅ DEPLOYED — v0.25.0
 
 > Fase 6 do roadmap (D1 + D7 num só deploy). **My Plan ganha modo Editar**: blocos pessoais (comer/descansar/água/encontro/explorar/custom) com presets, steppers ±15min e nota; CTA "Preencher" nos vãos longos; **invariante zero-overlap** preservada (planEdit puro).

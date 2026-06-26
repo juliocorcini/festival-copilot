@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.25.0";
+export const APP_VERSION = "0.25.1";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.25.1",
+    date: "2026-06-26",
+    title: "Picking artists feels right",
+    icon: "swipe",
+    whatsNew: [
+      "Swiping is snappier: a quick flick to the side now commits the card — no more dragging it all the way across. A slow, deliberate drag still works exactly as before.",
+      "Distinct buzz per choice: keeping an artist gives a happy little pulse, skipping gives a different one — so your hand knows the result without looking.",
+      "In the grid view, artist names are now clearly readable (they were too dark before).",
+      "The Undo button moved out of the way so it no longer touches the progress line.",
+    ],
+    howToTest: [
+      "Onboarding swipe: throw a card quickly to the right/left with a short, fast flick — it commits. Drag slowly and it commits past the halfway mark; let go early and it springs back.",
+      "Feel the difference between a 'keep' and a 'skip' swipe (and the Nah / I'd see this! buttons) — the vibration pattern differs. Needs Haptics on (Settings → Appearance) and a phone that vibrates.",
+      "Switch the picker to the grid view — every artist name is legible. The Undo control sits at the top-right, clear of the progress bar.",
+    ],
+  },
   {
     version: "0.25.0",
     date: "2026-06-26",

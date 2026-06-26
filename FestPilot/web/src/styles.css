@@ -569,6 +569,8 @@ a { color: inherit; text-decoration: none; }
 
 /* swipe card (step 4) */
 .swipe-head { position: relative; text-align: center; padding: 2px 0 6px; flex-shrink: 0; }
+/* Top row: progress on the left, Undo on the right — so Undo never overlaps the % line (feedback). */
+.swipe-head-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; }
 .swipe-head .count { font-size: 12px; color: var(--muted); font-weight: 600; }
 .swipe-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 8px; }
 .swipe-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.25s ease; }
@@ -625,7 +627,7 @@ a { color: inherit; text-decoration: none; }
   background: var(--glass); border: 1px solid var(--border); color: var(--ink); border-radius: 999px;
   padding: 9px 16px; font-size: 13px; margin-top: 16px; }
 .swipe-undo:active { transform: scale(0.97); }
-.swipe-undo.sm { position: absolute; top: -2px; right: 0; margin-top: 0; padding: 5px 11px; font-size: 12px;
+.swipe-undo.sm { margin-top: 0; padding: 5px 11px; font-size: 12px; flex-shrink: 0;
   color: var(--accent); background: rgba(245, 166, 35, 0.12); border-color: rgba(245, 166, 35, 0.32); }
 .swipe-undo:disabled { opacity: 0; pointer-events: none; }
 
@@ -660,7 +662,7 @@ a { color: inherit; text-decoration: none; }
 /* Grid favoriting (R5.2): 2-col photo + name, tap toggles the favorite. */
 .ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 4px 0 8px; }
 .gcard { position: relative; text-align: left; padding: 0; border: 1px solid var(--border); border-radius: 16px;
-  overflow: hidden; background: var(--glass); cursor: pointer; display: flex; flex-direction: column;
+  overflow: hidden; background: var(--glass); color: var(--ink); cursor: pointer; display: flex; flex-direction: column;
   transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; }
 .gcard:active { transform: scale(0.985); }
 .gcard.on { border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
