@@ -1119,10 +1119,12 @@
 - **Rationale**: Julio: "it won't activate the compass because I'm already at the place — but I want the compass to reach the exact specific point the person said they're at."
 - **Implemented (G6)**: pure `navMode(distanceMeters, arrivedRadiusM, forceCompass)` — `forceCompass` beats the auto-arrived state, so the dial is **always** reachable; `MeetNavScreen` holds a `forceCompass` flag toggled by a "Show compass anyway" button on the arrived screen (and requests heading permission on tap). **+4 unit** (`meetUi.test`).
 
-### DEC-102 — Meeting point: photo lightbox (P1) + per-point mural (P2) — PROPOSED (council C7)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7, v0.48.0).
+### DEC-102 — Meeting point: photo lightbox (P1) + per-point mural (P2) — APPROVED (council C7)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** (Gate G7, v0.48.0, client-only). **Lightbox shipped; mural (E20) DEFERRED (P2).**
 - **Decision**: **lightbox** (tap-to-zoom) on the meeting-point photo — **P1, do now** (`MeetDetailScreen`). A per-point **mural** (text+photo messages, author/time, `GroupRoom` fan-out) reusing the existing message/board pattern — **P2, only if there's slack**, else defer.
 - **Rationale**: Julio: "tapping the photo has to open it so you can zoom"; "each meeting point could have a mural too — to send where it is, how to get there, doubts; create a way to communicate by the meeting point." Council: Critic's "lightbox cheap now, don't inflate the wave with a from-scratch mural" adopted.
+- **Implemented (G7)**: **E19 lightbox** — new `ui/PhotoLightbox.tsx` opens the photo full-screen over a dark backdrop and drives pinch-zoom + pan through the **same `usePanZoom`** the map uses (native pinch is locked by `maximum-scale=1`), with the honest resolution ceiling `maxScaleForBase` (DEC-075). The photo shows **whole** (contain) vs the cover-cropped thumbnail; close via ✕ / Esc / double-tap. Pure `ui/lightbox.ts → containedSize` (+6 unit); the rest reuses tested map infra (zero new gesture code). Proof: web 525 (+6), e2e 35/35 (+1 lightbox).
+- **E20 mural — DEFERRED (P2)**: a per-point mural is net-new server surface (a point-scoped message store + API + `GroupRoom` fan-out topic + compose/list UI + i18n + e2e) — exactly the inflation the Critic (the deciding lens here) warned against, and §12 explicitly allows deferring P2 with a record. **Chair flip taken** ("mural only if slack, else defer"). Pickup path when prioritized: reuse the existing board/messages pattern (`SquadBoardScreen` + the board API + `GroupRoom`), scoping a thread to `meeting_point_id`.
 
 ### DEC-103 — Join: link / QR / scan-camera / code with clear affordances — PROPOSED (direct)
 - **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G8, v0.49.0).

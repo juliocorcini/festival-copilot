@@ -717,6 +717,9 @@ const EN = {
   "safety.stopping": "Stopping…",
   "safety.imOkay": "I'm okay — stop sharing",
   "safety.alsoHelpOthers": "Someone else needs help too — you can go to them above.",
+  // ── Leva 2 G7 — meeting-point photo lightbox (E19) ──
+  "meet.zoomPhoto": "Tap to zoom",
+  "meet.photoOf": "Photo of {title}",
 } as const;
 
 export type MessageKey = keyof typeof EN;
@@ -1393,6 +1396,9 @@ const PT: Partial<Record<MessageKey, string>> = {
   "safety.stopping": "Parando…",
   "safety.imOkay": "Estou bem — parar de compartilhar",
   "safety.alsoHelpOthers": "Outra pessoa também precisa de ajuda — você pode ir até ela acima.",
+  // ── Leva 2 G7 — lightbox da foto do ponto de encontro (E19) ──
+  "meet.zoomPhoto": "Toque para ampliar",
+  "meet.photoOf": "Foto de {title}",
 };
 
 const DICT: Record<Language, Partial<Record<MessageKey, string>>> = { en: EN, pt: PT };

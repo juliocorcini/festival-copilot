@@ -15,6 +15,8 @@ import { readableInkOn } from "../../lib/contrast";
 import type { MeetingPointMemberDto, SettableMeetingStatus } from "../../data/types";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { compressMeetingPhoto } from "../../ui/imageCompress";
+import { PhotoLightbox } from "../../ui/PhotoLightbox";
+import { useT } from "../../i18n";
 import { PresenceAvatar } from "../presence/presenceUi";
 import { MeetConvergenceMap } from "./MeetConvergenceMap";
 import { closesInLabel, convergenceSummary, lifecycleBadge, memberStatusLine, whenLabel } from "./meetUi";
@@ -31,12 +33,14 @@ const STATUS_RANK: Record<MeetingPointMemberDto["status"], number> = {
 export function MeetDetailScreen(): JSX.Element {
   const { id, mpId } = useParams<{ id: string; mpId: string }>();
   const navigate = useNavigate();
+  const t = useT();
   const { point, status, reload } = useMeetingPoint(id, mpId);
   const { presence } = useGroupPresence(id);
   const [busy, setBusy] = useState<string | null>(null);
   const [keptOpen, setKeptOpen] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [zoomPhoto, setZoomPhoto] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
 
   const pickPhoto = async (file: File | undefined): Promise<void> => {
@@ -179,7 +183,17 @@ export function MeetDetailScreen(): JSX.Element {
           {(point.photoUrl || point.isMine) && (
             <div className="meet-photo">
               {point.photoUrl ? (
-                <img className="meet-photo-img" src={point.photoUrl} alt={`Photo of ${point.title}`} />
+                <button
+                  type="button"
+                  className="meet-photo-zoom"
+                  onClick={() => setZoomPhoto(true)}
+                  aria-label={t("meet.zoomPhoto")}
+                >
+                  <img className="meet-photo-img" src={point.photoUrl} alt={t("meet.photoOf", { title: point.title })} />
+                  <span className="meet-photo-zoom-badge" aria-hidden="true">
+                    <span className="ms">zoom_in</span>
+                  </span>
+                </button>
               ) : (
                 <div className="meet-photo-empty">
                   <span className="ms" aria-hidden="true">add_a_photo</span>
@@ -269,6 +283,13 @@ export function MeetDetailScreen(): JSX.Element {
           )}
         </div>
       </div>
+      {zoomPhoto && point.photoUrl && (
+        <PhotoLightbox
+          src={point.photoUrl}
+          alt={t("meet.photoOf", { title: point.title })}
+          onClose={() => setZoomPhoto(false)}
+        />
+      )}
     </>
   );
 }

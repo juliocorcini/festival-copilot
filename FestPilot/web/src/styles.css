@@ -1977,6 +1977,22 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .meet-photo-action:disabled { opacity: 0.7; cursor: default; }
 .meet-photo-action .ms { font-size: 16px; }
 .meet-photo-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+/* Tappable thumbnail → opens the full photo (E19/DEC-102). */
+.meet-photo-zoom { display: block; width: 100%; padding: 0; border: 0; background: none; position: relative; cursor: zoom-in; border-radius: 14px; }
+.meet-photo-zoom-badge { position: absolute; right: 10px; top: 10px; width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; background: rgba(8, 7, 5, 0.55); color: #fff;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: none; }
+.meet-photo-zoom-badge .ms { font-size: 18px; }
+
+/* Full-screen photo lightbox (E19/DEC-102) — pinch-zoom over a dark backdrop, reusing .viewport/.world. */
+.lightbox { position: fixed; inset: 0; z-index: 400; background: rgba(8, 7, 5, 0.96); animation: fp-fade 0.18s ease; }
+.lightbox-viewport { background: transparent; cursor: default; }
+.lightbox-img { display: block; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+.lightbox-close { position: absolute; top: calc(10px + var(--safe-top)); right: 14px; z-index: 1;
+  width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--glass); border: 1px solid var(--border); color: var(--ink);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.lightbox-close .ms { font-size: 22px; }
 
 .meet-drift { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; padding: 10px 12px; border-radius: 12px;
   background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3); color: var(--accent2); }

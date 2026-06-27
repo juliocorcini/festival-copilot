@@ -150,4 +150,28 @@ test.describe("Phase 6 — meeting points (Gate 6.1)", () => {
     await expect(page.getByText("Active")).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase6-active-card.png" });
   });
+
+  // Gate 7 (E19/DEC-102): the meeting-point photo opens a full-screen pinch-zoom lightbox.
+  test("photo lightbox: tap the meeting photo → it opens full-screen → close (E19)", async ({ page }) => {
+    const PHOTO =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const POINT_WITH_PHOTO = { ...POINT, photoUrl: PHOTO, lifecycle: "active", everyoneHere: false, creatorDrifted: false };
+    // A specific route for the single-point GET takes precedence over the broad beforeEach stub.
+    await page.route(`**/api/groups/${GROUP_ID}/meeting-points/mp-1`, (route) => {
+      if (route.request().method() === "GET") return route.fulfill({ json: { meetingPoint: POINT_WITH_PHOTO } });
+      return route.fallback();
+    });
+
+    await page.goto(`/squad/${GROUP_ID}/meet/mp-1`);    await expect(page.getByText("Regroup at the bar 🍻")).toBeVisible({ timeout: 20_000 });
+
+    // The photo is tappable; tapping opens the lightbox overlay.
+    await page.getByRole("button", { name: "Tap to zoom" }).click();
+    await expect(page.locator(".lightbox")).toBeVisible();
+    await expect(page.locator(".lightbox-img")).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/g7-photo-lightbox.png", fullPage: true });
+
+    // The ✕ closes it.
+    await page.getByRole("button", { name: "Close" }).click();
+    await expect(page.locator(".lightbox")).toHaveCount(0);
+  });
 });

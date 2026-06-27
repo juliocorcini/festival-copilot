@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.47.0";
+export const APP_VERSION = "0.48.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,18 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.48.0",
+    date: "2026-06-27",
+    title: "Zoom into the spot",
+    icon: "zoom_in",
+    whatsNew: [
+      "Tap a meeting-point photo to open it full-screen and pinch-zoom in — so you can actually read the detail (\"it's the blue tent by the bar\").",
+    ],
+    howToTest: [
+      "Open a meeting point that has a photo → tap the photo. It opens full-screen; pinch to zoom and drag around, then tap ✕ (or press Esc) to close.",
+    ],
+  },
   {
     version: "0.47.0",
     date: "2026-06-27",
