@@ -16,15 +16,15 @@
 > **INVARIÂNCIA: `buildSquadPlan`/agregação NÃO muda — esta leva explica e atualiza, não recalcula.**
 
 ### Estado da leva (vivo)
-- **gate atual:** G0 ✅ — baseline verde re-confirmado, dev-log semeado, DEC-089…107 já PROPOSED, pipeline confirmado. **Iniciando G1.**
-- **produção:** **v0.41.0** (`festpilot.pages.dev`, build `index-D8bE2GjT.js`, master) — leva 2 ainda não deployou.
+- **gate atual:** G1 ✅ (v0.42.0) — feel nativo: altura real do shell iOS (`--app-height`) + portrait-only + `color-scheme: dark`. **Iniciando G2.**
+- **produção:** **v0.42.0** (deploy em andamento via push no `master`) — anterior `index-D8bE2GjT.js` (v0.41.0).
 - **baseline G0 (re-verificado 2026-06-27, antes de tocar em nada):** `tsc` limpo · **496 web (58 files) + 238 server (27 files) = 734 unit** · `build` verde (main 424.66 kB, embute 0.41.0) · produção serve o mesmo hash `index-D8bE2GjT.js` (pipeline vivo). e2e 34/34 (registrado na leva 1; não re-rodado no G0). **Sem falhas baseline conhecidas.**
 - **Durable Objects:** testes de server que tocam DO (groups/presence/meeting/board) rodam via harness `sql.js` e **passam local**. Por instrução do Julio, **DO real fora do ar é não-erro**: deploy do worker é tolerado, os testes de DO seguem verdes via harness.
 - **LOCKs §16 (não-bloqueantes):** sem resposta → adotadas as **recomendações** do conselho (precise escopo-squad+TTL; coarse-visível no join; notificações locais primeiro).
 
 ### Checklist de gates (leva 2)
 - [x] **G0** — baseline verde + dev-log semeado + DEC-089…107 PROPOSED + pipeline confirmado. *(sem bump)*
-- [ ] **G1** — feel nativo: iOS chrome+safe-areas+portrait + barras Android (E01/E02/E28; DEC-089/107). → v0.42.0
+- [x] **G1** — feel nativo: iOS chrome+safe-areas+portrait + barras Android (E01/E02/E28; DEC-089/107). → **v0.42.0** ✅
 - [ ] **G2** — base de mapa unificada + sem texto preto (E17/E18; DEC-090/091). → v0.43.0
 - [ ] **G3** — squad honesto: Próximo real + CTA + i18n + transparência (E04/E05/E06/E08; DEC-092/093/094/096). → v0.44.0
 - [ ] **G4** — squad vivo: re-share + histórico + notificação (E07; DEC-095) [server+client]. → v0.45.0
@@ -34,6 +34,16 @@
 - [ ] **G8** — join QR/scan/código + i18n/overflow + header (E03/E24/E27/E26; DEC-103/094/104). → v0.49.0
 - [ ] **G9** — notificações locais (E25; DEC-105). → v0.50.0
 - [ ] **G10** — (opcional/P2) zoom do mapa + estrutura squad (E11/E21/E22/E23; DEC-106). → v0.51.0
+
+### G1 — Feel nativo (iOS + barras de sistema) ✅ — v0.42.0
+> Fecha **E01/E02/E28** (DEC-089/107): barra preta gigante + conteúdo espremido no iOS instalado, app girando para landscape, e barras de sistema genéricas. **Diagnóstico-chave:** a auditoria de safe-area da leva 1 (DEC-088) passou em desktop/sim mas o **iPhone real** mostrava o defeito — causa é o iOS standalone (com `black-translucent`) **mal-computar `100dvh`/`%`** no primeiro paint/rotação → shell mais curto que a tela (conteúdo no topo, faixa preta embaixo). Domínio-primeiro: util de altura pura/testável separada do mount.
+- **G1.1 — Altura real do shell (E01, DEC-089).** Novo **`lib/viewport.ts`** (`applyAppHeight(px)` escreve `--app-height` arredondado no root; `useAppHeight()` espelha `window.innerHeight` no mount + `resize`/`orientationchange`) — **+3 unit** (`viewport.test.ts`: escreve px, arredonda sub-pixel, último valor vence). `html/body/#root` e `.app`/`.ob` passam a `height: var(--app-height, 100%|100dvh)` (fallback pré-JS). Montado uma vez no root (`App.tsx`). `black-translucent` **mantido** (edge-to-edge faz a barra de status mostrar o próprio chrome do app → N7); as safe-areas (já no header/`.nav`) agora atuam sobre um shell de altura correta.
+- **G1.2 — Portrait-only (E02, DEC-089).** Manifest já tinha `orientation:"portrait"` (Android honra). Como o **iOS PWA ignora** a orientação do manifest, adicionada **guarda layout-side**: componente i18n **`app/RotateGuard.tsx`** (overlay sempre no DOM) + CSS `.rotate-guard` mostrado **só** em viewport landscape de telefone (`@media (orientation: landscape) and (max-height:540px) and (pointer:coarse)`) — desktop/web (também "landscape", mas pointer fino + tela alta) **nunca** é bloqueado. Texto via `t()` (`app.rotatePortrait`/`Sub`, EN+PT) + glifo `screen_rotation`.
+- **G1.3 — Barras de sistema profissionais (E28, DEC-107).** Manifest `theme_color`/`background_color` = `#0F0D09` (já) + `theme-color` dinâmico por paleta (DEC-088, já) cobrem a status-bar; adicionado **`color-scheme: dark`** no `:root` + `<meta name="color-scheme" content="dark">` → SO renderiza chrome nativo (scrollbars, controles, e em alguns Androids as barras) escuro, nunca claro genérico. **Limite reafirmado e documentado** (`brain/documents/2026-06-27-native-system-bars.md`): controle **total** da nav-bar Android exige TWA/Capacitor (DEC-035) — não construído agora; PWA cobre o gap com zero nova superfície de build.
+- **5-point self-check:** E01/E02/E28 + DEC-089/107 ✅; ACs em risco re-verificados → **invariância `buildSquadPlan`** intacta (nenhuma mudança de domínio), **shell/5-tabs** verde (`shell.spec`), **sheets/safe-area da leva 1** intactos (tokens `--safe-*` inalterados; só a altura virou var; presence/meeting sheets verdes no e2e); testes **web 499** (+3) + **server 238** = **737** sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo · **web unit 499** (era 496, +3 viewport) · **server 238** · **737 total** · **e2e 34/34** (2.4m) · `build` verde (embute 0.42.0) · deploy via push `master` → `festpilot.pages.dev`. Worker/D1 intactos (frontend-only).
+- **Escopo (arquivos):** `lib/viewport.ts`+`.test` (novo, +3), `app/RotateGuard.tsx` (novo), `App.tsx` (mount `useAppHeight`+`<RotateGuard/>`), `styles.css` (`--app-height` na cadeia de altura, `color-scheme: dark`, `.rotate-guard`+media query), `index.html` (`color-scheme` meta), `i18n/index.ts` (`app.rotatePortrait`/`Sub` EN+PT), `brain/documents/2026-06-27-native-system-bars.md` (nota leva 2), `data/changelog.ts`, `web/package.json`.
+- **DECs:** DEC-089 → **APPROVED** (iOS feel: altura real + portrait). DEC-107 → **APPROVED** (barras de sistema profissionais iOS+Android via manifest+theme-color+color-scheme; nav-bar total = shell nativo futuro).
 
 ### G0 — baseline & seed ✅ *(sem bump)*
 > Referência de regressão da leva 2. Baseline re-verificado idêntico ao fim da leva 1 (v0.41.0).

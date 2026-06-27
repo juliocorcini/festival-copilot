@@ -5,6 +5,8 @@ import { UpdateBanner } from "./app/UpdateBanner";
 import { RouteAnnouncer } from "./app/RouteAnnouncer";
 import { SkipLink } from "./app/SkipLink";
 import { useThemeColor } from "./lib/chrome";
+import { useAppHeight } from "./lib/viewport";
+import { RotateGuard } from "./app/RotateGuard";
 import { Toaster } from "./ui/Toaster";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
@@ -66,11 +68,14 @@ const AdminMapEditorScreen = lazy(() => named(import("./admin/AdminMapEditorScre
 export function App(): JSX.Element {
   // D11/DEC-088: keep the OS status-/nav-bar color in sync with the active day/night palette.
   useThemeColor();
+  // E01/DEC-089: pin the shell to the real viewport height (iOS standalone 100dvh miscompute).
+  useAppHeight();
   return (
     <BrowserRouter>
       <SkipLink />
       <RouteAnnouncer />
       <UpdateBanner />
+      <RotateGuard />
       <Toaster />
       <Routes>
         <Route path="/onboarding" element={<OnboardingScreen />} />

@@ -438,6 +438,10 @@ const EN = {
   "share.copyError": "Couldn't copy",
   "share.hint": "Drop it in your Instagram story or send it on WhatsApp.",
 
+  // App shell — portrait-only guard (E02/DEC-089)
+  "app.rotatePortrait": "Turn your phone upright",
+  "app.rotatePortraitSub": "FestPilot is built for portrait — rotate back to keep your plan and map in view.",
+
   // Shared palette words (used inside templated copy)
   "palette.day": "day",
   "palette.night": "night",
@@ -849,6 +853,9 @@ const PT: Partial<Record<MessageKey, string>> = {
   "share.copied": "Plano + link copiados",
   "share.copyError": "Não foi possível copiar",
   "share.hint": "Coloque no seu story do Instagram ou mande no WhatsApp.",
+
+  "app.rotatePortrait": "Vire o celular para a vertical",
+  "app.rotatePortraitSub": "O FestPilot foi feito para o modo retrato — volte à vertical para ver seu plano e o mapa.",
 
   "palette.day": "dia",
   "palette.night": "noite",

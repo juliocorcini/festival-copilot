@@ -51,6 +51,33 @@
 - [ ] Troca day/night atualiza as barras sem flicker.
 - [ ] Gesture/3-button navigation no Android: o `.nav` continua acima do home indicator.
 
+## Atualização leva 2 (2026-06-27) — G1 / DEC-089 + DEC-107 (v0.42.0)
+
+A auditoria de safe-area da leva 1 (DEC-088) passou em desktop/simulador mas **falhou no iPhone real**: barra
+preta gigante embaixo + conteúdo espremido/travado no topo. Causa: o iOS standalone (com `black-translucent`)
+**mal-computa `100dvh`/`%` no primeiro paint e após rotação**, deixando o shell mais curto que a tela.
+
+**Entregue no PWA (G1):**
+- **`web/src/lib/viewport.ts` (`useAppHeight`/`applyAppHeight`)** — espelha `window.innerHeight` (fonte
+  confiável em standalone) em `--app-height`; `.app`/`.ob` e a cadeia `html/body/#root` usam
+  `height: var(--app-height, 100dvh|100%)` (fallback pré-JS). Mata a faixa preta + o conteúdo espremido.
+- **`black-translucent` mantido** — é a escolha edge-to-edge que faz a barra de status **mostrar o próprio
+  chrome do app** (N7), em vez de uma faixa sólida destoante. As safe-areas (header `--safe-top`, `.nav`
+  `--safe-bottom`) já estão no lugar e agora atuam sobre um shell de altura correta.
+- **Portrait-only (E02):** manifest `orientation:"portrait"` (Android honra) + **guarda CSS layout-side**
+  `.rotate-guard` (overlay i18n, só em viewport landscape de telefone: `pointer:coarse` + `max-height:540px`,
+  nunca no desktop), pois o iOS PWA ignora a orientação do manifest.
+- **N7/E28 — `color-scheme: dark`** no `:root` (+ `<meta name="color-scheme" content="dark">`): informa ao SO
+  que a UI é escura, então o chrome nativo (scrollbars, controles de formulário e, em alguns Androids, as
+  barras do sistema) renderiza escuro e combina, nunca uma superfície clara genérica.
+
+**Limite do PWA (reafirmado):** controle **total** da barra de navegação do Android (cor garantida em todas as
+versões) continua exigindo TWA/Capacitor (DEC-035) — **não** construído agora. O caminho manifest
+`theme_color`/`background_color` (= `#0F0D09`) + `theme-color` dinâmico + `color-scheme: dark` cobre a maior
+parte do gap com zero nova superfície de build. O plano do shell nativo permanece o das seções acima.
+
 ## Decisão
 - **DEC-088**: `theme-color` dinâmico + auditoria de safe-area entregues no PWA (G8, v0.39.0); o shell nativo
   fica **documentado aqui** e **não** é construído nesta fase.
+- **DEC-089 + DEC-107** (leva 2, G1, v0.42.0): altura real do shell (`--app-height`) + portrait-only (guarda
+  CSS) + `color-scheme: dark`; `black-translucent` mantido; nav-bar total do Android segue dependendo do shell nativo.

@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.41.0";
+export const APP_VERSION = "0.42.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.42.0",
+    date: "2026-06-27",
+    title: "Feels like a real app on your phone",
+    icon: "fit_screen",
+    whatsNew: [
+      "Installed on your home screen, FestPilot now fills the whole screen — no more giant black bar at the bottom or content squeezed up top.",
+      "The app stays upright: it no longer flips sideways into a cramped landscape view.",
+      "The phone's status and navigation bars now follow FestPilot's dark look on both iPhone and Android, instead of a clashing light strip.",
+    ],
+    howToTest: [
+      "Install to your home screen and open it: the app reaches edge to edge, top and bottom, with nothing cut off.",
+      "Rotate your phone sideways: you get a gentle 'turn your phone upright' nudge instead of a broken landscape layout.",
+      "Glance at the very top (and, on Android, the bottom) bars: they blend into the app's dark chrome.",
+    ],
+  },
   {
     version: "0.41.0",
     date: "2026-06-27",

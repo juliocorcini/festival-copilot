@@ -44,13 +44,18 @@
   --friend: #7cf59a;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* N7/E28: tell the OS this is a dark UI so native chrome (scrollbars, form controls, and on some
+     Androids the system bars) renders dark to match the app, never a generic light surface. */
+  color-scheme: dark;
 }
 
 /* ---- reset & base ---- */
 * { box-sizing: border-box; }
 *::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
-html, body, #root { height: 100%; margin: 0; background: var(--bg); }
+/* E01/DEC-089: pin the chain to the real viewport height (`--app-height`, set by lib/viewport.ts),
+   falling back to 100% for the pre-JS first paint. Fixes the iOS-standalone short-shell black strip. */
+html, body, #root { height: var(--app-height, 100%); margin: 0; background: var(--bg); }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -107,7 +112,7 @@ a { color: inherit; text-decoration: none; }
 .app {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: var(--app-height, 100dvh);
   max-width: 480px;
   margin: 0 auto;
   position: relative;
@@ -115,6 +120,22 @@ a { color: inherit; text-decoration: none; }
   background:
     radial-gradient(ellipse 130% 62% at 50% -8%, rgba(245, 166, 35, 0.14), transparent 52%),
     var(--bg);
+}
+
+/* E02/DEC-089 — portrait-only. iOS PWAs ignore the manifest `orientation`, so this is the layout-side
+   lock: a full-screen overlay shown ONLY on a phone-sized landscape viewport (coarse pointer + short
+   height). Desktop/web — also "landscape" — keeps a fine pointer and tall viewport, so it's never hit. */
+.rotate-guard { display: none; }
+@media (orientation: landscape) and (max-height: 540px) and (pointer: coarse) {
+  .rotate-guard {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: fixed; inset: 0; z-index: 999; gap: 12px; text-align: center;
+    padding: 24px calc(24px + var(--safe-bottom));
+    background: var(--bg); color: var(--ink);
+  }
+  .rotate-guard .ms { font-size: 52px; color: var(--accent); }
+  .rotate-guard-title { margin: 0; font-size: 18px; font-weight: 700; }
+  .rotate-guard-sub { margin: 0; font-size: 13px; color: var(--muted); max-width: 280px; line-height: 1.45; }
 }
 
 .appbar {
@@ -559,7 +580,7 @@ main:focus { outline: none; }
 /* =============================================================================
    Onboarding flow (#17) — festival → weekend → days → swipe favorites
    ============================================================================= */
-.ob { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto;
+.ob { display: flex; flex-direction: column; height: var(--app-height, 100dvh); max-width: 480px; margin: 0 auto;
   background: radial-gradient(ellipse 120% 55% at 50% 4%, rgba(245, 166, 35, 0.1), transparent 50%), var(--bg); }
 .ob-top { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
   padding: calc(18px + var(--safe-top)) 22px 10px; }
