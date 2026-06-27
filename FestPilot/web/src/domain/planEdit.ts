@@ -5,7 +5,7 @@
  * Lock-in and while preserving that same zero-overlap invariant. No DOM/React.
  */
 import { overlaps } from "./intervals";
-import { effectiveInterval } from "./planSlot";
+import { effectiveEnd, effectiveInterval, effectiveStart } from "./planSlot";
 import type { PlanBlock, PlannableSet, PlanSlot } from "./types";
 
 function setToSlot(set: PlannableSet): PlanSlot {
@@ -159,4 +159,102 @@ export function clearTravelChoice(slots: PlanSlot[], fromSetId: string, toSetId:
     if (slot.setId === toSetId) return { ...slot, lateStartMs: null };
     return slot;
   });
+}
+
+/**
+ * Split a tight walk down the middle (DEC-079/C2): leave `fromSetId` early AND arrive at `toSetId`
+ * late, so each set gives up roughly half the lost music — "the smallest loss on both sides". Both
+ * edits only shrink an effective interval, so the zero-overlap invariant holds without a fit check.
+ */
+export function applySplitTravel(
+  slots: PlanSlot[],
+  fromSetId: string,
+  toSetId: string,
+  departMs: number,
+  arriveMs: number
+): PlanSlot[] {
+  return slots.map((slot) => {
+    if (slot.setId === fromSetId) return { ...slot, cutMs: departMs };
+    if (slot.setId === toSetId) return { ...slot, lateStartMs: arriveMs };
+    return slot;
+  });
+}
+
+// ── Insert between two cards (DEC-081) ───────────────────────────────────────
+// "Where does the time come from?" — open a free window between two consecutive sets to drop a
+// personal block into, carving the shortfall from the previous set's end, the next set's start, or
+// both. We reuse the same cut/late fields as travel choices, which ONLY ever shrink a set, so the
+// plan stays zero-overlap by construction.
+
+/** Which neighbour gives up the time when inserting between two back-to-back sets. */
+export type CarveSource = "before" | "after" | "split";
+
+export interface CarveResult {
+  /** The slots after carving (a copy; unchanged when the free room already fits). */
+  slots: PlanSlot[];
+  /** The freed window a block can occupy, `[startMs, endMs)`. */
+  startMs: number;
+  endMs: number;
+}
+
+/**
+ * Open a `durationMs` window between the consecutive sets `beforeSetId`→`afterSetId`. Any existing
+ * free gap is used first; only the shortfall is carved from the chosen `source`. Returns the carved
+ * slots + the freed window, or `null` when that side can't give the time without erasing a set.
+ */
+export function carveWindow(
+  slots: PlanSlot[],
+  beforeSetId: string,
+  afterSetId: string,
+  durationMs: number,
+  source: CarveSource
+): CarveResult | null {
+  if (!Number.isFinite(durationMs) || durationMs <= 0) return null;
+  const before = slots.find((slot) => slot.setId === beforeSetId);
+  const after = slots.find((slot) => slot.setId === afterSetId);
+  if (!before || !after) return null;
+
+  const bEnd = effectiveEnd(before);
+  const aStart = effectiveStart(after);
+  const freeMs = Math.max(0, aStart - bEnd);
+  const need = durationMs - freeMs; // extra time to carve beyond the existing free room
+
+  if (need <= 0) {
+    // Enough idle time already — drop the block at the start of the free window, carve nothing.
+    return { slots, startMs: bEnd, endMs: bEnd + durationMs };
+  }
+
+  if (source === "before") {
+    const newEnd = bEnd - need;
+    if (newEnd <= before.startMs) return null;
+    return { slots: withCut(slots, beforeSetId, newEnd), startMs: newEnd, endMs: aStart };
+  }
+  if (source === "after") {
+    const newStart = aStart + need;
+    if (newStart >= after.endMs) return null;
+    return { slots: withLate(slots, afterSetId, newStart), startMs: bEnd, endMs: newStart };
+  }
+  // split — symmetric halves (the odd minute goes to the later arrival)
+  const fromBefore = Math.floor(need / 2);
+  const fromAfter = need - fromBefore;
+  const newEnd = bEnd - fromBefore;
+  const newStart = aStart + fromAfter;
+  if (newEnd <= before.startMs || newStart >= after.endMs) return null;
+  return {
+    slots: slots.map((slot) => {
+      if (slot.setId === beforeSetId) return { ...slot, cutMs: newEnd };
+      if (slot.setId === afterSetId) return { ...slot, lateStartMs: newStart };
+      return slot;
+    }),
+    startMs: newEnd,
+    endMs: newStart,
+  };
+}
+
+function withCut(slots: PlanSlot[], setId: string, cutMs: number): PlanSlot[] {
+  return slots.map((slot) => (slot.setId === setId ? { ...slot, cutMs } : slot));
+}
+
+function withLate(slots: PlanSlot[], setId: string, lateStartMs: number): PlanSlot[] {
+  return slots.map((slot) => (slot.setId === setId ? { ...slot, lateStartMs } : slot));
 }

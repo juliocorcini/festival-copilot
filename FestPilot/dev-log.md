@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G5 ✅ (v0.36.0 no ar) — **poster v2: todos os sets + fotos/iniciais + URL final** · **próximo:** G6 (inserir entre cards D09 + caminhada D17/D18 — fecha P0).
-- **produção:** **v0.36.0** (`festpilot.pages.dev`, deploy `75d8b3a9`, master).
+- **gate atual:** G6 ✅ (v0.37.0 no ar) — **inserir entre cards (+ de onde vem o tempo) + caminhada única/ajustável/split — fecha P0** · **próximo:** G7 (timetable/line-up: favoritos, gridlines, Lock-in, pinça, colapsar, haptic).
+- **produção:** **v0.37.0** (`festpilot.pages.dev`, deploy `78432c15`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -25,11 +25,21 @@
 - [x] **G3** — mapa base progressiva nítida no zoom (D01). → **v0.34.0** ✅ *(fechou "o principal alerta")*
 - [x] **G4** — português em todas as telas (D04). → **v0.35.0** ✅
 - [x] **G5** — poster v2 (D08) + URL final (D26). → **v0.36.0** ✅
-- [ ] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → v0.37.0 *(fecha P0)*
+- [x] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → **v0.37.0** ✅ *(fechou P0)*
 - [ ] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → v0.38.0
 - [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G6 — Inserir entre cards + caminhada única/ajustável/split ✅ — v0.37.0
+> Fecha **D09** (#13, inserir entre dois cards) + **D17/D18** (#10/#11, caminhada confusa/duplicada e só ajustável no Editar) — **último P0**. **Conselho C2 + Red Team:** o risco real do "inserir" não é a UI do "+", é **manter o zero-overlap** quando se carva tempo entre dois sets colados; e o da caminhada é **duas fontes de verdade** (chip + linha de gap) dizendo coisas diferentes. Solução: **domínio puro primeiro** (carve/split com invariante testado), **uma única fonte** de caminhada (chip no card de destino).
+- **G6.0 — Domínio (DEC-079/081, antes de qualquer UI).** `domain/planEdit.ts`: **`applySplitTravel`** (aplica `cutMs` no set de origem **e** `lateStartMs` no de destino → divide a perda do trecho ao meio, some os dois → zero-overlap) e **`carveWindow`** (cria uma janela livre entre dois sets consecutivos consumindo `cutMs`/`lateStartMs` conforme a fonte escolhida — `"before"`/`"after"`/`"split"` —, respeitando folga já existente e os limites de cada set; retorna `null` quando carvar apagaria um set). Helpers `withCut`/`withLate`. **Testes**: `applySplitTravel` (cut+late corretos, zero-overlap) e `carveWindow` (3 fontes × mesmo-palco/cross-palco com walk real × folga-suficiente × impossível), validando o invariante via `buildPlanTimeline` para **as duas** prefs (`leave-early`/`arrive-late`). **+7 unit** (457→464).
+- **G6.1 — Inserir entre cards (D09, DEC-081).** Em **Editar**, um divisor **`+`** (`InsertDivider`) aparece entre cada par de cards adjacentes (set ou bloco). Tocar abre **`InsertSheet`**: presets de bloco (comida/água/descanso) **ou** "Adicionar um set". Com folga ≥10 min → abre o `BlockSheet` já na janela livre. **Colado** (e ambos vizinhos são sets) → passo **"de onde vem o tempo?"** (antes/depois/dividir) → `carveWindow` ajusta os vizinhos, `addBlock` insere o bloco (30 min), **salva os dois** (`plan.save` + `plan.saveBlocks` — seguro: `update` lê o estado mais recente a cada chamada) e confirma com toast. "Adicionar um set" reusa o `SetPickerSheet` (cai cronologicamente).
+- **G6.2 — Caminhada única/ajustável/split (D17/D18, DEC-079).** **Uma só fonte**: o `TravelChip` mora **no card de destino** e o `PlanGapRow` **não mostra mais caminhada** (retorna `null` quando o gap é só uma caminhada). O chip agora é **sempre um `<button>`** (toca **fora** do Editar — D18) e o texto reflete a resolução (tight / split / arrive-late / leave-early / "{n} min walk" neutro). O `TravelSheet` ganhou **"Split it"** (habilitado quando viável), **destaque da escolha atual** (cut/late explícitos → split destaca como split, não como arrive-late), **"Ver caminhada no mapa"** (`routeForTravel` → `/route` com `fromStageId`/`toStageId`/`atMs` exatos — preserva D07) e **toasts** em toda ação.
+- **5-point self-check:** Dxx D09+D17+D18 + DEC-079/081 ✅; ACs em risco re-verificados → **zero-overlap** garantido **no domínio** (carve/split só encolhem intervalos efetivos via cut/late; testado nas 2 prefs), **`buildSquadPlan` só-sets** não tocado, **presença grosseira** não tocada, **sheets fixos** (G1) intactos (o `TravelSheet`/`InsertSheet`/`BlockSheet` usam o `Sheet` portalado); testes **web 464** + **server 238** sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo (web+server) · **web unit 464** (era 457, +7 carve/split) · **server 238** · **702 total** · `build` verde (main 407.58 kB, embute 0.37.0) · **e2e myplan 3/3** (inclui os 2 novos: inserir-entre-cards com carve **"leave early"** + ajustar caminhada **fora** do Editar; verificação visual nos screenshots — bloco "Water" carvado, **um** chip "8 min walk" no destino, sheet com Leave/Arrive/**Split**/Ver-no-mapa, toast) · **deploy master** `78432c15` → `festpilot.pages.dev`. Worker/D1 intactos.
+- **Escopo (arquivos):** `domain/planEdit.ts` (`applySplitTravel`/`carveWindow`/helpers) + `.test.ts` (+7), `routes/MyPlanScreen.tsx` (`InsertDivider`/`InsertSheet`, `resolveTravel`+split+toasts, `routeForTravel`, `carveInsertBlock`/`insertBlockInWindow`/`insertSet`, `timelineNodes`, `TravelSheet`/`TravelChip`/`PlanSetRow`/`PlanGapRow` refeitos), `i18n/index.ts` (+chaves `plan.*` insert/split/walk/toasts EN+PT, `common.back`), `styles.css` (`.plan-insert-*`), `e2e/myplan.spec.js` (+2), `data/changelog.ts`, `web/package.json`.
+- **DECs:** DEC-079 → **APPROVED** (caminhada: abre transição exata, aviso único, ajuste fora do Editar + split). DEC-081 → **APPROVED** (inserir entre dois cards com "de onde vem o tempo").
 
 ### G5 — Imagem de compartilhamento v2 ✅ — v0.36.0
 > Fecha **D08** (#18, poster fraco) + **D26** (#19, URL temporária). **Conselho C3 + Red Team:** o risco real não era layout, era **CORS tingindo o canvas**.

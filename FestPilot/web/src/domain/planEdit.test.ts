@@ -5,6 +5,8 @@ import {
   addToPlan,
   applyArriveLate,
   applyLeaveEarly,
+  applySplitTravel,
+  carveWindow,
   clearTravelChoice,
   editBlockMeta,
   fittingAdds,
@@ -16,8 +18,9 @@ import {
   setFits,
   swapInPlan,
 } from "./planEdit";
+import { buildPlanTimeline, type PlanTimeline } from "./plan";
 import { hasNoOverlaps } from "./intervals";
-import type { PlanBlock, PlannableSet, PlanSlot } from "./types";
+import type { PlanBlock, PlannableSet, PlanSlot, TravelMatrix } from "./types";
 
 const MIN = 60_000;
 
@@ -196,5 +199,89 @@ describe("travel choice (DEC-074)", () => {
     const next = clearTravelChoice(dirty, "a", "b");
     expect(next.find((s) => s.setId === "a")!.cutMs).toBeNull();
     expect(next.find((s) => s.setId === "b")!.lateStartMs).toBeNull();
+  });
+
+  it("split trims the source's end AND pushes the target's start (smallest loss on both sides)", () => {
+    const next = applySplitTravel(two, "a", "b", 55 * MIN, 69 * MIN);
+    expect(next.find((s) => s.setId === "a")!.cutMs).toBe(55 * MIN);
+    expect(next.find((s) => s.setId === "b")!.lateStartMs).toBe(69 * MIN);
+    expect(hasNoOverlaps(next.map((s) => ({ startMs: s.startMs, endMs: s.cutMs ?? s.endMs })))).toBe(true);
+  });
+});
+
+// ── Insert between two cards (DEC-081) ───────────────────────────────────────
+// `carveWindow` opens room for a personal block between two consecutive sets. The strong guarantee
+// we test: after carving AND adding the block, the RENDERED timeline (which re-resolves travel on
+// every read) stays zero-overlap under BOTH global prefs — carving can never corrupt the plan.
+const SAME = (): TravelMatrix => ({ minutesBetween: () => 0 });
+const WALK = (min: number): TravelMatrix => ({ minutesBetween: (a, b) => (a && b && a !== b ? min : 0) });
+
+function intervals(tl: PlanTimeline): { startMs: number; endMs: number }[] {
+  return tl.items.flatMap((item) =>
+    item.kind === "set"
+      ? [{ startMs: item.startMs, endMs: item.endMs }]
+      : item.kind === "block"
+        ? [{ startMs: item.block.startMs, endMs: item.block.endMs }]
+        : []
+  );
+}
+
+function assertCarveStaysClashFree(carved: ReturnType<typeof carveWindow>, travel: TravelMatrix): void {
+  expect(carved).not.toBeNull();
+  const blocks = addBlock(carved!.slots, [], { id: "ins", kind: "water", label: "Water", startMs: carved!.startMs, endMs: carved!.endMs });
+  expect(blocks).not.toBeNull();
+  for (const pref of ["leave-early", "arrive-late"] as const) {
+    expect(hasNoOverlaps(intervals(buildPlanTimeline(carved!.slots, blocks!, travel, 0, pref)))).toBe(true);
+  }
+}
+
+describe("carveWindow (DEC-081 insert between cards)", () => {
+  // Back-to-back, same stage (no walk): A 0–60, B 60–120.
+  const backToBack = [slot("a", 0, 60, "s1"), slot("b", 60, 120, "s1")];
+
+  it("'before' trims the previous set's end and frees a window of the asked size", () => {
+    const carved = carveWindow(backToBack, "a", "b", 20 * MIN, "before")!;
+    expect(carved.slots.find((s) => s.setId === "a")!.cutMs).toBe(40 * MIN);
+    expect(carved.startMs).toBe(40 * MIN);
+    expect(carved.endMs).toBe(60 * MIN);
+    assertCarveStaysClashFree(carved, SAME());
+  });
+
+  it("'after' pushes the next set's start", () => {
+    const carved = carveWindow(backToBack, "a", "b", 20 * MIN, "after")!;
+    expect(carved.slots.find((s) => s.setId === "b")!.lateStartMs).toBe(80 * MIN);
+    expect(carved.startMs).toBe(60 * MIN);
+    expect(carved.endMs).toBe(80 * MIN);
+    assertCarveStaysClashFree(carved, SAME());
+  });
+
+  it("'split' carves symmetric halves from both neighbours", () => {
+    const carved = carveWindow(backToBack, "a", "b", 20 * MIN, "split")!;
+    expect(carved.slots.find((s) => s.setId === "a")!.cutMs).toBe(50 * MIN);
+    expect(carved.slots.find((s) => s.setId === "b")!.lateStartMs).toBe(70 * MIN);
+    expect(carved.endMs - carved.startMs).toBe(20 * MIN);
+    assertCarveStaysClashFree(carved, SAME());
+  });
+
+  it("stays clash-free even when the transition also has a real walk (both prefs)", () => {
+    // Different stages with a 10-min walk — exercises the travel re-resolution interaction.
+    const crossStage = [slot("a", 0, 60, "s1"), slot("b", 60, 120, "s2")];
+    assertCarveStaysClashFree(carveWindow(crossStage, "a", "b", 20 * MIN, "before"), WALK(10));
+    assertCarveStaysClashFree(carveWindow(crossStage, "a", "b", 20 * MIN, "after"), WALK(10));
+    assertCarveStaysClashFree(carveWindow(crossStage, "a", "b", 30 * MIN, "split"), WALK(10));
+  });
+
+  it("uses existing idle time first and carves nothing when the gap already fits", () => {
+    const roomy = [slot("a", 0, 60, "s1"), slot("b", 100, 160, "s1")]; // 40 min free
+    const carved = carveWindow(roomy, "a", "b", 20 * MIN, "before")!;
+    expect(carved.slots).toBe(roomy); // untouched
+    expect(carved.startMs).toBe(60 * MIN);
+    expect(carved.endMs).toBe(80 * MIN);
+  });
+
+  it("returns null when the chosen side can't give the time without erasing the set", () => {
+    expect(carveWindow(backToBack, "a", "b", 200 * MIN, "before")).toBeNull();
+    expect(carveWindow(backToBack, "a", "b", 200 * MIN, "after")).toBeNull();
+    expect(carveWindow(backToBack, "zzz", "b", 20 * MIN, "before")).toBeNull();
   });
 });

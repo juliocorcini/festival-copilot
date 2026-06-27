@@ -26,6 +26,8 @@ import {
   addToPlan,
   applyArriveLate,
   applyLeaveEarly,
+  applySplitTravel,
+  carveWindow,
   clearTravelChoice,
   editBlockMeta,
   fittingAdds,
@@ -35,10 +37,12 @@ import {
   removeFromPlan,
   resizeBlock,
   swapInPlan,
+  type CarveSource,
 } from "../domain/planEdit";
-import { effectiveEnd } from "../domain/planSlot";
+import { effectiveEnd, effectiveStart } from "../domain/planSlot";
 import { daysForWeekends, initials } from "../lib/festival";
 import { stageColor, timeInZone } from "../lib/format";
+import { toast } from "../lib/toast";
 import { useT, useLocale, type TranslateFn, type MessageKey } from "../i18n";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
@@ -51,6 +55,10 @@ import type { PlanBlock, PlanBlockKind, PlannableSet, PlanSlot } from "../domain
 
 const MIN = 60_000;
 const STEP_MS = 15 * MIN;
+/** Idle minutes between two cards that already fit a block — below this we carve from a neighbour. */
+const INSERT_ROOM_MIN = 10;
+/** Default length of a block carved between two back-to-back sets (the user can trim it after). */
+const DEFAULT_CARVE_MS = 30 * MIN;
 
 const BLOCK_KINDS: Record<PlanBlockKind, { icon: string; labelKey: MessageKey }> = {
   eat: { icon: "restaurant", labelKey: "plan.kindEat" },
@@ -74,6 +82,12 @@ interface BlockDraft {
   startMs: number;
   endMs: number;
   note: string;
+}
+
+/** The pair of cards an insert "+" sits between — drives the "where does the time come from?" sheet. */
+interface InsertContext {
+  before: PlanItem;
+  after: PlanItem;
 }
 
 export function MyPlanScreen(): JSX.Element {
@@ -130,6 +144,7 @@ export function MyPlanScreen(): JSX.Element {
   const [showAdd, setShowAdd] = useState(false);
   const [blockDraft, setBlockDraft] = useState<BlockDraft | null>(null);
   const [travelFor, setTravelFor] = useState<PlanSetItem | null>(null);
+  const [insertFor, setInsertFor] = useState<InsertContext | null>(null);
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !lineup) {
@@ -201,20 +216,95 @@ export function MyPlanScreen(): JSX.Element {
     setBlockDraft(null);
   };
 
-  // Travel choice (DEC-074) — both options only shrink an effective interval, so they stay zero-overlap.
-  const resolveTravel = (item: PlanSetItem, choice: "leave-early" | "arrive-late" | "clear"): void => {
+  // Travel choice (DEC-074/079) — leave early, arrive late, or split the loss. Each only shrinks an
+  // effective interval, so the plan stays zero-overlap. Every choice confirms with a toast (C2).
+  const resolveTravel = (item: PlanSetItem, choice: "leave-early" | "arrive-late" | "split" | "clear"): void => {
     const info = item.travelIn;
     if (!info) return;
     const prev = slots.find((s) => s.setId === info.fromSetId);
     if (!prev) return;
     const walkMs = info.walkMinutes * MIN;
-    let next = slots;
-    if (choice === "leave-early") next = applyLeaveEarly(slots, prev.setId, item.slot.setId, item.slot.startMs - walkMs);
-    else if (choice === "arrive-late") next = applyArriveLate(slots, prev.setId, item.slot.setId, prev.endMs + walkMs);
-    else next = clearTravelChoice(slots, prev.setId, item.slot.setId);
-    plan.save(next);
+    const lostMs = Math.max(0, prev.endMs + walkMs - item.slot.startMs);
+    const lost = Math.round(lostMs / MIN);
+    if (choice === "leave-early") {
+      plan.save(applyLeaveEarly(slots, prev.setId, item.slot.setId, item.slot.startMs - walkMs));
+      toast.success(t("plan.toastLeftEarly", { name: prev.label, lost }));
+    } else if (choice === "arrive-late") {
+      plan.save(applyArriveLate(slots, prev.setId, item.slot.setId, prev.endMs + walkMs));
+      toast.success(t("plan.toastArrivedLate", { name: item.slot.label, lost }));
+    } else if (choice === "split") {
+      const fromPrev = Math.floor(lostMs / 2);
+      plan.save(applySplitTravel(slots, prev.setId, item.slot.setId, prev.endMs - fromPrev, item.slot.startMs + (lostMs - fromPrev)));
+      toast.success(t("plan.toastSplit", { lost }));
+    } else {
+      plan.save(clearTravelChoice(slots, prev.setId, item.slot.setId));
+      toast.info(t("plan.toastTravelCleared"));
+    }
     setTravelFor(null);
   };
+
+  // Open the exact tapped walk leg on the map (DEC-079): real from/to/at, never a recomputed leg.
+  const routeForTravel = (item: PlanSetItem): void => {
+    const prev = item.travelIn ? slots.find((s) => s.setId === item.travelIn!.fromSetId) : undefined;
+    navigate(routeHref(dayKey, { fromStageId: prev?.stageId ?? undefined, toStageId: item.slot.stageId ?? undefined, atMs: item.startMs }));
+    setTravelFor(null);
+  };
+
+  // Insert between two cards (DEC-081). With idle room, open the editor on that window; back-to-back,
+  // carve the time from a neighbour. A set insert reuses the fitting-adds picker (lands chronologically).
+  const insertBlockInWindow = (kind: PlanBlockKind, startMs: number, endMs: number): void => {
+    setBlockDraft({ id: null, kind, label: blockKindLabel(t, kind), startMs, endMs, note: "" });
+    setInsertFor(null);
+  };
+  const carveInsertBlock = (kind: PlanBlockKind, beforeSetId: string, afterSetId: string, source: CarveSource): void => {
+    const carve = carveWindow(slots, beforeSetId, afterSetId, DEFAULT_CARVE_MS, source);
+    if (!carve) return;
+    const label = blockKindLabel(t, kind);
+    const nextBlocks = addBlock(carve.slots, blocks, { id: cryptoId(), kind, label, startMs: carve.startMs, endMs: carve.endMs });
+    if (!nextBlocks) return;
+    plan.save(carve.slots);
+    plan.saveBlocks(nextBlocks);
+    toast.success(t("plan.toastInserted", { label }));
+    setInsertFor(null);
+  };
+  const insertSet = (): void => {
+    setInsertFor(null);
+    setShowAdd(true);
+  };
+
+  // Build the timeline rows, threading an insert "+" between every two adjacent cards (edit mode).
+  const timelineNodes: JSX.Element[] = [];
+  let prevCard: PlanItem | null = null;
+  timeline.items.forEach((item, index) => {
+    const i = Math.min(index, 11);
+    if (item.kind === "gap") {
+      timelineNodes.push(<PlanGapRow key={`gap-${index}`} i={i} item={item} editing={editing} onFill={() => fillGap(item)} />);
+      return;
+    }
+    if (editing && prevCard) {
+      const before = prevCard;
+      timelineNodes.push(<InsertDivider key={`ins-${index}`} before={before} after={item} onClick={() => setInsertFor({ before, after: item })} />);
+    }
+    if (item.kind === "set") {
+      const prevSlot = item.travelIn ? slots.find((s) => s.setId === item.travelIn!.fromSetId) : undefined;
+      const isSplit = !!(prevSlot && prevSlot.cutMs != null && item.slot.lateStartMs != null);
+      timelineNodes.push(
+        <PlanSetRow
+          key={item.slot.setId}
+          item={item}
+          i={i}
+          tz={tz}
+          isSplit={isSplit}
+          photoUrl={photoByKey.get(item.slot.actKey) ?? null}
+          onMenu={() => setMenuFor(item.slot)}
+          onTravel={() => setTravelFor(item)}
+        />
+      );
+    } else {
+      timelineNodes.push(<PlanBlockRow key={item.block.id} item={item} i={i} tz={tz} editing={editing} onEdit={() => editBlock(item.block)} />);
+    }
+    prevCard = item;
+  });
 
   return (
     <>
@@ -282,44 +372,7 @@ export function MyPlanScreen(): JSX.Element {
         <div className="plan-scroll">
           <div className="plan-tl">
             <div className="plan-tl-line" />
-            {timeline.items.map((item, index) => {
-              const i = Math.min(index, 11);
-              if (item.kind === "set") {
-                return (
-                  <PlanSetRow
-                    key={item.slot.setId}
-                    item={item}
-                    i={i}
-                    tz={tz}
-                    editing={editing}
-                    photoUrl={photoByKey.get(item.slot.actKey) ?? null}
-                    onMenu={() => setMenuFor(item.slot)}
-                    onTravel={() => setTravelFor(item)}
-                  />
-                );
-              }
-              if (item.kind === "block") {
-                return <PlanBlockRow key={item.block.id} item={item} i={i} tz={tz} editing={editing} onEdit={() => editBlock(item.block)} />;
-              }
-              return (
-                <PlanGapRow
-                  key={`gap-${index}`}
-                  i={i}
-                  item={item}
-                  editing={editing}
-                  onRoute={() =>
-                    navigate(
-                      routeHref(dayKey, {
-                        fromStageId: item.fromStageId,
-                        toStageId: item.toStageId,
-                        atMs: item.atMs,
-                      })
-                    )
-                  }
-                  onFill={() => fillGap(item)}
-                />
-              );
-            })}
+            {timelineNodes}
             <div className="plan-row">
               <span className="plan-dot mini" />
               <div className="plan-add-row">
@@ -407,8 +460,22 @@ export function MyPlanScreen(): JSX.Element {
           tz={tz}
           onLeaveEarly={() => resolveTravel(travelFor, "leave-early")}
           onArriveLate={() => resolveTravel(travelFor, "arrive-late")}
+          onSplit={() => resolveTravel(travelFor, "split")}
           onClear={() => resolveTravel(travelFor, "clear")}
+          onRoute={() => routeForTravel(travelFor)}
           onClose={() => setTravelFor(null)}
+        />
+      )}
+
+      {insertFor && (
+        <InsertSheet
+          before={insertFor.before}
+          after={insertFor.after}
+          slots={slots}
+          onBlockInWindow={insertBlockInWindow}
+          onCarve={carveInsertBlock}
+          onAddSet={insertSet}
+          onClose={() => setInsertFor(null)}
         />
       )}
     </>
@@ -675,14 +742,20 @@ function TimeStepper({
   );
 }
 
-/** Choose how to absorb a tight walk into a set: leave the previous early, or arrive at this one late. */
+/**
+ * Adjust a walk between two sets (DEC-079): leave the previous one early, arrive at this one late, or
+ * split the loss down the middle — each labelled in minutes of music given up, all reversible. Also
+ * the single place to open the exact leg on the map. Reachable in AND out of Edit mode (D18).
+ */
 function TravelSheet({
   item,
   slots,
   tz,
   onLeaveEarly,
   onArriveLate,
+  onSplit,
   onClear,
+  onRoute,
   onClose,
 }: {
   item: PlanSetItem;
@@ -690,60 +763,82 @@ function TravelSheet({
   tz: string;
   onLeaveEarly: () => void;
   onArriveLate: () => void;
+  onSplit: () => void;
   onClear: () => void;
+  onRoute: () => void;
   onClose: () => void;
 }): JSX.Element {
   const t = useT();
   const info = item.travelIn!;
   const prev = slots.find((s) => s.setId === info.fromSetId);
   const walkMs = info.walkMinutes * MIN;
-  const lost = prev ? Math.max(0, Math.round((prev.endMs + walkMs - item.slot.startMs) / MIN)) : info.lostMinutes;
+  const lostMs = prev ? Math.max(0, prev.endMs + walkMs - item.slot.startMs) : info.lostMinutes * MIN;
+  const lost = Math.round(lostMs / MIN);
+  const lostHalf = Math.round(lostMs / 2 / MIN);
   const departMs = item.slot.startMs - walkMs; // leave-early
   const arriveMs = prev ? prev.endMs + walkMs : item.slot.startMs; // arrive-late
-  const leaveFeasible = prev ? departMs > prev.startMs : false;
   const hm = (ms: number): string => timeInZone(new Date(ms).toISOString(), tz);
   const prevLabel = prev?.label ?? t("plan.theSet");
 
+  const leaveFeasible = prev ? departMs > prev.startMs : false;
+  const splitFeasible = !!(prev && lostMs > 0 && prev.endMs - Math.floor(lostMs / 2) > prev.startMs);
+  // The user's EXPLICIT choice (raw cut/late), so a split highlights as a split — not as arrive-late.
+  const cutOn = !!(prev && prev.cutMs != null && prev.cutMs > prev.startMs && prev.cutMs < prev.endMs);
+  const lateOn = item.slot.lateStartMs != null && item.slot.lateStartMs > item.slot.startMs && item.slot.lateStartMs < item.slot.endMs;
+  const splitOn = cutOn && lateOn;
+  const leaveOn = cutOn && !lateOn;
+  const lateSelected = lateOn && !cutOn;
+  const showOptions = lostMs > 0 || info.explicit;
+
   return (
-    <Sheet onClose={onClose} label={t("plan.tightWalk")}>
+    <Sheet onClose={onClose} label={t("plan.walkSheetTitle", { stage: item.slot.stageName })}>
       <div className="sheet-head">
-        <div className="poster sheet-title">{t("plan.tightWalk")}</div>
+        <div className="poster sheet-title">{t("plan.walkSheetTitle", { stage: item.slot.stageName })}</div>
         <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
       <div className="travel-summary">
         <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
-        {t("plan.tightWalkSummary", { min: info.walkMinutes, from: info.fromStageName, to: item.slot.stageName, lost })}
+        {lost > 0
+          ? t("plan.tightWalkSummary", { min: info.walkMinutes, from: info.fromStageName, to: item.slot.stageName, lost })
+          : t("plan.walkSummary", { min: info.walkMinutes, from: info.fromStageName, to: item.slot.stageName })}
       </div>
       <div className="sheet-body">
-        <button
-          className={`travel-opt${info.resolution === "leave-early" ? " on" : ""}`}
-          disabled={!leaveFeasible}
-          onClick={onLeaveEarly}
-        >
-          <span className="ms">logout</span>
-          <span className="min0">
-            <span className="travel-opt-title">{t("plan.leaveEarlyTitle", { name: prevLabel })}</span>
-            <span className="travel-opt-sub">
-              {leaveFeasible ? t("plan.leaveEarlySub", { name: item.slot.label, time: hm(departMs), lost }) : t("plan.notEnoughTime")}
-            </span>
-          </span>
-          {info.resolution === "leave-early" && <span className="ms travel-opt-check">check_circle</span>}
-        </button>
+        {showOptions && (
+          <>
+            <button className={`travel-opt${leaveOn ? " on" : ""}`} disabled={!leaveFeasible} onClick={onLeaveEarly}>
+              <span className="ms">logout</span>
+              <span className="min0">
+                <span className="travel-opt-title">{t("plan.leaveEarlyTitle", { name: prevLabel })}</span>
+                <span className="travel-opt-sub">
+                  {leaveFeasible ? t("plan.leaveEarlySub", { name: item.slot.label, time: hm(departMs), lost }) : t("plan.notEnoughTime")}
+                </span>
+              </span>
+              {leaveOn && <span className="ms travel-opt-check">check_circle</span>}
+            </button>
 
-        <button
-          className={`travel-opt${info.resolution === "arrive-late" ? " on" : ""}`}
-          onClick={onArriveLate}
-        >
-          <span className="ms">login</span>
-          <span className="min0">
-            <span className="travel-opt-title">{t("plan.arriveLateTitle", { name: item.slot.label })}</span>
-            <span className="travel-opt-sub">
-              {t("plan.arriveLateSub", { prev: prevLabel, time: hm(arriveMs), lost })}
-            </span>
-          </span>
-          {info.resolution === "arrive-late" && <span className="ms travel-opt-check">check_circle</span>}
-        </button>
+            <button className={`travel-opt${lateSelected ? " on" : ""}`} onClick={onArriveLate}>
+              <span className="ms">login</span>
+              <span className="min0">
+                <span className="travel-opt-title">{t("plan.arriveLateTitle", { name: item.slot.label })}</span>
+                <span className="travel-opt-sub">{t("plan.arriveLateSub", { prev: prevLabel, time: hm(arriveMs), lost })}</span>
+              </span>
+              {lateSelected && <span className="ms travel-opt-check">check_circle</span>}
+            </button>
 
+            <button className={`travel-opt${splitOn ? " on" : ""}`} disabled={!splitFeasible} onClick={onSplit}>
+              <span className="ms">swap_vert</span>
+              <span className="min0">
+                <span className="travel-opt-title">{t("plan.splitTitle")}</span>
+                <span className="travel-opt-sub">{t("plan.splitSub", { prev: prevLabel, next: item.slot.label, lost: lostHalf })}</span>
+              </span>
+              {splitOn && <span className="ms travel-opt-check">check_circle</span>}
+            </button>
+          </>
+        )}
+
+        <button className="plan-menu-item" onClick={onRoute}>
+          <span className="ms">map</span> {t("plan.viewWalk")}
+        </button>
         {info.explicit && (
           <button className="plan-menu-item" onClick={onClear}>
             <span className="ms">restart_alt</span> {t("plan.useDefault")}
@@ -758,7 +853,7 @@ function PlanSetRow({
   item,
   i,
   tz,
-  editing,
+  isSplit,
   photoUrl,
   onMenu,
   onTravel,
@@ -766,7 +861,7 @@ function PlanSetRow({
   item: PlanSetItem;
   i: number;
   tz: string;
-  editing: boolean;
+  isSplit: boolean;
   photoUrl: string | null;
   onMenu: () => void;
   onTravel: () => void;
@@ -783,8 +878,8 @@ function PlanSetRow({
     <div className="plan-row fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className={`plan-dot ${status}`} />
       <div className="min0" style={{ flex: 1 }}>
-        {travelIn && travelIn.resolution !== "none" && (
-          <TravelChip travel={travelIn} editing={editing} onClick={onTravel} />
+        {travelIn && travelIn.walkMinutes > 0 && (
+          <TravelChip travel={travelIn} isSplit={isSplit} onClick={onTravel} />
         )}
         <div
           className={`glass plan-card tappable ${status}`}
@@ -826,34 +921,37 @@ function PlanSetRow({
   );
 }
 
+/**
+ * The single walk indicator for a transition (DEC-079/D17): it lives on the destination set's card,
+ * the gap row shows only free time. Always a button — tapping opens the {@link TravelSheet} in or out
+ * of Edit (D18). Text reflects the resolution: tight warning, split, arrive-late, leave-early, or a
+ * neutral "{n} min walk" for a roomy hop.
+ */
 function TravelChip({
   travel,
-  editing,
+  isSplit,
   onClick,
 }: {
   travel: NonNullable<PlanSetItem["travelIn"]>;
-  editing: boolean;
+  isSplit: boolean;
   onClick: () => void;
 }): JSX.Element {
   const t = useT();
   const danger = !travel.feasible;
   const text = danger
     ? t("plan.tightChip", { min: travel.walkMinutes, from: travel.fromStageName })
-    : travel.resolution === "arrive-late"
-      ? t("plan.arriveLateChip", { lost: travel.lostMinutes, min: travel.walkMinutes })
-      : t("plan.leaveEarlyChip", { min: travel.walkMinutes, lost: travel.lostMinutes });
+    : isSplit
+      ? t("plan.splitChip", { lost: travel.lostMinutes })
+      : travel.resolution === "arrive-late"
+        ? t("plan.arriveLateChip", { lost: travel.lostMinutes, min: travel.walkMinutes })
+        : travel.resolution === "leave-early"
+          ? t("plan.leaveEarlyChip", { min: travel.walkMinutes, lost: travel.lostMinutes })
+          : t("plan.walkChip", { min: travel.walkMinutes });
+  const adjusted = isSplit || travel.resolution !== "none";
   const className = `plan-travel-chip${danger ? " danger" : ""}${travel.explicit ? " set" : ""}`;
-  const icon = danger ? "warning" : travel.resolution === "arrive-late" ? "login" : "logout";
-  if (!editing) {
-    return (
-      <span className={className}>
-        <span className="ms" style={{ fontSize: 13 }}>{icon}</span>
-        {text}
-      </span>
-    );
-  }
+  const icon = danger ? "warning" : isSplit ? "swap_vert" : travel.resolution === "arrive-late" ? "login" : adjusted ? "logout" : "directions_walk";
   return (
-    <button type="button" className={className} onClick={onClick}>
+    <button type="button" className={className} onClick={onClick} aria-label={t("plan.viewWalk")}>
       <span className="ms" style={{ fontSize: 13 }}>{icon}</span>
       {text}
       <span className="ms" style={{ fontSize: 13, marginLeft: "auto" }}>tune</span>
@@ -908,34 +1006,31 @@ function PlanBlockRow({
   );
 }
 
+/**
+ * The idle stretch between two cards — free time ONLY. The walk now lives on the next set's card
+ * (DEC-079/D17), so a gap that's purely a walk renders nothing; a break or a fillable window still
+ * surfaces here. Inserting between cards is the `+` divider (DEC-081), not this row.
+ */
 function PlanGapRow({
   item,
   i,
   editing,
-  onRoute,
   onFill,
 }: {
   item: PlanGapItem;
   i: number;
   editing: boolean;
-  onRoute: () => void;
   onFill: () => void;
-}): JSX.Element {
+}): JSX.Element | null {
   const t = useT();
   const fillable = editing && item.freeMinutes >= FILLABLE_THRESHOLD_MIN;
+  const showBreak = item.breakMinutes >= 20;
+  if (!showBreak && !fillable) return null;
   return (
     <div className="plan-row gap fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className="plan-dot mini" />
       <div className="plan-chips">
-        {item.walkMinutes > 0 && (
-          <button type="button" className="plan-chip" onClick={onRoute}>
-            <span className="ms" style={{ fontSize: 13 }}>directions_walk</span>
-            {item.toStageName
-              ? t("plan.walkChipTo", { min: item.walkMinutes, stage: item.toStageName })
-              : t("plan.walkChip", { min: item.walkMinutes })}
-          </button>
-        )}
-        {item.breakMinutes >= 20 && (
+        {showBreak && (
           <span className="plan-chip">
             <span className="ms" style={{ fontSize: 13 }}>schedule</span>
             {t("plan.freeChip", { min: item.breakMinutes })}
@@ -949,6 +1044,143 @@ function PlanGapRow({
         )}
       </div>
     </div>
+  );
+}
+
+function cardLabel(item: PlanItem): string {
+  return item.kind === "set" ? item.slot.label : item.kind === "block" ? item.block.label : "";
+}
+/** The effective end of a card — the boundary an inserted item starts from (matches `rangeIsFree`). */
+function cardEndMs(item: PlanItem): number {
+  return item.kind === "set" ? effectiveEnd(item.slot) : item.kind === "block" ? item.block.endMs : 0;
+}
+function cardStartMs(item: PlanItem): number {
+  return item.kind === "set" ? effectiveStart(item.slot) : item.kind === "block" ? item.block.startMs : 0;
+}
+
+/** The "+" affordance on the rail between two adjacent cards (edit mode) — opens the insert sheet. */
+function InsertDivider({ before, after, onClick }: { before: PlanItem; after: PlanItem; onClick: () => void }): JSX.Element {
+  const t = useT();
+  return (
+    <div className="plan-row plan-insert-row">
+      <span className="plan-insert-dot" />
+      <button
+        type="button"
+        className="plan-insert-btn"
+        aria-label={t("plan.insertAria", { from: cardLabel(before), to: cardLabel(after) })}
+        onClick={onClick}
+      >
+        <span className="ms" aria-hidden="true">add</span>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Insert between two cards (DEC-081). Pick a block preset or another set. With idle room the block
+ * editor opens on that exact window; when the two sets run back-to-back it asks "where does the time
+ * come from?" — leave the previous early, arrive at the next late, or split — carving via `planEdit`
+ * so the plan stays zero-overlap.
+ */
+function InsertSheet({
+  before,
+  after,
+  slots,
+  onBlockInWindow,
+  onCarve,
+  onAddSet,
+  onClose,
+}: {
+  before: PlanItem;
+  after: PlanItem;
+  slots: PlanSlot[];
+  onBlockInWindow: (kind: PlanBlockKind, startMs: number, endMs: number) => void;
+  onCarve: (kind: PlanBlockKind, beforeSetId: string, afterSetId: string, source: CarveSource) => void;
+  onAddSet: () => void;
+  onClose: () => void;
+}): JSX.Element {
+  const t = useT();
+  const [kind, setKind] = useState<PlanBlockKind | null>(null);
+  const beforeSet = before.kind === "set" ? before.slot : null;
+  const afterSet = after.kind === "set" ? after.slot : null;
+  const winStart = cardEndMs(before);
+  const winEnd = cardStartMs(after);
+  const freeMin = Math.max(0, Math.round((winEnd - winStart) / MIN));
+  const bothSets = !!(beforeSet && afterSet);
+  const hasRoom = freeMin >= INSERT_ROOM_MIN;
+  const fromLabel = cardLabel(before);
+  const toLabel = cardLabel(after);
+
+  const pickKind = (k: PlanBlockKind): void => {
+    if (hasRoom || !bothSets) onBlockInWindow(k, winStart, winEnd);
+    else setKind(k);
+  };
+
+  if (kind && beforeSet && afterSet) {
+    return (
+      <Sheet onClose={onClose} label={t("plan.timeSourceTitle")}>
+        <div className="sheet-head">
+          <div className="poster sheet-title">{t("plan.timeSourceTitle")}</div>
+          <button className="ms sheet-x" onClick={onClose}>close</button>
+        </div>
+        <div className="travel-summary">
+          <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>{BLOCK_KINDS[kind].icon}</span>
+          {t("plan.timeSourceSub", { what: blockKindLabel(t, kind), from: fromLabel, to: toLabel })}
+        </div>
+        <div className="sheet-body">
+          {(["before", "after", "split"] as CarveSource[]).map((source) => {
+            const carve = carveWindow(slots, beforeSet.setId, afterSet.setId, DEFAULT_CARVE_MS, source);
+            const min = carve ? Math.round((carve.endMs - carve.startMs) / MIN) : 0;
+            const title =
+              source === "before"
+                ? t("plan.leaveEarlyTitle", { name: fromLabel })
+                : source === "after"
+                  ? t("plan.arriveLateTitle", { name: toLabel })
+                  : t("plan.splitTitle");
+            const sub = !carve ? t("plan.carveNoRoom") : source === "split" ? t("plan.carveHalf", { min }) : t("plan.carveFrees", { min });
+            const icon = source === "before" ? "logout" : source === "after" ? "login" : "swap_vert";
+            return (
+              <button key={source} className="travel-opt" disabled={!carve} onClick={() => onCarve(kind, beforeSet.setId, afterSet.setId, source)}>
+                <span className="ms">{icon}</span>
+                <span className="min0">
+                  <span className="travel-opt-title">{title}</span>
+                  <span className="travel-opt-sub">{sub}</span>
+                </span>
+              </button>
+            );
+          })}
+          <button className="plan-menu-item" onClick={() => setKind(null)}>
+            <span className="ms">arrow_back</span> {t("common.back")}
+          </button>
+        </div>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Sheet onClose={onClose} label={t("plan.insertHere")}>
+      <div className="sheet-head">
+        <div className="poster sheet-title">{t("plan.insertHere")}</div>
+        <button className="ms sheet-x" onClick={onClose}>close</button>
+      </div>
+      <div className="plan-menu-meta">
+        <span className="ms" style={{ fontSize: 15, color: "var(--accent)" }}>{hasRoom ? "schedule" : "fast_forward"}</span>
+        {hasRoom ? t("plan.insertFree", { min: freeMin }) : t("plan.insertBackToBack")}
+      </div>
+      <div className="sheet-body">
+        <div className="block-presets">
+          {PRESET_ORDER.map((k) => (
+            <button key={k} className="block-preset" onClick={() => pickKind(k)}>
+              <span className="ms" aria-hidden="true">{BLOCK_KINDS[k].icon}</span>
+              {blockKindLabel(t, k)}
+            </button>
+          ))}
+        </div>
+        <button className="plan-menu-item" onClick={onAddSet}>
+          <span className="ms">library_music</span> {t("plan.insertAddSet")}
+        </button>
+      </div>
+    </Sheet>
   );
 }
 

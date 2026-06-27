@@ -1164,6 +1164,16 @@ main:focus { outline: none; }
 .plan-travel-chip.set { border-color: rgba(245, 166, 35, 0.4); }
 .plan-travel-chip.danger { color: var(--danger-ink); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
 
+/* "+" between two cards (DEC-081) — a slim insert affordance on the rail, edit mode only. */
+.plan-insert-row { position: relative; padding-bottom: 12px; margin-top: -6px; }
+.plan-insert-dot { position: absolute; left: -30px; top: 4px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); opacity: 0.55; }
+.plan-insert-btn { display: inline-flex; align-items: center; justify-content: center; appearance: none; cursor: pointer;
+  width: 26px; height: 26px; border-radius: 999px; color: var(--accent);
+  background: rgba(245, 166, 35, 0.1); border: 1px dashed rgba(245, 166, 35, 0.45); transition: transform 0.12s ease; }
+.plan-insert-btn .ms { font-size: 16px; }
+.plan-insert-btn:active { transform: scale(0.94); }
+
 /* Personal block card on the timeline. */
 .plan-dot.block { border-color: var(--accent2); }
 .plan-card.block { gap: 12px; }

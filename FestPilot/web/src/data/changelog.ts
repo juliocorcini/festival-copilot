@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.36.0";
+export const APP_VERSION = "0.37.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.37.0",
+    date: "2026-06-27",
+    title: "Slot a break anywhere, and own every walk",
+    icon: "add_circle",
+    whatsNew: [
+      "Tap the “+” between any two cards in Edit to slot in food, water or a breather — even when they're back-to-back, you choose where the time comes from.",
+      "Every walk now lives in one place, right on the card you're heading to — and you can tap it any time, not just in Edit.",
+      "New “Split it” option shares a tight walk evenly between the two sets, so you lose a little from each instead of all from one.",
+      "“View walk on map” jumps straight to that exact leg, and every change confirms with a quick toast.",
+    ],
+    howToTest: [
+      "Open My Plan → Edit: a “+” appears between cards. Tap it, pick “Water”; if the cards touch, choose before / after / split.",
+      "Tap a walk chip on a card (no need to be in Edit) → try Leave early / Arrive late / Split it / View walk on map.",
+      "After any change, the plan stays clash-free and a toast confirms what happened.",
+    ],
+  },
   {
     version: "0.36.0",
     date: "2026-06-27",
