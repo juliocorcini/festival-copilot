@@ -19,7 +19,7 @@ import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
-import { BoardPreviewCard, MeetingCompassCard, SquadAgendaCard, WhereEveryoneCard } from "./squad/squadHomeCards";
+import { BoardPreviewCard, MeetingCompassCard, SquadAgendaCard, SquadNextUpCard, WhereEveryoneCard } from "./squad/squadHomeCards";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
 /** Remembers the last squad the user was looking at, so a multi-squad user lands back where they left. */
@@ -194,6 +194,19 @@ function GroupHome({
           </button>
         )}
 
+        <SquadNextUpCard groupId={group.id} events={events} points={points} presence={presence} />
+
+        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
+          <div className="squad-plan-icon">
+            <span className="ms">event_available</span>
+          </div>
+          <div className="squad-plan-main">
+            <div className="squad-plan-title">{t("squad.buildPlan")}</div>
+            <div className="squad-plan-sub">{t("squad.buildPlanSub")}</div>
+          </div>
+          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+        </button>
+
         <WhereEveryoneCard groupId={group.id} presence={presence} />
 
         {primaryPoint ? (
@@ -225,17 +238,6 @@ function GroupHome({
         <BoardPreviewCard groupId={group.id} notes={notes} loading={boardStatus === "loading"} />
 
         <SquadAgendaCard groupId={group.id} events={events} />
-
-        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
-          <div className="squad-plan-icon">
-            <span className="ms">event_available</span>
-          </div>
-          <div className="squad-plan-main">
-            <div className="squad-plan-title">{t("squad.buildPlan")}</div>
-            <div className="squad-plan-sub">{t("squad.buildPlanSub")}</div>
-          </div>
-          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
-        </button>
 
         {!hasSos && (
           <button className="glass squad-plan-cta squad-lost-cta" onClick={() => navigate(`/squad/${group.id}/safety`)}>

@@ -18,7 +18,9 @@ import { useHeading, useMyFix } from "../../lib/useGeo";
 import type { BoardNoteDto, GroupEventDto, GroupPresenceDto, MeetingPointDto } from "../../data/types";
 import { ago, groupRosterByStage, pingKindFor, PresenceAvatar } from "../presence/presenceUi";
 import { closesInLabel, convergenceSummary, formatMeters, lifecycleBadge } from "../meet/meetUi";
-import { eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
+import { durationLabel, eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
+import { firstActivePoint } from "./squadNowUi";
+import { squadNextUp, type SquadFocus } from "../../domain/squadNextUp";
 
 const MAX_AVATARS = 4;
 
@@ -227,6 +229,92 @@ export function BoardPreviewCard({
             </div>
           ))}
         </div>
+      )}
+    </section>
+  );
+}
+
+const NEXTUP_ICON: Record<SquadFocus["kind"], string> = { set: "music_note", event: "event", meet: "pin_drop" };
+
+/**
+ * "NEXT UP" — the single most relevant thing the squad is doing now/next (D20/D24 · DEC-086). It reads
+ * the parallel lanes the squad already has — group events + the active meeting point (and optionally
+ * the aggregated set plan) — via the pure `squadNextUp` selector, NEVER mixing them into the
+ * aggregation. Presentational: the parent passes the live hooks; tapping opens the squad plan (or a
+ * caller-supplied target, e.g. the whole Squad from Home).
+ */
+export function SquadNextUpCard({
+  groupId,
+  events,
+  points,
+  presence,
+  sets = [],
+  onOpen,
+}: {
+  groupId: string;
+  events: GroupEventDto[];
+  points: MeetingPointDto[];
+  presence: GroupPresenceDto | null;
+  sets?: { label: string; stageName: string; startMs: number; endMs: number }[];
+  onOpen?: () => void;
+}): JSX.Element {
+  const navigate = useNavigate();
+  const t = useT();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const focus = squadNextUp({ sets, events, meet: firstActivePoint(points), now });
+  const liveCount = presence?.liveCount ?? 0;
+  const open = onOpen ?? ((): void => navigate(`/squad/${groupId}/plan`));
+
+  // The time chip mirrors the event tones: live → green "Live now", soon (≤30 min) → amber, else neutral.
+  let chipLabel = t("squad.liveNow");
+  let chipTone: "go" | "warn" | "active" = "go";
+  if (focus && !focus.live && focus.startMs != null) {
+    const mins = (focus.startMs - now) / 60_000;
+    chipLabel = t("squad.inTime", { time: durationLabel(mins) });
+    chipTone = mins <= 30 ? "warn" : "active";
+  }
+
+  return (
+    <section
+      className="glass squad-card squad-nextup"
+      role="button"
+      tabIndex={0}
+      aria-label={t("squad.nextUp")}
+      onClick={open}
+      onKeyDown={onCardKey(open)}
+    >
+      <header className="squad-card-head">
+        <span className="squad-card-eyebrow">{t("squad.nextUp")}</span>
+        {liveCount > 0 && (
+          <span className="squad-nextup-live">
+            <span className="live" aria-hidden="true" />
+            {t("squad.live", { count: liveCount })}
+          </span>
+        )}
+        <span className="ms squad-card-chev" aria-hidden="true">chevron_right</span>
+      </header>
+
+      {focus ? (
+        <div className="squad-nextup-row">
+          <span className="squad-nextup-icon ms" aria-hidden="true">{NEXTUP_ICON[focus.kind]}</span>
+          <div className="squad-nextup-main">
+            <div className="squad-nextup-title">{focus.title}</div>
+            {focus.where && (
+              <div className="squad-nextup-where">
+                {focus.kind === "set" && <span className="dot" style={{ background: stageColor(focus.where) }} />}
+                {focus.where}
+              </div>
+            )}
+          </div>
+          <span className={`pill meet-badge meet-badge-${chipTone}`}>{chipLabel}</span>
+        </div>
+      ) : (
+        <div className="squad-nextup-quiet">{t("squad.nextUpQuiet")}</div>
       )}
     </section>
   );

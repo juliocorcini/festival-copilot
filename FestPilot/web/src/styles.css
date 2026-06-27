@@ -1407,6 +1407,20 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .squad-card-empty-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .squad-card-chev { color: var(--muted); flex-shrink: 0; }
 
+/* Squad "Next up" card (D20/D24 — DEC-086). */
+.squad-nextup .squad-card-eyebrow { margin-right: auto; }
+.squad-nextup-live { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; color: var(--ok-ink); }
+.squad-nextup-row { display: flex; align-items: center; gap: 12px; text-align: left; }
+.squad-nextup-icon { font-size: 22px; color: var(--accent); flex-shrink: 0; }
+.squad-nextup-main { flex: 1; min-width: 0; }
+.squad-nextup-title { font-weight: 700; font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.squad-nextup-where { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.squad-nextup-where .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.squad-nextup-quiet { font-size: 13px; color: var(--muted); }
+
+/* Home "My plan / Squad" tabs (D24). */
+.now-tabs { display: flex; width: fit-content; margin: 0 auto 12px; }
+
 /* "Where is everyone" roster, grouped by coarse stage. */
 .where-rows { display: flex; flex-direction: column; gap: 14px; width: 100%; text-align: left; border: 0; background: none; padding: 0; color: var(--ink); cursor: pointer; }
 .where-row { display: flex; align-items: center; gap: 12px; }

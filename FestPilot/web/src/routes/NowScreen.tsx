@@ -22,7 +22,13 @@ import { useT, useLocale } from "../i18n";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
 import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
-import { SquadNowCard } from "./squad/SquadNowCard";
+import { useIdentity } from "../data/identity";
+import { useMyGroups } from "../data/groups";
+import { useGroupPresence } from "../data/presence";
+import { useGroupEvents } from "../data/groupEvents";
+import { useMeetingPoints } from "../data/meetingPoints";
+import type { GroupDto } from "../data/types";
+import { SquadNextUpCard } from "./squad/squadHomeCards";
 
 const ms = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
@@ -42,7 +48,30 @@ interface HeroVM {
   walkMinutes: number;
 }
 
+/**
+ * Now & Next home. The personal hero is the default; for a squad user it gains a "My plan / Squad"
+ * toggle (D24 · DEC-086) that flips the hero between their plan and the squad's next-up — gated so a
+ * solo user makes ZERO squad network calls (identity → groups, both before any squad fetch).
+ */
 export function NowScreen(): JSX.Element {
+  const { hasProfile } = useIdentity();
+  // Solo / signed-out: render the personal home with no squad tab and no squad network.
+  if (!hasProfile) return <NowScreenBody />;
+  return <NowSquadAware />;
+}
+
+/** Signed-in: detect a squad (once), then offer the My-plan / Squad toggle without flashing. */
+function NowSquadAware(): JSX.Element {
+  const { groups, status } = useMyGroups();
+  const [mode, setMode] = useState<NowMode>("my");
+  if (status !== "ready" || groups.length === 0) return <NowScreenBody />;
+  const tabs = <NowTabs mode={mode} onMode={setMode} />;
+  return mode === "my" ? <NowScreenBody topSlot={tabs} /> : <NowSquadScreen groups={groups} topSlot={tabs} />;
+}
+
+type NowMode = "my" | "squad";
+
+function NowScreenBody({ topSlot }: { topSlot?: JSX.Element }): JSX.Element {
   const navigate = useNavigate();
   const t = useT();
   const locale = useLocale();
@@ -151,7 +180,7 @@ export function NowScreen(): JSX.Element {
         <AppHeader eyebrow={shorten(festivalName)} title={t("now.title")} />
         <PullToRefresh onRefresh={reload} />
         <div className="screen">
-          <SquadNowCard />
+          {topSlot}
           <NowEmpty
             favCount={favorites.count}
             hasTimetable={lineup.hasTimetable}
@@ -175,13 +204,13 @@ export function NowScreen(): JSX.Element {
       <AppHeader eyebrow={eyebrow} title={t("now.title")} />
       <PullToRefresh onRefresh={reload} />
       <div className="screen">
+        {topSlot}
         <NowHero
           vm={vm}
           tz={tz}
           now={now}
           onRoute={() => navigate(`/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
         />
-        <SquadNowCard />
         {vm.later.length > 0 && <NowList rows={vm.later} tz={tz} label={laterLabel} />}
         <p className="src" style={{ textAlign: "center" }}>{srcLine}</p>
       </div>
@@ -357,6 +386,107 @@ function NowEmpty({
       message={t("now.emptyNothingMsg")}
       action={{ label: t("now.emptyNothingCta"), icon: "queue_music", onClick: onBrowse }}
     />
+  );
+}
+
+/** The "My plan / Squad" segmented toggle that sits atop the Home for a squad user (D24). */
+function NowTabs({ mode, onMode }: { mode: NowMode; onMode: (m: NowMode) => void }): JSX.Element {
+  const t = useT();
+  return (
+    <div className="seg now-tabs" role="tablist" aria-label={t("now.title")}>
+      <button role="tab" aria-selected={mode === "my"} className={mode === "my" ? "on" : ""} onClick={() => onMode("my")}>
+        {t("now.tabMyPlan")}
+      </button>
+      <button role="tab" aria-selected={mode === "squad"} className={mode === "squad" ? "on" : ""} onClick={() => onMode("squad")}>
+        {t("now.tabSquad")}
+      </button>
+    </div>
+  );
+}
+
+/** Same key SquadScreen uses, so the Home Squad tab mirrors the squad the user last looked at. */
+const ACTIVE_GROUP_KEY = "fp.activeGroup.v1";
+function readActiveGroup(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_GROUP_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** The "Squad" tab of the Home — the squad's Next up + a shortcut into the full plan (D24 · DEC-086). */
+function NowSquadScreen({ groups, topSlot }: { groups: GroupDto[]; topSlot: JSX.Element }): JSX.Element {
+  const [activeId, setActiveId] = useState<string | null>(readActiveGroup);
+  const group = groups.find((g) => g.id === activeId) ?? groups[0]!;
+  const select = (id: string): void => {
+    setActiveId(id);
+    try {
+      localStorage.setItem(ACTIVE_GROUP_KEY, id);
+    } catch {
+      /* private mode — in-memory only */
+    }
+  };
+  return <NowSquadInner key={group.id} group={group} groups={groups} onSelect={select} topSlot={topSlot} />;
+}
+
+function NowSquadInner({
+  group,
+  groups,
+  onSelect,
+  topSlot,
+}: {
+  group: GroupDto;
+  groups: GroupDto[];
+  onSelect: (id: string) => void;
+  topSlot: JSX.Element;
+}): JSX.Element {
+  const navigate = useNavigate();
+  const t = useT();
+  const { presence } = useGroupPresence(group.id);
+  const { events } = useGroupEvents(group.id);
+  const { points } = useMeetingPoints(group.id);
+
+  return (
+    <>
+      <AppHeader eyebrow={`${group.emoji ? `${group.emoji} ` : ""}${group.name}`} title={t("now.title")} />
+      <div className="screen">
+        {topSlot}
+        {groups.length > 1 && (
+          <div className="squad-switcher" role="tablist" aria-label={t("squad.yourSquads")}>
+            {groups.map((g) => (
+              <button
+                key={g.id}
+                role="tab"
+                aria-selected={g.id === group.id}
+                className={`squad-tab${g.id === group.id ? " on" : ""}`}
+                onClick={() => onSelect(g.id)}
+              >
+                <span className="squad-tab-glyph">{g.emoji ?? "🎪"}</span>
+                <span className="squad-tab-name">{g.name}</span>
+                <span className="squad-tab-count">{g.memberCount}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <SquadNextUpCard
+          groupId={group.id}
+          events={events}
+          points={points}
+          presence={presence}
+          onOpen={() => navigate("/squad")}
+        />
+        <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
+          <div className="squad-plan-icon">
+            <span className="ms">event_available</span>
+          </div>
+          <div className="squad-plan-main">
+            <div className="squad-plan-title">{t("squad.buildPlan")}</div>
+            <div className="squad-plan-sub">{t("squad.buildPlanSub")}</div>
+          </div>
+          <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+        </button>
+      </div>
+    </>
   );
 }
 

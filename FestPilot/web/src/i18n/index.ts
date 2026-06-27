@@ -406,6 +406,13 @@ const EN = {
   "squad.ago": "{time} ago",
   "squad.openGroup": "Open {name}",
   "squad.live": "{count} live",
+  // Squad "Next up" (D20/D24 — DEC-086)
+  "squad.nextUp": "Next up",
+  "squad.liveNow": "Live now",
+  "squad.inTime": "in {time}",
+  "squad.nextUpQuiet": "Nothing scheduled yet",
+  "now.tabMyPlan": "My plan",
+  "now.tabSquad": "Squad",
 
   // Share plan sheet (poster v2 — DEC-080)
   "share.title": "Share your plan",
@@ -812,6 +819,12 @@ const PT: Partial<Record<MessageKey, string>> = {
   "squad.ago": "há {time}",
   "squad.openGroup": "Abrir {name}",
   "squad.live": "{count} ao vivo",
+  "squad.nextUp": "A seguir",
+  "squad.liveNow": "Ao vivo agora",
+  "squad.inTime": "em {time}",
+  "squad.nextUpQuiet": "Nada agendado ainda",
+  "now.tabMyPlan": "Meu plano",
+  "now.tabSquad": "Squad",
 
   "share.title": "Compartilhar seu plano",
   "share.previewAria": "Prévia do pôster do plano",

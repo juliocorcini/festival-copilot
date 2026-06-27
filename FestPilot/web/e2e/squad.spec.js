@@ -84,6 +84,19 @@ test.describe("Phase 4 — squad (Gate 4.1 identity + Gate 4.2 groups)", () => {
     await expect(page.getByText("Owner")).toBeVisible();
     await expect(page.getByRole("button", { name: /Leave squad/ })).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase4-group-home.png" });
+
+    // D20/D21 — the reorganized home leads with the squad "Next up" card (above the plan CTA + Where).
+    await expect(page.getByText("Next up", { exact: true })).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/g9-squad-nextup.png" });
+
+    // D24 — the Home gains a "My plan / Squad" toggle for a squad user; the Squad tab surfaces Next up.
+    await page.locator(".nav").getByRole("link", { name: "Now" }).click();
+    const squadTab = page.getByRole("tab", { name: "Squad" });
+    await expect(squadTab).toBeVisible({ timeout: 20_000 });
+    await squadTab.click();
+    await expect(page.getByText("Next up", { exact: true })).toBeVisible();
+    await page.screenshot({ path: "e2e/screenshots/g9-now-squad-tab.png" });
+    await page.getByRole("tab", { name: "My plan" }).click();
   });
 
   test("joiner: open invite link → guest → join → members(2)", async ({ page, request }) => {
