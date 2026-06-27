@@ -154,9 +154,10 @@ a { color: inherit; text-decoration: none; }
 }
 /* Stable, bounded width for the title block so the festival name (FitText) measures against a real
    width and shrinks/wraps inside the bar instead of pushing the avatar (D25/DEC-087). */
-.appbar-head { flex: 1; min-width: 0; }
-.appbar .eyebrow { font-size: 11px; letter-spacing: 0.2em; color: var(--muted); font-weight: 700; text-transform: uppercase; line-height: 1.3; }
-.appbar h1 { margin: 4px 0 0; font-size: 28px; font-weight: 700; line-height: 1; }
+.appbar-head { flex: 1; min-width: 0; overflow: hidden; }
+.appbar .eyebrow { font-size: 11px; letter-spacing: 0.2em; color: var(--muted); font-weight: 700; text-transform: uppercase; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; }
+.appbar h1 { margin: 4px 0 0; font-size: 28px; font-weight: 700; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .appbar .sub { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 2px; }
 
 .ava {
@@ -1993,6 +1994,20 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
   background: var(--glass); border: 1px solid var(--border); color: var(--ink);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .lightbox-close .ms { font-size: 22px; }
+
+/* Join entry (E03/DEC-103): scan is the highlighted fast path; code/link stay below it. */
+.join-scan-btn { margin: 4px 0 16px; }
+.join-or-link { font-size: 12px; color: var(--muted); margin: 8px 2px 0; }
+
+/* Camera QR scanner (E03/DEC-103) — full-screen, lazy jsQR; always degrades to typing on failure. */
+.qr-scanner { position: fixed; inset: 0; z-index: 400; background: #07060a; display: flex; flex-direction: column; animation: fp-fade 0.18s ease; }
+.qr-scanner-stage { position: relative; flex: 1; overflow: hidden; }
+.qr-scanner-video { width: 100%; height: 100%; object-fit: cover; background: #07060a; }
+.qr-scanner-reticle { position: absolute; top: 50%; left: 50%; width: min(64vw, 280px); aspect-ratio: 1; transform: translate(-50%, -50%);
+  border: 3px solid rgba(252, 247, 236, 0.92); border-radius: 22px; box-shadow: 0 0 0 100vmax rgba(8, 7, 5, 0.5); }
+.qr-scanner-foot { padding: 18px 24px calc(24px + var(--safe-bottom)); text-align: center; }
+.qr-scanner-hint, .qr-scanner-msg { font-size: 13px; color: var(--ink); margin: 0; line-height: 1.5; }
+.qr-scanner-close { top: calc(10px + var(--safe-top)); }
 
 .meet-drift { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; padding: 10px 12px; border-radius: 12px;
   background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3); color: var(--accent2); }

@@ -4,8 +4,8 @@
  *   • a token in the path   → the invite preview ("Andy invited you…") with Join / Not now.
  *
  * Guests are sent through the sign-in gate + profile first (DEC-039), carrying the join path as
- * `next` so they land back on the preview. QR *scanning* (camera) is a later add; the link is the
- * primary path and pasting a code covers the manual case.
+ * `next` so they land back on the preview. Three honest entry paths converge on the same token
+ * (E03/DEC-103): scan a friend's QR (camera, lazy jsQR), paste the invite link, or type the code.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -15,19 +15,36 @@ import { initialsOf, useIdentity } from "../../data/identity";
 import { readableInkOn } from "../../lib/contrast";
 import { useT } from "../../i18n";
 import type { InvitePreviewDto } from "../../data/types";
+import { QrScanner } from "./QrScanner";
 
-/** Pull the invite code out of a pasted link or raw code. */
-function parseToken(raw: string): string {
+/**
+ * Pull the invite code out of a pasted link, a scanned QR payload, or a raw code. A scanned QR may
+ * encode a full URL with a query/hash (`/j/AB12CD?utm=x`), so we cut at the first `?`, `#`, or `/`
+ * after the code before stripping separators — otherwise query chars would leak into the token.
+ */
+export function parseToken(raw: string): string {
   const trimmed = raw.trim();
   const afterJ = trimmed.includes("/j/") ? trimmed.split("/j/").pop()! : trimmed;
-  return afterJ.replace(/[^0-9a-z]/gi, "").toUpperCase();
+  const head = afterJ.split(/[?#/]/)[0];
+  return head.replace(/[^0-9a-z]/gi, "").toUpperCase();
 }
 
 function JoinEntry(): JSX.Element {
   const navigate = useNavigate();
   const t = useT();
   const [value, setValue] = useState("");
+  const [scanning, setScanning] = useState(false);
   const token = parseToken(value);
+
+  // Every entry path (scan / paste / type) normalises through parseToken, then lands on the preview.
+  const goToToken = useCallback(
+    (raw: string): void => {
+      const parsed = parseToken(raw);
+      if (parsed.length >= 4) navigate(`/squad/join/${parsed}`);
+    },
+    [navigate]
+  );
+
   return (
     <>
       <StackHeader title={t("join.title")} backTo="/squad" />
@@ -40,27 +57,39 @@ function JoinEntry(): JSX.Element {
             {t("join.intro")}
           </p>
         </div>
+
+        <button className="btn btn-primary join-scan-btn" onClick={() => setScanning(true)}>
+          <span className="ms">qr_code_scanner</span>
+          {t("join.scan")}
+        </button>
+
         <span className="label">{t("join.label")}</span>
         <input
           id="invite-code"
           className="field"
           value={value}
-          placeholder="festpilot.app/j/AB12CD"
+          placeholder="AB12CD"
           onChange={(e) => setValue(e.target.value)}
           autoComplete="off"
           autoCapitalize="characters"
         />
+        <p className="join-or-link">{t("join.orPasteLink")}</p>
       </div>
       <div className="squad-actions" style={{ marginTop: "auto" }}>
-        <button
-          className="btn btn-primary"
-          disabled={token.length < 4}
-          onClick={() => navigate(`/squad/join/${token}`)}
-        >
+        <button className="btn btn-primary" disabled={token.length < 4} onClick={() => goToToken(value)}>
           <span className="ms">group_add</span>
           {t("common.continue")}
         </button>
       </div>
+      {scanning && (
+        <QrScanner
+          onResult={(text) => {
+            setScanning(false);
+            goToToken(text);
+          }}
+          onClose={() => setScanning(false)}
+        />
+      )}
     </>
   );
 }

@@ -148,4 +148,33 @@ test.describe("Phase 4 — squad (Gate 4.1 identity + Gate 4.2 groups)", () => {
     await expect(page.getByText("Andy", { exact: false })).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase4-group-home-2.png" });
   });
+
+  test("joiner: type the invite CODE on the entry screen → preview gate (E03/G8)", async ({ page, request }) => {
+    // Owner + squad created server-side to get a real invite token quickly.
+    const ownerTok = `anon.${ulid()}`;
+    await request.put(`${API}/api/me`, {
+      headers: { authorization: `Bearer ${ownerTok}` },
+      data: { displayName: "Andy", avatarColor: "#0EA5E9" },
+    });
+    const created = await request.post(`${API}/api/groups`, {
+      headers: { authorization: `Bearer ${ownerTok}` },
+      data: { name: "CODE CREW", emoji: "🎟️", festivalId: FESTIVAL_ID },
+    });
+    const token = (await created.json()).group.inviteToken;
+
+    await page.addInitScript(SEED_ONBOARDING, { festivalId: FESTIVAL_ID, w1: W1 });
+    await page.goto("/squad/join");
+    // E03: the entry screen accepts a *typed code* — the placeholder shows the code, not the URL.
+    const code = page.locator("#invite-code");
+    await expect(code).toBeVisible({ timeout: 20_000 });
+    await expect(code).toHaveAttribute("placeholder", "AB12CD");
+    await expect(page.getByRole("button", { name: /Scan a QR code/ })).toBeVisible();
+    await code.fill(token);
+    await page.getByRole("button", { name: /Continue/ }).click();
+    // Routes to the invite preview, which gates a guest through sign-in (carrying the join path).
+    await expect(page.getByRole("heading", { name: "Keep your squad across devices" })).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.screenshot({ path: "e2e/screenshots/g8-join-by-code.png" });
+  });
 });

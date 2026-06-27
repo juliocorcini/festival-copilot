@@ -1,7 +1,7 @@
 {
   "name": "@festpilot/web",
   "private": true,
-  "version": "0.48.0",
+  "version": "0.49.0",
   "type": "module",
   "description": "FestPilot PWA: Amber-Glass app — onboarding, favorites, timetable, lock-in, map, squads with a shared timetable, coarse live presence, and squad meeting points.",
   "scripts": {
@@ -14,6 +14,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "jsqr": "^1.4.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

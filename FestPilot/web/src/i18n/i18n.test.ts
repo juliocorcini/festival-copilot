@@ -28,6 +28,26 @@ describe("i18n translate", () => {
     expect(translate("pt", "squad.whereEveryone")).toBe("Onde está todo mundo");
   });
 
+  it("keeps 'Timetable' as 'Timetable' in Portuguese for nav + view switch (E24/DEC-094)", () => {
+    // Portuguese keeps the loanword 'Timetable' (festival lingo) rather than 'Horários'.
+    expect(translate("pt", "nav.timetable")).toBe("Timetable");
+    expect(translate("pt", "view.timetable")).toBe("Timetable");
+  });
+
+  it("shortens the Line Up favourites labels in Portuguese to fit the chip (E27)", () => {
+    expect(translate("pt", "lineup.favorites")).toBe("Favs");
+    expect(translate("pt", "tt.onlyFavs")).toBe("Só favs");
+  });
+
+  it("exposes the join scan + link copy in both languages (E03/DEC-103)", () => {
+    expect(translate("en", "join.scan")).toBe("Scan a QR code");
+    expect(translate("pt", "join.scan")).toBe("Escanear um QR code");
+    expect(translate("pt", "join.orPasteLink")).toBe("ou cole o link de convite");
+    // Failure copy must never be blank — the scanner always degrades to a readable message.
+    expect(translate("pt", "join.cameraDenied").length).toBeGreaterThan(0);
+    expect(translate("en", "join.cameraNone").length).toBeGreaterThan(0);
+  });
+
   it("keeps an asserted-elsewhere English string identical (e2e contract)", () => {
     // shell.spec asserts this exact label is visible — i18n must not change the EN value.
     expect(translate("en", "settings.appearanceLang")).toBe("Appearance & language");

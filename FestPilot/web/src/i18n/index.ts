@@ -567,8 +567,8 @@ const EN = {
 
   // Join (JoinScreen — the QR/scan/code redesign is G8/E03)
   "join.title": "Join a squad",
-  "join.intro": "Paste the invite link a friend sent you, or type the code from their screen.",
-  "join.label": "Invite link or code",
+  "join.intro": "Scan a friend's QR code, paste their invite link, or type the code from their screen.",
+  "join.label": "Invite code",
   "join.previewTitle": "Join squad",
   "join.loading": "Loading invite…",
   "join.notFound": "That invite link isn't valid. Ask your friend to send it again.",
@@ -584,6 +584,14 @@ const EN = {
   "join.joinFailed": "Could not join. Check your connection and try again.",
   "join.joining": "Joining…",
   "join.joinCta": "Join squad",
+  // Leva 2 G8 — join by link / code / scan (E03)
+  "join.orPasteLink": "or paste the invite link",
+  "join.scan": "Scan a QR code",
+  "join.scanTitle": "Scan the invite QR",
+  "join.scanAlign": "Point your camera at your friend's QR code.",
+  "join.scanStarting": "Starting camera…",
+  "join.cameraDenied": "Camera access is off. Turn it on in your browser, or paste the link instead.",
+  "join.cameraNone": "No camera here — paste the link or type the code instead.",
 
   // ── Leva 2 G4 — squad vivo: live re-share + plan history + notice (E07) ──
   "squad.planHistory": "Plan history",
@@ -726,7 +734,7 @@ export type MessageKey = keyof typeof EN;
 
 const PT: Partial<Record<MessageKey, string>> = {
   "nav.now": "Agora",
-  "nav.timetable": "Horários",
+  "nav.timetable": "Timetable",
   "nav.myPlan": "Meu Plano",
   "nav.map": "Mapa",
   // C5/DEC-082 — the feature's brand/nav label stays "Squad" in every language.
@@ -882,7 +890,7 @@ const PT: Partial<Record<MessageKey, string>> = {
   "lineup.clearSearch": "Limpar busca",
   "lineup.gridDensity": "Densidade da grade",
   "lineup.cols": "{n} colunas",
-  "lineup.favorites": "Favoritos",
+  "lineup.favorites": "Favs",
   "lineup.allDays": "Todos os dias",
   "lineup.noneTitle": "Nenhum artista encontrado",
   "lineup.noneMsg": "Tente outra busca ou filtro.",
@@ -906,13 +914,13 @@ const PT: Partial<Record<MessageKey, string>> = {
   "tt.view1h": "Visão de 1 hora",
   "tt.view2h": "Visão de 2 horas",
   "tt.onlyFavsAria": "Mostrar só meus favoritos",
-  "tt.onlyFavs": "Só favoritos",
+  "tt.onlyFavs": "Só favs",
   "tt.lockIn": "Fechar meu dia",
   "tt.editPlan": "Editar plano",
   "tt.addFav": "Adicionar favorito",
   "tt.removeFav": "Remover favorito",
 
-  "view.timetable": "Horários",
+  "view.timetable": "Timetable",
   "view.lineup": "Line-up",
   "view.switch": "Horários ou Line-up",
   "day.select": "Selecionar dia",
@@ -1248,8 +1256,8 @@ const PT: Partial<Record<MessageKey, string>> = {
   "sharePlan.shareCta": "Compartilhar com o grupo",
 
   "join.title": "Entrar num grupo",
-  "join.intro": "Cole o link de convite que um amigo mandou, ou digite o código da tela dele.",
-  "join.label": "Link de convite ou código",
+  "join.intro": "Escaneie o QR de um amigo, cole o link de convite, ou digite o código da tela dele.",
+  "join.label": "Código de convite",
   "join.previewTitle": "Entrar no grupo",
   "join.loading": "Carregando convite…",
   "join.notFound": "Esse link de convite não é válido. Peça para seu amigo mandar de novo.",
@@ -1265,6 +1273,14 @@ const PT: Partial<Record<MessageKey, string>> = {
   "join.joinFailed": "Não foi possível entrar. Verifique a conexão e tente de novo.",
   "join.joining": "Entrando…",
   "join.joinCta": "Entrar no grupo",
+  // Leva 2 G8 — entrar por link / código / scan (E03)
+  "join.orPasteLink": "ou cole o link de convite",
+  "join.scan": "Escanear um QR code",
+  "join.scanTitle": "Escaneie o QR do convite",
+  "join.scanAlign": "Aponte a câmera para o QR code do seu amigo.",
+  "join.scanStarting": "Iniciando a câmera…",
+  "join.cameraDenied": "O acesso à câmera está desligado. Ative no navegador, ou cole o link.",
+  "join.cameraNone": "Sem câmera aqui — cole o link ou digite o código.",
 
   // ── Leva 2 G4 — squad vivo (E07) ──
   "squad.planHistory": "Histórico do plano",

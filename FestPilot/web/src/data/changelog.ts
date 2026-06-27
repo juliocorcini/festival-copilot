@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.48.0";
+export const APP_VERSION = "0.49.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.49.0",
+    date: "2026-06-27",
+    title: "Join in a snap",
+    icon: "qr_code_scanner",
+    whatsNew: [
+      "Joining a squad is easier: scan a friend's QR code with your camera, paste their link, or type the code.",
+      "If the camera is off or unavailable, you can always fall back to pasting the link — nothing gets stuck.",
+      "Tidied up the labels: the festival name no longer crowds your avatar, and the Line Up filters fit cleanly.",
+    ],
+    howToTest: [
+      "Squad → Join: tap 'Scan a QR code' and point at a friend's invite QR; you land on the invite preview.",
+      "Deny the camera (or open on a device without one) — you get a clear message and can paste the link instead.",
+      "Switch the app to Portuguese: the top tab now reads 'Timetable' and the Line Up chip reads 'Favs'.",
+    ],
+  },
   {
     version: "0.48.0",
     date: "2026-06-27",
