@@ -1,6 +1,27 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-26 (native-polish roadmap **Phases 5–10 COMPLETE** + **11 council-guided improvement rounds R1–R11**; app **v0.31.6**, fully deployed to Production; e2e **deterministic (30/30)** and **677 unit tests (439 web + 238 server)** green. See `FestPilot/dev-log.md` for the live per-round detail.)
+> Last updated: 2026-06-27 (**Review & Polish wave COMPLETE** — gates G0→G10 shipped, app **v0.41.0**, fully deployed to Production; e2e **34/34** and **734 unit tests (496 web + 238 server)** green. See `FestPilot/dev-log.md` for the live per-gate detail.)
+
+## Review & Polish wave (2026-06-27) — COMPLETE & DEPLOYED
+
+Source orchestrator: `brain/documents/2026-06-27-review-polish-orchestrator.md`. Live execution detail: `FestPilot/dev-log.md` (newest on top). Drove **DEC-075→088** (all **APPROVED**); fixed every issue in Julio's 2026-06-27 usage review (D01–D26) without rebuilding what already worked.
+
+- **G1 `v0.32.0`** — surgical bugs: sheets/menus portaled to `body` + `position:fixed` (D05/D06), circular home avatar with no amber bleed (D10), walk opens the exact tapped transition (D07).
+- **G2 `v0.33.0`** — map cover-fit (no black border, tinted letterbox, D03) + redesigned glass stage markers/labels (D02).
+- **G3 `v0.34.0`** — crisp progressive map base (kills zoom pixelation, D01) — closed "the main alert".
+- **G4 `v0.35.0`** — i18n on every screen (D04, DEC-082); "Squad" stays "Squad".
+- **G5 `v0.36.0`** — share poster v2: all sets (pagination/2-col), DJ photos (initials fallback on CORS), real clashes, story/square, final URL (D08/D26).
+- **G6 `v0.37.0`** — insert between any two plan cards with a time-source choice (D09); single/adjustable/splittable walk outside Edit (D17/D18) — **closed P0**.
+- **G7 `v0.38.0`** — timetable/lineup: stages by favorites (D12), stronger gridlines (D13), Lock-in reflects planned state (D14), one-step pinch + animation (D15), collapsible favorites (D16), tab haptics (D19).
+- **G8 `v0.39.0`** — system bars: dynamic `theme-color` per palette + safe-area audit + documented native status-bar plan (D11) — **closed P1**.
+- **G9 `v0.40.0`** — squad parity: "Next up" (D20) + My plan/Squad tabs on Now (D24), home reorg (D21), plan = My Plan timeline (D22), agenda interleaved render-only (D23) — `buildSquadPlan` stays sets-only (regression test).
+- **G10 `v0.41.0`** — festival name on the home with no ellipsis: shrink-to-fit + two-line fallback (D25, DEC-087) — **closed the wave**.
+
+**Production (deployed 2026-06-27, verified):** web **v0.41.0** at `festpilot.pages.dev` (deploy `74546e8b`, master); Worker unchanged (frontend-only wave); D1 through migration **0015**. Tests: **734 unit (496 web + 238 server) · e2e 34/34 · `typecheck`/`build` clean**. Invariants held: plan zero-overlap, `buildSquadPlan` sets-only, coarse presence, portaled/fixed sheets, nothing baked into the map.
+
+**Next (needs Julio):** the wave's DoD is fully TRUE. Remaining open item is the **manual on-device smoke** (§15 of the orchestrator) — best done by Julio on a phone. No further autonomous direction is queued; any new scope needs Julio to name it (with a decision-log entry).
+
+---
 
 ## Native-polish roadmap + improvement rounds (2026-06-26) — COMPLETE & DEPLOYED
 
