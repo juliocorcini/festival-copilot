@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { useNavigate } from "react-router-dom";
 import { geoToSvg, type MapTransform, type StageGeo } from "./transform";
+import { mapBaseUrl } from "./mapBase";
 import { useAppearance } from "../app/settings";
 import { usePanZoom } from "./usePanZoom";
 import { maxScaleForBase, NO_INSETS, type Insets } from "./panClamp";
@@ -200,7 +201,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
 
   // Slim pre-rendered raster base (DEC-040), now label-free (DEC-050); the interactive layer below
   // is a separate vector overlay so stage names/markers stay crisp and tappable at any zoom.
-  const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.webp`;
+  const base = mapBaseUrl(festivalId, palette);
   const openProgramme = openStage ? stageProgrammeAt(sets, openStage.name, nowMs) : null;
   const openAtStage = openStage ? setsAtStage(sets, openStage.name) : [];
 

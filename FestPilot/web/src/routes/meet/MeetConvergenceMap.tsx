@@ -7,6 +7,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { geoToSvg, type MapTransform } from "../../map/transform";
+import { mapBaseUrl } from "../../map/mapBase";
 import { useAppearance } from "../../app/settings";
 import { initialsOf } from "../../data/identity";
 import type { PresenceMemberDto } from "../../data/types";
@@ -94,7 +95,7 @@ export function MeetConvergenceMap({
 
   const meetX = meet ? (meet[0] / cw) * 100 : 50;
   const meetY = meet ? (meet[1] / ch) * 100 : 38;
-  const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.webp`;
+  const base = mapBaseUrl(festivalId, palette);
 
   return (
     <button

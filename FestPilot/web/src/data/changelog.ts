@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.42.0";
+export const APP_VERSION = "0.43.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.43.0",
+    date: "2026-06-27",
+    title: "Maps that always look right",
+    icon: "map",
+    whatsNew: [
+      "Every in-app map now shows a warm festival glow while it loads — no more black squares on the meeting-point picker, the walking route, or the squad map.",
+      "Stage names and map labels always read in clear light text, never hard-to-see dark text.",
+    ],
+    howToTest: [
+      "Open 'Set a meeting point' or a walking route, even on a slow or offline connection: the map area glows warm, never a black box.",
+      "Tap 'Meet at a stage' (or read the spot label): the stage names show in crisp light text.",
+    ],
+  },
   {
     version: "0.42.0",
     date: "2026-06-27",

@@ -44,6 +44,9 @@
   --friend: #7cf59a;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* N3/DEC-090 — one warm fallback wash behind every map base (MapView, meeting-point picker,
+     convergence + coarse presence). A missing or slow raster degrades to brand color, never black. */
+  --map-fallback: radial-gradient(120% 90% at 50% 0%, var(--panel) 0%, var(--bg) 72%);
   /* N7/E28: tell the OS this is a dark UI so native chrome (scrollbars, form controls, and on some
      Androids the system bars) renders dark to match the app, never a generic light surface. */
   color-scheme: dark;
@@ -75,7 +78,10 @@ input, textarea, [contenteditable="true"], .selectable {
   -webkit-user-select: text;
   -webkit-touch-callout: default;
 }
-button { font-family: inherit; }
+/* N2/DEC-091 — buttons inherit the app's light ink instead of the UA default (near-black), so map
+   sheets/labels rendered as buttons (e.g. the stage-pick rows) never paint black text on dark glass.
+   Every control that needs a specific color already sets its own via its component class. */
+button { font-family: inherit; color: inherit; }
 a { color: inherit; text-decoration: none; }
 
 .poster { font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: -0.01em; }
@@ -426,9 +432,9 @@ main:focus { outline: none; }
 .viewport {
   position: absolute; inset: 0; overflow: hidden;
   touch-action: none; cursor: grab;
-  /* App-tinted base (DEC-077) — warm brand tokens, never pure black. Cover-fit means this only ever
-     shows behind the safe-area chrome or a momentary overscroll bleed, never as a framing border. */
-  background: radial-gradient(120% 90% at 50% 0%, var(--panel) 0%, var(--bg) 72%);
+  /* App-tinted base (DEC-077/090) — the shared warm fallback wash, never pure black. Cover-fit means
+     this only ever shows behind the safe-area chrome or a momentary overscroll bleed, never a border. */
+  background: var(--map-fallback);
 }
 .viewport:active { cursor: grabbing; }
 .world { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
@@ -1718,10 +1724,10 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 
 /* --- Map peek + coarse pins (#25.4 / #25.5) --- */
 .presence-maptile { position: relative; display: block; width: 100%; height: 116px; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; padding: 0;
-  background: radial-gradient(circle at 30% 40%, rgba(245, 166, 35, 0.12), transparent 32%), linear-gradient(135deg, #14241a, #0d1410); }
+  background: var(--map-fallback); }
 /* Real mini-map preview (R9.5): the venue base image defines the box (true aspect, no distortion),
    centered + height-bounded; percentage-placed pins land exactly on the venue. */
-.presence-maptile--map { height: auto; width: fit-content; max-width: 100%; margin-inline: auto; background: none; }
+.presence-maptile--map { height: auto; width: fit-content; max-width: 100%; margin-inline: auto; background: var(--map-fallback); }
 .presence-maptile--map .presence-map-base { position: static; display: block; width: auto; height: 248px; max-width: 100%; object-fit: cover; }
 .presence-map-base { user-select: none; -webkit-user-drag: none; }
 .mpin { position: absolute; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; transform: translate(-50%, -50%); }
@@ -1825,7 +1831,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .stage-sheet-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 13px 14px; cursor: pointer; }
 .stage-sheet-row:disabled { opacity: 0.5; cursor: default; }
 .stage-sheet-row .ms:first-child { font-size: 20px; flex-shrink: 0; }
-.stage-sheet-name { flex: 1; font-weight: 700; font-size: 14px; }
+.stage-sheet-name { flex: 1; font-weight: 700; font-size: 14px; color: var(--ink); }
 
 /* ── Meeting points — pick spot (B4.1) + details (B4.2), UC-27 ──────────────── */
 .meet-spot-body { position: relative; flex: 1; overflow: hidden; display: flex; flex-direction: column;
@@ -1833,7 +1839,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 /* Zoomable spot picker (R2.4): the base + markers ride the shared pan/zoom world (R2.1). Kept
    in-flow with the venue aspect-ratio so the body keeps its height and the action bar stays below. */
 .meet-pick-viewport { position: relative; width: 100%; overflow: hidden; touch-action: none; cursor: grab;
-  background: radial-gradient(120% 90% at 50% 0%, #16110a 0%, #08070a 70%); }
+  background: var(--map-fallback); }
 .meet-pick-viewport:active { cursor: grabbing; }
 .meet-map-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; -webkit-user-drag: none; }
 .meet-stage-dot { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 5px;
@@ -1849,7 +1855,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .meet-chips .chip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0; }
 .meet-chips .chip:disabled { opacity: 0.5; cursor: default; }
 .meet-spot-label { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
-.meet-spot-label-main { flex: 1; font-size: 13px; font-weight: 700; }
+.meet-spot-label-main { flex: 1; font-size: 13px; font-weight: 700; color: var(--ink); }
 .meet-map-fallback { margin: 16px; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--muted); }
 .meet-map-fallback .ms { font-size: 32px; color: var(--accent); }
 
@@ -1888,7 +1894,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 /* Meeting-point detail (#26.3) — convergence map + sheet + roster + status loop. */
 .meet-detail { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .meet-convergence { position: relative; display: block; width: 100%; border: 0; padding: 0; cursor: pointer; overflow: hidden;
-  background: radial-gradient(circle at 50% 35%, rgba(245, 166, 35, 0.14), transparent 40%), linear-gradient(135deg, #14241a, #0d1410); }
+  background: var(--map-fallback); }
 .meet-converge-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .meet-detail-sheet { margin: -28px 12px 0; padding: 16px 16px 20px; border-radius: 26px 26px 20px 20px; position: relative;
   display: flex; flex-direction: column; gap: 12px; }

@@ -6,6 +6,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { geoToSvg, type MapTransform } from "../../map/transform";
+import { mapBaseUrl } from "../../map/mapBase";
 import { useAppearance } from "../../app/settings";
 import { initialsOf } from "../../data/identity";
 import type { PresenceMemberDto } from "../../data/types";
@@ -94,7 +95,7 @@ export function CoarsePresenceMap({
   // With the base shown, match the tile to the map's aspect so percentage-placed pins land exactly
   // on the venue (object-fit: fill, same as the convergence map).
   const withBase = showBase && t;
-  const base = `/maps/${festivalId}${palette === "day" ? "-day" : ""}.webp`;
+  const base = mapBaseUrl(festivalId, palette);
 
   return (
     <button

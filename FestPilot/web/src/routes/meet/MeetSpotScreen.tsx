@@ -10,6 +10,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { useAppearance } from "../../app/settings";
 import { coarseLabel, geoToSvg, svgToGeo, type MapTransform } from "../../map/transform";
+import { mapBaseUrl } from "../../map/mapBase";
 import { usePanZoom } from "../../map/usePanZoom";
 import type { StageDto } from "../../data/types";
 import { StagePickSheet } from "../presence/StagePickSheet";
@@ -38,6 +39,9 @@ export function MeetSpotScreen(): JSX.Element {
   const [source, setSource] = useState<Source>("pin");
   const [locating, setLocating] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // The shared `.base` raster fades in on load; without this flag it would stay invisible over the
+  // warm viewport wash (which is the intended never-black fallback if the art never resolves).
+  const [baseLoaded, setBaseLoaded] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -115,7 +119,7 @@ export function MeetSpotScreen(): JSX.Element {
   };
 
   const pin = t && lng != null && lat != null ? geoToSvg(t.affine, lng, lat) : null;
-  const base = `/maps/${MAP_FID}${palette === "day" ? "-day" : ""}.webp`;
+  const base = mapBaseUrl(MAP_FID, palette);
 
   // World (canvas) point → on-screen px within the viewport, following the live pan/zoom transform.
   const screenOf = (wx: number, wy: number): { left: string; top: string } => ({
@@ -173,7 +177,16 @@ export function MeetSpotScreen(): JSX.Element {
               className="world"
               style={{ width: cw, height: ch, transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
             >
-              <img className="base" src={base} width={cw} height={ch} alt="Festival map" draggable={false} />
+              <img
+                className={`base${baseLoaded ? " is-loaded" : ""}`}
+                src={base}
+                width={cw}
+                height={ch}
+                alt="Festival map"
+                draggable={false}
+                onLoad={() => setBaseLoaded(true)}
+                onError={() => setBaseLoaded(false)}
+              />
             </div>
             {t?.stages
               .filter((s) => s.matched)
