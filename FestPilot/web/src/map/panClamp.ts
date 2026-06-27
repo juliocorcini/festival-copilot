@@ -39,11 +39,16 @@ function safeRect(viewport: Size, insets: Insets): { x0: number; y0: number; w: 
   };
 }
 
-/** The scale that makes the whole world fit inside the safe rect (its natural "fit" / min zoom). */
+/**
+ * The "cover" scale: the smallest zoom at which the scaled world fully covers the safe rect, so the
+ * map reads edge-to-edge with **no black border / letterbox** (DEC-077). One axis fills exactly; the
+ * other overflows and is cropped (centred by `fitView`). This is also the map's min zoom — you can't
+ * zoom out past a full-bleed view. (Was *contain* = `Math.min`, which letterboxed the shorter axis.)
+ */
 export function fitScale(world: Size, viewport: Size, insets: Insets = NO_INSETS): number {
   if (world.w <= 0 || world.h <= 0) return 1;
   const safe = safeRect(viewport, insets);
-  return Math.min(safe.w / world.w, safe.h / world.h);
+  return Math.max(safe.w / world.w, safe.h / world.h);
 }
 
 /**

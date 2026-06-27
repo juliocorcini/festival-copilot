@@ -402,7 +402,9 @@ main:focus { outline: none; }
 .viewport {
   position: absolute; inset: 0; overflow: hidden;
   touch-action: none; cursor: grab;
-  background: radial-gradient(120% 90% at 50% 0%, #16110a 0%, #08070a 70%);
+  /* App-tinted base (DEC-077) — warm brand tokens, never pure black. Cover-fit means this only ever
+     shows behind the safe-area chrome or a momentary overscroll bleed, never as a framing border. */
+  background: radial-gradient(120% 90% at 50% 0%, var(--panel) 0%, var(--bg) 72%);
 }
 .viewport:active { cursor: grabbing; }
 .world { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
@@ -479,14 +481,22 @@ main:focus { outline: none; }
 
 .map-msg { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 14px; }
 
-/* interactive vector stage overlay (DEC-050) — crisp + tappable, never baked into the base */
+/* interactive vector stage overlay (DEC-050/076) — crisp glass markers, never baked into the base */
 .stage-pin { pointer-events: auto; cursor: pointer; }
-.stage-pin-shadow { fill: rgba(0, 0, 0, 0.45); }
-.stage-pin-disc { stroke: #08070a; stroke-width: 2; }
-.stage-pin.is-open .stage-pin-disc { stroke: var(--accent); stroke-width: 2.8; }
-.stage-pin-star { fill: #08070a; opacity: 0.9; }
-.stage-pin-live { fill: var(--s-core); stroke: #08070a; stroke-width: 1; }
-.stage-pin-name { font-size: 10.5px; }
+.stage-pin-shadow { fill: rgba(0, 0, 0, 0.4); }
+.stage-pin-ring { fill: none; stroke: rgba(255, 255, 255, 0.92); stroke-width: 1.5; }
+.stage-pin-disc { stroke: rgba(8, 7, 10, 0.55); stroke-width: 1; }
+.stage-pin-star { fill: #fff; opacity: 0.95; }
+.stage-pin-live { fill: var(--accent2); stroke: #0f0d09; stroke-width: 1; }
+.stage-pin.is-open .stage-pin-ring { stroke: var(--accent); stroke-width: 2.4; }
+/* Glass label (Amber-Glass): translucent warm base + amber hairline; legible name, no pure-black stroke. */
+.stage-label-bg { fill: rgba(15, 13, 9, 0.74); stroke: rgba(245, 166, 35, 0.45); stroke-width: 0.7; }
+.stage-label-text {
+  font-family: "Oswald", sans-serif; font-weight: 700; font-size: 11px;
+  fill: var(--ink); text-transform: uppercase; letter-spacing: 0.02em;
+  paint-order: stroke; stroke: rgba(8, 7, 10, 0.5); stroke-width: 0.5px;
+}
+.stage-pin.is-open .stage-label-bg { stroke: var(--accent); stroke-width: 1; }
 
 .stage-sheet {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;

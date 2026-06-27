@@ -41,8 +41,18 @@ function starPath(r: number, rin: number, n = 5): string {
   }
   return d + "Z";
 }
-const STAR = starPath(3.6, 1.6);
+const STAR = starPath(3.4, 1.5);
 const hhmm = (ms: number, tz: string): string => timeInZone(new Date(ms).toISOString(), tz);
+
+// Glass stage label geometry (DEC-076). The pill is sized in world px (it scales with the marker via
+// `pinScale`, so it stays screen-stable). Oswald is condensed (~0.6em/char); the medallion gap + a
+// right pad keep the name from ever clipping. Text sits to the right of the medallion at the origin.
+const STAGE_LABEL_FS = 11;
+const STAGE_LABEL_TEXT_X = 12;
+const STAGE_LABEL_PILL_X = -3;
+function stageLabelWidth(name: string): number {
+  return STAGE_LABEL_TEXT_X - STAGE_LABEL_PILL_X + name.length * (STAGE_LABEL_FS * 0.6) + 8;
+}
 
 /**
  * Measure the in-canvas chrome (top bar + bottom sheet) so the pan/zoom can treat the
@@ -215,20 +225,33 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
               const [x, y] = geoToSvg(t.affine, s.lng, s.lat);
               const live = stageProgrammeAt(sets, s.name, nowMs).now;
               const selected = openStage?.name === s.name;
+              const color = stageColor(s.name);
               return (
                 <g
                   key={s.name}
-                  className={`stage-pin${selected ? " is-open" : ""}`}
+                  className={`stage-pin${selected ? " is-open" : ""}${live ? " is-live" : ""}`}
                   transform={`translate(${x},${y}) scale(${pinScale})`}
                   role="button"
                   aria-label={`${s.name}${live ? `, now playing ${live.label}` : ""}`}
                   {...stageTap(s)}
                 >
-                  <ellipse className="stage-pin-shadow" cx="0" cy="3.4" rx="6.8" ry="2.4" />
-                  <circle className="stage-pin-disc" r="7" style={{ fill: stageColor(s.name) }} />
+                  {/* Amber-Glass label pill, tucked behind the medallion (DEC-076): translucent warm
+                      base + amber hairline, legible name — never pure black text on the art. */}
+                  <rect
+                    className="stage-label-bg"
+                    x={STAGE_LABEL_PILL_X}
+                    y="-7.5"
+                    width={stageLabelWidth(s.name)}
+                    height="15"
+                    rx="7.5"
+                  />
+                  <text className="stage-label-text" x={STAGE_LABEL_TEXT_X} y="3.3">{s.name}</text>
+                  {/* Clean medallion: soft shadow, glass ring, stage-colour disc, small star. */}
+                  <ellipse className="stage-pin-shadow" cx="0" cy="3.4" rx="6.6" ry="2.3" />
+                  <circle className="stage-pin-ring" r="7.4" />
+                  <circle className="stage-pin-disc" r="6" style={{ fill: color }} />
                   <path className="stage-pin-star" d={STAR} />
-                  {live && <circle className="stage-pin-live" cx="6.2" cy="-6.2" r="2.7" />}
-                  <text className="lbl stage-pin-name" x="11" y="3.5">{s.name}</text>
+                  {live && <circle className="stage-pin-live" cx="5.9" cy="-5.9" r="2.6" />}
                 </g>
               );
             })}

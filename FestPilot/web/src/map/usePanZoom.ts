@@ -34,7 +34,8 @@ export function usePanZoom(contentW: number, contentH: number, insets: Insets = 
   insetsRef.current = insets;
   const vp = useRef({ w: 0, h: 0 });
 
-  const clampScale = useCallback((s: number) => Math.max(fit.current * 0.9, Math.min(s, MAX_SCALE)), []);
+  // Floor at the cover scale (`fit.current`): zooming out past it would reveal the tinted void again.
+  const clampScale = useCallback((s: number) => Math.max(fit.current, Math.min(s, MAX_SCALE)), []);
 
   const settle = useCallback(
     (v: View): View => clampPan(v, world.current, vp.current, insetsRef.current, BLEED),

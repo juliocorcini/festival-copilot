@@ -4,26 +4,31 @@ import { clampPan, fitScale, fitView, NO_INSETS, type Insets, type Size, type Vi
 const world: Size = { w: 1000, h: 800 };
 const viewport: Size = { w: 400, h: 700 };
 
-describe("fitScale / fitView", () => {
-  it("fits the world inside the bare viewport and centres it", () => {
+describe("fitScale / fitView — cover-fit (DEC-077, no black border)", () => {
+  it("covers the bare viewport (larger axis wins) and centres the crop", () => {
     const v = fitView(world, viewport);
-    // limiting dimension is width: 400/1000 = 0.4 (vs height 700/800 = 0.875)
-    expect(v.scale).toBeCloseTo(0.4, 6);
-    expect(fitScale(world, viewport)).toBeCloseTo(0.4, 6);
-    // centred: x spans full width (gap 0), y centred in the 700px height
-    expect(v.x).toBeCloseTo(0, 6);
-    expect(v.y).toBeCloseTo((700 - 800 * 0.4) / 2, 6); // (700-320)/2 = 190
+    // cover = max(400/1000=0.4, 700/800=0.875) = 0.875 — height fills exactly, width overflows + crops
+    expect(v.scale).toBeCloseTo(0.875, 6);
+    expect(fitScale(world, viewport)).toBeCloseTo(0.875, 6);
+    // centred crop: x negative (875 wide into 400), y exact (700 into 700)
+    expect(v.x).toBeCloseTo((400 - 1000 * 0.875) / 2, 6); // (400-875)/2 = -237.5
+    expect(v.y).toBeCloseTo(0, 6);
+    // invariant: the scaled world fully covers the viewport (no void on either axis)
+    expect(1000 * v.scale).toBeGreaterThanOrEqual(viewport.w - 1e-6);
+    expect(800 * v.scale).toBeGreaterThanOrEqual(viewport.h - 1e-6);
   });
 
-  it("frames the venue inside the safe rect (chrome insets), not behind the chrome", () => {
+  it("covers the safe rect (chrome insets), never letterboxing the venue", () => {
     const insets: Insets = { top: 80, right: 0, bottom: 160, left: 0 };
     const v = fitView(world, viewport, insets);
     const safeW = 400;
     const safeH = 700 - 80 - 160; // 460
-    const scale = Math.min(safeW / 1000, safeH / 800); // min(0.4, 0.575) = 0.4
+    const scale = Math.max(safeW / 1000, safeH / 800); // max(0.4, 0.575) = 0.575
     expect(v.scale).toBeCloseTo(scale, 6);
-    // y is offset by the top inset + centred within the safe height
+    // y offset by the top inset + centred within the safe height; the world covers the safe rect
     expect(v.y).toBeCloseTo(80 + (safeH - 800 * scale) / 2, 6);
+    expect(1000 * v.scale).toBeGreaterThanOrEqual(safeW - 1e-6);
+    expect(800 * v.scale).toBeGreaterThanOrEqual(safeH - 1e-6);
   });
 });
 
