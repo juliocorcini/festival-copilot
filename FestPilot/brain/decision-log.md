@@ -967,13 +967,13 @@
 - **Decision**: default the map framing to **cover-fit** (fill the safe rect, crop edges with bleed) instead of *contain* (which letterboxes); any remaining letterbox is **tinted with the app colour**, never `#000`; the clamp guarantees the user never drags into a void; better initial zoom.
 - **Rationale**: the big black border "looks like a badly fitted image". Cover-fit + tinted background removes it. Pure, unit-testable (`fitScale` cover).
 
-### DEC-078 — Floating sheets/menus are portaled to body + position:fixed — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G1).
+### DEC-078 — Floating sheets/menus are portaled to body + position:fixed — APPROVED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** — shipped G1 (v0.32.0, deploy `f85f34e1`).
 - **Decision**: the base `Sheet` renders its scrim + sheet via `createPortal(document.body)` and `.scrim`/`.sheet` use **`position: fixed`** (not `absolute`). This kills the whole class of "menu stuck to the scrolled page / transformed ancestor" (the `more_vert` plan menu, the share sheet, artist sheet, pickers). Drag-to-dismiss, Esc, focus-trap and scroll-lock are preserved.
 - **Rationale**: `position: absolute` inside a transformed ancestor (`.world{will-change:transform}`, screen transitions) anchors to that ancestor, so the menu scrolls with the content. A portal + fixed positions to the viewport.
 
-### DEC-079 — Walk: open the exact tapped transition, single source, tap-to-adjust + split — PROPOSED (council C2)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gates G1 + G6). Extends DEC-074.
+### DEC-079 — Walk: open the exact tapped transition, single source, tap-to-adjust + split — APPROVED partial (council C2)
+- **Date**: 2026-06-27 · **Status**: **APPROVED (partial)** — G1 shipped (1) the exact-leg route via `from/to/at` + `chooseRouteStages` hardening (v0.32.0). The single-source notice (2), tap-to-adjust outside Edit + split (3) land in **G6**. Extends DEC-074.
 - **Decision**: (1) the walk chip/gap navigates to `/route?from=&to=&at=` of the **exact tapped transition** (fixes "Mainstage → Mainstage"); `RouteScreen`'s default is hardened so `to ≠ from`. (2) **One source per transition**: the "Leave early for {n} min walk to {stage}" notice lives in the previous set's card; the gap shows only free time (kills the duplicate). (3) the travel chip is **tappable always** (not only in Edit) → opens the `TravelSheet` with **three** options — leave early / arrive late / **split** (`applySplitTravel`, pure) — labelled in minutes of music lost, reversible with a confirm toast.
 - **Rationale**: walking decisions are common and made in the moment; they must be one tap, honest, and never duplicated or wrongly addressed.
 

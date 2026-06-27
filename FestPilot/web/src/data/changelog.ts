@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.31.6";
+export const APP_VERSION = "0.32.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.32.0",
+    date: "2026-06-27",
+    title: "Menus, your photo & walking directions, fixed",
+    icon: "build",
+    whatsNew: [
+      "Pop-up menus and panels now stay put at the bottom of the screen instead of drifting up the page as you scroll.",
+      "Your profile photo in the top corner is now a clean circle — no stray colour leaking around the edges.",
+      "Tapping a walk between two sets now opens directions for that exact leg (the right 'from' and 'to'), not a guessed one.",
+    ],
+    howToTest: [
+      "Scroll a long list, then open a 3-dot menu or 'Share my plan' — the panel sits at the bottom of the screen and doesn't move with the scroll.",
+      "Set a profile photo (Profile) and look at the avatar on the Now screen — a perfect circle.",
+      "In My Plan, tap a 'X min walk to <stage>' chip — the route screen opens with the correct origin and destination.",
+    ],
+  },
   {
     version: "0.31.6",
     date: "2026-06-26",

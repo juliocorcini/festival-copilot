@@ -12,15 +12,15 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G0 ✅ (baseline) · **próximo:** G1.
-- **produção:** v0.31.6 (`6164f69`) — ainda sem deploy desta leva.
+- **gate atual:** G1 ✅ (v0.32.0 no ar) · **próximo:** G2 (mapa cover-fit + marcadores de vidro).
+- **produção:** **v0.32.0** (`festpilot.pages.dev` serve `index-CSOJ87J8.js`, deploy `f85f34e1`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
 
 ### Checklist de gates
 - [x] **G0** — baseline verde + DEC-075→088 PROPOSED (já no log) + back-fill DEC-073/074 (já no log) + pipeline confirmado. *(sem bump)*
-- [ ] **G1** — sheets portalados+fixed (D05/D06), foto da home circular (D10), caminhada certa from/to/at (D07). → v0.32.0
+- [x] **G1** — sheets portalados+fixed (D05/D06), foto da home circular (D10), caminhada certa from/to/at (D07). → **v0.32.0** ✅
 - [ ] **G2** — mapa cover-fit sem borda preta (D03) + marcadores/labels de vidro (D02). → v0.33.0
 - [ ] **G3** — mapa base progressiva nítida no zoom (D01). → v0.34.0 *(fecha "o principal alerta")*
 - [ ] **G4** — português em todas as telas (D04). → v0.35.0
@@ -30,6 +30,21 @@
 - [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G1 — Bugs cirúrgicos: menus presos, foto da home, caminhada errada ✅ — v0.32.0
+> Três vitórias rápidas de baixo risco que provam o pipeline. **Conselho:** decisões diretas (DEC-078) + C2 (DEC-079);
+> reuso total — RouteScreen **já** aceitava `from/to/at`, só faltava o `MyPlanScreen` passar a transição tocada.
+- **G1.1 — Sheets portalados + fixed (D05/D06, DEC-078).** `ui/Sheet.tsx` renderiza scrim+sheet via `createPortal(document.body)`;
+  `.scrim`/`.sheet` viraram `position: fixed` (z-index 40/50 preservado — nav=20 fica abaixo, toaster=60 acima, no contexto da raiz).
+  Drag-to-dismiss/Esc/focus-trap/scroll-lock intactos. **Teste:** `Sheet.test.tsx` +1 (nó é filho de `document.body`, não do container); os 9 de drag/trap reescritos para consultar o `document.body`.
+- **G1.2 — Foto da home circular (D10).** `.ava { overflow: hidden }` — clipa a `<img>` ao círculo, sem o gradiente âmbar vazando. CSS-only.
+- **G1.3 — Caminhada abre a transição certa (D07, DEC-079).** `PlanGapItem` ganhou `fromStageId`/`toStageId`/`atMs`; o chip de caminhada navega `/route?from=&to=&at=&day=`.
+  `chooseRouteStages()` (puro) endurece o default do `RouteScreen` para **destino ≠ origem** (mata "Mainstage → Mainstage"). O menu de 3-pontos roteia para o palco do set tocado.
+  **Testes:** `route.test.ts` +6 (`chooseRouteStages`: explícito, to=from→substitui, defaults, sem palcos); `plan.test.ts` afirma o gap carregando o leg exato.
+- **5-point self-check:** Dxx D05/D06/D10/D07 + DEC-078/079 ✅; ACs em risco re-verificados → **zero-overlap** intacto (só adicionei campos derivados ao gap, sem tocar `resolveSets`/`planEdit`), **sheets agora fixos/portalados** (a própria correção), **presença grosseira** não tocada; testes **452 unit** (446 web + 6 novos contam aqui? na verdade web 446) + **e2e 30/30**, sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo · **web unit 446** (era 439; +1 Sheet portal, +6 route) · **e2e 30/30** (2.4m) · `build` verde (main 368.57 kB, embute 0.32.0) · **deploy master** `f85f34e1` → `festpilot.pages.dev` serve `index-CSOJ87J8.js` (confirmado por curl). Worker/D1 intactos.
+- **Escopo (arquivos):** `ui/Sheet.tsx`, `ui/Sheet.test.tsx`, `styles.css` (`.scrim`/`.sheet`/`.ava`), `domain/plan.ts`(+`.test`), `domain/route.ts`(+`.test`), `routes/MyPlanScreen.tsx`, `routes/RouteScreen.tsx`, `data/changelog.ts`, `web/package.json`. **Guardrail:** nenhum invariante quebrado; nada removido.
+- **DECs:** DEC-078 → **APPROVED**; DEC-079 **APPROVED (parte G1: leg exato + harden)**; o resto de DEC-079 (fonte única + split + ajuste-fora-do-Editar) fecha no **G6**.
 
 ### G0 — Setup & baseline ✅ — sem bump
 > Conferi a árvore verde **antes** de qualquer mudança (DoD da §12: baseline documentado). DEC-075→088 já estavam PROPOSED no
