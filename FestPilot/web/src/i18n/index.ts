@@ -209,6 +209,7 @@ const EN = {
   "tt.onlyFavsAria": "Show only my favorites",
   "tt.onlyFavs": "Only my favs",
   "tt.lockIn": "Lock in",
+  "tt.editPlan": "Edit plan",
   "tt.addFav": "Add favorite",
   "tt.removeFav": "Remove favorite",
 
@@ -620,6 +621,7 @@ const PT: Partial<Record<MessageKey, string>> = {
   "tt.onlyFavsAria": "Mostrar só meus favoritos",
   "tt.onlyFavs": "Só favoritos",
   "tt.lockIn": "Fechar meu dia",
+  "tt.editPlan": "Editar plano",
   "tt.addFav": "Adicionar favorito",
   "tt.removeFav": "Remover favorito",
 

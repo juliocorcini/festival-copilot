@@ -1,6 +1,7 @@
 import { type CSSProperties } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useT, type MessageKey } from "../i18n";
+import { haptic } from "../lib/haptics";
 
 // Exactly 5 tabs (DEC-032). Lineup is NOT a tab (it's a header icon on Timetable).
 const TABS: { to: string; end: boolean; icon: string; label: MessageKey }[] = [
@@ -29,17 +30,25 @@ export function BottomNav(): JSX.Element {
         aria-hidden="true"
         style={{ "--active": active, opacity: active < 0 ? 0 : 1 } as CSSProperties}
       />
-      {TABS.map((tab) => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          end={tab.end}
-          className={({ isActive }) => (isActive ? "navitem active" : "navitem")}
-        >
-          <span className="ms">{tab.icon}</span>
-          {t(tab.label)}
-        </NavLink>
-      ))}
+      {TABS.map((tab, i) => {
+        // D19: tabs are <a> (NavLink), which the global button haptic delegate doesn't cover — fire it
+        // here, but only when moving to a DIFFERENT tab so re-tapping the current one stays silent.
+        const isCurrent = i === active;
+        return (
+          <NavLink
+            key={tab.to}
+            to={tab.to}
+            end={tab.end}
+            className={({ isActive }) => (isActive ? "navitem active" : "navitem")}
+            onClick={() => {
+              if (!isCurrent) haptic("light");
+            }}
+          >
+            <span className="ms">{tab.icon}</span>
+            {t(tab.label)}
+          </NavLink>
+        );
+      })}
     </nav>
   );
 }

@@ -767,6 +767,12 @@ main:focus { outline: none; }
 .filter-rail .chip { flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
 .sec { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: var(--muted); padding: 16px 6px 6px; }
+/* D16: the "Your Favorites" header is a collapse toggle; the caret rotates to point right when closed. */
+.sec-toggle { display: inline-flex; align-items: center; gap: 6px; appearance: none; background: none; border: none;
+  font: inherit; letter-spacing: inherit; color: inherit; cursor: pointer; padding: 0; }
+.sec-caret { font-size: 18px; margin-left: -3px; }
+@media (prefers-reduced-motion: no-preference) { .sec-caret { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); } }
+.sec-caret.closed { transform: rotate(-90deg); }
 .art-row { display: flex; align-items: center; gap: 12px; padding: 10px 6px; }
 .art-row + .art-row { border-top: 1px solid rgba(255, 255, 255, 0.05); }
 .avatar-sq { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; display: grid; place-items: center;
@@ -785,6 +791,7 @@ main:focus { outline: none; }
 
 /* LU-1: immersive artist grid (poster cards). Stage tint via --c. */
 .grid { display: grid; gap: 12px; }
+@media (prefers-reduced-motion: no-preference) { .grid { transition: gap 0.2s ease; } }
 .cols-2 .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .cols-3 .grid { grid-template-columns: repeat(3, 1fr); gap: 9px; }
 .cols-4 .grid { grid-template-columns: repeat(4, 1fr); gap: 7px; }
@@ -921,8 +928,9 @@ main:focus { outline: none; }
 
 /* Discreet time gridlines (R7.2): hour lines + fainter :30 lines, behind the cards. */
 .tt-content .tt-grid { position: absolute; top: 30px; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
-.tt-content .tt-grid .gl { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.06); }
-.tt-content .tt-grid .gl.half { background: rgba(255, 255, 255, 0.028); }
+/* D13: hour lines a touch stronger so the grid reads at a glance; :30 lines stay clearly fainter. */
+.tt-content .tt-grid .gl { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.072); }
+.tt-content .tt-grid .gl.half { background: rgba(255, 255, 255, 0.033); }
 .tt-content .stage-name { position: sticky; left: 10px; z-index: 25; display: inline-flex; align-items: center; gap: 6px;
   margin-bottom: 5px; padding: 3px 10px 3px 8px; border-radius: 999px;
   background: rgba(20, 17, 12, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);

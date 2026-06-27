@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFavorites, useOnboarding } from "../data/localStore";
+import { useFavorites, useOnboarding, usePlan } from "../data/localStore";
 import { useLineup } from "../data/useLineup";
 import { buildTimetable } from "../domain/timetable";
 import { festivalDataState } from "../domain/dataState";
@@ -57,6 +57,11 @@ export function TimetableScreen(): JSX.Element {
   const tz = lineup?.festival.timezone ?? "UTC";
   const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
   const dayKey = selectedDay ?? days[0]?.key ?? null;
+
+  // D14/DEC-084: the Lock-in button reflects this day's planned state — once a plan is locked it
+  // becomes "Edit plan" and routes to My Plan, instead of always re-running lock-in.
+  const dayPlan = usePlan(lineup?.festival.id, dayKey ?? undefined);
+  const hasDayPlan = !!dayPlan.plan && dayPlan.plan.slots.length > 0;
 
   const model = useMemo(() => {
     if (!lineup) return null;
@@ -135,11 +140,14 @@ export function TimetableScreen(): JSX.Element {
       </button>
       <button
         type="button"
-        className="tt-lk"
-        onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
+        className={`tt-lk${hasDayPlan ? " planned" : ""}`}
+        onClick={() => {
+          const q = dayKey ? `?day=${encodeURIComponent(dayKey)}` : "";
+          navigate(hasDayPlan ? `/plan${q}` : `/lockin${q}`);
+        }}
       >
-        <span className="ms">playlist_add_check</span>
-        {t("tt.lockIn")}
+        <span className="ms">{hasDayPlan ? "event_available" : "playlist_add_check"}</span>
+        {hasDayPlan ? t("tt.editPlan") : t("tt.lockIn")}
       </button>
     </div>
   );
@@ -188,7 +196,7 @@ export function TimetableScreen(): JSX.Element {
 
             {model.stages.map((stage) => {
               const color = stageColor(stage.name);
-              const favCount = stage.sets.filter((s) => s.isFav).length;
+              const favCount = stage.favCount;
               return (
                 <div key={stage.id} className={`stage${stage.hasFav ? " has-fav" : ""}`}>
                   <div className="stage-name">

@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G6 ✅ (v0.37.0 no ar) — **inserir entre cards (+ de onde vem o tempo) + caminhada única/ajustável/split — fecha P0** · **próximo:** G7 (timetable/line-up: favoritos, gridlines, Lock-in, pinça, colapsar, haptic).
-- **produção:** **v0.37.0** (`festpilot.pages.dev`, deploy `78432c15`, master).
+- **gate atual:** G7 ✅ (v0.38.0 no ar) — **timetable/line-up: palcos por favoritos, gridlines, Lock-in reflete plano, pinça um-passo, colapsar favs, haptic de aba** · **próximo:** G8 (barras do sistema D11 — fecha P1).
+- **produção:** **v0.38.0** (`festpilot.pages.dev`, deploy `ca5f8617`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -26,10 +26,23 @@
 - [x] **G4** — português em todas as telas (D04). → **v0.35.0** ✅
 - [x] **G5** — poster v2 (D08) + URL final (D26). → **v0.36.0** ✅
 - [x] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → **v0.37.0** ✅ *(fechou P0)*
-- [ ] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → v0.38.0
+- [x] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → **v0.38.0** ✅
 - [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G7 — Timetable & Line-up: polimento ✅ — v0.38.0
+> Fecha **D12/D13/D14/D15/D16/D19** (6 itens P1 de timetable/line-up). Domínio-primeiro onde havia lógica (ordenação por favoritos, gesto de pinça); o resto é CSS / estado local / haptic. **Sem ambiguidade nova** — só DEC-083/084/085 já adotadas.
+- **G7.1 — Palcos por favoritos (D12, DEC-083).** `domain/timetable.ts`: `TimetableStage` ganha **`favCount`**; quando `favorites.size>0`, ordena palcos por **favCount desc** (tiebreak `sortOrder`, depois nome); sem favoritos, mantém a ordem da fonte. `TimetableScreen` usa `stage.favCount` (removido o recompute local). **+2 unit** (contagem por palco; favorito do FREEDOM pula à frente do MAINSTAGE; empate volta à ordem da fonte). Verificado no screenshot: "MAINSTAGE ★ 1" no topo.
+- **G7.2 — Gridlines (D13, CSS).** `.gl` `0.06→0.072` (hora), `.gl.half` `0.028→0.033` (meia-hora, ainda mais fraca). Lê de relance sem competir com os cards.
+- **G7.3 — Lock-in reflete o plano (D14, DEC-084).** `TimetableScreen` lê `usePlan(festivalId, dayKey)`; com plano travado (`slots.length>0`) o botão vira **"Editar plano"** (ícone `event_available`, classe `.planned`) e navega pro **Meu Plano** em vez de re-rodar o lock-in. i18n `tt.editPlan` (EN+PT). **e2e**: trava um dia → volta pro timetable client-side → botão "Edit plan" → `/plan`.
+- **G7.4 — Pinça suave (D15, DEC-085).** `lib/usePinch.ts` refeito: extraí o núcleo puro **`createPinchTracker`** (sem DOM) que **trava após o primeiro passo** até os dedos soltarem (`end()`), matando o "pula vários níveis"; limiar **mais largo e log-simétrico** (`PINCH_STEP_OUT=1.4`, `PINCH_STEP_IN=1/1.4`). A transição animada do zoom já existia (`.tt-content { transition: width }`); adicionei `transition: gap` no `.grid` do line-up. **+5 unit** (uma pinça = um passo; re-arma só após `end()`; 25% antigo não dispara mais).
+- **G7.5 — Colapsar favoritos (D16).** `LineupScreen`: o header "YOUR FAVORITES" vira **toggle** (`.sec-toggle` + caret que gira), aberto por padrão, **lembrado na sessão** (`sessionStorage` `fp.lineup.favOpen`). CSS do caret. **e2e**: favorita → recolhe (grid some, `aria-expanded=false`) → reabre.
+- **G7.6 — Haptic de aba (D19).** `app/BottomNav.tsx`: o delegate global de haptic só cobre `button,[role=button]` — as abas são `<a>` (NavLink), então **nunca vibravam**. Adicionei `haptic("light")` no `onClick`, **só quando a aba é diferente da ativa** (re-tocar a atual fica em silêncio).
+- **5-point self-check:** Dxx D12–D16+D19 + DEC-083/084/085 ✅; ACs em risco re-verificados → **zero-overlap** intacto (não toquei plano/`buildPlanTimeline`; D14 só lê), **`buildSquadPlan` só-sets** não tocado, **presença grosseira** não tocada, **sheets fixos** intactos; testes **web 471** (+7: 2 timetable, 5 pinça) + **server 238** sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo · **web unit 471** (era 464) · **server 238** · **709 total** · `build` verde (main 409.31 kB, embute 0.38.0) · **e2e** timetable 4/4 (inclui D14 Lock-in→Edit plan + D16 colapsar) + lockin/myplan 6/6 sem regressão · **deploy master** `ca5f8617` → `festpilot.pages.dev`. Worker/D1 intactos.
+- **Escopo (arquivos):** `domain/timetable.ts` (`favCount`+ordenação) + `.test.ts` (+2), `lib/usePinch.ts` (`createPinchTracker`+thresholds) + `usePinch.test.ts` (novo, +5), `routes/TimetableScreen.tsx` (usePlan/D14 + favCount), `routes/LineupScreen.tsx` (colapsar favoritos), `app/BottomNav.tsx` (haptic de aba), `i18n/index.ts` (`tt.editPlan` EN+PT), `styles.css` (gridlines, `.sec-toggle`/`.sec-caret`, `.grid` gap transition), `e2e/timetable.spec.js` (+2), `data/changelog.ts`, `web/package.json`.
+- **DECs:** DEC-083 → **APPROVED** (palcos por favoritos). DEC-084 → **APPROVED** (Lock-in reflete o plano). DEC-085 → **APPROVED** (pinça um-passo + limiar maior + transição).
 
 ### G6 — Inserir entre cards + caminhada única/ajustável/split ✅ — v0.37.0
 > Fecha **D09** (#13, inserir entre dois cards) + **D17/D18** (#10/#11, caminhada confusa/duplicada e só ajustável no Editar) — **último P0**. **Conselho C2 + Red Team:** o risco real do "inserir" não é a UI do "+", é **manter o zero-overlap** quando se carva tempo entre dois sets colados; e o da caminhada é **duas fontes de verdade** (chip + linha de gap) dizendo coisas diferentes. Solução: **domínio puro primeiro** (carve/split com invariante testado), **uma única fonte** de caminhada (chip no card de destino).

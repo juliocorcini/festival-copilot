@@ -79,6 +79,26 @@ describe("buildTimetable", () => {
     expect(model.stages[1]!.hasFav).toBe(false);
   });
 
+  it("counts favorites per stage (DEC-083)", () => {
+    expect(model.stages[0]!.favCount).toBe(1); // MAINSTAGE: Steve Aoki
+    expect(model.stages[1]!.favCount).toBe(0); // FREEDOM: none
+  });
+
+  it("orders stages by favorite count when the user has favorites, source order otherwise (DEC-083)", () => {
+    // No favorites → source `sortOrder` decides: MAINSTAGE (0) before FREEDOM (1).
+    const none = buildTimetable({ performances, stages, favorites: new Set(), dayKey: "FRIDAY", weekendIds: ["w1"], timeZone: "UTC" });
+    expect(none.stages.map((s) => s.name)).toEqual(["MAINSTAGE", "FREEDOM"]);
+
+    // Favorite only the FREEDOM act (Adam Beyer) → FREEDOM jumps ahead of MAINSTAGE despite higher sortOrder.
+    const favFreedom = buildTimetable({ performances, stages, favorites: new Set(["ab"]), dayKey: "FRIDAY", weekendIds: ["w1"], timeZone: "UTC" });
+    expect(favFreedom.stages.map((s) => s.name)).toEqual(["FREEDOM", "MAINSTAGE"]);
+    expect(favFreedom.stages[0]).toMatchObject({ name: "FREEDOM", favCount: 1 });
+
+    // A tie on favorite count falls back to source order (both have 1 fav → MAINSTAGE first).
+    const favBoth = buildTimetable({ performances, stages, favorites: new Set(["sa", "ab"]), dayKey: "FRIDAY", weekendIds: ["w1"], timeZone: "UTC" });
+    expect(favBoth.stages.map((s) => s.name)).toEqual(["MAINSTAGE", "FREEDOM"]);
+  });
+
   it("is empty for a day with no sets", () => {
     const empty = buildTimetable({ performances, stages, favorites: new Set(), dayKey: "SUNDAY", weekendIds: ["w1"], timeZone: "UTC" });
     expect(empty.isEmpty).toBe(true);

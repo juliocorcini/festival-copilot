@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.37.0";
+export const APP_VERSION = "0.38.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,24 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.38.0",
+    date: "2026-06-27",
+    title: "A timetable that follows your favorites",
+    icon: "calendar_month",
+    whatsNew: [
+      "Once you've favorited acts, the timetable puts your busiest stages on top — your day, first.",
+      "Time gridlines are a touch clearer, so you can read across the grid at a glance.",
+      "After you lock in a day, its button becomes “Edit plan” and jumps straight to My Plan.",
+      "Pinch-to-zoom now moves one step at a time (no more skipping levels), and the “Your Favorites” list folds away when you want room.",
+      "Switching tabs gives a gentle tap on phones that support it.",
+    ],
+    howToTest: [
+      "Favorite a few acts on different stages, open Timetable: your most-favorited stages lead, each with a ★ count.",
+      "Lock in a day, return to Timetable: the button now reads “Edit plan” and opens My Plan.",
+      "On the Line-up, tap the “Your Favorites” header to fold it; pinch the grid — it changes one level per pinch.",
+    ],
+  },
   {
     version: "0.37.0",
     date: "2026-06-27",

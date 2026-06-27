@@ -27,6 +27,8 @@ export interface TimetableStage {
   name: string;
   sortOrder: number;
   hasFav: boolean;
+  /** How many of this stage's sets the user favorited — drives favorite-first ordering (DEC-083). */
+  favCount: number;
   sets: TimetableSet[];
 }
 
@@ -169,18 +171,24 @@ export function buildTimetable(input: BuildTimetableInput): TimetableModel {
     else byStage.set(stageId, [entry]);
   }
 
-  const stagesOut: TimetableStage[] = [...byStage.entries()]
-    .map(([id, entries]) => {
-      entries.sort((a, b) => a.startMs - b.startMs);
-      return {
-        id,
-        name: nameById.get(id) ?? "—",
-        sortOrder: sortOrderById.get(id) ?? Number.MAX_SAFE_INTEGER,
-        hasFav: entries.some((entry) => entry.isFav),
-        sets: entries,
-      };
-    })
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  const stagesOut: TimetableStage[] = [...byStage.entries()].map(([id, entries]) => {
+    entries.sort((a, b) => a.startMs - b.startMs);
+    return {
+      id,
+      name: nameById.get(id) ?? "—",
+      sortOrder: sortOrderById.get(id) ?? Number.MAX_SAFE_INTEGER,
+      hasFav: entries.some((entry) => entry.isFav),
+      favCount: entries.reduce((n, entry) => n + (entry.isFav ? 1 : 0), 0),
+      sets: entries,
+    };
+  });
+
+  // DEC-083: with favorites set, surface the user's stages first (most-favorited → least), keeping the
+  // festival's source order as the tiebreak and the only order when there are no favorites yet.
+  const orderByFavorites = favorites.size > 0;
+  stagesOut.sort((a, b) =>
+    (orderByFavorites ? b.favCount - a.favCount : 0) || a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)
+  );
 
   return {
     windowStartMs,

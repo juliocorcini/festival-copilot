@@ -997,20 +997,23 @@
 - **Rationale**: the user set PT but core screens stayed English. "Squad" is the feature/nav brand and reads fine in PT.
 - **Implementation (G4)**: added EN+PT keys for `common/header/now/lineup/timetable(tt)/view/day/plan/map/squad` and wired `useT()` across the 6 main screens + `AppHeader`/`ViewSwitch`/`DayDropdown`/`states`/`squadHomeCards`/`SquadNowCard`. Locale-aware dates via optional `locale?` on `dayLabel`/`daysForWeekends`/`applyLabels`/`weekdayInZone`/`dateInZone`/`buildArtistDetail` fed by `useLocale()` (`pt-BR` for PT, `undefined` for EN → no English regression). Brand label fix: `nav.squad` PT "Grupo" → **"Squad"**. Out of scope (per orchestrator §4 "telas principais"): micro-copy inside pure tested helpers and secondary Squad sub-screens — deferred. Verified: web 453 + server 238 unit, build green, deploy `87c0489b`.
 
-### DEC-083 — Timetable: order stages by favorite count when the user has favorites — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7).
+### DEC-083 — Timetable: order stages by favorite count when the user has favorites — APPROVED + IMPLEMENTED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED + IMPLEMENTED** (Gate G7, v0.38.0).
 - **Decision**: when `favorites.size > 0`, `buildTimetable` orders stages by **favorite count descending** (tiebreak: source `sortOrder`, then name); with no favorites, keep the festival's source order. Adds `favCount` to `TimetableStage`. Pure + unit-tested.
 - **Rationale**: with favorites set, the user's important stages should come first.
+- **Implementation (G7)**: `TimetableStage.favCount` (count of favorited sets); a single sort uses `favCount desc` only when `favorites.size>0`, then `sortOrder`, then name. `TimetableScreen` reads `stage.favCount` (dropped the local recompute). Unit-tested: per-stage count; favoriting the FREEDOM act lifts it above MAINSTAGE despite higher sortOrder; a tie falls back to source order. Verified in screenshot ("MAINSTAGE ★ 1" leading). Deploy `ca5f8617`.
 
-### DEC-084 — Lock-in button reflects the planned state of the day — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7).
+### DEC-084 — Lock-in button reflects the planned state of the day — APPROVED + IMPLEMENTED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED + IMPLEMENTED** (Gate G7, v0.38.0).
 - **Decision**: when the day already has a locked plan, the Timetable "Lock in" button changes to a **planned** state ("Dia planejado" / "Editar plano" + icon) whose action goes to My Plan; otherwise it stays "Lock in". Reads `usePlan(festivalId, dayKey)`.
 - **Rationale**: today the button never changes, so the user can't tell the day was saved.
+- **Implementation (G7)**: `TimetableScreen` calls `usePlan(festivalId, dayKey)`; `hasDayPlan = plan && plan.slots.length>0` → button becomes **"Edit plan"** (`event_available` icon, `.planned` class) routing to `/plan?day=`, else "Lock in" → `/lockin`. i18n `tt.editPlan` (EN+PT). e2e: lock a day, return to the timetable client-side, button reads "Edit plan" and opens My Plan. Deploy `ca5f8617`.
 
-### DEC-085 — Pinch zoom: one step per gesture + larger threshold + animated transition — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7). Refines `lib/usePinch.ts`.
+### DEC-085 — Pinch zoom: one step per gesture + larger threshold + animated transition — APPROVED + IMPLEMENTED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED + IMPLEMENTED** (Gate G7, v0.38.0). Refines `lib/usePinch.ts`.
 - **Decision**: `usePinch` fires **one density/zoom step per pinch gesture** (locked until `touchend`) with a larger threshold, and the grid/zoom change is **animated** (CSS transition). No more jumping multiple levels on a small pinch.
 - **Rationale**: the gesture is too sensitive (re-baselines each threshold) and the transition is abrupt; the user should feel in control.
+- **Implementation (G7)**: extracted a pure **`createPinchTracker`** (no DOM) that latches after the first crossing until `end()`; wider, log-symmetric thresholds `PINCH_STEP_OUT=1.4` / `PINCH_STEP_IN=1/1.4` (the old 25% no longer triggers). The hook wraps it. Zoom transition already existed (`.tt-content { transition: width }`); added `transition: gap` to the lineup `.grid`. Unit-tested: one pinch = one step; re-arms only after `end()`. Deploy `ca5f8617`.
 
 ### DEC-086 — Squad parity: Next up, plan = My Plan timeline, agenda interleaved (render-only) — PROPOSED (council C4)
 - **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G9). Refines the Squad/Group-events model. Hard ÂNCORA: `buildSquadPlan` stays sets-only.

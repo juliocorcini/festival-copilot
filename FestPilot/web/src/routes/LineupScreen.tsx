@@ -35,6 +35,17 @@ function loadCols(): Cols {
   return 2;
 }
 
+// D16: the "Your Favorites" section collapses; the choice is remembered for the session (not forever —
+// a fresh visit re-opens it so favorites stay discoverable). Defaults open.
+const FAV_OPEN_KEY = "fp.lineup.favOpen";
+function loadFavOpen(): boolean {
+  try {
+    return sessionStorage.getItem(FAV_OPEN_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
 const DENSITY_OPTIONS: { c: Cols; icon: string }[] = [
   { c: 2, icon: "grid_view" },
   { c: 3, icon: "view_module" },
@@ -89,6 +100,16 @@ export function LineupScreen(): JSX.Element {
   // Pinch to set density: spread → fewer/bigger columns, pinch → more/smaller columns.
   const clampCols = (c: number): Cols => (c < 2 ? 2 : c > 4 ? 4 : (c as Cols));
   const pinchRef = usePinch((dir) => setCols(clampCols(dir === "out" ? cols - 1 : cols + 1)));
+
+  const [favOpen, setFavOpenState] = useState<boolean>(loadFavOpen);
+  const setFavOpen = (open: boolean): void => {
+    setFavOpenState(open);
+    try {
+      sessionStorage.setItem(FAV_OPEN_KEY, open ? "1" : "0");
+    } catch {
+      /* storage unavailable */
+    }
+  };
 
   // Scope everything (days, acts, favorites, day tags) to the weekend(s) chosen at onboarding —
   // otherwise a W2 attendee sees W1-only acts and wrong day chips (the source `day` label is shared
@@ -250,10 +271,18 @@ export function LineupScreen(): JSX.Element {
       {favoriteActs.length > 0 && (
         <>
           <div className="sec">
-            <span>{t("lineup.yourFavorites", { count: favoriteActs.length })}</span>
+            <button
+              type="button"
+              className="sec-toggle"
+              aria-expanded={favOpen}
+              onClick={() => setFavOpen(!favOpen)}
+            >
+              <span className={`ms sec-caret${favOpen ? "" : " closed"}`} aria-hidden="true">expand_more</span>
+              {t("lineup.yourFavorites", { count: favoriteActs.length })}
+            </button>
             <DensityControl cols={cols} onChange={setCols} />
           </div>
-          <div className="grid">{favoriteActs.map(renderCard)}</div>
+          {favOpen && <div className="grid">{favoriteActs.map(renderCard)}</div>}
         </>
       )}
       {otherActs.length > 0 && (
