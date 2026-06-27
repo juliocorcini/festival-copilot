@@ -11,7 +11,7 @@
  */
 import { initialsOf } from "../data/identity";
 import { geoToSvg, type MapTransform } from "./transform";
-import type { PresenceMemberDto } from "../data/types";
+import type { PrecisePresenceDto, PresenceMemberDto } from "../data/types";
 
 export interface MapPin {
   id: string;
@@ -25,50 +25,78 @@ export interface MapPin {
   darkText: boolean;
   live: boolean;
   isYou: boolean;
+  /** Plotted at the member's EXACT consented coordinate (DEC-099), not their stage anchor. */
+  precise: boolean;
 }
 
 const FAN_RADIUS = 16;
 const FALLBACK_COLOR = "#6B7280";
 const YOU_COLOR = "var(--accent)";
 
+/** Index the precise pins by member id so the placement loop can prefer an exact coordinate. */
+export function indexPrecise(precise: readonly PrecisePresenceDto[] | undefined): Map<string, PrecisePresenceDto> {
+  return new Map((precise ?? []).map((p) => [p.userId, p] as const));
+}
+
 /**
- * Stage-anchor every sharing member onto the illustration. Ghosts, members with no fix, and stale
- * fixes are dropped (they belong in the roster, not the map). "between A & B" lands on the midpoint.
+ * Place every sharing member onto the illustration. A precise+live member (DEC-099) is plotted at
+ * their EXACT consented coordinate; everyone else is stage-anchored (coarse, privacy-cheap). Ghosts,
+ * members with no fix, and stale fixes are dropped (they belong in the roster, not the map).
+ * "between A & B" lands on the midpoint. Fanning only applies to stage-anchored dots so exact pins
+ * stay truthful.
  */
-export function coarsePresencePins(t: MapTransform, members: PresenceMemberDto[]): MapPin[] {
+export function coarsePresencePins(
+  t: MapTransform,
+  members: PresenceMemberDto[],
+  precise?: readonly PrecisePresenceDto[]
+): MapPin[] {
   const byName = new Map(t.stages.map((s) => [s.name, s] as const));
+  const preciseById = indexPrecise(precise);
   const perStage = new Map<string, number>();
   const pins: MapPin[] = [];
 
   for (const m of members) {
     const p = m.presence;
-    if (m.shareMode === "ghost" || !p || p.stale) continue;
+    const exact = preciseById.get(m.userId);
+    if (!exact && (m.shareMode === "ghost" || !p || p.stale)) continue;
 
-    const primary = p.stageName ? byName.get(p.stageName) : undefined;
     let point: [number, number] | null = null;
-    if (p.coarseLabel === "between" && primary && p.betweenStageName) {
-      const second = byName.get(p.betweenStageName);
-      if (second) point = geoToSvg(t.affine, (primary.lng + second.lng) / 2, (primary.lat + second.lat) / 2);
+    if (exact) {
+      // Exact, consented coordinate — plotted as-is (no fan, no stage rounding).
+      point = geoToSvg(t.affine, exact.lng, exact.lat);
+    } else if (p) {
+      const primary = p.stageName ? byName.get(p.stageName) : undefined;
+      if (p.coarseLabel === "between" && primary && p.betweenStageName) {
+        const second = byName.get(p.betweenStageName);
+        if (second) point = geoToSvg(t.affine, (primary.lng + second.lng) / 2, (primary.lat + second.lat) / 2);
+      }
+      if (!point && primary) point = geoToSvg(t.affine, primary.lng, primary.lat);
     }
-    if (!point && primary) point = geoToSvg(t.affine, primary.lng, primary.lat);
     if (!point) continue;
 
-    const key = p.stageName ?? "?";
-    const seat = perStage.get(key) ?? 0;
-    perStage.set(key, seat + 1);
-    const angle = seat * 1.2;
-    const radius = seat === 0 ? 0 : FAN_RADIUS;
+    let x = point[0];
+    let y = point[1];
+    if (!exact && p) {
+      const key = p.stageName ?? "?";
+      const seat = perStage.get(key) ?? 0;
+      perStage.set(key, seat + 1);
+      const angle = seat * 1.2;
+      const radius = seat === 0 ? 0 : FAN_RADIUS;
+      x += Math.cos(angle) * radius;
+      y += Math.sin(angle) * radius;
+    }
 
     pins.push({
       id: m.userId,
-      x: point[0] + Math.cos(angle) * radius,
-      y: point[1] + Math.sin(angle) * radius,
+      x,
+      y,
       initials: initialsOf(m.displayName),
       name: m.isYou ? "You" : m.displayName ?? "Guest",
       color: m.isYou ? YOU_COLOR : m.avatarColor ?? FALLBACK_COLOR,
       darkText: m.isYou,
-      live: m.live,
+      live: m.live || !!exact,
       isYou: m.isYou,
+      precise: !!exact,
     });
   }
   return pins;

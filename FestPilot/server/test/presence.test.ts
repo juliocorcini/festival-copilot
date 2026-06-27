@@ -187,6 +187,53 @@ describe("presence pipeline (UC-21/22/24 — coarse + honest)", () => {
     expect(meAfter.live).toBe(false);
   });
 
+  it("precise+live exposes the exact pin to the squad (DEC-099) — coarse stays coordinate-free", async () => {
+    const owner = await makeUser(d1, "Julio");
+    const mara = await makeUser(d1, "Mara");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+    await joinByToken(d1, mara.id, g.inviteToken!, "t1");
+    // Owner shares precise (exact pin); Mara shares only coarse (stage).
+    await setGroupShareMode(d1, g.id, owner.id, "precise", 60, NOW);
+    await setGroupShareMode(d1, g.id, mara.id, "stage", 60, NOW);
+    await recordFix(d1, owner.id, { lat: CORE.lat, lng: CORE.lng, accuracyMeters: 12, source: "gps" }, NOW);
+    await recordFix(d1, mara.id, { lat: MAIN.lat, lng: MAIN.lng, accuracyMeters: 8, source: "gps" }, NOW);
+
+    const roster = await getGroupPresence(d1, g.id, mara.id, NOW);
+    // Exactly one precise pin — the owner — carrying the real coordinate, accuracy + TTL.
+    expect(roster.precise).toHaveLength(1);
+    const pin = roster.precise[0]!;
+    expect(pin.userId).toBe(owner.id);
+    expect(pin.lat).toBeCloseTo(CORE.lat, 5);
+    expect(pin.lng).toBeCloseTo(CORE.lng, 5);
+    expect(pin.accuracyMeters).toBe(12);
+    expect(Date.parse(pin.expiresAtUtc)).toBeGreaterThan(Date.parse(NOW));
+    expect(pin.ageSeconds).toBe(0);
+
+    // The coarse member rows still carry NO coordinate (only the precise channel does).
+    for (const m of roster.members) {
+      if (m.presence) {
+        expect(Object.keys(m.presence)).not.toContain("lat");
+        expect(Object.keys(m.presence)).not.toContain("lng");
+      }
+    }
+    // Mara (coarse only) never appears in the precise channel.
+    expect(roster.precise.some((p) => p.userId === mara.id)).toBe(false);
+  });
+
+  it("a live precise window with a STALE fix exposes no exact pin (falls back to coarse)", async () => {
+    const owner = await makeUser(d1, "Julio");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+    await setGroupShareMode(d1, g.id, owner.id, "precise", 60, NOW);
+    await recordFix(d1, owner.id, { lat: MAIN.lat, lng: MAIN.lng, accuracyMeters: 8, source: "gps" }, NOW);
+
+    // 20 min on: the precise WINDOW is still open (live), but the GPS fix (15-min) is stale — a 20-min
+    // old "exact" dot would be a lie, so the precise channel is empty while the member stays live.
+    const stale = "2026-07-18T20:50:00Z";
+    const roster = await getGroupPresence(d1, g.id, owner.id, stale);
+    expect(roster.members.find((m) => m.isYou)!.live).toBe(true);
+    expect(roster.precise).toHaveLength(0);
+  });
+
   it("a stale GPS fix is flagged (not counted live) and purged by the cron", async () => {
     const owner = await makeUser(d1, "Julio");
     const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");

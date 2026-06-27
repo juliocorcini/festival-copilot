@@ -6,10 +6,11 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { geoToSvg, type MapTransform } from "../../map/transform";
+import { indexPrecise } from "../../map/presencePins";
 import { mapBaseUrl } from "../../map/mapBase";
 import { useAppearance } from "../../app/settings";
 import { initialsOf } from "../../data/identity";
-import type { PresenceMemberDto } from "../../data/types";
+import type { PrecisePresenceDto, PresenceMemberDto } from "../../data/types";
 
 interface Pin {
   id: string;
@@ -19,37 +20,52 @@ interface Pin {
   color: string;
   darkText: boolean;
   live: boolean;
+  precise: boolean;
 }
 
 const FAN_RADIUS = 18;
 const FALLBACK_COLOR = "#6B7280";
 
-function buildPins(t: MapTransform, members: PresenceMemberDto[]): Pin[] {
+function buildPins(
+  t: MapTransform,
+  members: PresenceMemberDto[],
+  precise: readonly PrecisePresenceDto[]
+): Pin[] {
   const byName = new Map(t.stages.map((s) => [s.name, s] as const));
+  const preciseById = indexPrecise(precise);
   const { width: cw, height: ch } = t.canvas;
   const perStage = new Map<string, number>();
   const pins: Pin[] = [];
 
   for (const m of members) {
     const p = m.presence;
-    if (m.shareMode === "ghost" || !p || p.stale) continue;
+    const exact = preciseById.get(m.userId);
+    if (!exact && (m.shareMode === "ghost" || !p || p.stale)) continue;
 
-    const primary = p.stageName ? byName.get(p.stageName) : undefined;
     let point: [number, number] | null = null;
-    if (p.coarseLabel === "between" && primary && p.betweenStageName) {
-      const second = byName.get(p.betweenStageName);
-      if (second) point = geoToSvg(t.affine, (primary.lng + second.lng) / 2, (primary.lat + second.lat) / 2);
+    if (exact) {
+      point = geoToSvg(t.affine, exact.lng, exact.lat);
+    } else if (p) {
+      const primary = p.stageName ? byName.get(p.stageName) : undefined;
+      if (p.coarseLabel === "between" && primary && p.betweenStageName) {
+        const second = byName.get(p.betweenStageName);
+        if (second) point = geoToSvg(t.affine, (primary.lng + second.lng) / 2, (primary.lat + second.lat) / 2);
+      }
+      if (!point && primary) point = geoToSvg(t.affine, primary.lng, primary.lat);
     }
-    if (!point && primary) point = geoToSvg(t.affine, primary.lng, primary.lat);
     if (!point) continue;
 
-    const key = p.stageName ?? "?";
-    const seat = perStage.get(key) ?? 0;
-    perStage.set(key, seat + 1);
-    const angle = seat * 1.2;
-    const radius = seat === 0 ? 0 : FAN_RADIUS;
-    const x = point[0] + Math.cos(angle) * radius;
-    const y = point[1] + Math.sin(angle) * radius;
+    let x = point[0];
+    let y = point[1];
+    if (!exact && p) {
+      const key = p.stageName ?? "?";
+      const seat = perStage.get(key) ?? 0;
+      perStage.set(key, seat + 1);
+      const angle = seat * 1.2;
+      const radius = seat === 0 ? 0 : FAN_RADIUS;
+      x += Math.cos(angle) * radius;
+      y += Math.sin(angle) * radius;
+    }
 
     pins.push({
       id: m.userId,
@@ -58,7 +74,8 @@ function buildPins(t: MapTransform, members: PresenceMemberDto[]): Pin[] {
       label: initialsOf(m.displayName),
       color: m.isYou ? "var(--accent)" : m.avatarColor ?? FALLBACK_COLOR,
       darkText: m.isYou,
-      live: m.live,
+      live: m.live || !!exact,
+      precise: !!exact,
     });
   }
   return pins;
@@ -67,11 +84,14 @@ function buildPins(t: MapTransform, members: PresenceMemberDto[]): Pin[] {
 export function CoarsePresenceMap({
   festivalId = "tomorrowland-deschorre",
   members,
+  precise = [],
   onOpen,
   showBase = true,
 }: {
   festivalId?: string;
   members: PresenceMemberDto[];
+  /** Exact pins for precise+live members (DEC-099); plotted at their real coordinate. */
+  precise?: readonly PrecisePresenceDto[];
   onOpen?: () => void;
   /** Render the real venue map behind the pins (the mini-map preview). Off for the full-screen
    *  precise-sharing backdrop, which keeps the plain tint so the scrim + dot read clearly. */
@@ -91,7 +111,7 @@ export function CoarsePresenceMap({
     };
   }, [festivalId]);
 
-  const pins = useMemo(() => (t ? buildPins(t, members) : []), [t, members]);
+  const pins = useMemo(() => (t ? buildPins(t, members, precise) : []), [t, members, precise]);
   // With the base shown, match the tile to the map's aspect so percentage-placed pins land exactly
   // on the venue (object-fit: fill, same as the convergence map).
   const withBase = showBase && t;
@@ -110,7 +130,7 @@ export function CoarsePresenceMap({
       {pins.map((p) => (
         <span
           key={p.id}
-          className={`mpin${p.live ? " is-live" : ""}`}
+          className={`mpin${p.live ? " is-live" : ""}${p.precise ? " is-precise" : ""}`}
           style={{ left: `${p.xPct}%`, top: `${p.yPct}%`, background: p.color, color: p.darkText ? "#0F0D09" : "#fff" }}
         >
           {p.label}

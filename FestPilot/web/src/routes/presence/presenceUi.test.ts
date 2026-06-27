@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { ago, groupRosterByStage, mmss, pingKindFor, presenceLine, rosterRank, sortRoster } from "./presenceUi";
-import type { CoarsePresenceDto, PresenceMemberDto } from "../../data/types";
+import {
+  ago,
+  groupRosterByStage,
+  mapsDirectionsUrl,
+  mmss,
+  pingKindFor,
+  presenceLine,
+  rosterRank,
+  sortRoster,
+} from "./presenceUi";
+import { translate, type TranslateFn } from "../../i18n";
+import type { CoarsePresenceDto, PrecisePresenceDto, PresenceMemberDto } from "../../data/types";
+
+// Tests assert the English source-of-truth strings (the PT overlay is exercised by translate()).
+const t: TranslateFn = (key, vars) => translate("en", key, vars);
 
 const FRESH: CoarsePresenceDto = {
   coarseLabel: "at",
@@ -63,50 +76,81 @@ describe("mmss", () => {
 
 describe("presenceLine", () => {
   it("ghost mode reads as not sharing, muted", () => {
-    const line = presenceLine(member({ shareMode: "ghost" }, null));
+    const line = presenceLine(member({ shareMode: "ghost" }, null), t);
     expect(line.text).toBe("not sharing");
     expect(line.icon).toBe("visibility_off");
     expect(line.muted).toBe(true);
   });
 
   it("distinguishes 'you' vs others when there's no fix yet", () => {
-    expect(presenceLine(member({ isYou: true }, null)).text).toBe("share to appear");
-    expect(presenceLine(member({ isYou: false }, null)).text).toBe("no location yet");
+    expect(presenceLine(member({ isYou: true }, null), t).text).toBe("share to appear");
+    expect(presenceLine(member({ isYou: false }, null), t).text).toBe("no location yet");
   });
 
   it("shows a coarse 'last seen' for a stale fix", () => {
-    const line = presenceLine(member({}, { ...FRESH, stale: true, ageSeconds: 1080 }));
+    const line = presenceLine(member({}, { ...FRESH, stale: true, ageSeconds: 1080 }), t);
     expect(line.text).toBe("last seen 18m ago");
     expect(line.muted).toBe(true);
   });
 
   it("labels 'at <stage>' and surfaces the current artist", () => {
-    const line = presenceLine(member({}, { ...FRESH, currentArtistName: "Martin Garrix" }));
+    const line = presenceLine(member({}, { ...FRESH, currentArtistName: "Martin Garrix" }), t);
     expect(line.text).toBe("at MAINSTAGE");
     expect(line.sub).toBe("watching Martin Garrix");
     expect(line.muted).toBe(false);
   });
 
   it("labels 'near' and 'between' honestly", () => {
-    expect(presenceLine(member({}, { ...FRESH, coarseLabel: "near", stageName: "FOOD COURT B" })).text).toBe(
+    expect(presenceLine(member({}, { ...FRESH, coarseLabel: "near", stageName: "FOOD COURT B" }), t).text).toBe(
       "near FOOD COURT B"
     );
     expect(
-      presenceLine(member({}, { ...FRESH, coarseLabel: "between", stageName: "CORE", betweenStageName: "MAINSTAGE" }))
+      presenceLine(member({}, { ...FRESH, coarseLabel: "between", stageName: "CORE", betweenStageName: "MAINSTAGE" }), t)
         .text
     ).toBe("between CORE & MAINSTAGE");
   });
 
   it("falls back to a vague venue label when no stage resolves", () => {
-    expect(presenceLine(member({}, { ...FRESH, coarseLabel: "none", stageName: null })).text).toBe(
+    expect(presenceLine(member({}, { ...FRESH, coarseLabel: "none", stageName: null }), t).text).toBe(
       "somewhere in the venue"
     );
   });
 
   it("a live sharer shows the precise countdown clause over the artist", () => {
-    const line = presenceLine(member({ live: true, liveSecondsLeft: 2820 }, { ...FRESH, currentArtistName: "Anyma" }));
+    const line = presenceLine(member({ live: true, liveSecondsLeft: 2820 }, { ...FRESH, currentArtistName: "Anyma" }), t);
     expect(line.sub).toBe("precise · 47m left");
     expect(line.icon).toBe("my_location");
+  });
+
+  it("an exact pin (DEC-099) reads 'exact · Nm ago' and overrides a stale coarse fix", () => {
+    const precise: PrecisePresenceDto = {
+      userId: "u1",
+      lat: 51,
+      lng: 4,
+      accuracyMeters: 10,
+      expiresAtUtc: "2026-07-18T21:00:00Z",
+      updatedAtUtc: "2026-07-18T20:28:00Z",
+      ageSeconds: 120,
+    };
+    const line = presenceLine(member({ live: true }, { ...FRESH, stale: true }), t, precise);
+    expect(line.sub).toBe("exact · 2m ago");
+    expect(line.icon).toBe("my_location");
+    expect(line.muted).toBe(false); // a fresh exact pin is never muted, even over a stale coarse fix
+  });
+
+  it("translates the line into the Portuguese overlay", () => {
+    const pt: TranslateFn = (key, vars) => translate("pt", key, vars);
+    const line = presenceLine(member({}, { ...FRESH, currentArtistName: "Anyma" }), pt);
+    expect(line.text).toBe("no MAINSTAGE");
+    expect(line.sub).toBe("assistindo Anyma");
+  });
+});
+
+describe("mapsDirectionsUrl", () => {
+  it("builds a platform maps directions deep link to the exact coordinate", () => {
+    expect(mapsDirectionsUrl(51.0, 4.00571)).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=51,4.00571"
+    );
   });
 });
 

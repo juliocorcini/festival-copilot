@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.45.0";
+export const APP_VERSION = "0.46.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.46.0",
+    date: "2026-06-27",
+    title: "Find each other for real",
+    icon: "share_location",
+    whatsNew: [
+      "Share a precise pin and the squad now sees your *exact* spot on the map — not just 'at MAINSTAGE' — with how long ago it updated and a one-tap 'Navigate' to walk straight to you.",
+      "When you join a squad it now asks about location right away: share at stage-level by default (with an obvious 'stay invisible') so the map isn't empty — precise is still only ever when you choose.",
+      "'Where's the squad' now groups everyone by stage, busiest first, so you can see at a glance where the crowd is.",
+      "Your exact point stays private by design: only your squad can see it, only while you're sharing precise, and it switches itself off.",
+    ],
+    howToTest: [
+      "On two phones in a squad: phone A → 'Share a precise pin'. On phone B open 'Where's the squad' — A shows as an exact dot (brighter ring) with 'exact · now' and a 'Navigate' button that opens maps directions.",
+      "Join a squad from an invite link — right after joining you're asked to share location; accept and you appear at stage-level, or tap 'Stay invisible for now' to opt out.",
+      "Open 'Where's the squad' with a few people sharing — members are grouped under their stage, the busiest stage on top, with a '{n} here' count.",
+    ],
+  },
   {
     version: "0.45.0",
     date: "2026-06-27",

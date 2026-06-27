@@ -279,11 +279,25 @@ export interface PingDto {
   createdAtUtc: string;
 }
 
+/** The exact pin a precise+live member exposes to their squad (DEC-099) — a separate channel from
+ *  the coarse roster, populated only while sharing precise with a fresh fix; auto-empties on TTL. */
+export interface PrecisePresenceDto {
+  userId: string;
+  lat: number;
+  lng: number;
+  accuracyMeters: number | null;
+  expiresAtUtc: string;
+  updatedAtUtc: string;
+  ageSeconds: number;
+}
+
 export interface GroupPresenceDto {
   groupId: string;
   memberCount: number;
   liveCount: number;
   members: PresenceMemberDto[];
+  /** Exact pins for precise+live members (DEC-099); empty by default (privacy). */
+  precise: PrecisePresenceDto[];
   me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
   inbox: PingDto[];
 }

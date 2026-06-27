@@ -127,3 +127,59 @@ export const EXPIRY_MINUTES: Record<PresenceSource, number> = {
 export function presenceExpiry(source: PresenceSource, nowMs: number): number {
   return nowMs + EXPIRY_MINUTES[source] * 60_000;
 }
+
+/**
+ * The exact, consented pin a live sharer exposes to their squad (UC-22, DEC-099). This is the ONE
+ * place a coordinate is allowed to leave the server for presence — and only under a strict gate:
+ * the member is in `precise + live` (share window still open) AND has a still-fresh fix. The coarse
+ * `CoarsePresenceDto` never carries this; it lives in a separate channel so the privacy default
+ * stays "stage only".
+ */
+export interface PrecisePin {
+  userId: string;
+  lat: number;
+  lng: number;
+  accuracyMeters: number | null;
+  /** When the precise SHARE window auto-expires (server-hard TTL — `share_until`). */
+  expiresAtUtc: string;
+  /** When the underlying fix was taken (drives the "exact · 2m ago" honesty clause). */
+  updatedAtUtc: string;
+  ageSeconds: number;
+}
+
+/** The fields the precise gate needs from a presence roster row (lat/lng are server-only inputs). */
+export interface PreciseInput {
+  userId: string;
+  shareLocation: string;
+  shareUntil: string | null;
+  lat: number | null;
+  lng: number | null;
+  accuracyMeters: number | null;
+  /** When the underlying fix was taken (presence.updated_at_utc). */
+  updatedAt: string | null;
+  /** The FIX freshness expiry (presence.expires_at_utc) — distinct from the precise window. */
+  fixExpiresAt: string | null;
+}
+
+/**
+ * Decide whether a member exposes an exact pin to the squad right now (DEC-099). Returns a pin ONLY
+ * when the member is in `precise + live` (the share window is still open) AND has a still-fresh fix
+ * with coordinates. A live window with a stale/absent fix yields null — the squad then sees the
+ * coarse stage pin (honest) instead of a misleading old "exact" dot. Pure so the privacy/safety gate
+ * is exhaustively unit-testable.
+ */
+export function precisePinOf(input: PreciseInput, nowMs: number): PrecisePin | null {
+  if (input.shareLocation !== "live_until" || !input.shareUntil) return null;
+  if (Date.parse(input.shareUntil) <= nowMs) return null; // precise window lapsed
+  if (input.lat == null || input.lng == null || !input.updatedAt) return null;
+  if (!input.fixExpiresAt || Date.parse(input.fixExpiresAt) <= nowMs) return null; // stale fix
+  return {
+    userId: input.userId,
+    lat: input.lat,
+    lng: input.lng,
+    accuracyMeters: input.accuracyMeters,
+    expiresAtUtc: input.shareUntil,
+    updatedAtUtc: input.updatedAt,
+    ageSeconds: Math.max(0, Math.round((nowMs - Date.parse(input.updatedAt)) / 1000)),
+  };
+}

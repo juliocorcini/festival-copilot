@@ -4,7 +4,9 @@ import {
   coarsenPresence,
   EXPIRY_MINUTES,
   metersBetween,
+  precisePinOf,
   presenceExpiry,
+  type PreciseInput,
   type StageCoord,
 } from "../src/domain/presence";
 
@@ -78,5 +80,52 @@ describe("presenceExpiry (DEC-008 freshness windows)", () => {
     expect(EXPIRY_MINUTES.manual).toBe(45);
     expect(presenceExpiry("gps", now) - now).toBe(15 * 60_000);
     expect(presenceExpiry("push_reply", now) - now).toBe(45 * 60_000);
+  });
+});
+
+describe("precisePinOf (DEC-099 — the exact-pin privacy/safety gate)", () => {
+  const NOW = Date.parse("2026-07-18T20:30:00Z");
+  // A precise+live member with a still-fresh fix: the happy path that exposes a pin.
+  const live: PreciseInput = {
+    userId: "u1",
+    shareLocation: "live_until",
+    shareUntil: "2026-07-18T21:00:00Z", // window open
+    lat: 51.0,
+    lng: 4.00571,
+    accuracyMeters: 12,
+    updatedAt: "2026-07-18T20:29:00Z", // 60s ago
+    fixExpiresAt: "2026-07-18T20:44:00Z", // fix still fresh
+  };
+
+  it("exposes the exact pin with TTL + age when precise, live and freshly fixed", () => {
+    const pin = precisePinOf(live, NOW);
+    expect(pin).not.toBeNull();
+    expect(pin!.userId).toBe("u1");
+    expect(pin!.lat).toBe(51.0);
+    expect(pin!.lng).toBe(4.00571);
+    expect(pin!.accuracyMeters).toBe(12);
+    expect(pin!.expiresAtUtc).toBe("2026-07-18T21:00:00Z");
+    expect(pin!.ageSeconds).toBe(60);
+  });
+
+  it("returns null when the member is not precise (coarse 'stage' never leaks a coordinate)", () => {
+    expect(precisePinOf({ ...live, shareLocation: "while_using" }, NOW)).toBeNull();
+    expect(precisePinOf({ ...live, shareLocation: "off" }, NOW)).toBeNull();
+  });
+
+  it("returns null when the precise window has lapsed (TTL is hard)", () => {
+    expect(precisePinOf({ ...live, shareUntil: "2026-07-18T20:29:00Z" }, NOW)).toBeNull();
+    expect(precisePinOf({ ...live, shareUntil: null }, NOW)).toBeNull();
+  });
+
+  it("returns null when the fix is stale — never a misleading old 'exact' dot", () => {
+    expect(precisePinOf({ ...live, fixExpiresAt: "2026-07-18T20:20:00Z" }, NOW)).toBeNull();
+    expect(precisePinOf({ ...live, fixExpiresAt: null }, NOW)).toBeNull();
+  });
+
+  it("returns null when coordinates or the fix timestamp are missing", () => {
+    expect(precisePinOf({ ...live, lat: null }, NOW)).toBeNull();
+    expect(precisePinOf({ ...live, lng: null }, NOW)).toBeNull();
+    expect(precisePinOf({ ...live, updatedAt: null }, NOW)).toBeNull();
   });
 });

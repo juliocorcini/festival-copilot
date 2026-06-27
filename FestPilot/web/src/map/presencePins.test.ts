@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { coarsePresencePins, isOutsideVenue } from "./presencePins";
 import type { MapTransform } from "./transform";
-import type { CoarsePresenceDto, PresenceMemberDto } from "../data/types";
+import type { CoarsePresenceDto, PrecisePresenceDto, PresenceMemberDto } from "../data/types";
 
 // Identity affine so geoToSvg(lng, lat) === [lng, lat] — keeps the placement maths obvious.
 const transform: MapTransform = {
@@ -100,6 +100,61 @@ describe("coarsePresencePins — privacy-correct, stage-anchored placement", () 
     expect(pin!.color).toBe("var(--accent)");
     expect(pin!.darkText).toBe(true);
     expect(pin!.name).toBe("You");
+  });
+});
+
+describe("coarsePresencePins — exact pin for precise+live members (DEC-099)", () => {
+  function precise(over: Partial<PrecisePresenceDto> = {}): PrecisePresenceDto {
+    return {
+      userId: "u1",
+      lng: 500,
+      lat: 600,
+      accuracyMeters: 12,
+      expiresAtUtc: "2026-06-24T21:00:00Z",
+      updatedAtUtc: "2026-06-24T20:00:00Z",
+      ageSeconds: 30,
+      ...over,
+    };
+  }
+
+  it("plots a precise member at the exact projected coordinate, not their stage anchor", () => {
+    const pins = coarsePresencePins(transform, [member({ live: true })], [precise()]);
+    expect(pins).toHaveLength(1);
+    expect(pins[0]!.x).toBeCloseTo(500, 6); // exact coord, NOT the MAINSTAGE anchor (100)
+    expect(pins[0]!.y).toBeCloseTo(600, 6);
+    expect(pins[0]!.precise).toBe(true);
+    expect(pins[0]!.live).toBe(true);
+  });
+
+  it("plots an exact pin even when the coarse fix is stale (the exact channel overrides the drop)", () => {
+    const pins = coarsePresencePins(
+      transform,
+      [member({ presence: coarse({ stale: true }) })],
+      [precise()]
+    );
+    expect(pins).toHaveLength(1);
+    expect(pins[0]!.x).toBeCloseTo(500, 6);
+    expect(pins[0]!.precise).toBe(true);
+  });
+
+  it("still carries only screen x/y — never a raw lng/lat — on an exact pin", () => {
+    const [pin] = coarsePresencePins(transform, [member({ live: true })], [precise()]);
+    expect(Object.keys(pin!)).not.toContain("lng");
+    expect(Object.keys(pin!)).not.toContain("lat");
+  });
+
+  it("leaves coarse members stage-anchored when only one of two shares precise", () => {
+    const pins = coarsePresencePins(
+      transform,
+      [member({ userId: "u1", live: true }), member({ userId: "u2", displayName: "Bo" })],
+      [precise({ userId: "u1" })]
+    );
+    const exact = pins.find((p) => p.id === "u1")!;
+    const coarsePin = pins.find((p) => p.id === "u2")!;
+    expect(exact.precise).toBe(true);
+    expect(exact.x).toBeCloseTo(500, 6);
+    expect(coarsePin.precise).toBe(false);
+    expect(coarsePin.x).toBeCloseTo(100, 6); // still on the MAINSTAGE anchor
   });
 });
 

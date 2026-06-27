@@ -209,8 +209,13 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   // and a "show festival map" button instead of a black void; only then is "me" a precise dot.
   const outside = device.coords ? isOutsideVenue(t.bbox, device.coords.lng, device.coords.lat) : false;
   const hasPreciseMe = !!device.coords && !outside;
-  // Coarse, stage-anchored squad pins — never a raw coordinate. Drop "you" when the precise dot is shown.
-  const pins = coarsePresencePins(t, hasPreciseMe ? roster.filter((m) => !m.isYou) : roster);
+  // Squad pins: precise+live members land on their exact consented coordinate (DEC-099), everyone
+  // else stays stage-anchored (coarse). Drop "you" when the device precise dot is shown.
+  const pins = coarsePresencePins(
+    t,
+    hasPreciseMe ? roster.filter((m) => !m.isYou) : roster,
+    presence?.precise
+  );
 
   return (
     <div className="map">
@@ -437,7 +442,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
         ) : (
           <ul className="map-roster">
             {roster.map((m) => {
-              const line = presenceLine(m);
+              const line = presenceLine(m, tr);
               return (
                 <li key={m.userId} className={line.muted ? "muted" : ""}>
                   <PresenceAvatar name={m.displayName} color={m.avatarColor} live={m.live} size={32} />
@@ -445,7 +450,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
                     <b>{m.displayName ?? tr("common.guest")}{m.isYou && <span className="you"> · {tr("common.you")}</span>}</b>
                     <span className="map-roster-line">{line.text}{line.sub ? ` · ${line.sub}` : ""}</span>
                   </div>
-                  {!line.muted && m.presence && <em>{ago(m.presence.ageSeconds)}</em>}
+                  {!line.muted && m.presence && <em>{ago(m.presence.ageSeconds, tr)}</em>}
                 </li>
               );
             })}

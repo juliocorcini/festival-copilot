@@ -1,7 +1,8 @@
 /** Shared bits for the presence screens (#25): avatar with optional live ring + coarse label text. */
 import { initialsOf } from "../../data/identity";
 import { readableInkOn } from "../../lib/contrast";
-import type { PresenceMemberDto } from "../../data/types";
+import type { TranslateFn } from "../../i18n";
+import type { PrecisePresenceDto, PresenceMemberDto } from "../../data/types";
 
 const FALLBACK_COLOR = "#6B7280";
 
@@ -33,13 +34,18 @@ export function PresenceAvatar({
   );
 }
 
-/** Compact "now / 4m / 18m" age from seconds. */
-export function ago(seconds: number): string {
-  if (seconds < 45) return "now";
+/** Compact "now / 4m / 18m" age from seconds. Pass `t` to localise the "now" token. */
+export function ago(seconds: number, t?: TranslateFn): string {
+  if (seconds < 45) return t ? t("time.nowShort") : "now";
   const min = Math.round(seconds / 60);
   if (min < 60) return `${min}m`;
   const hr = Math.round(min / 60);
   return `${hr}h`;
+}
+
+/** A platform maps "navigate to" deep link for an exact, consented coordinate (DEC-099). */
+export function mapsDirectionsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
 export interface PresenceLine {
@@ -52,34 +58,46 @@ export interface PresenceLine {
   muted: boolean;
 }
 
-const COARSE_PREFIX: Record<string, string> = { at: "at", near: "near", between: "between" };
+const COARSE_KEY = { at: "pline.at", near: "pline.near" } as const;
 
-/** Turn a coarse presence DTO into the honest one-liner the roster + map show (never a coordinate). */
-export function presenceLine(m: PresenceMemberDto): PresenceLine {
+/**
+ * Turn a member's presence into the honest one-liner the roster + map show. When `precise` is given
+ * (the member shares an exact pin, DEC-099), the secondary clause becomes "exact · 2m ago" — the
+ * truthful signal that this is a real coordinate, not a stage guess. The coarse "where" never
+ * carries a coordinate.
+ */
+export function presenceLine(m: PresenceMemberDto, t: TranslateFn, precise?: PrecisePresenceDto): PresenceLine {
   if (m.shareMode === "ghost") {
-    return { text: "not sharing", sub: null, icon: "visibility_off", muted: true };
+    return { text: t("pline.notSharing"), sub: null, icon: "visibility_off", muted: true };
   }
   const p = m.presence;
   if (!p) {
-    return { text: m.isYou ? "share to appear" : "no location yet", sub: null, icon: "location_searching", muted: true };
+    return {
+      text: m.isYou ? t("pline.shareToAppear") : t("pline.noLocation"),
+      sub: null,
+      icon: "location_searching",
+      muted: true,
+    };
   }
-  if (p.stale) {
-    return { text: `last seen ${ago(p.ageSeconds)} ago`, sub: null, icon: "schedule", muted: true };
+  if (p.stale && !precise) {
+    return { text: t("pline.lastSeen", { ago: ago(p.ageSeconds, t) }), sub: null, icon: "schedule", muted: true };
   }
   let where: string;
   if (p.coarseLabel === "between") {
-    where = `between ${p.stageName ?? "—"} & ${p.betweenStageName ?? "—"}`;
+    where = t("pline.between", { a: p.stageName ?? "—", b: p.betweenStageName ?? "—" });
   } else if (p.coarseLabel === "none" || !p.stageName) {
-    where = "somewhere in the venue";
+    where = t("pline.venue");
   } else {
-    where = `${COARSE_PREFIX[p.coarseLabel] ?? "near"} ${p.stageName}`;
+    where = t(COARSE_KEY[p.coarseLabel as "at" | "near"] ?? "pline.near", { stage: p.stageName });
   }
-  const sub = m.live
-    ? `precise · ${ago(m.liveSecondsLeft ?? 0)} left`
-    : p.currentArtistName
-      ? `watching ${p.currentArtistName}`
-      : null;
-  return { text: where, sub, icon: m.live ? "my_location" : "apartment", muted: false };
+  const sub = precise
+    ? t("pline.exactAgo", { ago: ago(precise.ageSeconds, t) })
+    : m.live
+      ? t("pline.preciseLeft", { ago: ago(m.liveSecondsLeft ?? 0, t) })
+      : p.currentArtistName
+        ? t("pline.watching", { artist: p.currentArtistName })
+        : null;
+  return { text: where, sub, icon: m.live || precise ? "my_location" : "apartment", muted: false };
 }
 
 /** mm:ss countdown for a precise-sharing control. */

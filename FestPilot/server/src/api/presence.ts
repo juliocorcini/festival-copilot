@@ -10,12 +10,19 @@ import { ulid } from "../db/ids";
 import { getFestivalMap, listStages } from "./repo";
 import {
   coarsenPresence,
+  precisePinOf,
   presenceExpiry,
   type CoarsePresence,
   type PresenceSource,
   type StageCoord,
 } from "../domain/presence";
-import type { CoarsePresenceDto, GroupPresenceDto, PresenceMemberDto, ShareMode } from "./dto";
+import type {
+  CoarsePresenceDto,
+  GroupPresenceDto,
+  PresenceMemberDto,
+  PrecisePresenceDto,
+  ShareMode,
+} from "./dto";
 
 /** A raw GPS/manual fix coming in. lat/lng are accepted, stored server-only, never echoed back. */
 export interface PresenceFix {
@@ -279,6 +286,9 @@ interface PresenceRosterRow {
   source: string | null;
   updatedAt: string | null;
   expiresAt: string | null;
+  lat: number | null;
+  lng: number | null;
+  accuracyMeters: number | null;
   stageName: string | null;
   betweenStageName: string | null;
   currentArtistName: string | null;
@@ -318,8 +328,10 @@ function liveStateOf(
 }
 
 /**
- * The coarse "where is everyone" roster for one squad. NEVER selects lat/lng. Members who are ghost
- * or have no fresh fix come back with `presence: null` (the client renders "ghost" / "last seen").
+ * The "where is everyone" roster for one squad. The coarse list NEVER carries lat/lng; the only
+ * coordinates that leave the server are the separate `precise[]` pins, populated solely for
+ * precise+live members with a fresh fix (DEC-099). Members who are ghost or have no fresh fix come
+ * back with `presence: null` (the client renders "ghost" / "last seen").
  */
 export async function getGroupPresence(
   db: D1Database,
@@ -335,6 +347,7 @@ export async function getGroupPresence(
               m.role AS role, m.share_location AS shareLocation, m.share_until_utc AS shareUntil,
               p.coarse_label AS coarseLabel, p.confidence AS confidence, p.source AS source,
               p.updated_at_utc AS updatedAt, p.expires_at_utc AS expiresAt,
+              p.lat AS lat, p.lng AS lng, p.accuracy_meters AS accuracyMeters,
               s.name AS stageName, b.name AS betweenStageName, a.name AS currentArtistName
          FROM group_member m
          JOIN app_user u ON u.id = m.user_id
@@ -349,10 +362,27 @@ export async function getGroupPresence(
     .all<PresenceRosterRow>();
 
   let liveCount = 0;
+  const precise: PrecisePresenceDto[] = [];
   const members: PresenceMemberDto[] = results.map((row) => {
     const { live, liveSecondsLeft } = liveStateOf(row.shareLocation, row.shareUntil, nowMs);
     const presence = toPresenceDto(row, nowMs);
     if (presence && !presence.stale) liveCount += 1;
+    // Exact pin only for precise+live members with a fresh fix (DEC-099) — a separate channel from
+    // the coarse DTO, so coordinates never ride the default privacy-cheap roster row.
+    const pin = precisePinOf(
+      {
+        userId: row.userId,
+        shareLocation: row.shareLocation,
+        shareUntil: row.shareUntil,
+        lat: row.lat,
+        lng: row.lng,
+        accuracyMeters: row.accuracyMeters,
+        updatedAt: row.updatedAt,
+        fixExpiresAt: row.expiresAt,
+      },
+      nowMs
+    );
+    if (pin) precise.push(pin);
     return {
       userId: row.userId,
       displayName: row.displayName,
@@ -373,6 +403,7 @@ export async function getGroupPresence(
     memberCount: members.length,
     liveCount,
     members,
+    precise,
     me: {
       shareMode: mine?.shareMode ?? "stage",
       live: mine?.live ?? false,

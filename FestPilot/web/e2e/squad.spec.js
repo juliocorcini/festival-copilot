@@ -133,6 +133,11 @@ test.describe("Phase 4 — squad (Gate 4.1 identity + Gate 4.2 groups)", () => {
     await page.screenshot({ path: "e2e/screenshots/phase4-join.png" });
     await page.getByRole("button", { name: "Join squad" }).click();
 
+    // Location step on join (DEC-097, G5): the consent screen appears first (coarse-visible default,
+    // obvious opt-out). With geolocation not granted here, the guest taps the opt-out to continue.
+    await expect(page.getByRole("heading", { name: "Never lose your people" })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("button", { name: "Stay invisible for now" }).click();
+
     // Auto-share confirm on join (R9.4, DEC-054): the share screen appears (toggles default ON);
     // a guest with no plan yet taps "Not now" to continue to the group home.
     await expect(page.locator(".share-intro h1")).toBeVisible({ timeout: 20_000 });

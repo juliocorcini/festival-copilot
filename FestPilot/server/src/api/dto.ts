@@ -263,6 +263,22 @@ export interface PresenceMemberDto {
   presence: CoarsePresenceDto | null;
 }
 
+/**
+ * The exact pin a live sharer exposes to their squad (DEC-099). A SEPARATE channel from the coarse
+ * `CoarsePresenceDto` so the privacy default ("stage only") is untouched: this array is populated
+ * ONLY for same-squad members who are precise+live with a fresh fix, and auto-empties on TTL.
+ */
+export interface PrecisePresenceDto {
+  userId: string;
+  lat: number;
+  lng: number;
+  accuracyMeters: number | null;
+  /** Server-hard auto-off for the precise window (TTL). */
+  expiresAtUtc: string;
+  updatedAtUtc: string;
+  ageSeconds: number;
+}
+
 /** A pending "where are you?" / "turn on sharing" request addressed to the caller (#25.4). */
 export interface PingDto {
   id: string;
@@ -279,6 +295,8 @@ export interface GroupPresenceDto {
   /** Members with a fresh coarse fix right now. */
   liveCount: number;
   members: PresenceMemberDto[];
+  /** Exact pins for precise+live members (DEC-099) — squad-scoped, TTL'd, never on the coarse DTO. */
+  precise: PrecisePresenceDto[];
   /** The caller's own sharing for this squad (mirrors their entry; drives the precise control). */
   me: { shareMode: ShareMode; live: boolean; liveSecondsLeft: number | null };
   /** Pending pings addressed to the caller in this squad (one-tap answer with a stage). */

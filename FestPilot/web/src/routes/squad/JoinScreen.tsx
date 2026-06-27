@@ -10,7 +10,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
-import { autoShareOnJoinEnabled } from "../../app/settings";
 import { api, ApiError } from "../../data/api";
 import { initialsOf, useIdentity } from "../../data/identity";
 import { readableInkOn } from "../../lib/contrast";
@@ -109,9 +108,10 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
     setJoinError(null);
     try {
       const joined = await api.joinGroup(token);
-      // Auto-share on join (DEC-054): land on the share confirm (toggles default ON) unless the user
-      // opted out in Settings, in which case go straight to the squad home.
-      navigate(autoShareOnJoinEnabled() ? `/squad/${joined.id}/share?joined=1` : "/squad", { replace: true });
+      // Location step on join (DEC-097): ask to share location (coarse-visible default, opt-out) as
+      // the first post-join step. The consent screen then continues the join flow (plan-share or
+      // squad home) on accept OR skip — so location is asked once, in context, not buried in a menu.
+      navigate(`/squad/${joined.id}/location?joined=1`, { replace: true });
     } catch (err) {
       setJoining(false);
       setJoinError(
