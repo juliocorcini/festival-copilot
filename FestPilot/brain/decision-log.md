@@ -988,10 +988,11 @@
 - **Decision**: a **"+" affordance between any two adjacent cards** opens a sheet that asks **where the time comes from** — leave the previous set earlier / arrive at the next later / split / set the time manually — for either a **block** (water/toilet/food/meet/break/note) or **another set**. Reuses `applyLeaveEarly`/`applyArriveLate` + `addBlock`/`addToPlan`. Personal, zero-overlap, stripped from the group plan.
 - **Rationale**: editing realistically (a quick break between Alok and Avicii) without recreating the whole plan.
 
-### DEC-082 — i18n covers every main screen; "Squad" stays "Squad" — PROPOSED (council C5)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G4). Extends DEC-039 (i18n layer).
+### DEC-082 — i18n covers every main screen; "Squad" stays "Squad" — APPROVED + IMPLEMENTED (council C5)
+- **Date**: 2026-06-27 · **Status**: **APPROVED + IMPLEMENTED** (Gate G4, v0.35.0). Extends DEC-039 (i18n layer).
 - **Decision**: wire Now, Line-up, Timetable, My Plan, Map and Squad through `t()` with EN+PT keys (incl. "Your Favorites" → "Seus favoritos", "All artists", "Favorites", "All days", "Next up" → "A seguir", weekday names Friday → Sexta / Fri → Sex, etc.). When the app is in PT, **no English remains** on the main screens; review button overflow (PT is longer). **"Squad" remains "Squad"** in PT (brand/nav label).
 - **Rationale**: the user set PT but core screens stayed English. "Squad" is the feature/nav brand and reads fine in PT.
+- **Implementation (G4)**: added EN+PT keys for `common/header/now/lineup/timetable(tt)/view/day/plan/map/squad` and wired `useT()` across the 6 main screens + `AppHeader`/`ViewSwitch`/`DayDropdown`/`states`/`squadHomeCards`/`SquadNowCard`. Locale-aware dates via optional `locale?` on `dayLabel`/`daysForWeekends`/`applyLabels`/`weekdayInZone`/`dateInZone`/`buildArtistDetail` fed by `useLocale()` (`pt-BR` for PT, `undefined` for EN → no English regression). Brand label fix: `nav.squad` PT "Grupo" → **"Squad"**. Out of scope (per orchestrator §4 "telas principais"): micro-copy inside pure tested helpers and secondary Squad sub-screens — deferred. Verified: web 453 + server 238 unit, build green, deploy `87c0489b`.
 
 ### DEC-083 — Timetable: order stages by favorite count when the user has favorites — PROPOSED (direct)
 - **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7).
