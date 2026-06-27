@@ -6,6 +6,13 @@
 
 ---
 
+## Nota de fact-check 26/06 — "busca/filtros no lineup" JÁ EXISTE (não é feature futura) ✅
+
+> Ao triar o próximo passo de **produto**, verifiquei o código antes de codar (regras "No Assumptions" / "Reuse First" / fact-verification): **`web/src/routes/LineupScreen.tsx` já entrega busca por nome** (`.lineup-search`, com clear), **filtro de favoritos** e **filtro por dia** (`filter-rail`), `filtered` useMemo, estado vazio "No artists found", densidade de grid por pinch. As menções a "busca/filtros no lineup" como candidata de feature (R7–R11 e no `project-status`) eram **premissa herdada não verificada** — a feature está pronta e polida.
+> **Ação:** corrigido o "Next" do `project-status` para refletir a realidade. **Nenhuma feature implementada** (seria duplicata). **Lição:** sempre verificar o código antes de citar um "gap de feature". Não há feature óbvia não-construída para pegar sozinho; um rumo novo de produto agora exige o Julio nomeá-lo (com entrada no decision-log).
+
+---
+
 ## Rodada de melhoria R11 26/06 — rede de regressão (servidor): testes para `sha256Hex` e o ULID `db/ids` ✅ — sem bump (só-de-teste)
 
 > Décima-primeira rodada — simétrica à R10, agora no backend. **Conselho (O QUE/SE — `/assess`):** auditei `server/src` × `server/test`. Os 3 domínios (`groupEvent`/`meeting`/`presence`) e `normalize`/`resolver`/`diff` já têm teste; as lacunas **puras** reais eram **`ingest/hash.ts`** (`sha256Hex` — usado na detecção de mudança da ingestão) e **`db/ids.ts`** (o ULID do servidor, **gêmeo** de `web/src/lib/ulid.ts` que a R10 cobriu, mas o lado servidor seguia sem teste direto). Lente dominante = **Risk**: a ingestão decide re-escrever o lineup com base no `configHash`/`stagesHash`; pinar o hash protege esse contrato. Não inventei alvos — hooks/IO/DO ficam de fora (boundary).

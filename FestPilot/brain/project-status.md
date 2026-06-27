@@ -23,7 +23,7 @@ Source roadmap: `brain/documents/2026-06-26-native-polish-and-features-roadmap.m
 
 **Production (deployed 2026-06-26, verified):** web **v0.31.6** at `festpilot.pages.dev` (deploy `d276f936`); Worker at `festpilot.trippilot.workers.dev` (healthy); D1 through migration **0015**. Prod smoke green (`/api/health`, `/festivals/:id/lineup|stages|map`, SPA routes 200). Tests: **677 unit (439 web + 238 server) · e2e 30/30 with zero flaky (R9 closed the last race) · builds OK**.
 
-**Next (needs Julio):** safe-polish ceiling reached and the e2e suite is now deterministic (no known flake left). The highest-value remaining work is **product** — e.g. lineup search/filters — which is a new feature requiring a decision-log entry, so it needs Julio's call rather than another autonomous polish round.
+**Next (needs Julio):** safe-polish ceiling reached, e2e deterministic, and web + server pure logic covered (677 unit). **Fact-check (2026-06-26):** the lineup screen already ships search + favorites/day filters (`web/src/routes/LineupScreen.tsx`) — the "lineup search" idea floated as a future feature in earlier notes is **already built**, not a gap. There is no obvious unbuilt feature to pick autonomously; any genuinely new direction now needs Julio to name it (with a decision-log entry).
 
 ---
 
