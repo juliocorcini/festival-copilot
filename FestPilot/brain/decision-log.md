@@ -951,8 +951,8 @@
 > each promotes to APPROVED when the gate that ships it closes. Five came from inline councils (C1–C5); the rest are
 > direct directives from Julio's 2026-06-27 usage review.
 
-### DEC-075 — Map: crisp progressive high-fidelity base (kill zoom pixelation) — PROPOSED (council C1)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G3). Refines DEC-030/040/050 (map = raster base + separate vector overlay).
+### DEC-075 — Map: crisp progressive high-fidelity base (kill zoom pixelation) — APPROVED (council C1)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** — shipped G3 (v0.34.0, deploy `f4fa08a0`) via the **measured raster path**: re-rasterized the existing label-free art SVG at **3200px** (was 2400px) + an **honest dynamic cap** (`maxScaleForBase`, base-px ÷ canvas × 1.25 soft = 4× for the 3200 base) + progressive fade-in. The dense-SVG-in-`<img>` deep-zoom option stayed deferred (the art SVG is ~19 MB with inlined relief → the Critic's mobile-jank risk); the raster path delivered the crispness with zero perf risk. Refines DEC-030/040/050.
 - **Decision**: the raster WebP base pixelates past ~MAX_SCALE; ship a **progressive high-fidelity base** — a light raster placeholder on first paint, then swap to a high-fidelity base when ready. Preference: a **vector SVG** base (the `spikes/map-art` generator already projects the geometry; emit SVG without labels) with a **measured fallback** to a 2–4× raster + an honest MAX_SCALE cap if SVG fails the mobile-performance budget. The **vector overlay (stages/people/pins) and the affine transform are untouched** — labels are never baked (ÂNCORA).
 - **Rationale**: the map is "the main alert"; a pixelated base breaks trust. The overlay is already crisp, so the fix is the background asset + an honest zoom cap.
 - **Alternatives**: full SVG now (risk: parse/paint jank on weak phones — hence the fallback); leave raster (rejected — the complaint).

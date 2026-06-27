@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G2 ✅ (v0.33.0 no ar) · **próximo:** G3 (mapa base progressiva nítida no zoom — D01, "o principal alerta").
-- **produção:** **v0.33.0** (`festpilot.pages.dev`, deploy `75a7f309`, master).
+- **gate atual:** G3 ✅ (v0.34.0 no ar) — **fechou "o principal alerta" (o mapa)** · **próximo:** G4 (português em todas as telas — D04).
+- **produção:** **v0.34.0** (`festpilot.pages.dev`, deploy `f4fa08a0`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -22,7 +22,7 @@
 - [x] **G0** — baseline verde + DEC-075→088 PROPOSED (já no log) + back-fill DEC-073/074 (já no log) + pipeline confirmado. *(sem bump)*
 - [x] **G1** — sheets portalados+fixed (D05/D06), foto da home circular (D10), caminhada certa from/to/at (D07). → **v0.32.0** ✅
 - [x] **G2** — mapa cover-fit sem borda preta (D03) + marcadores/labels de vidro (D02). → **v0.33.0** ✅
-- [ ] **G3** — mapa base progressiva nítida no zoom (D01). → v0.34.0 *(fecha "o principal alerta")*
+- [x] **G3** — mapa base progressiva nítida no zoom (D01). → **v0.34.0** ✅ *(fechou "o principal alerta")*
 - [ ] **G4** — português em todas as telas (D04). → v0.35.0
 - [ ] **G5** — poster v2 (D08) + URL final (D26). → v0.36.0
 - [ ] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → v0.37.0 *(fecha P0)*
@@ -30,6 +30,25 @@
 - [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G3 — Mapa: base nítida no zoom (o "principal alerta") ✅ — v0.34.0
+> Fecha **D01** — o item mais arriscado, em gate próprio. **Conselho C1 + Red Team:** a SVG vetorial deep-zoom é o ideal teórico, mas a
+> arte gerada é **~19 MB** (relevo inline base64) → exatamente o risco de jank-no-celular que o Critic levantou. Adotei o **caminho raster
+> medido** (a recomendação de fallback de DEC-075): mais nitidez, **zero risco de performance**. Descoberta-chave: a SVG `spikes/map-art/out/`
+> **já é stage-label-free** (só cromo: título/legenda/bússola/moldura; os nomes/medalhões vêm do overlay) — então rerasterizar em alta-res **não**
+> reintroduz label dupla.
+- **G3.1 — Base de alta-fidelidade (D01, DEC-075).** Rerasterizei a arte existente via `resvg`(spike)+`sharp`(`FestPilot/node_modules`) a **3200px**
+  (era 2400px) — **sem** re-rodar OSM/relevo (a SVG já tem o relevo embutido). Resultado: **556 KB / 516 KB** (vs ~400 KB), terreno/trilhas/copas
+  visivelmente mais nítidos no mesmo zoom (verificado por crops nativo-vs-upscaled). Cacheável offline.
+- **Cap de zoom honesto (D01, núcleo testável).** `maxScaleForBase(baseNaturalWidth, canvas, soft=1.25)` (puro) deriva o teto da **resolução real da
+  base carregada** (3200/1000 × 1.25 = **4×**) em vez de um `MAX_SCALE=12` cego que borrava qualquer raster. `usePanZoom` agora recebe esse cap por ref
+  (vivo); `MapView` mede `img.naturalWidth` no `onLoad` e passa o cap → ceiling sempre **honesto** ao asset (e suporta o swap progressivo).
+- **Progressivo (DEC-075).** `.base` faz **fade-in** sobre o wash tingido do viewport (G2.1) — first-paint é a cor quente da marca, nunca um flash preto/vazio.
+- **5-point self-check:** Dxx D01 + DEC-075 ✅; ACs em risco re-verificados → **cover-fit/borda** (G2) intactos (cap só mexe no teto, piso segue `fit`), **overlay segue vetorial** e **affine inalterado** (só troquei o asset raster + teto), **zero-overlap/`buildSquadPlan`/presença** não tocados; testes **map 32/32** + **web 451** + **e2e 30/30**, sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo · **map unit 32/32** (+5 `maxScaleForBase`) · **web unit 451** (era 446) · **e2e 30/30** (2.3m) · `build` verde (main 369.78 kB, embute 0.34.0) · **deploy master** `f4fa08a0` → `festpilot.pages.dev`. Worker/D1 intactos.
+- **Escopo (arquivos):** `map/panClamp.ts`(+`.test` +5), `map/usePanZoom.ts`, `map/MapView.tsx`, `styles.css` (`.base` fade), `public/maps/*.webp` (3200px), `data/changelog.ts`, `web/package.json`. **Guardrail:** overlay/affine intactos; nada removido.
+- **⏳ futuro (não bloqueia P0):** base **vetorial SVG** deep-zoom (nitidez infinita) exige slim do SVG (relevo externo + SVGO) pra caber no orçamento mobile — fora do escopo desta leva; o raster 3200 + cap já fecha o "principal alerta".
+- **DECs:** DEC-075 → **APPROVED** (caminho raster medido).
 
 ### G2 — Mapa: cover-fit sem borda preta + marcadores/labels de vidro ✅ — v0.33.0
 > Ataca **D03** (borda preta) e **D02** (marcadores ilegíveis) — os dois problemas visuais do mapa. **Conselho:** decisões diretas

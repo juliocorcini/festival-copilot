@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.33.0";
+export const APP_VERSION = "0.34.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.34.0",
+    date: "2026-06-27",
+    title: "A sharper map that stays crisp when you zoom",
+    icon: "zoom_in",
+    whatsNew: [
+      "The map base is now higher-resolution — terrain, paths and trees stay sharp as you zoom in, instead of going blurry.",
+      "Zoom now stops at the point where the map is still clear, so you never end up staring at a pixelated blur.",
+      "The map fades in smoothly when you open it, over the app's warm backdrop — no blank flash.",
+    ],
+    howToTest: [
+      "Open the Map and pinch to zoom in on the lakes or tree areas — the detail stays crisp instead of turning into mush.",
+      "Try to keep zooming: it now stops at a sensible, still-sharp level rather than blurring further.",
+    ],
+  },
   {
     version: "0.33.0",
     date: "2026-06-27",
