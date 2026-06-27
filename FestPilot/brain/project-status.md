@@ -1,6 +1,27 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-27 (**Review & Polish wave COMPLETE** — gates G0→G10 shipped, app **v0.41.0**, fully deployed to Production; e2e **34/34** and **734 unit tests (496 web + 238 server)** green. See `FestPilot/dev-log.md` for the live per-gate detail.)
+> Last updated: 2026-06-27 (**Leva 2 "Squad Vivo, Localização & Polimento Nativo" AUTHORED** — Julio's *second* usage review turned into `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (**ACTIVE**) + kickoff; **DEC-089→107 PROPOSED**; awaiting execution (G0→G10, v0.42.0→v0.51.0). The prior **Review & Polish wave is COMPLETE & DEPLOYED** at **v0.41.0**; e2e **34/34** and **734 unit tests** green.)
+
+## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — AUTHORED · ACTIVE (awaiting execution)
+
+Source orchestrator: `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (+ `…-kickoff-prompt.md`). Julio's **second** usage review — run on a real iPhone, inside a squad, across two devices. Normalized into **E01–E28** (P0/P1/P2) with a code↔fix root-cause map, **5 full + 2 quick inline councils**, and **DEC-089→107 (PROPOSED)**. Gates G0→G10, **v0.42.0 → v0.51.0** (one deploy per gate).
+
+- **G1 `v0.42.0`** — native feel: iOS safe-area-correct standalone (no black bottom bar / cramped top) + portrait-only, **and professional system bars on both platforms** (Android status/notification + navigation bar following the app chrome) (E01/E02/E28, DEC-089/107).
+- **G2 `v0.43.0`** — no black: unified map base across all surfaces (kills black sub-maps) + no black text (E17/E18, DEC-090/091).
+- **G3 `v0.44.0`** — squad honest: "Next up" reads the real plan, CTA reflects existence, full i18n of squad/meet/presence sub-screens ("Timetable" stays in PT, "Favs"), per-block "Why this?" transparency (E04/E05/E06/E08, DEC-092/093/094/096).
+- **G4 `v0.45.0`** — **squad live** (the central pain): auto re-share on personal-plan change + change history + notify why (server-owned revision/changelog/fan-out) (E07, DEC-095).
+- **G5 `v0.46.0`** — location truth: precise pin reaches the squad (separate DTO, squad-scope + TTL) + coarse-visible default on join + group-by-stage full screen (E16/E09/E10, DEC-099/097/098).
+- **G6 `v0.47.0`** — SOS redesign: stop syncs across devices first, then mutual awareness + zoomable map + Now alert + compass when "arrived" (E12/E13/E14/E15, DEC-100/101).
+- **G7 `v0.48.0`** — meeting point: photo lightbox (P1) + per-point mural (P2 if slack) (E19/E20, DEC-102).
+- **G8 `v0.49.0`** — join (link/QR/scan/code) + i18n/overflow + header name vs avatar (E03/E24/E27/E26, DEC-103/094/104).
+- **G9 `v0.50.0`** — notifications: local on-device (set reminder + leave-by), server push prepared/not-promised (E25, DEC-105).
+- **G10 `v0.51.0`** — (optional/P2) map zoom re-check + squad structure (insert events into plan, agenda reorg, multi-squad switch) (E11/E21/E22/E23, DEC-106).
+
+**§16 LOCK (non-blocking):** three privacy/scope decisions carry the council recommendation and are adopted unless Julio overrides before G4/G5/G9 — precise-presence exposure (DEC-099), presence default visibility (DEC-097), notifications scope (DEC-105).
+
+**Next:** the doc is **ACTIVE**. Execute G0→G10 in one session (or hand the kickoff to a fresh agent). Optionally, Julio locks the §16 items first.
+
+---
 
 ## Review & Polish wave (2026-06-27) — COMPLETE & DEPLOYED
 
@@ -19,7 +40,7 @@ Source orchestrator: `brain/documents/2026-06-27-review-polish-orchestrator.md`.
 
 **Production (deployed 2026-06-27, verified):** web **v0.41.0** at `festpilot.pages.dev` (deploy `74546e8b`, master); Worker unchanged (frontend-only wave); D1 through migration **0015**. Tests: **734 unit (496 web + 238 server) · e2e 34/34 · `typecheck`/`build` clean**. Invariants held: plan zero-overlap, `buildSquadPlan` sets-only, coarse presence, portaled/fixed sheets, nothing baked into the map.
 
-**Next (needs Julio):** the wave's DoD is fully TRUE. Remaining open item is the **manual on-device smoke** (§15 of the orchestrator) — best done by Julio on a phone. No further autonomous direction is queued; any new scope needs Julio to name it (with a decision-log entry).
+**Next:** this wave's DoD is fully TRUE. Julio's manual on-device smoke surfaced a **second usage review** → now authored as **Leva 2** (see the section at the top of this file). The §15 manual smoke of this wave is superseded by Leva 2's own smoke matrix.
 
 ---
 

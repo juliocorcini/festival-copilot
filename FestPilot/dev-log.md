@@ -1,8 +1,46 @@
 # FestPilot — Dev Log (execution state)
 
 > The single live execution-memory file. Update it **every milestone**. On context loss, re-read this first,
-> then the current gate in `brain/documents/2026-06-27-review-polish-orchestrator.md` (ACTIVE leva) and its §3
-> non-negotiables. (Earlier execution truth: `2026-06-23-v1-implementation-orchestrator.md`.) Seeded 2026-06-23.
+> then the current gate in `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (**ACTIVE leva 2**)
+> and its §3 non-negotiables. (Sister leva, done: `2026-06-27-review-polish-orchestrator.md`.
+> Earlier execution truth: `2026-06-23-v1-implementation-orchestrator.md`.) Seeded 2026-06-23.
+
+---
+
+## Leva 2 "Squad Vivo, Localização & Polimento Nativo" (2026-06-27) — seed + checklist G0→G10
+
+> 2ª rodada de review de uso do Julio (iPhone, 2 aparelhos, dentro de um squad). Doc mestre:
+> `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (**ACTIVE**). Expõe/conecta/torna honestos
+> pedaços que já existem + constrói o que falta (re-share vivo + histórico, coordenada precisa, notificações
+> locais, lightbox/mural). Sobe **v0.41.0 → v0.51.0** (um bump por gate G1→G10). Mais-recente no topo.
+> **INVARIÂNCIA: `buildSquadPlan`/agregação NÃO muda — esta leva explica e atualiza, não recalcula.**
+
+### Estado da leva (vivo)
+- **gate atual:** G0 ✅ — baseline verde re-confirmado, dev-log semeado, DEC-089…107 já PROPOSED, pipeline confirmado. **Iniciando G1.**
+- **produção:** **v0.41.0** (`festpilot.pages.dev`, build `index-D8bE2GjT.js`, master) — leva 2 ainda não deployou.
+- **baseline G0 (re-verificado 2026-06-27, antes de tocar em nada):** `tsc` limpo · **496 web (58 files) + 238 server (27 files) = 734 unit** · `build` verde (main 424.66 kB, embute 0.41.0) · produção serve o mesmo hash `index-D8bE2GjT.js` (pipeline vivo). e2e 34/34 (registrado na leva 1; não re-rodado no G0). **Sem falhas baseline conhecidas.**
+- **Durable Objects:** testes de server que tocam DO (groups/presence/meeting/board) rodam via harness `sql.js` e **passam local**. Por instrução do Julio, **DO real fora do ar é não-erro**: deploy do worker é tolerado, os testes de DO seguem verdes via harness.
+- **LOCKs §16 (não-bloqueantes):** sem resposta → adotadas as **recomendações** do conselho (precise escopo-squad+TTL; coarse-visível no join; notificações locais primeiro).
+
+### Checklist de gates (leva 2)
+- [x] **G0** — baseline verde + dev-log semeado + DEC-089…107 PROPOSED + pipeline confirmado. *(sem bump)*
+- [ ] **G1** — feel nativo: iOS chrome+safe-areas+portrait + barras Android (E01/E02/E28; DEC-089/107). → v0.42.0
+- [ ] **G2** — base de mapa unificada + sem texto preto (E17/E18; DEC-090/091). → v0.43.0
+- [ ] **G3** — squad honesto: Próximo real + CTA + i18n + transparência (E04/E05/E06/E08; DEC-092/093/094/096). → v0.44.0
+- [ ] **G4** — squad vivo: re-share + histórico + notificação (E07; DEC-095) [server+client]. → v0.45.0
+- [ ] **G5** — localização: ponto preciso + default coarse + group-by-stage (E16/E09/E10; DEC-099/097/098). → v0.46.0
+- [ ] **G6** — SOS (stop sincroniza primeiro) + bússola (E13/E12/E14/E15; DEC-100/101). → v0.47.0
+- [ ] **G7** — ponto de encontro: lightbox (+ mural se folga) (E19/E20; DEC-102). → v0.48.0
+- [ ] **G8** — join QR/scan/código + i18n/overflow + header (E03/E24/E27/E26; DEC-103/094/104). → v0.49.0
+- [ ] **G9** — notificações locais (E25; DEC-105). → v0.50.0
+- [ ] **G10** — (opcional/P2) zoom do mapa + estrutura squad (E11/E21/E22/E23; DEC-106). → v0.51.0
+
+### G0 — baseline & seed ✅ *(sem bump)*
+> Referência de regressão da leva 2. Baseline re-verificado idêntico ao fim da leva 1 (v0.41.0).
+- **Baseline:** `tsc` limpo · 496 web (58 files) + 238 server (27 files) = **734** · build verde (main 424.66 kB, embute 0.41.0) · produção serve o mesmo hash `index-D8bE2GjT.js` (pipeline vivo). Sem falhas baseline.
+- **DECs:** DEC-089…107 confirmadas **PROPOSED** no `decision-log.md` (pré-semeadas na prep do orchestrator); header do log atualizado (próximo id = DEC-108).
+- **Pipeline:** Cloudflare Pages → `festpilot.pages.dev`, deploy por push no `master`; verificação por **hash do asset** no `index.html` ao vivo (`/version.json` cai no fallback SPA — não é arquivo). Worker do server só re-deploya quando rotas/DTO mudam (G4/G5).
+- **Próximo:** G1 (v0.42.0).
 
 ---
 
