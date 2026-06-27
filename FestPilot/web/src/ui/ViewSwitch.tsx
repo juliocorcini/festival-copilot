@@ -5,11 +5,13 @@
  * default straight to the Lineup, so there's nothing to switch to.
  */
 import { useNavigate } from "react-router-dom";
+import { useT } from "../i18n";
 
 export function ViewSwitch({ active }: { active: "timetable" | "lineup" }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   return (
-    <div className="view-switch" role="tablist" aria-label="Timetable or Lineup">
+    <div className="view-switch" role="tablist" aria-label={t("view.switch")}>
       <button
         type="button"
         role="tab"
@@ -18,7 +20,7 @@ export function ViewSwitch({ active }: { active: "timetable" | "lineup" }): JSX.
         onClick={() => active !== "timetable" && navigate("/timetable")}
       >
         <span className="ms" aria-hidden="true">calendar_month</span>
-        Timetable
+        {t("view.timetable")}
       </button>
       <button
         type="button"
@@ -28,7 +30,7 @@ export function ViewSwitch({ active }: { active: "timetable" | "lineup" }): JSX.
         onClick={() => active !== "lineup" && navigate("/lineup")}
       >
         <span className="ms" aria-hidden="true">groups</span>
-        Lineup
+        {t("view.lineup")}
       </button>
     </div>
   );

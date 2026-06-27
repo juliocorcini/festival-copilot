@@ -10,8 +10,22 @@ describe("i18n translate", () => {
 
   it("flips a sample string to Portuguese when language is pt", () => {
     expect(translate("pt", "nav.now")).toBe("Agora");
-    expect(translate("pt", "nav.squad")).toBe("Grupo");
     expect(translate("pt", "settings.title")).toBe("Ajustes");
+  });
+
+  it("keeps the brand/nav label 'Squad' in Portuguese (C5/DEC-082)", () => {
+    expect(translate("pt", "nav.squad")).toBe("Squad");
+    expect(translate("pt", "squad.title")).toBe("Squad");
+  });
+
+  it("flips one representative string from each main screen to Portuguese (G4 D04)", () => {
+    // Now, Line-up, Timetable, My Plan, Map, Squad — proves the screen is wired, not just nav.
+    expect(translate("pt", "now.upNext")).toBe("A seguir");
+    expect(translate("pt", "lineup.allArtists")).not.toBe(translate("en", "lineup.allArtists"));
+    expect(translate("pt", "tt.onlyFavs")).not.toBe(translate("en", "tt.onlyFavs"));
+    expect(translate("pt", "plan.lockInMyDay")).toBe("Fechar meu dia");
+    expect(translate("pt", "map.recenter")).toBe("Recentralizar");
+    expect(translate("pt", "squad.whereEveryone")).toBe("Onde está todo mundo");
   });
 
   it("keeps an asserted-elsewhere English string identical (e2e contract)", () => {

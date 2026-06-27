@@ -13,6 +13,7 @@ import { festivalDataState } from "../domain/dataState";
 import { imageByActKey } from "../domain/lineup";
 import { countFavoritesPerDay, daysForWeekends, type DayInfo } from "../lib/festival";
 import { stageColor, stageColorRgb, timeInZone } from "../lib/format";
+import { useT, useLocale } from "../i18n";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { ViewSwitch } from "../ui/ViewSwitch";
 import { DayDropdown } from "../ui/DayDropdown";
@@ -34,6 +35,8 @@ export function TimetableScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const navigate = useNavigate();
   const { onboarding } = useOnboarding();
+  const t = useT();
+  const locale = useLocale();
   const favorites = useFavorites(lineup?.festival.id);
   const { openArtist } = useArtistSheet();
 
@@ -52,7 +55,7 @@ export function TimetableScreen(): JSX.Element {
 
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
   const tz = lineup?.festival.timezone ?? "UTC";
-  const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds) : []), [lineup, weekendIds]);
+  const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
   const dayKey = selectedDay ?? days[0]?.key ?? null;
 
   const model = useMemo(() => {
@@ -85,7 +88,7 @@ export function TimetableScreen(): JSX.Element {
     return (
       <div className="tt-screen">
         <TimetableHeader days={[]} dayKey={null} tz={tz} favByDay={favByDay} festivalName={lineup?.festival.name ?? ""} onSelectDay={setSelectedDay} />
-        <ErrorState message={error ?? "Could not load the timetable."} onRetry={reload} />
+        <ErrorState message={error ?? t("tt.loadError")} onRetry={reload} />
       </div>
     );
   }
@@ -97,8 +100,8 @@ export function TimetableScreen(): JSX.Element {
         <TimetableHeader days={[]} dayKey={null} tz={tz} favByDay={favByDay} festivalName={lineup?.festival.name ?? ""} onSelectDay={setSelectedDay} />
         <EmptyState
           icon="event_busy"
-          title="No lineup announced yet"
-          message="As soon as this festival reveals its artists, you'll pick favorites and build your plan right here."
+          title={t("tt.noLineupTitle")}
+          message={t("tt.noLineupMsg")}
         />
       </div>
     );
@@ -115,8 +118,8 @@ export function TimetableScreen(): JSX.Element {
         type="button"
         className="tt-ic"
         onClick={() => setZoom((z) => (z === "2h" ? "1h" : "2h"))}
-        aria-label={zoom === "2h" ? "Zoom in to 1-hour view" : "Zoom out to 2-hour view"}
-        title={zoom === "2h" ? "1-hour view" : "2-hour view"}
+        aria-label={zoom === "2h" ? t("tt.zoomIn") : t("tt.zoomOut")}
+        title={zoom === "2h" ? t("tt.view1h") : t("tt.view2h")}
       >
         <span className="ms">{zoom === "2h" ? "zoom_in" : "zoom_out"}</span>
       </button>
@@ -125,8 +128,8 @@ export function TimetableScreen(): JSX.Element {
         className={`tt-ic${onlyFavs ? " on" : ""}`}
         onClick={() => setOnlyFavs((v) => !v)}
         aria-pressed={onlyFavs}
-        aria-label="Show only my favorites"
-        title="Only my favs"
+        aria-label={t("tt.onlyFavsAria")}
+        title={t("tt.onlyFavs")}
       >
         <span className="ms">favorite</span>
       </button>
@@ -136,7 +139,7 @@ export function TimetableScreen(): JSX.Element {
         onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
       >
         <span className="ms">playlist_add_check</span>
-        Lock in
+        {t("tt.lockIn")}
       </button>
     </div>
   );
@@ -158,8 +161,8 @@ export function TimetableScreen(): JSX.Element {
       {model.isEmpty ? (
         <EmptyState
           icon="calendar_month"
-          title="No sets yet"
-          message="No performances are scheduled for this day in the published lineup."
+          title={t("tt.noSetsTitle")}
+          message={t("tt.noSetsMsg")}
         />
       ) : (
         <div className="tt-scroll" ref={pinchRef}>
@@ -218,7 +221,7 @@ export function TimetableScreen(): JSX.Element {
                             className="set-inner tappable"
                             role="button"
                             tabIndex={0}
-                            aria-label={`View ${set.label}`}
+                            aria-label={t("common.viewAct", { name: set.label })}
                             onClick={() => openArtist(set.actKey)}
                             onKeyDown={openOnActivate(() => openArtist(set.actKey))}
                           >
@@ -238,11 +241,11 @@ export function TimetableScreen(): JSX.Element {
                           <button
                             className="heart"
                             data-haptic="select"
-                            aria-label={set.isFav ? "Remove favorite" : "Add favorite"}
+                            aria-label={set.isFav ? t("tt.removeFav") : t("tt.addFav")}
                             onClick={() => {
                               favorites.toggle(set.actKey);
                               toast.show({
-                                message: set.isFav ? `Removed ${set.label}` : `Saved ${set.label}`,
+                                message: set.isFav ? t("common.removedToast", { name: set.label }) : t("common.savedToast", { name: set.label }),
                                 tone: set.isFav ? "info" : "success",
                                 key: "favorite",
                                 haptic: false,
@@ -286,11 +289,12 @@ function TimetableHeader({
   onSelectDay: (key: string) => void;
   controls?: JSX.Element;
 }): JSX.Element {
+  const t = useT();
   const hasBar = days.length > 0 || Boolean(controls);
   return (
     <header className="tt-top">
       <div className="shell-eyebrow">
-        {festivalName} <span className="view">TIMETABLE</span>
+        {festivalName} <span className="view">{t("tt.view")}</span>
       </div>
       {hasBar && (
         <div className="tt-bar">

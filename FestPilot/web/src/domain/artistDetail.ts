@@ -41,19 +41,20 @@ export interface ArtistDetail {
   slots: ArtistSlot[];
 }
 
-function weekdayInZone(ms: number, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone }).format(new Date(ms));
+function weekdayInZone(ms: number, timeZone: string, locale = "en-US"): string {
+  return new Intl.DateTimeFormat(locale, { weekday: "long", timeZone }).format(new Date(ms));
 }
 
-function dateInZone(ms: number, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone }).format(new Date(ms));
+function dateInZone(ms: number, timeZone: string, locale = "en-US"): string {
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone }).format(new Date(ms));
 }
 
 export function buildArtistDetail(
   act: Act,
   stages: StageDto[],
   weekends: WeekendDto[],
-  timeZone: string
+  timeZone: string,
+  locale?: string
 ): ArtistDetail {
   const weekendNameById = new Map(weekends.map((w) => [w.id, w.name]));
   const slots: ArtistSlot[] = toPlannableSets(act.performances, stages)
@@ -61,8 +62,8 @@ export function buildArtistDetail(
     .map((set) => ({
       stageName: set.stageName,
       stageColorKey: stageColor(set.stageName),
-      dayLabel: weekdayInZone(set.startMs, timeZone),
-      dateLabel: dateInZone(set.startMs, timeZone),
+      dayLabel: weekdayInZone(set.startMs, timeZone, locale),
+      dateLabel: dateInZone(set.startMs, timeZone, locale),
       start: timeInZone(new Date(set.startMs).toISOString(), timeZone),
       end: timeInZone(new Date(set.endMs).toISOString(), timeZone),
       weekendName: set.weekendId ? weekendNameById.get(set.weekendId) ?? null : null,

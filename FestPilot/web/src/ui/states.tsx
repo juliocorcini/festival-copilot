@@ -1,4 +1,5 @@
 /** System states (screen-catalog B6.6): loading skeleton, error+retry, empty. Reused everywhere. */
+import { useT } from "../i18n";
 
 interface ErrorStateProps {
   title?: string;
@@ -6,15 +7,16 @@ interface ErrorStateProps {
   onRetry?: () => void;
 }
 
-export function ErrorState({ title = "Something went wrong", message, onRetry }: ErrorStateProps): JSX.Element {
+export function ErrorState({ title, message, onRetry }: ErrorStateProps): JSX.Element {
+  const t = useT();
   return (
     <div className="state error" role="alert">
       <span className="ms">error</span>
-      <h2>{title}</h2>
+      <h2>{title ?? t("common.somethingWrong")}</h2>
       {message && <p>{message}</p>}
       {onRetry && (
         <button className="btn btn-primary" onClick={onRetry}>
-          <span className="ms">refresh</span> Try again
+          <span className="ms">refresh</span> {t("common.tryAgain")}
         </button>
       )}
     </div>
@@ -55,8 +57,9 @@ export function LoadingState({
   rows?: number;
   variant?: "list" | "grid";
 }): JSX.Element {
+  const t = useT();
   return (
-    <div className="screen" aria-busy="true" aria-label="Loading">
+    <div className="screen" aria-busy="true" aria-label={t("common.loading")}>
       <div className="shimmer" style={{ height: 132 }} />
       {variant === "grid" ? (
         <div className="shimmer-grid">

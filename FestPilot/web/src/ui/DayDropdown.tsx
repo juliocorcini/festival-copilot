@@ -4,6 +4,7 @@
  * full date and a ★ favorites count. Pure presentation: the selected-day state lives in the screen.
  */
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../i18n";
 import { dayOfMonth, type DayInfo } from "../lib/festival";
 
 export function DayDropdown({
@@ -21,6 +22,7 @@ export function DayDropdown({
 }): JSX.Element | null {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -48,7 +50,7 @@ export function DayDropdown({
         className={`dsel${open ? " open" : ""}`}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label="Select day"
+        aria-label={t("day.select")}
         onClick={() => setOpen((v) => !v)}
       >
         <span className="ms cal" aria-hidden="true">calendar_month</span>
@@ -58,8 +60,8 @@ export function DayDropdown({
       {open && (
         <>
           <div className="dd-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="day-dd" role="listbox" aria-label="Festival days">
-            <div className="dd-ti">Choose a day</div>
+          <div className="day-dd" role="listbox" aria-label={t("day.festivalDays")}>
+            <div className="dd-ti">{t("day.choose")}</div>
             {days.map((day, i) => {
               const on = day.key === selected.key;
               const fav = favByDay.get(day.key) ?? 0;
@@ -72,7 +74,7 @@ export function DayDropdown({
                   className={`dd-opt${on ? " on" : ""}`}
                   onClick={() => choose(day.key)}
                 >
-                  <span className="dd-dn">Day {i + 1}</span>
+                  <span className="dd-dn">{t("day.n", { n: i + 1 })}</span>
                   <span className="dd-when">
                     <span className="dd-wd">{day.weekdayLong}</span>
                     {day.dateLabel && <span className="dd-dt">{day.dateLabel}</span>}

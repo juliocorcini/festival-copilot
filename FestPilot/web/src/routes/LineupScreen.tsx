@@ -11,6 +11,7 @@ import { festivalDayIdByPerformanceId } from "../domain/festivalDay";
 import { performancesForWeekends, uniqueActs, type Act } from "../domain/lineup";
 import { daysForWeekends, type DayInfo } from "../lib/festival";
 import { stageColorRgb } from "../lib/format";
+import { useT, useLocale } from "../i18n";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
 import { ViewSwitch } from "../ui/ViewSwitch";
@@ -34,28 +35,32 @@ function loadCols(): Cols {
   return 2;
 }
 
-const DENSITY_OPTIONS: { c: Cols; icon: string; label: string }[] = [
-  { c: 2, icon: "grid_view", label: "2 columns" },
-  { c: 3, icon: "view_module", label: "3 columns" },
-  { c: 4, icon: "view_comfy", label: "4 columns" },
+const DENSITY_OPTIONS: { c: Cols; icon: string }[] = [
+  { c: 2, icon: "grid_view" },
+  { c: 3, icon: "view_module" },
+  { c: 4, icon: "view_comfy" },
 ];
 
 function DensityControl({ cols, onChange }: { cols: Cols; onChange: (c: Cols) => void }): JSX.Element {
+  const t = useT();
   return (
-    <div className="density" role="group" aria-label="Grid density">
-      {DENSITY_OPTIONS.map((o) => (
-        <button
-          key={o.c}
-          type="button"
-          className={o.c === cols ? "on" : ""}
-          aria-pressed={o.c === cols}
-          aria-label={o.label}
-          title={o.label}
-          onClick={() => onChange(o.c)}
-        >
-          <span className="ms">{o.icon}</span>
-        </button>
-      ))}
+    <div className="density" role="group" aria-label={t("lineup.gridDensity")}>
+      {DENSITY_OPTIONS.map((o) => {
+        const label = t("lineup.cols", { n: o.c });
+        return (
+          <button
+            key={o.c}
+            type="button"
+            className={o.c === cols ? "on" : ""}
+            aria-pressed={o.c === cols}
+            aria-label={label}
+            title={label}
+            onClick={() => onChange(o.c)}
+          >
+            <span className="ms">{o.icon}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -63,6 +68,8 @@ function DensityControl({ cols, onChange }: { cols: Cols; onChange: (c: Cols) =>
 export function LineupScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const { onboarding } = useOnboarding();
+  const t = useT();
+  const locale = useLocale();
   const festivalId = lineup?.festival.id;
   const favorites = useFavorites(festivalId);
   const { openArtist } = useArtistSheet();
@@ -92,7 +99,7 @@ export function LineupScreen(): JSX.Element {
     [lineup, weekendIds]
   );
 
-  const days = useMemo<DayInfo[]>(() => (lineup ? daysForWeekends(lineup, weekendIds) : []), [lineup, weekendIds]);
+  const days = useMemo<DayInfo[]>(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
   const stageName = useMemo(() => {
     const map = new Map<string, string>();
     lineup?.stages.forEach((s) => map.set(s.id, s.name));
@@ -118,7 +125,7 @@ export function LineupScreen(): JSX.Element {
   }, [acts, query, dayFilter, favOnly, favorites]);
 
   if (status === "loading") return <LoadingState variant="grid" />;
-  if (status === "error" || !lineup) return <ErrorState message={error ?? "Could not load."} onRetry={reload} />;
+  if (status === "error" || !lineup) return <ErrorState message={error ?? t("lineup.loadError")} onRetry={reload} />;
 
   const dataState = festivalDataState(lineup.hasLineup, lineup.hasTimetable);
   if (dataState === "nothing") {
@@ -126,8 +133,8 @@ export function LineupScreen(): JSX.Element {
       <div className="screen" style={{ paddingTop: "calc(10px + var(--safe-top))" }}>
         <EmptyState
           icon="event_busy"
-          title="No lineup announced yet"
-          message="This festival hasn't revealed its artists. Check back soon — you'll pick favorites here the moment it does."
+          title={t("lineup.noLineupTitle")}
+          message={t("lineup.noLineupMsg")}
         />
       </div>
     );
@@ -153,7 +160,7 @@ export function LineupScreen(): JSX.Element {
         <button
           type="button"
           className="gc-tap"
-          aria-label={`View ${act.label}`}
+          aria-label={t("common.viewAct", { name: act.label })}
           onClick={() => openArtist(act.actKey)}
         >
           <ArtistPhoto src={act.imageUrl} name={act.label} width={PHOTO_WIDTH.grid} className="gc-photo" />
@@ -167,11 +174,11 @@ export function LineupScreen(): JSX.Element {
           className="gc-heart"
           data-haptic="select"
           aria-pressed={on}
-          aria-label={on ? `Remove ${act.label} from favorites` : `Add ${act.label} to favorites`}
+          aria-label={on ? t("lineup.removeFav", { name: act.label }) : t("lineup.addFav", { name: act.label })}
           onClick={() => {
             favorites.toggle(act.actKey);
             toast.show({
-              message: on ? `Removed ${act.label}` : `Saved ${act.label}`,
+              message: on ? t("common.removedToast", { name: act.label }) : t("common.savedToast", { name: act.label }),
               tone: on ? "info" : "success",
               key: "favorite",
               haptic: false,
@@ -193,13 +200,13 @@ export function LineupScreen(): JSX.Element {
       <PullToRefresh onRefresh={reload} />
       <header className="lu-top">
         <div className="shell-eyebrow">
-          {lineup.festival.name} <span className="view">LINEUP</span>
+          {lineup.festival.name} <span className="view">{t("lineup.view")}</span>
         </div>
       </header>
       {dataState === "lineup_only" && (
         <div className="lineup-note">
           <span className="ms" aria-hidden="true">schedule</span>
-          <span>The full timetable isn't out yet — favorite who you want to see and we'll build your plan the moment it drops.</span>
+          <span>{t("lineup.lineupOnlyNote")}</span>
         </div>
       )}
 
@@ -210,11 +217,11 @@ export function LineupScreen(): JSX.Element {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search artists…"
-          aria-label="Search artists"
+          placeholder={t("common.searchArtists")}
+          aria-label={t("common.searchArtistsAria")}
         />
         {query && (
-          <button className="ob-skip" style={{ padding: 0 }} onClick={() => setQuery("")} aria-label="Clear search">
+          <button className="ob-skip" style={{ padding: 0 }} onClick={() => setQuery("")} aria-label={t("lineup.clearSearch")}>
             <span className="ms">close</span>
           </button>
         )}
@@ -222,9 +229,9 @@ export function LineupScreen(): JSX.Element {
 
       <div className="filter-rail">
         <button className={`chip${favOnly ? " on" : ""}`} onClick={() => setFavOnly((v) => !v)}>
-          <span className="ms" style={{ fontSize: 14 }}>star</span> Favorites
+          <span className="ms" style={{ fontSize: 14 }}>star</span> {t("lineup.favorites")}
         </button>
-        <button className={`chip${dayFilter === "all" ? " on" : ""}`} onClick={() => setDayFilter("all")}>All days</button>
+        <button className={`chip${dayFilter === "all" ? " on" : ""}`} onClick={() => setDayFilter("all")}>{t("lineup.allDays")}</button>
         {days.map((d) => (
           <button
             key={d.key}
@@ -237,13 +244,13 @@ export function LineupScreen(): JSX.Element {
       </div>
 
       {filtered.length === 0 && (
-        <div className="state"><span className="ms">search_off</span><h2>No artists found</h2><p>Try a different search or filter.</p></div>
+        <div className="state"><span className="ms">search_off</span><h2>{t("lineup.noneTitle")}</h2><p>{t("lineup.noneMsg")}</p></div>
       )}
 
       {favoriteActs.length > 0 && (
         <>
           <div className="sec">
-            <span>YOUR FAVORITES · {favoriteActs.length}</span>
+            <span>{t("lineup.yourFavorites", { count: favoriteActs.length })}</span>
             <DensityControl cols={cols} onChange={setCols} />
           </div>
           <div className="grid">{favoriteActs.map(renderCard)}</div>
@@ -252,7 +259,7 @@ export function LineupScreen(): JSX.Element {
       {otherActs.length > 0 && (
         <>
           <div className="sec">
-            <span>ALL ARTISTS · {otherActs.length}</span>
+            <span>{t("lineup.allArtists", { count: otherActs.length })}</span>
             {favoriteActs.length === 0 && <DensityControl cols={cols} onChange={setCols} />}
           </div>
           <div className="grid">{otherActs.map(renderCard)}</div>

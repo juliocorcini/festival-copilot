@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
+import { useT } from "../i18n";
 import { api } from "../data/api";
 import { useBoard } from "../data/board";
 import { useMyGroups, useGroup } from "../data/groups";
@@ -56,37 +57,35 @@ export function SquadScreen(): JSX.Element {
 
 function EmptySquad({ hasProfile }: { hasProfile: boolean }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const go = (target: string): void =>
     navigate(hasProfile ? target : `/squad/signin?next=${encodeURIComponent(target)}`);
 
   return (
     <>
-      <AppHeader eyebrow="Together" title="Squad" />
+      <AppHeader eyebrow={t("squad.together")} title={t("squad.title")} />
       <div className="squad-empty">
         <div className="squad-hero">
           <div className="squad-hero-orb">
             <span className="ms">diversity_3</span>
           </div>
           <h2 className="poster">
-            Festivals are
+            {t("squad.betterTogether1")}
             <br />
-            better together
+            {t("squad.betterTogether2")}
           </h2>
-          <p>
-            Create a squad, build one shared plan, and keep everyone on the same page — who's at
-            which stage, and where to meet up.
-          </p>
+          <p>{t("squad.heroMsg")}</p>
         </div>
         <div className="squad-actions">
           <button className="btn btn-primary" onClick={() => go("/squad/create")}>
             <span className="ms">add</span>
-            Create a squad
+            {t("squad.createSquad")}
           </button>
           <button className="btn btn-ghost" onClick={() => go("/squad/join")}>
             <span className="ms">link</span>
-            Join with a link or QR
+            {t("squad.joinLinkQr")}
           </button>
-          <p className="squad-note">A quick account keeps your squad in sync — 5 seconds.</p>
+          <p className="squad-note">{t("squad.quickAccount")}</p>
         </div>
       </div>
     </>
@@ -105,6 +104,7 @@ function GroupHome({
   onChanged: () => void;
 }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { members, reload: reloadMembers } = useGroup(group.id);
   const { points, reload: reloadPoints } = useMeetingPoints(group.id);
   const { points: safetyPoints, reload: reloadSafety } = useSafety(group.id);
@@ -146,10 +146,10 @@ function GroupHome({
   return (
     <>
       <AppHeader
-        eyebrow={`${group.emoji ? `${group.emoji} ` : ""}${group.name} · ${count} ${count === 1 ? "person" : "people"}`}
-        title="Squad"
+        eyebrow={`${group.emoji ? `${group.emoji} ` : ""}${group.name} · ${count} ${count === 1 ? t("common.person") : t("common.people")}`}
+        title={t("squad.title")}
         right={
-          <button className="ava" aria-label="Invite to squad" onClick={() => navigate(`/squad/invite/${group.id}`)}>
+          <button className="ava" aria-label={t("squad.inviteToSquad")} onClick={() => navigate(`/squad/invite/${group.id}`)}>
             <span className="ms">person_add</span>
           </button>
         }
@@ -157,7 +157,7 @@ function GroupHome({
       <PullToRefresh onRefresh={refreshAll} />
       <div className="screen">
         {groups.length > 1 && (
-          <div className="squad-switcher" role="tablist" aria-label="Your squads">
+          <div className="squad-switcher" role="tablist" aria-label={t("squad.yourSquads")}>
             {groups.map((g) => (
               <button
                 key={g.id}
@@ -171,7 +171,7 @@ function GroupHome({
                 <span className="squad-tab-count">{g.memberCount}</span>
               </button>
             ))}
-            <button className="squad-tab squad-tab-add" onClick={() => navigate("/squad/create")} aria-label="New squad">
+            <button className="squad-tab squad-tab-add" onClick={() => navigate("/squad/create")} aria-label={t("squad.newSquad")}>
               <span className="ms">add</span>
             </button>
           </div>
@@ -184,10 +184,10 @@ function GroupHome({
             </span>
             <div className="safety-home-main">
               <div className="safety-home-title">
-                {sosMine ? "You're sharing your location" : `${sosOther?.createdByName ?? "A squadmate"} needs help`}
+                {sosMine ? t("squad.sharingLocation") : t("squad.needsHelp", { name: sosOther?.createdByName ?? t("squad.aSquadmate") })}
               </div>
               <div className="safety-home-sub">
-                {sosMine ? "Your squad can see where you are — tap to manage" : `${sosOther?.landmarkLabel ?? ""} · tap to go to them`}
+                {sosMine ? t("squad.sharingSub") : t("squad.needsHelpSub", { landmark: sosOther?.landmarkLabel ?? "" })}
               </div>
             </div>
             <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
@@ -204,8 +204,8 @@ function GroupHome({
               <span className="ms">flag</span>
             </div>
             <div className="squad-plan-main">
-              <div className="squad-plan-title">Set a meeting point</div>
-              <div className="squad-plan-sub">Drop a spot for the squad to regroup</div>
+              <div className="squad-plan-title">{t("squad.setMeetingPoint")}</div>
+              <div className="squad-plan-sub">{t("squad.setMeetingPointSub")}</div>
             </div>
             <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
           </button>
@@ -218,7 +218,7 @@ function GroupHome({
         {primaryPoint && (
           <button className="squad-inline-add" onClick={() => navigate(`/squad/${group.id}/meet`)}>
             <span className="ms" aria-hidden="true">add_location_alt</span>
-            Set another meeting point
+            {t("squad.setAnotherPoint")}
           </button>
         )}
 
@@ -231,8 +231,8 @@ function GroupHome({
             <span className="ms">event_available</span>
           </div>
           <div className="squad-plan-main">
-            <div className="squad-plan-title">Build the squad plan</div>
-            <div className="squad-plan-sub">See where everyone wants to be</div>
+            <div className="squad-plan-title">{t("squad.buildPlan")}</div>
+            <div className="squad-plan-sub">{t("squad.buildPlanSub")}</div>
           </div>
           <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>
@@ -243,8 +243,8 @@ function GroupHome({
               <span className="ms">volunteer_activism</span>
             </div>
             <div className="squad-plan-main">
-              <div className="squad-plan-title">I'm lost</div>
-              <div className="squad-plan-sub">Get back to the squad — calmly</div>
+              <div className="squad-plan-title">{t("squad.imLost")}</div>
+              <div className="squad-plan-sub">{t("squad.imLostSub")}</div>
             </div>
             <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
           </button>
@@ -252,7 +252,7 @@ function GroupHome({
 
         <section className="glass members-card">
           <div className="members-head">
-            <span className="label">Members</span>
+            <span className="label">{t("squad.members")}</span>
             <button
               className="members-invite"
               onClick={() => navigate(`/squad/invite/${group.id}`)}
@@ -260,7 +260,7 @@ function GroupHome({
               <span className="ms" style={{ fontSize: 15 }}>
                 person_add
               </span>
-              Invite
+              {t("squad.invite")}
             </button>
           </div>
           <div className="members-list">
@@ -269,14 +269,14 @@ function GroupHome({
                 <Avatar url={m.avatarUrl} color={m.avatarColor} name={m.displayName} size={36} />
                 <div className="member-main">
                   <div className="member-name">
-                    {m.displayName ?? "Guest"}
-                    {m.isYou && <span className="member-you"> · you</span>}
+                    {m.displayName ?? t("common.guest")}
+                    {m.isYou && <span className="member-you"> · {t("common.you")}</span>}
                   </div>
                   <div className="member-sub">
-                    {m.role === "owner" ? "Created the squad" : "Member"}
+                    {m.role === "owner" ? t("squad.createdSquad") : t("squad.memberRole")}
                   </div>
                 </div>
-                {m.role === "owner" && <span className="chip chip-accent-soft">Owner</span>}
+                {m.role === "owner" && <span className="chip chip-accent-soft">{t("squad.owner")}</span>}
               </div>
             ))}
           </div>
@@ -284,7 +284,7 @@ function GroupHome({
 
         <button className="btn btn-danger" onClick={leave} disabled={leaving}>
           <span className="ms">logout</span>
-          {leaving ? "Leaving…" : "Leave squad"}
+          {leaving ? t("squad.leaving") : t("squad.leaveSquad")}
         </button>
       </div>
     </>
@@ -294,9 +294,10 @@ function GroupHome({
 /** A live "come to me" meeting point on the squad home — opens the convergence detail (#26.3). */
 function MeetingPointCard({ groupId, point }: { groupId: string; point: MeetingPointDto }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const closesIn = closesInLabel(point.expiresAtUtc);
   const badge = lifecycleBadge(point.lifecycle);
-  const owner = point.isMine ? "Your spot" : `${point.createdByName ?? "A squadmate"}'s spot`;
+  const owner = point.isMine ? t("squad.yourSpot") : t("squad.someonesSpot", { name: point.createdByName ?? t("squad.aSquadmate") });
   return (
     <button className="glass meet-active-card" onClick={() => navigate(`/squad/${groupId}/meet/${point.id}`)}>
       {point.photoUrl ? (

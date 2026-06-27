@@ -10,6 +10,7 @@
  * never feeds the squad plan or any personal lock (it lives entirely alongside them).
  */
 import { useNavigate } from "react-router-dom";
+import { useT } from "../../i18n";
 import { useIdentity } from "../../data/identity";
 import { useMyGroups } from "../../data/groups";
 import { useGroupPresence } from "../../data/presence";
@@ -49,6 +50,7 @@ function SquadNowGate(): JSX.Element | null {
 
 function SquadNowInner({ group }: { group: GroupDto }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { presence, status: presenceStatus } = useGroupPresence(group.id);
   const { events } = useGroupEvents(group.id);
   const { points } = useMeetingPoints(group.id);
@@ -71,7 +73,7 @@ function SquadNowInner({ group }: { group: GroupDto }): JSX.Element {
       className="glass squad-now tappable fp-rise"
       role="button"
       tabIndex={0}
-      aria-label={`Open ${group.name}`}
+      aria-label={t("squad.openGroup", { name: group.name })}
       onClick={go}
       onKeyDown={openOnActivate(go)}
     >
@@ -84,10 +86,10 @@ function SquadNowInner({ group }: { group: GroupDto }): JSX.Element {
           {liveCount > 0 ? (
             <>
               <span className="live" />
-              {liveCount} live
+              {t("squad.live", { count: liveCount })}
             </>
           ) : (
-            `${group.memberCount} ${group.memberCount === 1 ? "member" : "members"}`
+            `${group.memberCount} ${group.memberCount === 1 ? t("common.member") : t("common.members")}`
           )}
         </span>
         <span className="ms squad-now-chev" aria-hidden>

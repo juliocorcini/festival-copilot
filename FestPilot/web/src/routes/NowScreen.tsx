@@ -18,6 +18,7 @@ import { buildNowNext, chronoNowNext, type HomeSet } from "../domain/nowNext";
 import { actKey, actLabel, imageByActKey } from "../domain/lineup";
 import { daysForWeekends } from "../lib/festival";
 import { dayLabel, daysUntil, stageColor, timeInZone } from "../lib/format";
+import { useT, useLocale } from "../i18n";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
 import { useArtistSheet, openOnActivate } from "../ui/useArtistSheet";
@@ -43,6 +44,8 @@ interface HeroVM {
 
 export function NowScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
+  const locale = useLocale();
   const { status, lineup, error, reload } = useLineup();
   const { onboarding } = useOnboarding();
   const favorites = useFavorites(lineup?.festival.id);
@@ -54,7 +57,7 @@ export function NowScreen(): JSX.Element {
   }, []);
 
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
-  const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds) : []), [lineup, weekendIds]);
+  const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
   const activeDay = useMemo(() => {
     if (days.length === 0) return null;
     let chosen = days[0]!;
@@ -103,20 +106,20 @@ export function NowScreen(): JSX.Element {
         id: p.id,
         actKey: actKey(p),
         label: actLabel(p),
-        stageName: (p.stageId ? stageNameById.get(p.stageId) : "") || "TBA",
+        stageName: (p.stageId ? stageNameById.get(p.stageId) : "") || t("common.tba"),
         startMs: ms(p.startAtUtc),
         endMs: ms(p.endAtUtc),
         imageUrl: p.artists[0]?.imageUrl ?? null,
       }));
-  }, [lineup, favorites.keys, stageNameById]);
+  }, [lineup, favorites.keys, stageNameById, t]);
   const favChrono = useMemo(() => chronoNowNext(favSets, now), [favSets, now]);
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !lineup) {
     return (
       <>
-        <AppHeader eyebrow="FestPilot" title="Now & Next" />
-        <ErrorState message={error ?? "Could not load the lineup."} onRetry={reload} />
+        <AppHeader eyebrow="FestPilot" title={t("now.title")} />
+        <ErrorState message={error ?? t("now.loadError")} onRetry={reload} />
       </>
     );
   }
@@ -145,7 +148,7 @@ export function NowScreen(): JSX.Element {
   if (!vm) {
     return (
       <>
-        <AppHeader eyebrow={shorten(festivalName)} title="Now & Next" />
+        <AppHeader eyebrow={shorten(festivalName)} title={t("now.title")} />
         <PullToRefresh onRefresh={reload} />
         <div className="screen">
           <SquadNowCard />
@@ -159,17 +162,17 @@ export function NowScreen(): JSX.Element {
     );
   }
 
-  const eyebrow = `${shorten(festivalName)} · ${dayLabel(new Date(vm.hero.startMs).toISOString(), tz)}`;
+  const eyebrow = `${shorten(festivalName)} · ${dayLabel(new Date(vm.hero.startMs).toISOString(), tz, locale)}`;
   const dayKey = activeDay?.key ?? null;
-  const laterLabel = vm.source === "plan" ? "Later tonight" : "Up next";
+  const laterLabel = vm.source === "plan" ? t("now.laterTonight") : t("now.upNext");
   const srcLine =
     vm.source === "plan"
-      ? `From your locked plan · ${planSlots.length} set${planSlots.length === 1 ? "" : "s"}`
-      : `From your favorites · ${favSets.length} with set times`;
+      ? t("now.srcPlan", { count: planSlots.length, sets: planSlots.length === 1 ? t("common.set") : t("common.sets") })
+      : t("now.srcFavorites", { count: favSets.length });
 
   return (
     <>
-      <AppHeader eyebrow={eyebrow} title="Now & Next" />
+      <AppHeader eyebrow={eyebrow} title={t("now.title")} />
       <PullToRefresh onRefresh={reload} />
       <div className="screen">
         <NowHero
@@ -198,6 +201,7 @@ function NowHero({
   onRoute: () => void;
 }): JSX.Element {
   const { openArtist } = useArtistSheet();
+  const t = useT();
   const { hero, next, isLive } = vm;
   const heroIso = new Date(hero.startMs).toISOString();
   const daysAhead = daysUntil(heroIso);
@@ -209,13 +213,13 @@ function NowHero({
       <ArtistPhoto src={hero.imageUrl} name={hero.label} width={PHOTO_WIDTH.card} className="now-hero-photo" />
       <div className="now-tag" style={{ color: isLive ? "var(--ok-ink)" : "var(--accent2)" }}>
         {isLive ? <span className="live" /> : <span className="ms" style={{ fontSize: 14 }}>schedule</span>}
-        {isLive ? "NOW" : "NEXT UP"}
+        {isLive ? t("now.now") : t("now.nextUp")}
       </div>
       <div
         className="now-title poster tappable"
         role="button"
         tabIndex={0}
-        aria-label={`View ${hero.label}`}
+        aria-label={t("common.viewAct", { name: hero.label })}
         onClick={() => openArtist(hero.actKey)}
         onKeyDown={openOnActivate(() => openArtist(hero.actKey))}
       >
@@ -223,7 +227,7 @@ function NowHero({
       </div>
       <div className="now-stage">
         <span className="dot" style={{ background: stageColor(hero.stageName) }} />
-        {hero.stageName || "TBA"}
+        {hero.stageName || t("common.tba")}
         <span style={{ marginLeft: "auto", color: "var(--accent2)", fontWeight: 700 }}>
           {timeInZone(heroIso, tz)}
         </span>
@@ -233,36 +237,36 @@ function NowHero({
         {isLive ? (
           vm.source === "plan" && vm.leaveInMinutes != null && next ? (
             <div>
-              <div className="now-next-label">{vm.leaveInMinutes <= 0 ? "LEAVE" : "LEAVE IN"}</div>
+              <div className="now-next-label">{vm.leaveInMinutes <= 0 ? t("now.leave") : t("now.leaveIn")}</div>
               <div className="big-count">
                 <span key={vm.leaveInMinutes} className="count-pop">
-                  {vm.leaveInMinutes <= 0 ? "now" : vm.leaveInMinutes}
+                  {vm.leaveInMinutes <= 0 ? t("now.nowLower") : vm.leaveInMinutes}
                 </span>
-                {vm.leaveInMinutes > 0 && <span style={{ fontSize: 24 }}>min</span>}
+                {vm.leaveInMinutes > 0 && <span style={{ fontSize: 24 }}>{t("now.min")}</span>}
               </div>
             </div>
           ) : (
             <div>
-              <div className="now-next-label">{next ? "on now" : "enjoy"}</div>
-              <div className="now-next-name poster">{next ? "Live right now" : "Last on your list"}</div>
+              <div className="now-next-label">{next ? t("now.onNow") : t("now.enjoy")}</div>
+              <div className="now-next-name poster">{next ? t("now.liveRightNow") : t("now.lastOnList")}</div>
             </div>
           )
         ) : (
           <div>
-            <div className="now-next-label">{daysAhead > 0 ? "DOORS IN" : "STARTS IN"}</div>
+            <div className="now-next-label">{daysAhead > 0 ? t("now.doorsIn") : t("now.startsIn")}</div>
             <div className="big-count">
               <span key={daysAhead > 0 ? `d${daysAhead}` : `m${startsInMin}`} className="count-pop">
                 {daysAhead > 0 ? daysAhead : startsInMin}
               </span>
               <span style={{ fontSize: daysAhead > 0 ? 18 : 24 }}>
-                {daysAhead > 0 ? (daysAhead === 1 ? "day" : "days") : "min"}
+                {daysAhead > 0 ? (daysAhead === 1 ? t("now.day") : t("now.days")) : t("now.min")}
               </span>
             </div>
           </div>
         )}
         {next && (
           <div style={{ textAlign: "right" }}>
-            <div className="now-next-label">{isLive && vm.leaveInMinutes != null ? "next up" : "then"}</div>
+            <div className="now-next-label">{isLive && vm.leaveInMinutes != null ? t("now.nextUpLower") : t("now.then")}</div>
             <div className="now-next-name poster">{next.label}</div>
             <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
               {next.stageName} · {timeInZone(new Date(next.startMs).toISOString(), tz)}
@@ -280,7 +284,7 @@ function NowHero({
       {isLive && vm.source === "plan" && next && vm.walkMinutes > 0 && (
         <button type="button" className="now-walk" onClick={onRoute}>
           <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
-          {vm.walkMinutes} min walk to {next.stageName}
+          {t("now.walkTo", { min: vm.walkMinutes, stage: next.stageName })}
           <span className="ms" style={{ fontSize: 15, marginLeft: "auto" }}>arrow_forward</span>
         </button>
       )}
@@ -290,6 +294,7 @@ function NowHero({
 
 function NowList({ rows, tz, label }: { rows: HomeSet[]; tz: string; label: string }): JSX.Element {
   const { openArtist } = useArtistSheet();
+  const t = useT();
   return (
     <section className="glass list-card">
       <span className="label">{label}</span>
@@ -300,7 +305,7 @@ function NowList({ rows, tz, label }: { rows: HomeSet[]; tz: string; label: stri
           style={{ "--i": i } as CSSProperties}
           role="button"
           tabIndex={0}
-          aria-label={`View ${r.label}`}
+          aria-label={t("common.viewAct", { name: r.label })}
           onClick={() => openArtist(r.actKey)}
           onKeyDown={openOnActivate(() => openArtist(r.actKey))}
         >
@@ -324,13 +329,14 @@ function NowEmpty({
   hasTimetable: boolean;
   onBrowse: () => void;
 }): JSX.Element {
+  const t = useT();
   if (favCount === 0) {
     return (
       <EmptyState
         icon="favorite"
-        title="Pick the acts you can't miss"
-        message="Favorite artists and FestPilot lines up what's on now and next — and when to leave to make it."
-        action={{ label: "Browse the lineup", icon: "queue_music", onClick: onBrowse }}
+        title={t("now.emptyPickTitle")}
+        message={t("now.emptyPickMsg")}
+        action={{ label: t("now.emptyPickCta"), icon: "queue_music", onClick: onBrowse }}
       />
     );
   }
@@ -338,18 +344,18 @@ function NowEmpty({
     return (
       <EmptyState
         icon="schedule"
-        title="Set times aren't out yet"
-        message={`Your ${favCount} favorite${favCount === 1 ? "" : "s"} will appear here the moment the schedule drops.`}
-        action={{ label: "Review your favorites", icon: "favorite", onClick: onBrowse }}
+        title={t("now.emptyTimesTitle")}
+        message={favCount === 1 ? t("now.emptyTimesMsgOne", { count: favCount }) : t("now.emptyTimesMsgMany", { count: favCount })}
+        action={{ label: t("now.emptyTimesCta"), icon: "favorite", onClick: onBrowse }}
       />
     );
   }
   return (
     <EmptyState
       icon="event_available"
-      title="Nothing coming up"
-      message="You've seen all your picks for now — browse the lineup to add a few more."
-      action={{ label: "Open the lineup", icon: "queue_music", onClick: onBrowse }}
+      title={t("now.emptyNothingTitle")}
+      message={t("now.emptyNothingMsg")}
+      action={{ label: t("now.emptyNothingCta"), icon: "queue_music", onClick: onBrowse }}
     />
   );
 }

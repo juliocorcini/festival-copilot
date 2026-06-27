@@ -39,6 +39,7 @@ import {
 import { effectiveEnd } from "../domain/planSlot";
 import { daysForWeekends, initials } from "../lib/festival";
 import { stageColor, timeInZone } from "../lib/format";
+import { useT, useLocale, type TranslateFn, type MessageKey } from "../i18n";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { ErrorState, LoadingState } from "../ui/states";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
@@ -51,15 +52,20 @@ import type { PlanBlock, PlanBlockKind, PlannableSet, PlanSlot } from "../domain
 const MIN = 60_000;
 const STEP_MS = 15 * MIN;
 
-const BLOCK_KINDS: Record<PlanBlockKind, { icon: string; label: string }> = {
-  eat: { icon: "restaurant", label: "Food" },
-  rest: { icon: "airline_seat_flat", label: "Rest" },
-  water: { icon: "local_drink", label: "Water" },
-  meet: { icon: "group", label: "Meet up" },
-  explore: { icon: "explore", label: "Explore" },
-  custom: { icon: "more_horiz", label: "Plan" },
+const BLOCK_KINDS: Record<PlanBlockKind, { icon: string; labelKey: MessageKey }> = {
+  eat: { icon: "restaurant", labelKey: "plan.kindEat" },
+  rest: { icon: "airline_seat_flat", labelKey: "plan.kindRest" },
+  water: { icon: "local_drink", labelKey: "plan.kindWater" },
+  meet: { icon: "group", labelKey: "plan.kindMeet" },
+  explore: { icon: "explore", labelKey: "plan.kindExplore" },
+  custom: { icon: "more_horiz", labelKey: "plan.kindCustom" },
 };
 const PRESET_ORDER: PlanBlockKind[] = ["eat", "rest", "water", "meet", "explore", "custom"];
+
+/** The localized human label for a personal-block kind (icons stay in {@link BLOCK_KINDS}). */
+function blockKindLabel(t: TranslateFn, kind: PlanBlockKind): string {
+  return t(BLOCK_KINDS[kind].labelKey);
+}
 
 interface BlockDraft {
   id: string | null;
@@ -73,6 +79,8 @@ interface BlockDraft {
 export function MyPlanScreen(): JSX.Element {
   const { status, lineup, error, reload } = useLineup();
   const navigate = useNavigate();
+  const t = useT();
+  const locale = useLocale();
   const [params, setParams] = useSearchParams();
   const { onboarding } = useOnboarding();
   const travel = useTravelMatrix(lineup);
@@ -88,7 +96,7 @@ export function MyPlanScreen(): JSX.Element {
   }, []);
 
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
-  const allDays = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds) : []), [lineup, weekendIds]);
+  const allDays = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
   const days = useMemo(() => {
     const picked = onboarding?.dayKeys ?? [];
     return picked.length > 0 ? allDays.filter((d) => picked.includes(d.key)) : allDays;
@@ -127,13 +135,13 @@ export function MyPlanScreen(): JSX.Element {
   if (status === "error" || !lineup) {
     return (
       <>
-        <AppHeader eyebrow="Your day" title="My Plan" />
-        <ErrorState message={error ?? "Could not load your plan."} onRetry={reload} />
+        <AppHeader eyebrow={t("plan.yourDay")} title={t("plan.title")} />
+        <ErrorState message={error ?? t("plan.loadError")} onRetry={reload} />
       </>
     );
   }
 
-  const title = day ? `${day.weekdayLong} ${dayOfMonth(day.startMs, tz)}` : "My Plan";
+  const title = day ? `${day.weekdayLong} ${dayOfMonth(day.startMs, tz)}` : t("plan.title");
   const hasPlan = timeline.setCount > 0;
   const selectDay = (key: string): void => setParams(key ? { day: key } : {}, { replace: true });
 
@@ -157,18 +165,18 @@ export function MyPlanScreen(): JSX.Element {
   // Personal blocks (DEC-073) — open the editor pre-filled (from a gap, or a sensible free window).
   const fillGap = (gap: PlanGapItem): void => {
     const kind: PlanBlockKind = "eat";
-    setBlockDraft({ id: null, kind, label: BLOCK_KINDS[kind].label, startMs: gap.fillStartMs, endMs: gap.fillEndMs, note: "" });
+    setBlockDraft({ id: null, kind, label: blockKindLabel(t, kind), startMs: gap.fillStartMs, endMs: gap.fillEndMs, note: "" });
   };
   const addBreak = (): void => {
     const window = firstFreeWindow(timeline.items);
     const kind: PlanBlockKind = "eat";
-    setBlockDraft({ id: null, kind, label: BLOCK_KINDS[kind].label, startMs: window.startMs, endMs: window.endMs, note: "" });
+    setBlockDraft({ id: null, kind, label: blockKindLabel(t, kind), startMs: window.startMs, endMs: window.endMs, note: "" });
   };
   const editBlock = (block: PlanBlock): void => {
     setBlockDraft({ id: block.id, kind: block.kind, label: block.label, startMs: block.startMs, endMs: block.endMs, note: block.note ?? "" });
   };
   const commitBlock = (draft: BlockDraft): void => {
-    const label = draft.label.trim() || BLOCK_KINDS[draft.kind].label;
+    const label = draft.label.trim() || blockKindLabel(t, draft.kind);
     if (draft.id) {
       const resized = resizeBlock(slots, blocks, draft.id, draft.startMs, draft.endMs);
       if (!resized) return;
@@ -211,7 +219,7 @@ export function MyPlanScreen(): JSX.Element {
   return (
     <>
       <AppHeader
-        eyebrow="My Plan"
+        eyebrow={t("plan.title")}
         title={title}
         right={
           hasPlan ? (
@@ -223,9 +231,9 @@ export function MyPlanScreen(): JSX.Element {
                 onClick={() => setEditing((v) => !v)}
               >
                 <span className="ms" style={{ fontSize: 16 }}>{editing ? "check" : "edit"}</span>
-                {editing ? "Done" : "Edit"}
+                {editing ? t("plan.done") : t("plan.edit")}
               </button>
-              <button className="ava-sm" aria-label="Share plan" onClick={() => setShowShare(true)}>
+              <button className="ava-sm" aria-label={t("plan.sharePlan")} onClick={() => setShowShare(true)}>
                 <span className="ms" style={{ color: "var(--accent)", fontSize: 19 }}>ios_share</span>
               </button>
             </div>
@@ -246,9 +254,13 @@ export function MyPlanScreen(): JSX.Element {
           ))}
           {hasPlan && (
             <span className="plan-summary">
-              {timeline.setCount} set{timeline.setCount === 1 ? "" : "s"}
-              {timeline.blockCount > 0 ? ` · ${timeline.blockCount} plan${timeline.blockCount === 1 ? "" : "s"}` : ""}
-              {timeline.breakCount > 0 ? ` · ${timeline.breakCount} break${timeline.breakCount === 1 ? "" : "s"}` : ""}
+              {t("plan.summarySets", { count: timeline.setCount, sets: timeline.setCount === 1 ? t("common.set") : t("common.sets") })}
+              {timeline.blockCount > 0
+                ? t("plan.summaryPlans", { count: timeline.blockCount, plans: timeline.blockCount === 1 ? t("common.plan") : t("common.plans") })
+                : ""}
+              {timeline.breakCount > 0
+                ? t("plan.summaryBreaks", { count: timeline.breakCount, breaks: timeline.breakCount === 1 ? t("common.break") : t("common.breaks") })
+                : ""}
             </span>
           )}
         </div>
@@ -257,13 +269,13 @@ export function MyPlanScreen(): JSX.Element {
       {!hasPlan ? (
         <div className="state">
           <span className="ms">event_available</span>
-          <h2>No plan yet</h2>
-          <p>Lock in your favorites and we’ll build a clash-free timeline for {day ? day.weekdayLong : "the day"}.</p>
+          <h2>{t("plan.noPlanTitle")}</h2>
+          <p>{t("plan.noPlanMsg", { day: day ? day.weekdayLong : t("plan.theDay") })}</p>
           <button
             className="btn btn-primary"
             onClick={() => navigate(`/lockin${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`)}
           >
-            <span className="ms">lock</span> Lock in my day
+            <span className="ms">lock</span> {t("plan.lockInMyDay")}
           </button>
         </div>
       ) : (
@@ -312,11 +324,11 @@ export function MyPlanScreen(): JSX.Element {
               <span className="plan-dot mini" />
               <div className="plan-add-row">
                 <button className="plan-chip" onClick={() => setShowAdd(true)}>
-                  <span className="ms" style={{ fontSize: 14 }}>add</span> Add a set
+                  <span className="ms" style={{ fontSize: 14 }}>add</span> {t("plan.addASet")}
                 </button>
                 {editing && (
                   <button className="plan-chip" onClick={addBreak}>
-                    <span className="ms" style={{ fontSize: 14 }}>more_time</span> Add a break
+                    <span className="ms" style={{ fontSize: 14 }}>more_time</span> {t("plan.addABreak")}
                   </button>
                 )}
               </div>
@@ -348,8 +360,9 @@ export function MyPlanScreen(): JSX.Element {
 
       {swapFor && (
         <SetPickerSheet
-          title={`Swap ${swapFor.label}`}
-          hint="Only acts that fit this slot without creating a clash are shown."
+          title={t("plan.swapTitle", { name: swapFor.label })}
+          hint={t("plan.swapHint")}
+          action="swap"
           tz={tz}
           options={fittingSwaps(
             slots,
@@ -363,8 +376,9 @@ export function MyPlanScreen(): JSX.Element {
 
       {showAdd && (
         <SetPickerSheet
-          title="Add a set"
-          hint="Only acts that fit your day without overlapping a locked set are shown."
+          title={t("plan.addASet")}
+          hint={t("plan.addHint")}
+          action="add"
           tz={tz}
           options={fittingAdds(slots, daySets)}
           onPick={addSet}
@@ -441,6 +455,7 @@ function PlanItemMenu({
   onMap: () => void;
   onClose: () => void;
 }): JSX.Element {
+  const t = useT();
   return (
     <Sheet onClose={onClose} label={slot.label}>
       <div className="sheet-head">
@@ -453,13 +468,13 @@ function PlanItemMenu({
       </div>
       <div className="sheet-body">
         <button className="plan-menu-item" onClick={onMap}>
-          <span className="ms">map</span> View on map
+          <span className="ms">map</span> {t("plan.viewOnMap")}
         </button>
         <button className="plan-menu-item" onClick={onSwap}>
-          <span className="ms">swap_horiz</span> Swap set
+          <span className="ms">swap_horiz</span> {t("plan.swapSet")}
         </button>
         <button className="plan-menu-item danger" onClick={onRemove}>
-          <span className="ms">delete</span> Remove from plan
+          <span className="ms">delete</span> {t("plan.removeFromPlan")}
         </button>
       </div>
     </Sheet>
@@ -469,6 +484,7 @@ function PlanItemMenu({
 function SetPickerSheet({
   title,
   hint,
+  action,
   tz,
   options,
   onPick,
@@ -476,11 +492,13 @@ function SetPickerSheet({
 }: {
   title: string;
   hint: string;
+  action: "swap" | "add";
   tz: string;
   options: PlannableSet[];
   onPick: (set: PlannableSet) => void;
   onClose: () => void;
 }): JSX.Element {
+  const t = useT();
   const [query, setQuery] = useState("");
   const filtered = query.trim()
     ? options.filter((set) => set.label.toLowerCase().includes(query.trim().toLowerCase()))
@@ -493,11 +511,11 @@ function SetPickerSheet({
       </div>
       <div className="search">
         <span className="ms" style={{ color: "var(--muted)", fontSize: 20 }}>search</span>
-        <input placeholder="Search artists…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search artists" />
+        <input placeholder={t("common.searchArtists")} value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("common.searchArtistsAria")} />
       </div>
       <div className="sheet-body">
         {filtered.length === 0 ? (
-          <p className="lk-note">No acts fit here without a clash.</p>
+          <p className="lk-note">{t("plan.noFit")}</p>
         ) : (
           filtered.map((set) => (
             <div key={set.id} className="row">
@@ -509,7 +527,7 @@ function SetPickerSheet({
                   {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
                 </div>
               </div>
-              <button className="addpill" onClick={() => onPick(set)}>{title.startsWith("Swap") ? "Swap" : "Add"}</button>
+              <button className="addpill" onClick={() => onPick(set)}>{action === "swap" ? t("plan.swap") : t("plan.add")}</button>
             </div>
           ))
         )}
@@ -539,16 +557,18 @@ function BlockSheet({
   onDelete?: () => void;
   onClose: () => void;
 }): JSX.Element {
+  const t = useT();
   const valid = rangeIsFree(slots, blocks, { startMs: draft.startMs, endMs: draft.endMs }, draft.id ?? undefined);
   const durationMin = Math.max(0, Math.round((draft.endMs - draft.startMs) / MIN));
   const pickKind = (kind: PlanBlockKind): void => {
-    const wasDefault = draft.label.trim() === "" || PRESET_ORDER.some((k) => BLOCK_KINDS[k].label === draft.label.trim());
-    onChange({ ...draft, kind, label: wasDefault ? BLOCK_KINDS[kind].label : draft.label });
+    const wasDefault = draft.label.trim() === "" || PRESET_ORDER.some((k) => blockKindLabel(t, k) === draft.label.trim());
+    onChange({ ...draft, kind, label: wasDefault ? blockKindLabel(t, kind) : draft.label });
   };
+  const sheetTitle = draft.id ? t("plan.editPlan") : t("plan.addToYourDay");
   return (
-    <Sheet onClose={onClose} label={draft.id ? "Edit plan" : "Add to your day"}>
+    <Sheet onClose={onClose} label={sheetTitle}>
       <div className="sheet-head">
-        <div className="poster sheet-title">{draft.id ? "Edit plan" : "Add to your day"}</div>
+        <div className="poster sheet-title">{sheetTitle}</div>
         <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
       <div className="sheet-body">
@@ -561,58 +581,58 @@ function BlockSheet({
               aria-pressed={draft.kind === kind}
             >
               <span className="ms" aria-hidden="true">{BLOCK_KINDS[kind].icon}</span>
-              {BLOCK_KINDS[kind].label}
+              {blockKindLabel(t, kind)}
             </button>
           ))}
         </div>
 
         <label className="block-field">
-          <span className="block-field-label">Label</span>
+          <span className="block-field-label">{t("plan.label")}</span>
           <input
             className="block-input"
             value={draft.label}
-            placeholder={BLOCK_KINDS[draft.kind].label}
+            placeholder={blockKindLabel(t, draft.kind)}
             onChange={(e) => onChange({ ...draft, label: e.target.value })}
-            aria-label="Block label"
+            aria-label={t("plan.blockLabelAria")}
           />
         </label>
 
         <div className="block-times">
           <TimeStepper
-            label="From"
+            label={t("plan.from")}
             valueMs={draft.startMs}
             tz={tz}
             onChange={(startMs) => onChange({ ...draft, startMs, endMs: Math.max(draft.endMs, startMs + STEP_MS) })}
           />
           <TimeStepper
-            label="To"
+            label={t("plan.to")}
             valueMs={draft.endMs}
             tz={tz}
             min={draft.startMs + STEP_MS}
             onChange={(endMs) => onChange({ ...draft, endMs })}
           />
-          <span className="block-duration">{durationMin} min</span>
+          <span className="block-duration">{t("plan.minShort", { min: durationMin })}</span>
         </div>
 
         <label className="block-field">
-          <span className="block-field-label">Note (optional)</span>
+          <span className="block-field-label">{t("plan.noteOptional")}</span>
           <input
             className="block-input"
             value={draft.note}
-            placeholder="e.g. north gate, with Ana"
+            placeholder={t("plan.notePlaceholder")}
             onChange={(e) => onChange({ ...draft, note: e.target.value })}
-            aria-label="Block note"
+            aria-label={t("plan.blockNoteAria")}
           />
         </label>
 
-        {!valid && <p className="block-error"><span className="ms" style={{ fontSize: 14 }}>error</span> That time overlaps a set or another plan.</p>}
+        {!valid && <p className="block-error"><span className="ms" style={{ fontSize: 14 }}>error</span> {t("plan.overlapError")}</p>}
 
         <button className="btn btn-primary" disabled={!valid} onClick={() => onCommit(draft)}>
-          <span className="ms">{draft.id ? "check" : "add"}</span> {draft.id ? "Save" : "Add to plan"}
+          <span className="ms">{draft.id ? "check" : "add"}</span> {draft.id ? t("plan.save") : t("plan.addToPlan")}
         </button>
         {onDelete && (
           <button className="plan-menu-item danger" onClick={onDelete}>
-            <span className="ms">delete</span> Remove from plan
+            <span className="ms">delete</span> {t("plan.removeFromPlan")}
           </button>
         )}
       </div>
@@ -633,6 +653,7 @@ function TimeStepper({
   min?: number;
   onChange: (ms: number) => void;
 }): JSX.Element {
+  const t = useT();
   const dec = (): void => {
     const next = valueMs - STEP_MS;
     if (min == null || next >= min) onChange(next);
@@ -641,11 +662,11 @@ function TimeStepper({
     <div className="time-stepper">
       <span className="time-stepper-label">{label}</span>
       <div className="time-stepper-ctrl">
-        <button className="time-stepper-btn" aria-label={`${label} earlier`} onClick={dec}>
+        <button className="time-stepper-btn" aria-label={t("plan.earlier", { label })} onClick={dec}>
           <span className="ms" style={{ fontSize: 18 }}>remove</span>
         </button>
         <span className="time-stepper-val">{timeInZone(new Date(valueMs).toISOString(), tz)}</span>
-        <button className="time-stepper-btn" aria-label={`${label} later`} onClick={() => onChange(valueMs + STEP_MS)}>
+        <button className="time-stepper-btn" aria-label={t("plan.later", { label })} onClick={() => onChange(valueMs + STEP_MS)}>
           <span className="ms" style={{ fontSize: 18 }}>add</span>
         </button>
       </div>
@@ -671,6 +692,7 @@ function TravelSheet({
   onClear: () => void;
   onClose: () => void;
 }): JSX.Element {
+  const t = useT();
   const info = item.travelIn!;
   const prev = slots.find((s) => s.setId === info.fromSetId);
   const walkMs = info.walkMinutes * MIN;
@@ -679,16 +701,17 @@ function TravelSheet({
   const arriveMs = prev ? prev.endMs + walkMs : item.slot.startMs; // arrive-late
   const leaveFeasible = prev ? departMs > prev.startMs : false;
   const hm = (ms: number): string => timeInZone(new Date(ms).toISOString(), tz);
+  const prevLabel = prev?.label ?? t("plan.theSet");
 
   return (
-    <Sheet onClose={onClose} label="Tight walk">
+    <Sheet onClose={onClose} label={t("plan.tightWalk")}>
       <div className="sheet-head">
-        <div className="poster sheet-title">Tight walk</div>
+        <div className="poster sheet-title">{t("plan.tightWalk")}</div>
         <button className="ms sheet-x" onClick={onClose}>close</button>
       </div>
       <div className="travel-summary">
         <span className="ms" style={{ fontSize: 16, color: "var(--accent)" }}>directions_walk</span>
-        {info.walkMinutes} min from {info.fromStageName} to {item.slot.stageName} — about {lost} min overlaps.
+        {t("plan.tightWalkSummary", { min: info.walkMinutes, from: info.fromStageName, to: item.slot.stageName, lost })}
       </div>
       <div className="sheet-body">
         <button
@@ -698,9 +721,9 @@ function TravelSheet({
         >
           <span className="ms">logout</span>
           <span className="min0">
-            <span className="travel-opt-title">Leave {prev?.label ?? "the set"} early</span>
+            <span className="travel-opt-title">{t("plan.leaveEarlyTitle", { name: prevLabel })}</span>
             <span className="travel-opt-sub">
-              {leaveFeasible ? `Catch all of ${item.slot.label}. Leave at ${hm(departMs)} — miss the last ${lost} min.` : "Not enough time to make this walk."}
+              {leaveFeasible ? t("plan.leaveEarlySub", { name: item.slot.label, time: hm(departMs), lost }) : t("plan.notEnoughTime")}
             </span>
           </span>
           {info.resolution === "leave-early" && <span className="ms travel-opt-check">check_circle</span>}
@@ -712,9 +735,9 @@ function TravelSheet({
         >
           <span className="ms">login</span>
           <span className="min0">
-            <span className="travel-opt-title">Arrive at {item.slot.label} late</span>
+            <span className="travel-opt-title">{t("plan.arriveLateTitle", { name: item.slot.label })}</span>
             <span className="travel-opt-sub">
-              Stay to the end of {prev?.label ?? "the set"}. Arrive {hm(arriveMs)} — miss the first {lost} min.
+              {t("plan.arriveLateSub", { prev: prevLabel, time: hm(arriveMs), lost })}
             </span>
           </span>
           {info.resolution === "arrive-late" && <span className="ms travel-opt-check">check_circle</span>}
@@ -722,7 +745,7 @@ function TravelSheet({
 
         {info.explicit && (
           <button className="plan-menu-item" onClick={onClear}>
-            <span className="ms">restart_alt</span> Use the default again
+            <span className="ms">restart_alt</span> {t("plan.useDefault")}
           </button>
         )}
       </div>
@@ -748,6 +771,7 @@ function PlanSetRow({
   onTravel: () => void;
 }): JSX.Element {
   const { openArtist } = useArtistSheet();
+  const t = useT();
   const { slot, status, startMs, endMs, travelIn } = item;
   const start = timeInZone(new Date(startMs).toISOString(), tz);
   const end = timeInZone(new Date(endMs).toISOString(), tz);
@@ -765,18 +789,18 @@ function PlanSetRow({
           className={`glass plan-card tappable ${status}`}
           role="button"
           tabIndex={0}
-          aria-label={`View ${slot.label}`}
+          aria-label={t("common.viewAct", { name: slot.label })}
           onClick={() => openArtist(slot.actKey)}
           onKeyDown={openOnActivate(() => openArtist(slot.actKey))}
         >
           <ArtistPhoto src={photoUrl} name={slot.label} width={PHOTO_WIDTH.list} className="plan-photo" />
           <div className="plan-card-main">
             <div className={`plan-when ${status}`}>
-              {status === "now" ? "NOW · " : ""}
+              {status === "now" ? t("plan.nowDot") : ""}
               {start} – {end}
-              {status === "done" ? " · done" : ""}
-              {leftEarly ? " · leave early" : ""}
-              {inLate ? " · in late" : ""}
+              {status === "done" ? t("plan.doneSuffix") : ""}
+              {leftEarly ? t("plan.leaveEarlySuffix") : ""}
+              {inLate ? t("plan.inLateSuffix") : ""}
             </div>
             <div className="poster plan-name">{slot.label}</div>
             <div className="plan-stage">
@@ -787,7 +811,7 @@ function PlanSetRow({
           <button
             type="button"
             className="plan-state-ico-btn"
-            aria-label={`Edit ${slot.label}`}
+            aria-label={t("plan.editAct", { name: slot.label })}
             onClick={(e) => {
               e.stopPropagation();
               onMenu();
@@ -810,12 +834,13 @@ function TravelChip({
   editing: boolean;
   onClick: () => void;
 }): JSX.Element {
+  const t = useT();
   const danger = !travel.feasible;
   const text = danger
-    ? `Tight: ${travel.walkMinutes} min walk from ${travel.fromStageName}`
+    ? t("plan.tightChip", { min: travel.walkMinutes, from: travel.fromStageName })
     : travel.resolution === "arrive-late"
-      ? `Arrive ${travel.lostMinutes} min late · ${travel.walkMinutes} min walk`
-      : `Leave early for ${travel.walkMinutes} min walk · −${travel.lostMinutes} min`;
+      ? t("plan.arriveLateChip", { lost: travel.lostMinutes, min: travel.walkMinutes })
+      : t("plan.leaveEarlyChip", { min: travel.walkMinutes, lost: travel.lostMinutes });
   const className = `plan-travel-chip${danger ? " danger" : ""}${travel.explicit ? " set" : ""}`;
   const icon = danger ? "warning" : travel.resolution === "arrive-late" ? "login" : "logout";
   if (!editing) {
@@ -848,6 +873,7 @@ function PlanBlockRow({
   editing: boolean;
   onEdit: () => void;
 }): JSX.Element {
+  const t = useT();
   const { block, status } = item;
   const meta = BLOCK_KINDS[block.kind];
   const start = timeInZone(new Date(block.startMs).toISOString(), tz);
@@ -857,9 +883,9 @@ function PlanBlockRow({
       <span className="block-card-ico ms" aria-hidden="true">{meta.icon}</span>
       <div className="plan-card-main">
         <div className={`plan-when ${status}`}>
-          {status === "now" ? "NOW · " : ""}
+          {status === "now" ? t("plan.nowDot") : ""}
           {start} – {end}
-          {status === "done" ? " · done" : ""}
+          {status === "done" ? t("plan.doneSuffix") : ""}
         </div>
         <div className="poster plan-name">{block.label}</div>
         {block.note && <div className="plan-stage">{block.note}</div>}
@@ -871,7 +897,7 @@ function PlanBlockRow({
     <div className="plan-row fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className={`plan-dot ${status} block`} />
       {editing ? (
-        <button type="button" className={`glass plan-card block tappable ${status}`} onClick={onEdit} aria-label={`Edit ${block.label}`}>
+        <button type="button" className={`glass plan-card block tappable ${status}`} onClick={onEdit} aria-label={t("plan.editAct", { name: block.label })}>
           {inner}
         </button>
       ) : (
@@ -894,6 +920,7 @@ function PlanGapRow({
   onRoute: () => void;
   onFill: () => void;
 }): JSX.Element {
+  const t = useT();
   const fillable = editing && item.freeMinutes >= FILLABLE_THRESHOLD_MIN;
   return (
     <div className="plan-row gap fp-rise" style={{ "--i": i } as CSSProperties}>
@@ -902,19 +929,21 @@ function PlanGapRow({
         {item.walkMinutes > 0 && (
           <button type="button" className="plan-chip" onClick={onRoute}>
             <span className="ms" style={{ fontSize: 13 }}>directions_walk</span>
-            {item.walkMinutes} min walk{item.toStageName ? ` to ${item.toStageName}` : ""}
+            {item.toStageName
+              ? t("plan.walkChipTo", { min: item.walkMinutes, stage: item.toStageName })
+              : t("plan.walkChip", { min: item.walkMinutes })}
           </button>
         )}
         {item.breakMinutes >= 20 && (
           <span className="plan-chip">
             <span className="ms" style={{ fontSize: 13 }}>schedule</span>
-            {item.breakMinutes} min free
+            {t("plan.freeChip", { min: item.breakMinutes })}
           </span>
         )}
         {fillable && (
           <button type="button" className="plan-chip fill" onClick={onFill}>
             <span className="ms" style={{ fontSize: 13 }}>add</span>
-            Fill {item.freeMinutes}m
+            {t("plan.fillChip", { min: item.freeMinutes })}
           </button>
         )}
       </div>

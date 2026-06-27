@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.34.0";
+export const APP_VERSION = "0.35.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,21 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.35.0",
+    date: "2026-06-27",
+    title: "The whole app now speaks Portuguese",
+    icon: "translate",
+    whatsNew: [
+      "Switch the language to Português and the main screens follow — Now, Line-up, Timetable, My Plan, Map and Squad, not just the menus.",
+      "Days and dates read naturally in Portuguese too (segunda, ter, 18 jul…).",
+      "The feature name “Squad” stays “Squad” in every language — it's the name, not a word to translate.",
+    ],
+    howToTest: [
+      "Settings → Appearance & language → Português, then open each main tab: no stray English labels, empty states or buttons.",
+      "Check the day chips and artist dates — they switch to Portuguese weekday/month names.",
+    ],
+  },
   {
     version: "0.34.0",
     date: "2026-06-27",

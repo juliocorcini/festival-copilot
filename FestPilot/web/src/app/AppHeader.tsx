@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, type ReactNode } from "react";
 import { initialsOf, useIdentity } from "../data/identity";
+import { useT } from "../i18n";
 
 interface Props {
   eyebrow?: string;
@@ -18,6 +19,7 @@ interface Props {
 export function AppHeader({ eyebrow, title, avatarInitial, right }: Props): JSX.Element {
   const navigate = useNavigate();
   const { user } = useIdentity();
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const initial = avatarInitial ?? initialsOf(user?.displayName);
   // A real avatar photo (DEC-059) replaces the initial when set; custom `avatarInitial` callers
@@ -39,22 +41,22 @@ export function AppHeader({ eyebrow, title, avatarInitial, right }: Props): JSX.
         <div className="ava-menu-wrap">
           <button
             className="ava"
-            aria-label="Profile & settings"
+            aria-label={t("header.profileSettings")}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            {photoUrl ? <img className="ava-img" src={photoUrl} alt="Your avatar" /> : initial}
+            {photoUrl ? <img className="ava-img" src={photoUrl} alt={t("header.yourAvatar")} /> : initial}
           </button>
           {menuOpen && (
             <>
               <div className="menu-scrim" onClick={() => setMenuOpen(false)} />
               <div className="ava-menu" role="menu">
                 <button role="menuitem" className="ava-menu-item" onClick={() => go("/squad/profile")}>
-                  <span className="ms">person</span> Profile
+                  <span className="ms">person</span> {t("header.profile")}
                 </button>
                 <button role="menuitem" className="ava-menu-item" onClick={() => go("/settings")}>
-                  <span className="ms">settings</span> Settings
+                  <span className="ms">settings</span> {t("header.settings")}
                 </button>
               </div>
             </>

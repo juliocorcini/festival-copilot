@@ -17,7 +17,7 @@ export interface DayInfo {
  * Days are the derived contiguous blocks (DEC-048), so a 00:30 set shows under the night it belongs to
  * and the key stays the source day label ("FRIDAY") that persisted plans/onboarding are stored under.
  */
-export function daysForWeekends(lineup: LineupDto, weekendIds: string[]): DayInfo[] {
+export function daysForWeekends(lineup: LineupDto, weekendIds: string[], locale?: string): DayInfo[] {
   const tz = lineup.festival.timezone;
   const scoped = performancesForWeekends(lineup.performances, weekendIds);
 
@@ -33,7 +33,7 @@ export function daysForWeekends(lineup: LineupDto, weekendIds: string[]): DayInf
       if (block.startMs < existing.startMs) {
         existing.startMs = block.startMs;
         existing.weekendId = block.weekendId;
-        applyLabels(existing, block.startMs, tz);
+        applyLabels(existing, block.startMs, tz, locale);
       }
       continue;
     }
@@ -45,7 +45,7 @@ export function daysForWeekends(lineup: LineupDto, weekendIds: string[]): DayInf
       weekdayLong: block.id,
       dateLabel: "",
     };
-    applyLabels(info, block.startMs, tz);
+    applyLabels(info, block.startMs, tz, locale);
     byId.set(block.id, info);
   }
 
@@ -69,11 +69,11 @@ function legacyDaysByLabel(performances: PerformanceDto[]): DayInfo[] {
   return [...byDay.values()];
 }
 
-function applyLabels(info: DayInfo, ms: number, tz: string): void {
+function applyLabels(info: DayInfo, ms: number, tz: string, locale = "en-US"): void {
   const date = new Date(ms);
-  info.weekdayShort = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: tz }).format(date);
-  info.weekdayLong = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: tz }).format(date);
-  info.dateLabel = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: tz }).format(date);
+  info.weekdayShort = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: tz }).format(date);
+  info.weekdayLong = new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: tz }).format(date);
+  info.dateLabel = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: tz }).format(date);
 }
 
 export function weekendTitle(weekend: WeekendDto): string {

@@ -65,12 +65,12 @@ export function timeInZone(utcIso: string | null, timeZone: string): string {
   }).format(date);
 }
 
-/** "SAT 18 JUL" style label in the festival timezone. */
-export function dayLabel(utcIso: string | null, timeZone: string): string {
+/** "SAT 18 JUL" style label in the festival timezone, localized to `locale` (defaults to en-GB). */
+export function dayLabel(utcIso: string | null, timeZone: string, locale = "en-GB"): string {
   if (!utcIso) return "";
   const date = new Date(utcIso);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "short",
     day: "numeric",
     month: "short",

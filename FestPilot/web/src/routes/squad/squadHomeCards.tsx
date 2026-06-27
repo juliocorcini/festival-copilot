@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../data/api";
 import { bearingDegrees, compassPoint, metersBetween } from "../../domain/travel";
 import { stageColor } from "../../lib/format";
+import { useT, type TranslateFn } from "../../i18n";
 import { useHeading, useMyFix } from "../../lib/useGeo";
 import type { BoardNoteDto, GroupEventDto, GroupPresenceDto, MeetingPointDto } from "../../data/types";
 import { ago, groupRosterByStage, pingKindFor, PresenceAvatar } from "../presence/presenceUi";
@@ -45,10 +46,14 @@ export function WhereEveryoneCard({
   presence: GroupPresenceDto | null;
 }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const [pinged, setPinged] = useState(false);
   const members = presence?.members ?? [];
   const places = groupRosterByStage(members);
   const livePlaces = places.filter((p) => p.kind !== "off");
+  // Localize the two non-proper-noun place labels (stage/between labels are venue names — kept as-is).
+  const placeLabel = (place: { kind: string; label: string }): string =>
+    place.kind === "off" ? t("squad.locationOffPlace") : place.kind === "venue" ? t("squad.inVenue") : place.label;
   const pingable = members.filter((m) => pingKindFor(m) !== null);
   const open = (): void => navigate(`/squad/${groupId}/where`);
 
@@ -63,11 +68,11 @@ export function WhereEveryoneCard({
   return (
     <section className="glass squad-card">
       <header className="squad-card-head">
-        <span className="squad-card-eyebrow">Where is everyone</span>
+        <span className="squad-card-eyebrow">{t("squad.whereEveryone")}</span>
         {pingable.length > 0 && (
           <button className="squad-ping" onClick={(e) => void pingAll(e)} disabled={pinged}>
             <span className="ms" aria-hidden="true">{pinged ? "check" : "campaign"}</span>
-            {pinged ? "Pinged" : "Ping all"}
+            {pinged ? t("squad.pinged") : t("squad.pingAll")}
           </button>
         )}
       </header>
@@ -76,8 +81,8 @@ export function WhereEveryoneCard({
         <div className="squad-card-empty" role="button" tabIndex={0} onClick={open} onKeyDown={onCardKey(open)}>
           <span className="ms" aria-hidden="true">location_searching</span>
           <div className="squad-card-empty-main">
-            <div className="squad-card-empty-title">No one's sharing yet</div>
-            <div className="squad-card-empty-sub">Share your location to see who's at which stage</div>
+            <div className="squad-card-empty-title">{t("squad.noOneSharingTitle")}</div>
+            <div className="squad-card-empty-sub">{t("squad.noOneSharingSub")}</div>
           </div>
           <span className="ms squad-card-chev" aria-hidden="true">chevron_right</span>
         </div>
@@ -90,8 +95,8 @@ export function WhereEveryoneCard({
                 style={{ background: place.stageName ? stageColor(place.stageName) : "var(--muted)" }}
               />
               <span className="where-label">
-                {place.label}
-                {place.hasYou && <span className="where-you"> · with you</span>}
+                {placeLabel(place)}
+                {place.hasYou && <span className="where-you"> · {t("squad.withYou")}</span>}
               </span>
               <span className="squad-live-stack">
                 {place.members.slice(0, MAX_AVATARS).map((m) => (
@@ -112,6 +117,7 @@ export function WhereEveryoneCard({
 /** A live meeting point: distance + compass arrow to the spot, with "Go" into turn-free navigation. */
 export function MeetingCompassCard({ groupId, point }: { groupId: string; point: MeetingPointDto }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { fix, denied } = useMyFix();
   const { heading } = useHeading();
 
@@ -122,7 +128,7 @@ export function MeetingCompassCard({ groupId, point }: { groupId: string; point:
   const arrowDeg = bearing == null ? 0 : heading == null ? bearing : (bearing - heading + 360) % 360;
   const closesIn = closesInLabel(point.expiresAtUtc);
   const badge = lifecycleBadge(point.lifecycle);
-  const owner = point.isMine ? "you" : point.createdByName ?? "a squadmate";
+  const owner = point.isMine ? t("common.you") : point.createdByName ?? t("squad.aSquadmate");
 
   const open = (): void => navigate(`/squad/${groupId}/meet/${point.id}`);
   const go = (e: { stopPropagation: () => void }): void => {
@@ -137,7 +143,7 @@ export function MeetingCompassCard({ groupId, point }: { groupId: string; point:
         style={point.photoUrl ? { backgroundImage: `url(${point.photoUrl})` } : undefined}
       >
         {!point.photoUrl && <span className="ms meet-compass-banner-icon" aria-hidden="true">flag</span>}
-        <span className="meet-compass-chip">{point.isSafety ? "Safety" : "Meeting point"}</span>
+        <span className="meet-compass-chip">{point.isSafety ? t("squad.safety") : t("squad.meetingPoint")}</span>
         <span className={`pill meet-badge meet-badge-${badge.tone} meet-compass-badge`}>{badge.label}</span>
       </div>
       <div className="meet-compass-body">
@@ -154,15 +160,15 @@ export function MeetingCompassCard({ groupId, point }: { groupId: string; point:
                 {bearing != null ? ` · ${compassPoint(bearing)}` : ""} ·{" "}
               </>
             ) : (
-              `${denied ? "Location off" : "Locating…"} · `
+              `${denied ? t("squad.locationOff") : t("squad.locating")} · `
             )}
-            {convergenceSummary(point)} · by {owner}
+            {convergenceSummary(point)} · {t("squad.by", { who: owner })}
             {closesIn ? ` · ${closesIn}` : ""}
           </div>
         </div>
-        <button className="btn btn-primary meet-compass-go" onClick={go} aria-label="Navigate to the spot">
+        <button className="btn btn-primary meet-compass-go" onClick={go} aria-label={t("squad.navigateToSpot")}>
           <span className="ms" aria-hidden="true">near_me</span>
-          Go
+          {t("squad.go")}
         </button>
       </div>
     </section>
@@ -180,16 +186,17 @@ export function BoardPreviewCard({
   loading: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const open = (): void => navigate(`/squad/${groupId}/board`);
   const top = notes.slice(0, 3);
 
   return (
     <section className="glass squad-card">
       <header className="squad-card-head">
-        <span className="squad-card-eyebrow">Pinned board</span>
+        <span className="squad-card-eyebrow">{t("squad.pinnedBoard")}</span>
         <button className="squad-add" onClick={(e) => { stop(e); open(); }}>
           <span className="ms" aria-hidden="true">add</span>
-          Add note
+          {t("squad.addNote")}
         </button>
       </header>
 
@@ -201,8 +208,8 @@ export function BoardPreviewCard({
         <div className="squad-card-empty" role="button" tabIndex={0} onClick={open} onKeyDown={onCardKey(open)}>
           <span className="ms" aria-hidden="true">push_pin</span>
           <div className="squad-card-empty-main">
-            <div className="squad-card-empty-title">Nothing pinned yet</div>
-            <div className="squad-card-empty-sub">Add the first note for the squad</div>
+            <div className="squad-card-empty-title">{t("squad.nothingPinnedTitle")}</div>
+            <div className="squad-card-empty-sub">{t("squad.nothingPinnedSub")}</div>
           </div>
           <span className="ms squad-card-chev" aria-hidden="true">chevron_right</span>
         </div>
@@ -214,7 +221,7 @@ export function BoardPreviewCard({
               <div className="board-preview-text">
                 <div className="board-preview-body">{note.body}</div>
                 <div className="board-preview-who">
-                  {note.authorName ?? "Guest"} · {relativeTime(note.createdAtUtc)}
+                  {note.authorName ?? t("common.guest")} · {relativeTime(note.createdAtUtc, t)}
                 </div>
               </div>
             </div>
@@ -228,10 +235,11 @@ export function BoardPreviewCard({
 /** "SQUAD AGENDA" — the next fixed-time group moments (Phase 8), each with a live countdown. */
 export function SquadAgendaCard({ groupId, events }: { groupId: string; events: GroupEventDto[] }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 30_000);
-    return () => window.clearInterval(t);
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
   }, []);
   const open = (): void => navigate(`/squad/${groupId}/events`);
   const top = events.slice(0, 2);
@@ -239,10 +247,10 @@ export function SquadAgendaCard({ groupId, events }: { groupId: string; events: 
   return (
     <section className="glass squad-card">
       <header className="squad-card-head">
-        <span className="squad-card-eyebrow">Squad agenda</span>
+        <span className="squad-card-eyebrow">{t("squad.agenda")}</span>
         <button className="squad-add" onClick={(e) => { stop(e); open(); }}>
           <span className="ms" aria-hidden="true">add</span>
-          Add
+          {t("squad.add")}
         </button>
       </header>
 
@@ -250,8 +258,8 @@ export function SquadAgendaCard({ groupId, events }: { groupId: string; events: 
         <div className="squad-card-empty" role="button" tabIndex={0} onClick={open} onKeyDown={onCardKey(open)}>
           <span className="ms" aria-hidden="true">event</span>
           <div className="squad-card-empty-main">
-            <div className="squad-card-empty-title">No squad moments yet</div>
-            <div className="squad-card-empty-sub">Pin a time everyone shows up — a photo, a meal, the headliner</div>
+            <div className="squad-card-empty-title">{t("squad.noMomentsTitle")}</div>
+            <div className="squad-card-empty-sub">{t("squad.noMomentsSub")}</div>
           </div>
           <span className="ms squad-card-chev" aria-hidden="true">chevron_right</span>
         </div>
@@ -282,9 +290,9 @@ export function SquadAgendaCard({ groupId, events }: { groupId: string; events: 
 }
 
 /** Compact relative time for the board preview, reusing the presence `ago` scale ("just now" / "20m ago"). */
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, t: TranslateFn): string {
   const then = Date.parse(iso);
   if (!Number.isFinite(then)) return "";
   const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
-  return seconds < 45 ? "just now" : `${ago(seconds)} ago`;
+  return seconds < 45 ? t("squad.justNow") : t("squad.ago", { time: ago(seconds) });
 }
