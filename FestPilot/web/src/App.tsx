@@ -4,6 +4,7 @@ import { AppLayout } from "./app/AppLayout";
 import { UpdateBanner } from "./app/UpdateBanner";
 import { RouteAnnouncer } from "./app/RouteAnnouncer";
 import { SkipLink } from "./app/SkipLink";
+import { useThemeColor } from "./lib/chrome";
 import { Toaster } from "./ui/Toaster";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
@@ -63,6 +64,8 @@ const AdminSuggestionsScreen = lazy(() => named(import("./admin/AdminSuggestions
 const AdminMapEditorScreen = lazy(() => named(import("./admin/AdminMapEditorScreen"), "AdminMapEditorScreen"));
 
 export function App(): JSX.Element {
+  // D11/DEC-088: keep the OS status-/nav-bar color in sync with the active day/night palette.
+  useThemeColor();
   return (
     <BrowserRouter>
       <SkipLink />

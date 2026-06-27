@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.38.0";
+export const APP_VERSION = "0.39.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.39.0",
+    date: "2026-06-27",
+    title: "System bars that match the app",
+    icon: "smartphone",
+    whatsNew: [
+      "Installed to your home screen, the phone's status bar now matches FestPilot's look on every screen.",
+      "A pass over the safe areas keeps the top and bottom bars tidy on notch and home-indicator phones.",
+    ],
+    howToTest: [
+      "Install FestPilot to your home screen and open it: the top bar blends with the app instead of clashing.",
+      "Switch Appearance (Auto / Day / Night) in Settings — the bar stays consistent with the chrome.",
+    ],
+  },
   {
     version: "0.38.0",
     date: "2026-06-27",

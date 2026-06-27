@@ -1025,7 +1025,8 @@
 - **Decision**: stop truncating the festival name with "…" on the home. Use a responsive font that shrinks to fit, and break to **two lines** (name + "Belgium 2026" as a subtitle) when it still doesn't fit. (LOCK: Julio may prefer "Tomorrowland" only.)
 - **Rationale**: "Tomorrowland Belgium…" looks unfinished; the name is identity and should read cleanly without breaking the layout.
 
-### DEC-088 — System chrome: dynamic theme-color + safe-area audit + documented native status-bar — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G8). The app is a PWA (DEC-035 — Capacitor deferred).
+### DEC-088 — System chrome: dynamic theme-color + safe-area audit + documented native status-bar — APPROVED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** (shipped Gate G8, v0.39.0). The app is a PWA (DEC-035 — Capacitor deferred).
 - **Decision**: make `theme-color` **dynamic** (follow the day/night palette via JS), audit `--safe-top`/`--safe-bottom` end-to-end so content sits under a transparent top bar correctly, and **document** the `@capacitor/status-bar` (overlaysWebView) + NavigationBar config for the future native shell — **not built now**.
 - **Rationale**: the static dark `theme-color` makes the system bars clash with day mode; the app should feel native without yet shipping the Capacitor wrapper.
+- **As shipped (G8)**: `web/src/lib/chrome.ts` (`THEME_COLOR` per-palette map + `applyThemeColor` + `useThemeColor`), mounted once in `App.tsx`; +3 unit (`chrome.test.ts`). **Audit finding:** the chrome is the **same** warm near-black (`#0F0D09`) in both palettes today (only the MAP raster swaps), so both entries resolve to that token — that uniformity is what makes the bars MATCH, and the palette map is the single switch-point for a future distinct day chrome. Safe-areas already cover top/bottom (headers `+ var(--safe-top)`, `.nav` fills `--safe-bottom`, `body/#root` use `var(--bg)`); `index.html`/`manifest.webmanifest` already consistent. Native plan: `brain/documents/2026-06-27-native-system-bars.md`.

@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G7 ✅ (v0.38.0 no ar) — **timetable/line-up: palcos por favoritos, gridlines, Lock-in reflete plano, pinça um-passo, colapsar favs, haptic de aba** · **próximo:** G8 (barras do sistema D11 — fecha P1).
-- **produção:** **v0.38.0** (`festpilot.pages.dev`, deploy `ca5f8617`, master).
+- **gate atual:** G8 ✅ (v0.39.0 no ar) — **barras do sistema: `theme-color` dinâmico por palette + auditoria de safe-area + doc do shell nativo (Capacitor)** — **fecha P1** · **próximo:** G9 (squad — **P2 opcional**, se houver folga).
+- **produção:** **v0.39.0** (`festpilot.pages.dev`, deploy `e609c23a`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -27,9 +27,19 @@
 - [x] **G5** — poster v2 (D08) + URL final (D26). → **v0.36.0** ✅
 - [x] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → **v0.37.0** ✅ *(fechou P0)*
 - [x] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → **v0.38.0** ✅
-- [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
+- [x] **G8** — barras do sistema (D11). → **v0.39.0** ✅ *(fechou P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G8 — Barras do sistema ✅ — v0.39.0 *(fecha P1)*
+> Fecha **D11** (#6, barras do topo/baixo não combinam quando instalado na home). **Conselho inline (quick: Architect+Critic) + DEC-088.** Decision Brief: o `theme-color` no `index.html` era **fixo** (`#0F0D09`); a queixa é a faixa do SO destoar do app quando instalado (standalone). **Achado-chave da auditoria:** o chrome do app (header/nav/sheets/`--bg`) é o **mesmo warm-near-black nas duas palettes** — **só a arte do mapa** troca day/night. Logo o conserto correto **não** é uma cor clara no day (criaria costura sobre o header escuro); é **(a)** tornar o `theme-color` **dinâmico via JS** (segue a palette, fonte única) e **(b)** confirmar que as **safe-areas** já cobrem topo/baixo. *(Critic: "se day=claro, costura" → por isso ambas as palettes mapeiam pro mesmo token hoje; o mecanismo é o entregável e o single-switch-point pra um chrome day futuro.)*
+- **G8.1 — `theme-color` dinâmico (D11, DEC-088).** Novo `lib/chrome.ts`: `THEME_COLOR: Record<Palette,string>` (hoje day=night=`#0F0D09`, o `--bg`), `applyThemeColor(palette)` (cria/atualiza **um** `<meta name="theme-color">`, idempotente, safe fora do DOM) e o hook `useThemeColor()` (lê `useAppearance().palette`, re-aplica no change). Montado **uma vez** no root (`App.tsx`). **+3 unit** (`chrome.test.ts`: cria a meta quando falta; reusa a meta única; ambas as palettes = warm-near-black — o teste "vira" quando um chrome day distinto chegar).
+- **G8.2 — Auditoria de safe-area (D11).** Confirmado (sem mudança necessária): `:root` define `--safe-top/--safe-bottom = env(safe-area-inset-*)`; os headers usam `calc(... + var(--safe-top))`, o `.nav` inferior pinta o fundo dentro do `--safe-bottom`, e `body/#root` usam `var(--bg)` → o letterbox lateral (shell `max-width:480px`) também combina. `index.html` já tinha `viewport-fit=cover` + `apple-mobile-web-app-status-bar-style=black-translucent`; `manifest.webmanifest` já tinha `theme_color`/`background_color=#0F0D09` consistentes.
+- **G8.3 — Doc do shell nativo (DEC-088).** `brain/documents/2026-06-27-native-system-bars.md`: plano do `@capacitor/status-bar` + navigation bar (Android, plugin de comunidade) pro shell nativo futuro — overlay on (edge-to-edge), `Style.Light`, cor = `THEME_COLOR[palette]` (fonte única reusada), sincronizada com `useAppearance`; + checklist de QA nativo. **Não construído** (FestPilot é PWA — DEC-035).
+- **5-point self-check:** Dxx D11 + DEC-088 ✅; ACs em risco re-verificados → **zero-overlap** não tocado (sem mexer em plano), **`buildSquadPlan` só-sets** não tocado, **presença grosseira** não tocada, **sheets fixos** (G1) intactos; testes **web 474** (+3) + **server 238** sem novas falhas; nenhum arquivo fora de escopo (`App.tsx` só monta o hook); esta entrada.
+- **Verificação:** `tsc` limpo · **web unit 474** (era 471, +3 chrome) · **server 238** · **712 total** · `build` verde (main 410.15 kB, embute 0.39.0) · **deploy master** `e609c23a` → `festpilot.pages.dev`. Worker/D1 intactos.
+- **Escopo (arquivos):** `lib/chrome.ts` (novo), `lib/chrome.test.ts` (novo, +3), `App.tsx` (monta `useThemeColor`), `brain/documents/2026-06-27-native-system-bars.md` (novo), `data/changelog.ts`, `web/package.json`.
+- **DECs:** DEC-088 → **APPROVED** (theme-color dinâmico + safe-area auditada + doc Capacitor StatusBar/NavigationBar).
 
 ### G7 — Timetable & Line-up: polimento ✅ — v0.38.0
 > Fecha **D12/D13/D14/D15/D16/D19** (6 itens P1 de timetable/line-up). Domínio-primeiro onde havia lógica (ordenação por favoritos, gesto de pinça); o resto é CSS / estado local / haptic. **Sem ambiguidade nova** — só DEC-083/084/085 já adotadas.
