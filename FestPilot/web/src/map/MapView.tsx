@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { geoToSvg, type MapTransform, type StageGeo } from "./transform";
 import { useAppearance } from "../app/settings";
 import { usePanZoom } from "./usePanZoom";
-import { NO_INSETS, type Insets } from "./panClamp";
+import { maxScaleForBase, NO_INSETS, type Insets } from "./panClamp";
 import { coarsePresencePins, isOutsideVenue } from "./presencePins";
 import { useDeviceLocation } from "./useDeviceLocation";
 import { poiMeta } from "./poiMeta";
@@ -111,7 +111,11 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const [topEl, setTopEl] = useState<HTMLElement | null>(null);
   const [sheetEl, setSheetEl] = useState<HTMLElement | null>(null);
   const insets = useMeasuredInsets(topEl, sheetEl);
-  const { ref, view, recenter, handlers } = usePanZoom(cw, ch, insets);
+  // Progressive base (DEC-075): the raster swaps in on load; its real pixel width sets the *honest*
+  // zoom ceiling so deep zoom never out-runs the art into a blurry mush (D01). 0 ⇒ not loaded yet.
+  const [baseNaturalW, setBaseNaturalW] = useState(0);
+  const maxScale = maxScaleForBase(baseNaturalW, cw);
+  const { ref, view, recenter, handlers } = usePanZoom(cw, ch, insets, maxScale);
 
   const sets = useMemo(
     () => (lineup ? toPlannableSets(lineup.performances, lineup.stages) : []),
@@ -199,7 +203,16 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
             transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
           }}
         >
-          <img className="base" src={base} width={cw} height={ch} alt={`${t.venue} map`} draggable={false} />
+          <img
+            className={`base${baseNaturalW > 0 ? " is-loaded" : ""}`}
+            src={base}
+            width={cw}
+            height={ch}
+            alt={`${t.venue} map`}
+            draggable={false}
+            onLoad={(e) => setBaseNaturalW(e.currentTarget.naturalWidth || 1)}
+            onError={() => setBaseNaturalW((w) => w || 1)}
+          />
           <svg className="overlay" viewBox={`0 0 ${cw} ${ch}`} width={cw} height={ch}>
             {visiblePois.map((p) => {
               const [x, y] = geoToSvg(t.affine, p.lng, p.lat);

@@ -408,7 +408,10 @@ main:focus { outline: none; }
 }
 .viewport:active { cursor: grabbing; }
 .world { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
-.base { display: block; user-select: none; -webkit-user-drag: none; border-radius: 2px; }
+/* Progressive base (DEC-075): fade the high-fidelity raster in over the app-tinted viewport wash,
+   so the first paint is the warm brand colour — never an empty/black flash — then the art resolves. */
+.base { display: block; user-select: none; -webkit-user-drag: none; border-radius: 2px; opacity: 0; transition: opacity 0.28s ease; }
+.base.is-loaded { opacity: 1; }
 .overlay { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
 
 .lbl { font-family: "Oswald", sans-serif; font-weight: 700; paint-order: stroke; stroke: #08070a; stroke-width: 3px; }

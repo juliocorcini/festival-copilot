@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { clampPan, fitScale, fitView, NO_INSETS, type Insets, type Size, type View } from "./panClamp";
+import {
+  clampPan,
+  fitScale,
+  fitView,
+  maxScaleForBase,
+  DEFAULT_MAX_SCALE,
+  NO_INSETS,
+  type Insets,
+  type Size,
+  type View,
+} from "./panClamp";
 
 const world: Size = { w: 1000, h: 800 };
 const viewport: Size = { w: 400, h: 700 };
@@ -96,5 +106,38 @@ describe("clampPan — never drag into the void", () => {
     const c = clampPan({ x: 9999, y: 9999, scale }, world, viewport, NO_INSETS, bleed);
     expect(c.x).toBeCloseTo(bleed, 6); // near edge allowed `bleed` px inside
     expect(c.y).toBeCloseTo(bleed, 6);
+  });
+});
+
+describe("maxScaleForBase — honest zoom cap (D01, DEC-075)", () => {
+  const canvas = 1000;
+
+  it("caps at the base's crisp 1:1 limit times a small soft margin", () => {
+    // shipped 3200px base over a 1000px canvas → 3.2× native, ×1.25 soft = 4.0
+    expect(maxScaleForBase(3200, canvas)).toBeCloseTo(4.0, 6);
+    // the legacy 2400px base → 2.4 × 1.25 = 3.0
+    expect(maxScaleForBase(2400, canvas)).toBeCloseTo(3.0, 6);
+  });
+
+  it("a higher-resolution base earns more crisp zoom; a lower one earns less", () => {
+    expect(maxScaleForBase(4800, canvas)).toBeGreaterThan(maxScaleForBase(3200, canvas));
+    expect(maxScaleForBase(2400, canvas)).toBeGreaterThan(maxScaleForBase(1600, canvas));
+  });
+
+  it("never out-runs the base: at the cap the raster is upscaled only by the soft margin", () => {
+    const baseW = 3200;
+    const cap = maxScaleForBase(baseW, canvas, 1.25);
+    // CSS px the base is painted at, at the cap = canvas * cap; vs native baseW → exactly the soft margin
+    expect((canvas * cap) / baseW).toBeCloseTo(1.25, 6);
+  });
+
+  it("clamps into a sane band and never exceeds the legacy ceiling", () => {
+    expect(maxScaleForBase(100, canvas)).toBe(2); // tiny base → usable floor, not 0.125
+    expect(maxScaleForBase(999999, canvas)).toBe(DEFAULT_MAX_SCALE); // huge base → still capped at 12
+  });
+
+  it("falls back to the default ceiling before the base resolution is known", () => {
+    expect(maxScaleForBase(0, canvas)).toBe(DEFAULT_MAX_SCALE);
+    expect(maxScaleForBase(3200, 0)).toBe(DEFAULT_MAX_SCALE);
   });
 });

@@ -11,15 +11,19 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
-import { clampPan, fitScale, fitView, NO_INSETS, type Insets, type View } from "./panClamp";
+import { clampPan, fitScale, fitView, DEFAULT_MAX_SCALE, NO_INSETS, type Insets, type View } from "./panClamp";
 
 export type { View };
 
-const MAX_SCALE = 12;
 /** Cosmetic overscroll tolerated at an edge before the clamp bites (px). */
 const BLEED = 40;
 
-export function usePanZoom(contentW: number, contentH: number, insets: Insets = NO_INSETS) {
+export function usePanZoom(
+  contentW: number,
+  contentH: number,
+  insets: Insets = NO_INSETS,
+  maxScale: number = DEFAULT_MAX_SCALE,
+) {
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View>({ x: 0, y: 0, scale: 1 });
   const fit = useRef(1);
@@ -32,10 +36,14 @@ export function usePanZoom(contentW: number, contentH: number, insets: Insets = 
   world.current = { w: contentW, h: contentH };
   const insetsRef = useRef(insets);
   insetsRef.current = insets;
+  // The honest zoom ceiling (D01, DEC-075) — tracks the loaded base's resolution; tightens/loosens live.
+  const maxScaleRef = useRef(maxScale);
+  maxScaleRef.current = maxScale;
   const vp = useRef({ w: 0, h: 0 });
 
   // Floor at the cover scale (`fit.current`): zooming out past it would reveal the tinted void again.
-  const clampScale = useCallback((s: number) => Math.max(fit.current, Math.min(s, MAX_SCALE)), []);
+  // Ceiling at the base's crisp limit (`maxScaleRef`): zooming past it would only blur the raster.
+  const clampScale = useCallback((s: number) => Math.max(fit.current, Math.min(s, maxScaleRef.current)), []);
 
   const settle = useCallback(
     (v: View): View => clampPan(v, world.current, vp.current, insetsRef.current, BLEED),

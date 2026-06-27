@@ -29,6 +29,29 @@ export interface View {
 
 export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
 
+/** Legacy absolute zoom ceiling; also the fallback used before the base's true resolution is known. */
+export const DEFAULT_MAX_SCALE = 12;
+
+/**
+ * The *honest* zoom ceiling for a raster base (D01, DEC-075). The base is `baseNaturalWidth` device px
+ * standing in for `worldWidth` CSS px of map, so at zoom `S` it is painted at `worldWidth * S` CSS px —
+ * pixel-for-pixel crisp (1:1 in CSS px) exactly when `S = baseNaturalWidth / worldWidth`. We allow a
+ * small `soft` over-zoom (a text-free, illustrated base tolerates mild upscaling) and clamp the result
+ * to a sane band. This is what stops the zoom from out-running the base into a blurry mush: the higher
+ * the shipped base resolution, the further you can crisply zoom — never more, never an arbitrary 12×.
+ */
+export function maxScaleForBase(
+  baseNaturalWidth: number,
+  worldWidth: number,
+  soft = 1.25,
+  min = 2,
+  max = DEFAULT_MAX_SCALE,
+): number {
+  if (baseNaturalWidth <= 0 || worldWidth <= 0) return max;
+  const crisp = (baseNaturalWidth / worldWidth) * soft;
+  return Math.min(max, Math.max(min, crisp));
+}
+
 /** The viewport rect actually free of chrome: [left, right] × [top, bottom] in viewport px. */
 function safeRect(viewport: Size, insets: Insets): { x0: number; y0: number; w: number; h: number } {
   return {
