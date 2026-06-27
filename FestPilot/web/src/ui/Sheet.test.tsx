@@ -22,7 +22,9 @@ function mountSheet(onClose = vi.fn()): {
   sheet: HTMLElement;
   scrim: HTMLElement;
   body: HTMLElement;
+  container: HTMLElement;
 } {
+  // The Sheet portals to document.body (DEC-078), so query the document, not the caller's container.
   const utils = render(
     <Sheet onClose={onClose} label="Test sheet">
       <div className="sheet-head">
@@ -31,12 +33,12 @@ function mountSheet(onClose = vi.fn()): {
       <div className="sheet-body">content</div>
     </Sheet>
   );
-  const sheet = utils.container.querySelector(".sheet") as HTMLElement;
-  const scrim = utils.container.querySelector(".scrim") as HTMLElement;
-  const body = utils.container.querySelector(".sheet-body") as HTMLElement;
+  const sheet = document.body.querySelector(".sheet") as HTMLElement;
+  const scrim = document.body.querySelector(".scrim") as HTMLElement;
+  const body = document.body.querySelector(".sheet-body") as HTMLElement;
   setHeight(sheet, 400); // quarter = 100px to dismiss
   setScrollTop(body, 0);
-  return { onClose, sheet, scrim, body };
+  return { onClose, sheet, scrim, body, container: utils.container };
 }
 
 function mountSheetWithButtons(onClose = vi.fn()): {
@@ -45,7 +47,7 @@ function mountSheetWithButtons(onClose = vi.fn()): {
   first: HTMLElement;
   last: HTMLElement;
 } {
-  const utils = render(
+  render(
     <Sheet onClose={onClose} label="Test sheet">
       <div className="sheet-head">
         <button type="button">first</button>
@@ -55,8 +57,8 @@ function mountSheetWithButtons(onClose = vi.fn()): {
       </div>
     </Sheet>
   );
-  const sheet = utils.container.querySelector(".sheet") as HTMLElement;
-  const buttons = utils.container.querySelectorAll("button");
+  const sheet = document.body.querySelector(".sheet") as HTMLElement;
+  const buttons = sheet.querySelectorAll("button");
   return {
     onClose,
     sheet,
@@ -70,6 +72,16 @@ afterEach(() => {
   vi.runOnlyPendingTimers();
   vi.useRealTimers();
   cleanup();
+});
+
+describe("Sheet portal (DEC-078)", () => {
+  it("renders the scrim + sheet into document.body, not the caller's container", () => {
+    const { sheet, scrim, container } = mountSheet();
+    // Pinned to the viewport via a body-level portal, so a transformed/scrolled ancestor can't drag it.
+    expect(sheet.parentElement).toBe(document.body);
+    expect(scrim.parentElement).toBe(document.body);
+    expect(container.querySelector(".sheet")).toBeNull();
+  });
 });
 
 describe("Sheet drag-to-dismiss", () => {

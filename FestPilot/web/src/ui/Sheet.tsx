@@ -8,6 +8,7 @@
  * `labelledBy`) so the dialog has an accessible name, and an optional `className` for per-sheet sizing.
  */
 import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useSheetDrag } from "./useSheetDrag";
 
 interface SheetProps {
@@ -81,7 +82,10 @@ export function Sheet({ onClose, label, labelledBy, className, children }: Sheet
 
   useSheetDrag(sheetRef, scrimRef, onClose);
 
-  return (
+  // Portal to <body> so the scrim + sheet are positioned against the viewport, never a transformed/
+  // scrolled ancestor (`.world{will-change:transform}`, page transitions). With `position: fixed`, this
+  // kills the "menu stuck to the scrolled page" class of bugs for every sheet at once (DEC-078).
+  return createPortal(
     <>
       <div ref={scrimRef} className="scrim on" onClick={onClose} />
       <div
@@ -97,6 +101,7 @@ export function Sheet({ onClose, label, labelledBy, className, children }: Sheet
         <div className="sheet-grip" aria-hidden="true" />
         {children}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
