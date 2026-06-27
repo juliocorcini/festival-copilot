@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.32.0";
+export const APP_VERSION = "0.33.0";
 export const CREATOR = "Julio Corcini";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
@@ -32,6 +32,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.33.0",
+    date: "2026-06-27",
+    title: "A cleaner map: no black border, clearer stages",
+    icon: "map",
+    whatsNew: [
+      "The map now fills the screen edge to edge — the black border around it is gone.",
+      "Stage markers are redesigned: a clean medallion with a readable, glass-style name label that stays sharp at any zoom.",
+    ],
+    howToTest: [
+      "Open the Map: it fills the whole area, and dragging to the edges no longer reveals a black void.",
+      "Look at the stages — each has a tidy pin and a legible name on a translucent label that matches the app's amber look.",
+    ],
+  },
   {
     version: "0.32.0",
     date: "2026-06-27",

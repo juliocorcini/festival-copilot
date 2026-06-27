@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G1 ✅ (v0.32.0 no ar) · **próximo:** G2 (mapa cover-fit + marcadores de vidro).
-- **produção:** **v0.32.0** (`festpilot.pages.dev` serve `index-CSOJ87J8.js`, deploy `f85f34e1`, master).
+- **gate atual:** G2 ✅ (v0.33.0 no ar) · **próximo:** G3 (mapa base progressiva nítida no zoom — D01, "o principal alerta").
+- **produção:** **v0.33.0** (`festpilot.pages.dev`, deploy `75a7f309`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -21,7 +21,7 @@
 ### Checklist de gates
 - [x] **G0** — baseline verde + DEC-075→088 PROPOSED (já no log) + back-fill DEC-073/074 (já no log) + pipeline confirmado. *(sem bump)*
 - [x] **G1** — sheets portalados+fixed (D05/D06), foto da home circular (D10), caminhada certa from/to/at (D07). → **v0.32.0** ✅
-- [ ] **G2** — mapa cover-fit sem borda preta (D03) + marcadores/labels de vidro (D02). → v0.33.0
+- [x] **G2** — mapa cover-fit sem borda preta (D03) + marcadores/labels de vidro (D02). → **v0.33.0** ✅
 - [ ] **G3** — mapa base progressiva nítida no zoom (D01). → v0.34.0 *(fecha "o principal alerta")*
 - [ ] **G4** — português em todas as telas (D04). → v0.35.0
 - [ ] **G5** — poster v2 (D08) + URL final (D26). → v0.36.0
@@ -30,6 +30,22 @@
 - [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G2 — Mapa: cover-fit sem borda preta + marcadores/labels de vidro ✅ — v0.33.0
+> Ataca **D03** (borda preta) e **D02** (marcadores ilegíveis) — os dois problemas visuais do mapa. **Conselho:** decisões diretas
+> (DEC-077 cover-fit; DEC-076 marcadores de vidro), nenhum ambíguo novo. Reuso: `panClamp`/`usePanZoom`/`MapView` já existiam — só
+> inverti o ajuste de escala e redesenhei o overlay vetorial. **Affine e camadas intactos** (overlay segue separado da base).
+- **G2.1 — Cover-fit, zero borda preta (D03, DEC-077).** `fitScale()` agora retorna a escala **cover** (`Math.max` em vez de `Math.min`);
+  o piso do `clampScale` (`usePanZoom`) virou a própria escala cover (sem zoom-out pro vazio); `.viewport` ganhou base **tingida com a cor do app**
+  (`--panel`→`--bg`, nunca `#000`) — então mesmo no overscroll/safe-area não aparece preto. **Teste:** `panClamp.test.ts` reescrito p/ cover (invariante: mundo escalado **cobre** o viewport).
+- **G2.2 — Marcadores + labels de vidro (D02, DEC-076).** `MapView.tsx`: cada palco é um **medalhão limpo** (anel de vidro + disco na cor do palco + estrela)
+  com um **pill Amber-Glass** atrás do nome (base quente translúcida + filete âmbar), legível em qualquer zoom; **sem stroke preto pesado** no texto.
+  Largura do pill calculada por `stageLabelWidth()` (condensada Oswald ~0.6em/char). `aria-label` e o `<text>` do nome preservados → testes de overlay intactos.
+- **5-point self-check:** Dxx D02/D03 + DEC-076/077 ✅; ACs em risco re-verificados → **zero-overlap** não tocado (mudança é puramente mapa/CSS), **`buildSquadPlan` só-sets** intacto, **presença grosseira** intacta, **sheets fixos/portalados** (G1) intactos; testes **web 446** + **e2e 30/30**, sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo · **map unit 27/27** · **web unit 446** (sem mudança de contagem: 2 testes do `panClamp` reescritos, MapView preservado) · **e2e 30/30** (2.2m) · `build` verde (main 369.11 kB, embute 0.33.0) · **deploy master** `75a7f309` → `festpilot.pages.dev`. Worker/D1 intactos.
+- **Escopo (arquivos):** `map/panClamp.ts`(+`.test`), `map/usePanZoom.ts`, `map/MapView.tsx`, `styles.css` (`.viewport` + bloco `.stage-*`/`.stage-label-*`), `data/changelog.ts`, `web/package.json`. **Guardrail:** affine/overlay/base preservados; nada removido.
+- **Verificação visual:** adiada ao live-browser (daemon de screenshot instável no WSL, §11) — correção coberta por invariante de cover-fit (`panClamp`) + testes de overlay (`MapView`) + revisão de CSS. **D01** (nitidez da base no zoom) é o **G3**, não aqui.
+- **DECs:** DEC-077 → **APPROVED**; DEC-076 → **APPROVED**.
 
 ### G1 — Bugs cirúrgicos: menus presos, foto da home, caminhada errada ✅ — v0.32.0
 > Três vitórias rápidas de baixo risco que provam o pipeline. **Conselho:** decisões diretas (DEC-078) + C2 (DEC-079);

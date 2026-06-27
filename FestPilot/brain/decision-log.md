@@ -957,13 +957,13 @@
 - **Rationale**: the map is "the main alert"; a pixelated base breaks trust. The overlay is already crisp, so the fix is the background asset + an honest zoom cap.
 - **Alternatives**: full SVG now (risk: parse/paint jank on weak phones — hence the fallback); leave raster (rejected — the complaint).
 
-### DEC-076 — Map: redesigned glass stage markers + legible labels — PROPOSED (council C1)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G2).
+### DEC-076 — Map: redesigned glass stage markers + legible labels — APPROVED (council C1)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** — shipped G2 (v0.33.0, deploy `75a7f309`).
 - **Decision**: replace the circle+star+black-text markers with clean icons + a **translucent glass label** (Amber-Glass), legible type (no pure black over the map), clear icon↔name hierarchy, and screen-stable scale (reuse `pinScale`). Stays a separate vector overlay (DEC-030/050).
 - **Rationale**: current markers "look like they were made in another app"; glass labels match the app's aesthetic and stay readable at every zoom.
 
-### DEC-077 — Map: cover-fit framing, never a black border — PROPOSED (direct + council C1)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G2). Refines `panClamp.fitScale`.
+### DEC-077 — Map: cover-fit framing, never a black border — APPROVED (direct + council C1)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** — shipped G2 (v0.33.0, deploy `75a7f309`). Refines `panClamp.fitScale`.
 - **Decision**: default the map framing to **cover-fit** (fill the safe rect, crop edges with bleed) instead of *contain* (which letterboxes); any remaining letterbox is **tinted with the app colour**, never `#000`; the clamp guarantees the user never drags into a void; better initial zoom.
 - **Rationale**: the big black border "looks like a badly fitted image". Cover-fit + tinted background removes it. Pure, unit-testable (`fitScale` cover).
 
