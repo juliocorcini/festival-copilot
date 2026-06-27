@@ -50,7 +50,16 @@ describe("buildPlanTimeline", () => {
     expect(a.status).toBe("done");
     expect(b.status).toBe("now");
     expect(c.status).toBe("upcoming");
-    expect(gap).toMatchObject({ kind: "gap", toStageName: "CAGE", walkMinutes: 8, breakMinutes: 32 });
+    // The gap carries the exact leg so the walk chip can open the right transition (DEC-079), never a recompute.
+    expect(gap).toMatchObject({
+      kind: "gap",
+      fromStageId: "s1",
+      toStageId: "s2",
+      toStageName: "CAGE",
+      atMs: 200 * MIN,
+      walkMinutes: 8,
+      breakMinutes: 32,
+    });
   });
 
   it("honors a partial-set cut for end time, status and the following gap", () => {

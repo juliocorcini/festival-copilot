@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRouteLeg, type RouteEndpoint } from "./route";
+import { buildRouteLeg, chooseRouteStages, type RouteEndpoint } from "./route";
 import type { TravelMatrix } from "./types";
 
 const fixed = (minutes: number): TravelMatrix => ({ minutesBetween: () => minutes });
@@ -41,5 +41,34 @@ describe("buildRouteLeg", () => {
     const leg = buildRouteLeg(main, { ...main }, fixed(99));
     expect(leg.minutes).toBe(0);
     expect(leg.meters).toBe(0);
+  });
+});
+
+describe("chooseRouteStages (DEC-079 — never Mainstage → Mainstage)", () => {
+  const ids = ["main", "cage", "freedom"];
+
+  it("keeps an explicit, distinct from/to", () => {
+    expect(chooseRouteStages("main", "freedom", ids)).toEqual({ fromId: "main", toId: "freedom" });
+  });
+
+  it("substitutes a different destination when to equals from", () => {
+    // The exact bug: a recomputed leg that points a stage at itself must resolve to a real walk.
+    expect(chooseRouteStages("main", "main", ids)).toEqual({ fromId: "main", toId: "cage" });
+  });
+
+  it("defaults from to the first stage and picks a distinct to when both are missing", () => {
+    expect(chooseRouteStages(null, null, ids)).toEqual({ fromId: "main", toId: "cage" });
+  });
+
+  it("honors an explicit destination even when the origin is defaulted", () => {
+    expect(chooseRouteStages(null, "freedom", ids)).toEqual({ fromId: "main", toId: "freedom" });
+  });
+
+  it("returns nulls with no stages to choose from", () => {
+    expect(chooseRouteStages(null, null, [])).toEqual({ fromId: null, toId: null });
+  });
+
+  it("falls back to the only stage's id for from, with no distinct destination available", () => {
+    expect(chooseRouteStages(null, null, ["solo"])).toEqual({ fromId: "solo", toId: null });
   });
 });

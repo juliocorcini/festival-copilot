@@ -14,7 +14,7 @@ import { useOnboarding, usePlan } from "../data/localStore";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import type { FestivalMapDto } from "../data/types";
 import { buildNowNext } from "../domain/nowNext";
-import { buildRouteLeg, type RouteEndpoint } from "../domain/route";
+import { buildRouteLeg, chooseRouteStages, type RouteEndpoint } from "../domain/route";
 import type { LatLng } from "../domain/travel";
 import { geoToSvg } from "../map/transform";
 import { usePanZoom } from "../map/usePanZoom";
@@ -88,9 +88,12 @@ export function RouteScreen(): JSX.Element {
     };
   }, [plan.plan, travel, now]);
 
-  const fromId = override.from ?? params.get("from") ?? planned?.fromId ?? stages[0]?.id ?? null;
-  const toId =
-    override.to ?? params.get("to") ?? planned?.toId ?? stages.find((s) => s.id !== fromId)?.id ?? null;
+  // Prefer the exact tapped leg (from/to params or a manual override); only fall back to the planned
+  // now/next when nothing was passed. `chooseRouteStages` guarantees the destination ≠ origin (DEC-079).
+  const resolvedFrom = override.from ?? params.get("from") ?? planned?.fromId ?? null;
+  const resolvedTo = override.to ?? params.get("to") ?? planned?.toId ?? null;
+  const stageIds = useMemo(() => stages.map((s) => s.id), [stages]);
+  const { fromId, toId } = chooseRouteStages(resolvedFrom, resolvedTo, stageIds);
 
   const arriveByMs = useMemo(() => {
     if (planned && toId === planned.toId && planned.atMs != null) return planned.atMs;

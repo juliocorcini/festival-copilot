@@ -58,8 +58,13 @@ export interface PlanBlockItem {
 
 export interface PlanGapItem {
   kind: "gap";
+  /** Stage IDs of the surrounding sets ("" for a block edge) — used to open the exact walk leg (DEC-079). */
+  fromStageId: string;
+  toStageId: string;
   fromStageName: string;
   toStageName: string;
+  /** Effective start of the next set — the arrive-by time for the walk leg. */
+  atMs: number;
   walkMinutes: number;
   /** Idle minutes beyond the walk; `>= BREAK_THRESHOLD_MIN` renders a break chip. */
   breakMinutes: number;
@@ -199,8 +204,11 @@ export function buildPlanTimeline(
 
     items.push({
       kind: "gap",
+      fromStageId: anchor.kind === "set" ? anchor.resolved.slot.stageId ?? "" : "",
+      toStageId: next.kind === "set" ? next.resolved.slot.stageId ?? "" : "",
       fromStageName: anchor.kind === "set" ? anchor.resolved.slot.stageName : "",
       toStageName: next.kind === "set" ? next.resolved.slot.stageName : "",
+      atMs: next.start,
       walkMinutes: walk,
       breakMinutes: breakMin,
       fillStartMs: anchor.end,

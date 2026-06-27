@@ -29,6 +29,23 @@ export interface RouteLeg {
   leaveByMs: number | null;
 }
 
+/**
+ * Pick the origin/destination stage for the route screen, hardening the default so the destination is
+ * never the origin ("Mainstage → Mainstage", DEC-079): an explicit `from`/`to` wins; missing values
+ * fall back to the first stage; and if the resolved destination still equals the origin, any other
+ * stage is chosen so the leg is always meaningful.
+ */
+export function chooseRouteStages(
+  from: string | null,
+  to: string | null,
+  stageIds: string[]
+): { fromId: string | null; toId: string | null } {
+  const fromId = from ?? stageIds[0] ?? null;
+  const toId =
+    to && to !== fromId ? to : stageIds.find((id) => id !== fromId) ?? to ?? null;
+  return { fromId, toId };
+}
+
 /** Build a single walking leg between two stages, optionally tied to a set start time. */
 export function buildRouteLeg(
   from: RouteEndpoint,

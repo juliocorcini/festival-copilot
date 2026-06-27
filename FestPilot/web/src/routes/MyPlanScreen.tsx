@@ -295,7 +295,15 @@ export function MyPlanScreen(): JSX.Element {
                   i={i}
                   item={item}
                   editing={editing}
-                  onRoute={() => navigate(routeHref(dayKey))}
+                  onRoute={() =>
+                    navigate(
+                      routeHref(dayKey, {
+                        fromStageId: item.fromStageId,
+                        toStageId: item.toStageId,
+                        atMs: item.atMs,
+                      })
+                    )
+                  }
                   onFill={() => fillGap(item)}
                 />
               );
@@ -333,7 +341,7 @@ export function MyPlanScreen(): JSX.Element {
           tz={tz}
           onSwap={() => setSwapFor(menuFor)}
           onRemove={() => removeSet(menuFor.setId)}
-          onMap={() => navigate(routeHref(dayKey))}
+          onMap={() => navigate(routeHref(dayKey, { toStageId: menuFor.stageId ?? undefined }))}
           onClose={() => setMenuFor(null)}
         />
       )}
@@ -919,6 +927,19 @@ function dayOfMonth(startMs: number, timeZone: string): string {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone }).format(startMs);
 }
 
-function routeHref(dayKey: string | null): string {
-  return `/route${dayKey ? `?day=${encodeURIComponent(dayKey)}` : ""}`;
+/**
+ * Build the `/route` link. When a leg is given (the tapped walk transition), pass its exact
+ * `from`/`to`/`at` so RouteScreen opens that very leg instead of recomputing now/next (DEC-079).
+ */
+function routeHref(
+  dayKey: string | null,
+  leg?: { fromStageId?: string; toStageId?: string; atMs?: number }
+): string {
+  const params = new URLSearchParams();
+  if (dayKey) params.set("day", dayKey);
+  if (leg?.fromStageId) params.set("from", leg.fromStageId);
+  if (leg?.toStageId) params.set("to", leg.toStageId);
+  if (leg?.atMs != null && Number.isFinite(leg.atMs)) params.set("at", String(leg.atMs));
+  const qs = params.toString();
+  return `/route${qs ? `?${qs}` : ""}`;
 }
