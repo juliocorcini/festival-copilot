@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.40.0";
+export const APP_VERSION = "0.41.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,18 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.41.0",
+    date: "2026-06-27",
+    title: "Your festival's full name",
+    icon: "title",
+    whatsNew: [
+      "The festival name on the home now shows in full — it gently shrinks to fit, or wraps to a second line, instead of being cut off with a “…”.",
+    ],
+    howToTest: [
+      "Open Now: the festival name at the top reads in full (no “…”), tidy on one line, on any phone width.",
+    ],
+  },
   {
     version: "0.40.0",
     date: "2026-06-27",

@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
+import { FitText } from "../app/FitText";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
 import { useLineup } from "../data/useLineup";
@@ -177,7 +178,7 @@ function NowScreenBody({ topSlot }: { topSlot?: JSX.Element }): JSX.Element {
   if (!vm) {
     return (
       <>
-        <AppHeader eyebrow={shorten(festivalName)} title={t("now.title")} />
+        <AppHeader eyebrow={<FitText text={festivalName} />} title={t("now.title")} />
         <PullToRefresh onRefresh={reload} />
         <div className="screen">
           {topSlot}
@@ -191,7 +192,7 @@ function NowScreenBody({ topSlot }: { topSlot?: JSX.Element }): JSX.Element {
     );
   }
 
-  const eyebrow = `${shorten(festivalName)} · ${dayLabel(new Date(vm.hero.startMs).toISOString(), tz, locale)}`;
+  const eyebrowText = `${festivalName} · ${dayLabel(new Date(vm.hero.startMs).toISOString(), tz, locale)}`;
   const dayKey = activeDay?.key ?? null;
   const laterLabel = vm.source === "plan" ? t("now.laterTonight") : t("now.upNext");
   const srcLine =
@@ -201,7 +202,7 @@ function NowScreenBody({ topSlot }: { topSlot?: JSX.Element }): JSX.Element {
 
   return (
     <>
-      <AppHeader eyebrow={eyebrow} title={t("now.title")} />
+      <AppHeader eyebrow={<FitText text={eyebrowText} />} title={t("now.title")} />
       <PullToRefresh onRefresh={reload} />
       <div className="screen">
         {topSlot}
@@ -492,8 +493,4 @@ function NowSquadInner({
 
 function clamp01(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
-}
-
-function shorten(name: string): string {
-  return name.length > 22 ? `${name.slice(0, 21)}…` : name;
 }

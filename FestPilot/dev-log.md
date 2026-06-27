@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G9 ✅ (v0.40.0 no ar) — **squad: Next up (D20), reorg da home (D21), plano = timeline do Meu Plano (D22), agenda interleaved render-only (D23), abas Meu plano/Squad no Now (D24)** · **próximo:** G10 (nome do festival D25 — **P2 opcional**).
-- **produção:** **v0.40.0** (`festpilot.pages.dev`, deploy `a2333fda`, master).
+- **gate atual:** G10 ✅ (v0.41.0 no ar) — **nome do festival na home sem reticências (D25, DEC-087): shrink-to-fit + fallback 2 linhas** · **leva Review & Polish ENCERRADA (G0→G10, todos os P0/P1/P2).**
+- **produção:** **v0.41.0** (`festpilot.pages.dev`, deploy `74546e8b`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -29,7 +29,16 @@
 - [x] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → **v0.38.0** ✅
 - [x] **G8** — barras do sistema (D11). → **v0.39.0** ✅ *(fechou P1)*
 - [x] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → **v0.40.0** ✅ *(P2)*
-- [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+- [x] **G10** — nome do festival sem "…" (D25). → **v0.41.0** ✅ *(P2 — **fecha a leva**)*
+
+### G10 — Nome do festival na home ✅ — v0.41.0 *(P2 — fecha a leva)*
+> Fecha **D25** (queixa #4: "Tomorrowland Belgium…" cortado em 22 chars). **LOCK §16 resolvido pelo Julio: "Responsivo"** → fonte que encolhe até caber, **sem reticências**, e **2 linhas** só quando nem no piso couber (DEC-087). Domínio-primeiro: geometria pura testável separada do componente.
+- **G10.1 — Nome sem "…" (D25, DEC-087).** Removido o `shorten(name)` (cortava em 21 chars + "…"). Nova geometria pura **`lib/fitText.ts`** (`fitFontScale` = clamp(avail/natural, minScale, 1); `shouldWrap` = ainda transborda no piso) — **+7 unit**. Componente **`app/FitText.tsx`**: mede a largura natural em uma linha, aplica `font-size: <scale>em`, e se nem no piso (0.72) couber troca para `white-space: normal` (2 linhas) — **nunca elipse**; recomputa via `ResizeObserver` (rotação/resize). `AppHeader.eyebrow` passou a aceitar **`ReactNode`** (retrocompatível) para escopar o FitText só à home (Now) sem mexer nas outras telas; `.appbar-head { flex:1; min-width:0 }` dá largura estável pra medição e impede empurrar o avatar.
+- **5-point self-check:** D25 + DEC-087 ✅; ACs em risco re-verificados → eyebrow das demais telas intacto (string ainda é `ReactNode` válido; FitText só na Now), avatar não é empurrado (`min-width:0`), nenhuma tela quebra; testes **web 496** (+7) + **server 238** sem novas falhas; arquivos fora de escopo: nenhum (removido `shorten` órfão); esta entrada.
+- **Verificação:** `tsc` limpo · **web unit 496** (era 489, +7 fitText) · **server 238** · **734 total** · `build` verde (main 424.66 kB, embute 0.41.0) · **e2e 34/34** · verificação visual: home com **"TOMORROWLAND BELGIUM 2026"** inteiro, uma linha, sem "…" (`phase1-now.png`); herói acrescenta "· DIA" pelo mesmo FitText (encolhe/quebra, nunca corta) · **deploy master** `74546e8b` → `festpilot.pages.dev`. Worker/D1 intactos.
+- **Escopo (arquivos):** `lib/fitText.ts`+`.test` (novo, +7), `app/FitText.tsx` (novo), `app/AppHeader.tsx` (`eyebrow: ReactNode` + `.appbar-head`), `routes/NowScreen.tsx` (FitText nos 2 eyebrows, removido `shorten`), `styles.css` (`.appbar-head`, `line-height` do eyebrow), `data/changelog.ts`, `web/package.json`.
+- **DECs:** DEC-087 → **APPROVED** (nome do festival responsivo, sem reticências, 2 linhas de fallback).
+- **🏁 Leva Review & Polish (2026-06-27) ENCERRADA** — G0→G10 entregues (P0+P1+P2). v0.31.6 → **v0.41.0**. DoD §12 toda TRUE (ver "Estado da leva").
 
 ### G9 — Paridade do Squad ✅ — v0.40.0 *(P2)*
 > Fecha **D20/D21/D22/D23/D24** (squad: "informação solta" → hierarquia + "o que o grupo faz agora"). **Conselho C4 + Red Team (DEC-086):** ÂNCORA dura — `buildSquadPlan` continua **puro e só-sets**; eventos são **camada paralela render-only**. Domínio-primeiro nas duas peças novas; UI reusa o que já existe (cards da home, receita visual do Meu Plano).

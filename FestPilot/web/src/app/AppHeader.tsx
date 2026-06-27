@@ -4,7 +4,7 @@ import { initialsOf, useIdentity } from "../data/identity";
 import { useT } from "../i18n";
 
 interface Props {
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   title: string;
   /** Override the avatar initials (defaults to the signed-in user's — DEC-032). */
   avatarInitial?: string;
@@ -33,7 +33,7 @@ export function AppHeader({ eyebrow, title, avatarInitial, right }: Props): JSX.
 
   return (
     <header className="appbar">
-      <div>
+      <div className="appbar-head">
         {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1 className="poster">{title}</h1>
       </div>
