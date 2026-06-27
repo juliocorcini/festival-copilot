@@ -12,8 +12,8 @@
 > Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
 
 ### Estado da leva (vivo)
-- **gate atual:** G4 ✅ (v0.35.0 no ar) — **telas principais em português (D04)** · **próximo:** G5 (poster v2 D08 + URL final D26).
-- **produção:** **v0.35.0** (`festpilot.pages.dev`, deploy `87c0489b`, master).
+- **gate atual:** G5 ✅ (v0.36.0 no ar) — **poster v2: todos os sets + fotos/iniciais + URL final** · **próximo:** G6 (inserir entre cards D09 + caminhada D17/D18 — fecha P0).
+- **produção:** **v0.36.0** (`festpilot.pages.dev`, deploy `75d8b3a9`, master).
 - **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
   **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
   (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
@@ -24,12 +24,23 @@
 - [x] **G2** — mapa cover-fit sem borda preta (D03) + marcadores/labels de vidro (D02). → **v0.33.0** ✅
 - [x] **G3** — mapa base progressiva nítida no zoom (D01). → **v0.34.0** ✅ *(fechou "o principal alerta")*
 - [x] **G4** — português em todas as telas (D04). → **v0.35.0** ✅
-- [ ] **G5** — poster v2 (D08) + URL final (D26). → v0.36.0
+- [x] **G5** — poster v2 (D08) + URL final (D26). → **v0.36.0** ✅
 - [ ] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → v0.37.0 *(fecha P0)*
 - [ ] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → v0.38.0
 - [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
 - [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
 - [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G5 — Imagem de compartilhamento v2 ✅ — v0.36.0
+> Fecha **D08** (#18, poster fraco) + **D26** (#19, URL temporária). **Conselho C3 + Red Team:** o risco real não era layout, era **CORS tingindo o canvas**.
+> **Pré-checagem (G5.1):** `curl` no CDN `artist-lineup-cdn.tomorrowland.com` → **200 sem `access-control-allow-origin`** → `crossOrigin` é negado e `toBlob` quebraria. Logo, **fallback de iniciais é o caminho hoje** (verificado no poster renderizado: medalhões SM/RA/VC/PS). Mantive a tentativa de foto com `crossOrigin` (à prova de futuro / outros festivais), que **falha graciosamente** sem nunca tingir o export.
+- **G5.2 — Poster paginado, todos os sets, medalhões, clashes reais (D08, DEC-080).** Reescrevi `lib/planPoster.ts`: `buildPosterRows`(corte "+N") → **`buildPosterLayout`** (puro): densidade de linha **adaptativa** que cabe **todos** os sets até um piso de legibilidade; acima → **paginação multi-imagem**; Square ganha modo **Resumo/Plano completo**. **`countClashes`** (puro, usa start/end efetivos com cortes DEC-074) alimenta um cabeçalho **honesto** `"N SETS · CLASH-FREE / N CLASHES"` — antes era **"0 CLASHES" hardcoded** com posição torta (duplo desconto de largura no `tracked`); agora `trackedWidth` + alinhamento à direita correto. **Medalhão** circular por set: foto (cover-crop) **ou disco de iniciais colorido** (`initials`+`stageColorHex`+`readableInkOn`), anel âmbar quando há clash.
+- **G5.3 — URL final (D26, DEC-080).** Constante canônica **`APP_URL = https://festpilot.pages.dev`** (LOCK §16; www não funciona) em `data/changelog.ts`, usada no rodapé do poster e no texto do plano — nunca mais um host com hash de deploy (`window.location.origin`). Rodapé renderizado: **`festpilot.pages.dev`**.
+- **Sheet (`SharePlanSheet`).** Pager de páginas (‹ 1/N ›) quando o plano pagina; toggle de densidade no Square; **save/share multi-página** (`sharePlanImages` com `File[]` → fallback download de todas). Tudo via `t()` (`share.*` EN+PT) — também localizei o sheet inteiro (estava em inglês).
+- **5-point self-check:** Dxx D08+D26 + DEC-080 ✅; ACs em risco re-verificados → **zero-overlap** intacto (poster só **lê** slots; `countClashes` é leitura, não muda o plano), **`buildSquadPlan` só-sets** não tocado, **presença grosseira** não tocada, **sheets fixos** (G1) intactos (o share sheet usa o `Sheet` portalado); testes **web 457** (+poster layout/clashes) + **server 238** sem novas falhas; nenhum arquivo fora de escopo; esta entrada.
+- **Verificação:** `tsc` limpo · **web unit 457** · **server 238** · **695 total** · `build` verde (main 398.30 kB, embute 0.36.0) · **e2e lockin** rerenderizou o poster (verificação visual: 4 sets, medalhões, "4 SETS · CLASH-FREE", `festpilot.pages.dev`) · **deploy master** `75d8b3a9`. Worker/D1 intactos.
+- **Escopo (arquivos):** `lib/planPoster.ts`(reescrito)+`.test`(reescrito), `lib/share.ts` (`sharePlanImages`), `routes/share/SharePlanSheet.tsx`(reescrito: i18n+pager+modo+multi-página), `routes/MyPlanScreen.tsx`/`routes/lockin/LockInScreen.tsx` (passam `photos`), `i18n/index.ts` (`share.*`), `data/changelog.ts` (`APP_URL`+release), `styles.css` (`.share-pager`/`.share-mode`), `web/package.json`.
+- **DECs:** DEC-080 → **APPROVED** (poster v2 + fotos/fallback + clashes reais + URL final).
 
 ### G4 — Português em todas as telas ✅ — v0.35.0
 > Fecha **D04** (#21, PT incompleto): o i18n real já existia (EN fonte, PT overlay, `useT()` reativo), mas só cobria `nav.*`+`settings.*` — as
