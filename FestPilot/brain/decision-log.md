@@ -1,6 +1,6 @@
 # FestPilot — Decision Log
 
-> Last updated: 2026-06-25 (**DEC-066** — unified-shell design pass: bottom-floating Timetable⇆Lineup switch + parallel header skeleton, Lock-in icon `playlist_add_check`, fixed-controls/scrolling-days top behavior; see `brain/wireframes/unified-shell-v2/`. Earlier: Initial set DEC-001→DEC-020 from the product-definition session; **2026-06-23 discovery-council session** advanced DEC-003/004/013/015 to APPROVED and added DEC-021/DEC-022 — see `documents/2026-06-23-discovery-councils-and-decisions.md`; the **/phases session** added DEC-023 (V1 cut line) and the **/council** added DEC-024 (auth) — see `implementation-phases.md`; the **2026-06-23 UI prototype-review** added DEC-025→DEC-029 (visual identity + Timetable/Onboarding/Lock in specs) — see `documents/2026-06-23-ui-decisions-locked.md` — and **DEC-030** (map rendering), **DEC-031** (map asset pipeline: OSM + AI art, not satellite tracing), **DEC-032** (Lineup/Timetable nav), and **DEC-033** (map *beauty* pipeline: stylized cartography + LiDAR relief now, AI-paint & 3D as upgrades), and **DEC-034** (map *generator* productized into a one-call engine + admin map-editor workflow) — see `documents/2026-06-23-realtime-map-technical-plan.md` §8/§10/§11; and **DEC-035** (V1 path-to-launch decisions: PWA→Capacitor, all-6 phases, WebSocket presence, auth providers, TML-only) — see `documents/2026-06-23-path-to-launch.md`; and **DEC-036** (adopt the V1 implementation orchestrator as the execution source of truth + git on `master`) — see `documents/2026-06-23-v1-implementation-orchestrator.md`; and **DEC-037** (V1 runs entirely on free tiers — Durable Objects are free on the Workers Free plan, direct Pages upload, token-based deploy); **DEC-038** (operator intake — no R2, both weekends, Firebase deferred, PWA-only, squad cap 50); **DEC-039** (design-pass answers + Android-only native, no Apple/iOS); **DEC-040** (V1 map = pre-rendered raster base + live overlay, drop the 20 MB inline-relief SVG); the **2026-06-23 build** added **DEC-041→DEC-047** (Phases 3–6 executor decisions); and the **2026-06-24 review-remediation pass** added **DEC-048→DEC-055** (Julio reviewed 2026-06-24: DEC-048/049/050/051/052/054/055 APPROVED, DEC-053 SUPERSEDED by DEC-059; see `documents/2026-06-24-v1-review-remediation-orchestrator.md` §7), and its **round-2 follow-up + 4 inline councils** added **DEC-056→DEC-061** (autonomy hardening, admin back-office, presence guard-rail revision, avatar storage, onboarding identity, artist-photo source). APPROVED = decided direction. PROPOSED/PENDING = not yet confirmed. Next new id = DEC-062.)
+> Last updated: 2026-06-25 (**DEC-066** — unified-shell design pass: bottom-floating Timetable⇆Lineup switch + parallel header skeleton, Lock-in icon `playlist_add_check`, fixed-controls/scrolling-days top behavior; see `brain/wireframes/unified-shell-v2/`. Earlier: Initial set DEC-001→DEC-020 from the product-definition session; **2026-06-23 discovery-council session** advanced DEC-003/004/013/015 to APPROVED and added DEC-021/DEC-022 — see `documents/2026-06-23-discovery-councils-and-decisions.md`; the **/phases session** added DEC-023 (V1 cut line) and the **/council** added DEC-024 (auth) — see `implementation-phases.md`; the **2026-06-23 UI prototype-review** added DEC-025→DEC-029 (visual identity + Timetable/Onboarding/Lock in specs) — see `documents/2026-06-23-ui-decisions-locked.md` — and **DEC-030** (map rendering), **DEC-031** (map asset pipeline: OSM + AI art, not satellite tracing), **DEC-032** (Lineup/Timetable nav), and **DEC-033** (map *beauty* pipeline: stylized cartography + LiDAR relief now, AI-paint & 3D as upgrades), and **DEC-034** (map *generator* productized into a one-call engine + admin map-editor workflow) — see `documents/2026-06-23-realtime-map-technical-plan.md` §8/§10/§11; and **DEC-035** (V1 path-to-launch decisions: PWA→Capacitor, all-6 phases, WebSocket presence, auth providers, TML-only) — see `documents/2026-06-23-path-to-launch.md`; and **DEC-036** (adopt the V1 implementation orchestrator as the execution source of truth + git on `master`) — see `documents/2026-06-23-v1-implementation-orchestrator.md`; and **DEC-037** (V1 runs entirely on free tiers — Durable Objects are free on the Workers Free plan, direct Pages upload, token-based deploy); **DEC-038** (operator intake — no R2, both weekends, Firebase deferred, PWA-only, squad cap 50); **DEC-039** (design-pass answers + Android-only native, no Apple/iOS); **DEC-040** (V1 map = pre-rendered raster base + live overlay, drop the 20 MB inline-relief SVG); the **2026-06-23 build** added **DEC-041→DEC-047** (Phases 3–6 executor decisions); and the **2026-06-24 review-remediation pass** added **DEC-048→DEC-055** (Julio reviewed 2026-06-24: DEC-048/049/050/051/052/054/055 APPROVED, DEC-053 SUPERSEDED by DEC-059; see `documents/2026-06-24-v1-review-remediation-orchestrator.md` §7), and its **round-2 follow-up + 4 inline councils** added **DEC-056→DEC-061** (autonomy hardening, admin back-office, presence guard-rail revision, avatar storage, onboarding identity, artist-photo source). APPROVED = decided direction. PROPOSED/PENDING = not yet confirmed. The **2026-06-26 native-polish roadmap** shipped DEC-073/074 (personal plan blocks + per-transition travel choice) — back-filled here on 2026-06-27. The **2026-06-27 "Review & Polish" leva** (Julio's usage review → `documents/2026-06-27-review-polish-orchestrator.md`) added **DEC-075→DEC-088 (PROPOSED)** across map quality, i18n, stuck sheets, walk UX, share poster, plan editing, timetable/lineup polish, system bars and squad parity. Next new id = DEC-089.)
 
 ## Format
 
@@ -928,3 +928,97 @@
 - **Finding**: the lineup CDN source exposes **no** `genre`, `biography`/`description` or `country` field; only name, photo and the socials of DEC-069. There is therefore no first-party data to render.
 - **Decision**: keep genre/bio/history **out of V1**. Building it would require a **secondary enrichment source** (e.g. an external music API) — out of scope and unverified (per `fact-verification.mdc`, we will not fabricate artist bios). Revisit if/when a reliable enrichment source is chosen.
 - **Detail**: ART-7 in `design-sync.md` is a decision marker, not a change set; the Artist Detail Sheet (DEC-069) is designed to absorb a bio block later without restructuring.
+
+### DEC-073 — Personal plan blocks (on-device-only day activities) — APPROVED + IMPLEMENTED (back-filled)
+- **Date**: 2026-06-26 (native-polish roadmap, Phase 6; back-filled into this log 2026-06-27)
+- **Status**: **APPROVED + IMPLEMENTED** (shipped in v0.x of the native-polish wave; referenced across `domain/planEdit.ts`, `domain/types.ts`, `localStore.ts`, `MyPlanScreen.tsx`).
+- **Decision**: the user can slot **personal activities** (eat / rest / water / meet / explore / custom) into a day's plan via a `BlockSheet` editor with steppers. Blocks are **on-device only** — `localStore` persists them next to the locked sets without touching the sets or the lock time. A **hard guardrail** (`slotToShareInput`, `api.ts`) strips blocks from any squad-share payload: the group plan is sets-only.
+- **Rationale**: festival days have gaps (food, rest, meeting friends) the lineup can't model; users want them in the timeline without polluting the shared/group plan.
+- **Detail**: blocks render in the My Plan timeline + can be promoted to the Now hero (`nowNext.ts`, `liveBlock`); the clash resolver and zero-overlap invariant are unchanged. See `documents/2026-06-26-native-polish-and-features-roadmap.md` (Phase 6).
+
+### DEC-074 — Travel choice between consecutive sets (leave-early / arrive-late, per-transition) — APPROVED + IMPLEMENTED (back-filled)
+- **Date**: 2026-06-26 (native-polish roadmap, Phase 6; back-filled 2026-06-27)
+- **Status**: **APPROVED + IMPLEMENTED** (referenced across `domain/plan.ts`, `planEdit.ts`, `planSlot.ts`, `settings.ts`, `MyPlanScreen.tsx`).
+- **Decision**: when the walking time between two consecutive sets would overlap them, the user resolves it per transition — **leave early** (shrink the end of the current set) or **arrive late** (`lateStartMs`, shrink the start of the next). Both **only shrink an effective interval**, so the plan stays **zero-overlap**. A global default (Q8 = leave early) is overridable per transition.
+- **Rationale**: walking between stages is a real, recurring decision; the plan must reflect "you'll miss the last 10 min of X to reach Y in time" honestly, without ever creating an overlap.
+- **Detail**: `effectiveStart`/`effectiveEnd` are pure (`planSlot.ts`, tested); `buildPlanTimeline` resolves travel chips. This wave (DEC-079) extends it with a **split** option + tap-to-adjust outside Edit. See roadmap Phase 6.
+
+---
+
+## Leva "Review & Polish" (2026-06-27) — DEC-075 → DEC-088 (PROPOSED)
+
+> Authored by the implementation-orchestrator (`documents/2026-06-27-review-polish-orchestrator.md` §7). PROPOSED at G0;
+> each promotes to APPROVED when the gate that ships it closes. Five came from inline councils (C1–C5); the rest are
+> direct directives from Julio's 2026-06-27 usage review.
+
+### DEC-075 — Map: crisp progressive high-fidelity base (kill zoom pixelation) — PROPOSED (council C1)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G3). Refines DEC-030/040/050 (map = raster base + separate vector overlay).
+- **Decision**: the raster WebP base pixelates past ~MAX_SCALE; ship a **progressive high-fidelity base** — a light raster placeholder on first paint, then swap to a high-fidelity base when ready. Preference: a **vector SVG** base (the `spikes/map-art` generator already projects the geometry; emit SVG without labels) with a **measured fallback** to a 2–4× raster + an honest MAX_SCALE cap if SVG fails the mobile-performance budget. The **vector overlay (stages/people/pins) and the affine transform are untouched** — labels are never baked (ÂNCORA).
+- **Rationale**: the map is "the main alert"; a pixelated base breaks trust. The overlay is already crisp, so the fix is the background asset + an honest zoom cap.
+- **Alternatives**: full SVG now (risk: parse/paint jank on weak phones — hence the fallback); leave raster (rejected — the complaint).
+
+### DEC-076 — Map: redesigned glass stage markers + legible labels — PROPOSED (council C1)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G2).
+- **Decision**: replace the circle+star+black-text markers with clean icons + a **translucent glass label** (Amber-Glass), legible type (no pure black over the map), clear icon↔name hierarchy, and screen-stable scale (reuse `pinScale`). Stays a separate vector overlay (DEC-030/050).
+- **Rationale**: current markers "look like they were made in another app"; glass labels match the app's aesthetic and stay readable at every zoom.
+
+### DEC-077 — Map: cover-fit framing, never a black border — PROPOSED (direct + council C1)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G2). Refines `panClamp.fitScale`.
+- **Decision**: default the map framing to **cover-fit** (fill the safe rect, crop edges with bleed) instead of *contain* (which letterboxes); any remaining letterbox is **tinted with the app colour**, never `#000`; the clamp guarantees the user never drags into a void; better initial zoom.
+- **Rationale**: the big black border "looks like a badly fitted image". Cover-fit + tinted background removes it. Pure, unit-testable (`fitScale` cover).
+
+### DEC-078 — Floating sheets/menus are portaled to body + position:fixed — PROPOSED (direct)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G1).
+- **Decision**: the base `Sheet` renders its scrim + sheet via `createPortal(document.body)` and `.scrim`/`.sheet` use **`position: fixed`** (not `absolute`). This kills the whole class of "menu stuck to the scrolled page / transformed ancestor" (the `more_vert` plan menu, the share sheet, artist sheet, pickers). Drag-to-dismiss, Esc, focus-trap and scroll-lock are preserved.
+- **Rationale**: `position: absolute` inside a transformed ancestor (`.world{will-change:transform}`, screen transitions) anchors to that ancestor, so the menu scrolls with the content. A portal + fixed positions to the viewport.
+
+### DEC-079 — Walk: open the exact tapped transition, single source, tap-to-adjust + split — PROPOSED (council C2)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gates G1 + G6). Extends DEC-074.
+- **Decision**: (1) the walk chip/gap navigates to `/route?from=&to=&at=` of the **exact tapped transition** (fixes "Mainstage → Mainstage"); `RouteScreen`'s default is hardened so `to ≠ from`. (2) **One source per transition**: the "Leave early for {n} min walk to {stage}" notice lives in the previous set's card; the gap shows only free time (kills the duplicate). (3) the travel chip is **tappable always** (not only in Edit) → opens the `TravelSheet` with **three** options — leave early / arrive late / **split** (`applySplitTravel`, pure) — labelled in minutes of music lost, reversible with a confirm toast.
+- **Rationale**: walking decisions are common and made in the moment; they must be one tap, honest, and never duplicated or wrongly addressed.
+
+### DEC-080 — Share poster v2: all sets, DJ photos, real clashes, story/square, final URL — PROPOSED (council C3)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G5). Subsumes D26 (final URL).
+- **Decision**: rewrite `buildPosterRows` → **`buildPosterPages`** (pure): adaptive density that fits **all sets** down to a legibility floor, then **paginates** (multi-image) or 2-columns (square) instead of hiding the majority behind "+N". Draw **DJ photos** on the canvas (`Image()` + `crossOrigin`) with a **mandatory initials fallback** if the CDN blocks CORS (the photo must never break the export). Compute **real clashes** (not the hardcoded "0"). Story = full vertical list; Square = a **"Summary / Full plan"** toggle. Fix text wrapping/tracking, enlarge names, use the horizontal space. Use the **final public URL** (LOCK §16: with/without www).
+- **Rationale**: people share to show the sets they'll see; hiding most of them defeats the purpose. Photos make it post-worthy.
+- **Alternatives**: keep "+N" (rejected); a generic layout engine (rejected — extend the pure builder).
+
+### DEC-081 — My Plan: insert blocks/sets between any two cards with a time-source choice — PROPOSED (direct)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G6). Reuses DEC-073/074.
+- **Decision**: a **"+" affordance between any two adjacent cards** opens a sheet that asks **where the time comes from** — leave the previous set earlier / arrive at the next later / split / set the time manually — for either a **block** (water/toilet/food/meet/break/note) or **another set**. Reuses `applyLeaveEarly`/`applyArriveLate` + `addBlock`/`addToPlan`. Personal, zero-overlap, stripped from the group plan.
+- **Rationale**: editing realistically (a quick break between Alok and Avicii) without recreating the whole plan.
+
+### DEC-082 — i18n covers every main screen; "Squad" stays "Squad" — PROPOSED (council C5)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G4). Extends DEC-039 (i18n layer).
+- **Decision**: wire Now, Line-up, Timetable, My Plan, Map and Squad through `t()` with EN+PT keys (incl. "Your Favorites" → "Seus favoritos", "All artists", "Favorites", "All days", "Next up" → "A seguir", weekday names Friday → Sexta / Fri → Sex, etc.). When the app is in PT, **no English remains** on the main screens; review button overflow (PT is longer). **"Squad" remains "Squad"** in PT (brand/nav label).
+- **Rationale**: the user set PT but core screens stayed English. "Squad" is the feature/nav brand and reads fine in PT.
+
+### DEC-083 — Timetable: order stages by favorite count when the user has favorites — PROPOSED (direct)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7).
+- **Decision**: when `favorites.size > 0`, `buildTimetable` orders stages by **favorite count descending** (tiebreak: source `sortOrder`, then name); with no favorites, keep the festival's source order. Adds `favCount` to `TimetableStage`. Pure + unit-tested.
+- **Rationale**: with favorites set, the user's important stages should come first.
+
+### DEC-084 — Lock-in button reflects the planned state of the day — PROPOSED (direct)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7).
+- **Decision**: when the day already has a locked plan, the Timetable "Lock in" button changes to a **planned** state ("Dia planejado" / "Editar plano" + icon) whose action goes to My Plan; otherwise it stays "Lock in". Reads `usePlan(festivalId, dayKey)`.
+- **Rationale**: today the button never changes, so the user can't tell the day was saved.
+
+### DEC-085 — Pinch zoom: one step per gesture + larger threshold + animated transition — PROPOSED (direct)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G7). Refines `lib/usePinch.ts`.
+- **Decision**: `usePinch` fires **one density/zoom step per pinch gesture** (locked until `touchend`) with a larger threshold, and the grid/zoom change is **animated** (CSS transition). No more jumping multiple levels on a small pinch.
+- **Rationale**: the gesture is too sensitive (re-baselines each threshold) and the transition is abrupt; the user should feel in control.
+
+### DEC-086 — Squad parity: Next up, plan = My Plan timeline, agenda interleaved (render-only) — PROPOSED (council C4)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G9). Refines the Squad/Group-events model. Hard ÂNCORA: `buildSquadPlan` stays sets-only.
+- **Decision**: (1) a **Squad "Next up"** at the top of Squad (+ "My plan / Squad" tabs on Now, gated to having a squad; squad selector if >1) reusing `useGroupEvents`/`useGroupPresence`/`useMeetingPoints`; (2) **reorganize** Squad: Next up → Group plan → Where everyone is → Pinned board → Agenda; (3) the **group plan reuses the My Plan timeline** (a shared visual component) with group extras (who's following/confirmed/creator); (4) the **agenda interleaves** into the plan timeline via `mergeSquadTimeline(setBlocks, events)` — **render-only**; events never enter `buildSquadPlan` (a regression test asserts it). Event×set conflict is a label only.
+- **Rationale**: Squad is "loose information"; users need "what's the group doing now" and a plan that looks like their own, with the agenda mixed into the sets — without ever polluting the sets-only aggregation.
+
+### DEC-087 — Festival name on the home: no ellipsis (responsive / two lines) — PROPOSED (council C5)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G10, LOCK §16).
+- **Decision**: stop truncating the festival name with "…" on the home. Use a responsive font that shrinks to fit, and break to **two lines** (name + "Belgium 2026" as a subtitle) when it still doesn't fit. (LOCK: Julio may prefer "Tomorrowland" only.)
+- **Rationale**: "Tomorrowland Belgium…" looks unfinished; the name is identity and should read cleanly without breaking the layout.
+
+### DEC-088 — System chrome: dynamic theme-color + safe-area audit + documented native status-bar — PROPOSED (direct)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G8). The app is a PWA (DEC-035 — Capacitor deferred).
+- **Decision**: make `theme-color` **dynamic** (follow the day/night palette via JS), audit `--safe-top`/`--safe-bottom` end-to-end so content sits under a transparent top bar correctly, and **document** the `@capacitor/status-bar` (overlaysWebView) + NavigationBar config for the future native shell — **not built now**.
+- **Rationale**: the static dark `theme-color` makes the system bars clash with day mode; the app should feel native without yet shipping the Capacitor wrapper.

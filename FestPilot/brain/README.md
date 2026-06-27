@@ -1,6 +1,6 @@
 # FestPilot Brain — Source of Truth
 
-> Last updated: 2026-06-23 (**Initial product definition** + **discovery-council session** + **two validated spikes** + **V1 phase plan**. First document `product-spec.md`; lineup data-source in `research/2026-06-23-festival-lineup-data-source.md`; **map seed** in `research/2026-06-23-festival-map-seed-kml.md`; councils + decisions in `documents/2026-06-23-discovery-councils-and-decisions.md`; the **6-phase plan** in `implementation-phases.md` (+ `ai-execution-guide.md`). Decisions DEC-001→DEC-024 in `decision-log.md` — **names resolved (app = FestPilot; Pillar 2 = "My Plan" / verb "Lock in")**, plus stack/backend/group/privacy/map. The data spikes live in `FestPilot/spikes/`. **All V1 scope is decided** (DEC-023: all 6 phases MUST SHIP; DEC-013: group board in V1).)
+> Last updated: 2026-06-27 (**"Review & Polish" leva authored** — Julio's usage review normalized into `documents/2026-06-27-review-polish-orchestrator.md` (ACTIVE) + kickoff; DEC-075→088 PROPOSED + DEC-073/074 back-filled in `decision-log.md`. Earlier: **Initial product definition** + **discovery-council session** + **two validated spikes** + **V1 phase plan**. First document `product-spec.md`; lineup data-source in `research/2026-06-23-festival-lineup-data-source.md`; **map seed** in `research/2026-06-23-festival-map-seed-kml.md`; councils + decisions in `documents/2026-06-23-discovery-councils-and-decisions.md`; the **6-phase plan** in `implementation-phases.md` (+ `ai-execution-guide.md`). Decisions DEC-001→DEC-024 in `decision-log.md` — **names resolved (app = FestPilot; Pillar 2 = "My Plan" / verb "Lock in")**, plus stack/backend/group/privacy/map. The data spikes live in `FestPilot/spikes/`. **All V1 scope is decided** (DEC-023: all 6 phases MUST SHIP; DEC-013: group board in V1).)
 
 ## Truth Policy
 
@@ -41,6 +41,7 @@
 | `documents/2026-06-23-discovery-councils-and-decisions.md` | The 2026-06-23 inline councils: festival-goer **brainstorm** (V1 essentials), **stack+backend** decision, **group-mechanics** decision, naming recommendations, privacy defaults, map seed. Source for DEC-003/004/013/015/021/022 |
 | `documents/v1-data-model-d1-schema.md` | **The concrete Cloudflare D1 schema** — ER diagram + every table's columns/types/FKs/indexes, privacy enforcement, D1 notes. The Phase-1 schema source of truth |
 | `documents/v1-use-cases.md` | **The canonical V1 use-case list** (56 UCs in 10 domains) + actor↔domain diagram + the Pillar-2 "Lock in" flow + coverage check + open assumptions (auth) |
+| `documents/2026-06-27-review-polish-orchestrator.md` | **CURRENT ACTIVE execution doc** — the "Review & Polish" leva from Julio's 2026-06-27 usage review (D01–D26, P0/P1/P2; gates G0→G10, v0.32.0→v0.41.0). Root-cause map (code↔fix), 5 inline councils, DEC-075→088. Paired kickoff: `documents/2026-06-27-review-polish-kickoff-prompt.md`. Supersedes the 24/06 and 26/06 orchestrators as the live execution truth |
 
 ## The Product in One Paragraph
 

@@ -1,8 +1,42 @@
 # FestPilot — Dev Log (execution state)
 
 > The single live execution-memory file. Update it **every milestone**. On context loss, re-read this first,
-> then the current gate in `brain/documents/2026-06-23-v1-implementation-orchestrator.md` and its §3 non-negotiables.
-> Seeded 2026-06-23.
+> then the current gate in `brain/documents/2026-06-27-review-polish-orchestrator.md` (ACTIVE leva) and its §3
+> non-negotiables. (Earlier execution truth: `2026-06-23-v1-implementation-orchestrator.md`.) Seeded 2026-06-23.
+
+---
+
+## Leva "Review & Polish" (2026-06-27) — seed + checklist G0→G10
+
+> A leva de revisão de uso do Julio (2026-06-27). Doc mestre: `brain/documents/2026-06-27-review-polish-orchestrator.md`.
+> Corrige D01–D26 (P0→P1→P2) **sem reconstruir** o que já funciona. Sobe v0.32.0→v0.41.0 (uma por gate). Mais-recente no topo.
+
+### Estado da leva (vivo)
+- **gate atual:** G0 ✅ (baseline) · **próximo:** G1.
+- **produção:** v0.31.6 (`6164f69`) — ainda sem deploy desta leva.
+- **baseline G0 (verificado 2026-06-27, antes de tocar em nada):** `typecheck` limpo · **677 unit** (439 web + 238 server) ·
+  **e2e 30/30** (mobile-chromium, 2.2m) · `build` verde (main 367.27 kB, embute 0.31.6). LOCKs §16 respondidos pelo Julio:
+  (1) mapa = SVG progressivo + fallback raster ("ok, faz isso"); (2) URL = `festpilot.pages.dev` (www não funciona); (3) nome = responsivo.
+
+### Checklist de gates
+- [x] **G0** — baseline verde + DEC-075→088 PROPOSED (já no log) + back-fill DEC-073/074 (já no log) + pipeline confirmado. *(sem bump)*
+- [ ] **G1** — sheets portalados+fixed (D05/D06), foto da home circular (D10), caminhada certa from/to/at (D07). → v0.32.0
+- [ ] **G2** — mapa cover-fit sem borda preta (D03) + marcadores/labels de vidro (D02). → v0.33.0
+- [ ] **G3** — mapa base progressiva nítida no zoom (D01). → v0.34.0 *(fecha "o principal alerta")*
+- [ ] **G4** — português em todas as telas (D04). → v0.35.0
+- [ ] **G5** — poster v2 (D08) + URL final (D26). → v0.36.0
+- [ ] **G6** — inserir entre cards (D09) + caminhada única/ajustável/split (D17/D18). → v0.37.0 *(fecha P0)*
+- [ ] **G7** — timetable/line-up: favoritos (D12), gridlines (D13), Lock-in (D14), pinça (D15), colapsar favs (D16), haptic (D19). → v0.38.0
+- [ ] **G8** — barras do sistema (D11). → v0.39.0 *(fecha P1)*
+- [ ] **G9** — squad: Next up (D20/D24), reorg (D21), plano=MyPlan (D22), agenda interleaved (D23). → v0.40.0 *(P2 opcional)*
+- [ ] **G10** — nome do festival (D25). → v0.41.0 *(P2 opcional)*
+
+### G0 — Setup & baseline ✅ — sem bump
+> Conferi a árvore verde **antes** de qualquer mudança (DoD da §12: baseline documentado). DEC-075→088 já estavam PROPOSED no
+> `decision-log.md` (authoring do orchestrator) e DEC-073/074 já back-filled — só verifiquei. Pipeline de deploy: Pages `festpilot`
+> (master) + Worker `festpilot.trippilot.workers.dev` + D1 (migração 0015) — confirmado pelo dev-log de v0.31.6. Sem produção tocada.
+- **Escopo (G0):** `dev-log.md` (esta seção), `brain/README.md` (índice + Last updated), `brain/documents/2026-06-27-review-polish-orchestrator.md` + `…-kickoff-prompt.md` (novos), `decision-log.md` (DEC-073→088, já presente), `package-lock.json` (web 0.2.0→0.31.6, reconciliação do `npm install`).
+- **Guardrail:** zero código de produção/domínio/UI tocado; nenhum teste/assert removido; baseline registrado para medir "sem novas falhas".
 
 ---
 
