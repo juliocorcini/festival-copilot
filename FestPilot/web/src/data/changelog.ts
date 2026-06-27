@@ -9,8 +9,10 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.35.0";
+export const APP_VERSION = "0.36.0";
 export const CREATOR = "Julio Corcini";
+/** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
+export const APP_URL = "https://festpilot.pages.dev";
 export const APP_TAGLINE = "Your festival, planned and together.";
 export const APP_ABOUT =
   "FestPilot is your festival companion. Pick every artist you don't want to miss, turn those picks into a " +
@@ -32,6 +34,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.36.0",
+    date: "2026-06-27",
+    title: "A share image that shows your whole plan",
+    icon: "ios_share",
+    whatsNew: [
+      "The shareable plan image now shows every set — no more “+3 more” hiding most of your day.",
+      "Each set gets a colorful artist medallion, and the header honestly says “clash-free” (or how many clashes you kept).",
+      "Packed days split into clean multiple images you can page through; Square has a Summary / Full-plan toggle.",
+      "The image footer shows the real app link, not a temporary-looking address.",
+    ],
+    howToTest: [
+      "Lock in a busy day, open Share: Story shows all sets with medallions; the count reads “N SETS · CLASH-FREE”.",
+      "Switch to Square and toggle Summary / Full plan; with many sets you'll see a page pager (1 / 2).",
+      "Save or share — the footer link reads festpilot.pages.dev.",
+    ],
+  },
   {
     version: "0.35.0",
     date: "2026-06-27",

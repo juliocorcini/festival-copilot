@@ -343,6 +343,7 @@ export function MyPlanScreen(): JSX.Element {
           dayName={title}
           slots={plan.plan.slots}
           timeZone={tz}
+          photos={photoByKey}
           onClose={() => setShowShare(false)}
         />
       )}

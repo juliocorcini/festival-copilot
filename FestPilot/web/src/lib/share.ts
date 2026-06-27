@@ -84,6 +84,28 @@ export async function sharePlanImage(blob: Blob, filename: string, text: string)
   }
 }
 
+/** Share several poster pages as files in one native sheet (falls back to "unsupported"). */
+export async function sharePlanImages(
+  blobs: Blob[],
+  filenames: string[],
+  text: string
+): Promise<ImageShareResult> {
+  if (blobs.length <= 1) {
+    return blobs[0] ? sharePlanImage(blobs[0], filenames[0] ?? "festpilot-plan.png", text) : "unsupported";
+  }
+  const nav = typeof navigator !== "undefined" ? navigator : undefined;
+  if (!nav || typeof nav.share !== "function") return "unsupported";
+  const files = blobs.map((blob, i) => new File([blob], filenames[i] ?? `festpilot-plan-${i + 1}.png`, { type: blob.type || "image/png" }));
+  if (typeof nav.canShare === "function" && !nav.canShare({ files })) return "unsupported";
+  try {
+    await nav.share({ files, title: "My FestPilot plan", text });
+    return "shared";
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") return "cancelled";
+    return "unsupported";
+  }
+}
+
 /** Trigger a browser download of a blob (poster PNG fallback / explicit save). */
 export function downloadBlob(blob: Blob, filename: string): void {
   if (typeof document === "undefined") return;

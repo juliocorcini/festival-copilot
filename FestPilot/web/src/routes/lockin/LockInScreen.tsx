@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFavorites, useOnboarding, usePlan } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
-import { favoriteSets, nearbySets } from "../../domain/lineup";
+import { favoriteSets, imageByActKey, nearbySets } from "../../domain/lineup";
 import { latestFeasibleDeparture } from "../../domain/partialSet";
 import { useTravelMatrix } from "../../data/useTravelMatrix";
 import {
@@ -37,6 +37,7 @@ export function LockInScreen(): JSX.Element {
   const travel = useTravelMatrix(lineup);
   const tz = lineup?.festival.timezone ?? "UTC";
 
+  const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
   const fallbackDay = useMemo(
     () => (lineup ? daysForWeekends(lineup, weekendIds)[0]?.key ?? null : null),
@@ -156,6 +157,7 @@ export function LockInScreen(): JSX.Element {
             dayName={dayName}
             slots={snapshot.locked}
             timeZone={tz}
+            photos={photoByKey}
             onClose={() => setShowShare(false)}
           />
         )}
