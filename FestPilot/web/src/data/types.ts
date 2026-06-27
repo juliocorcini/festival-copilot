@@ -195,6 +195,8 @@ export interface SquadMemberShareDto {
   shareFavorites: boolean;
   performanceIds: string[];
   favoriteActKeys: string[];
+  /** Monotonic revision of this member's shared plan (G4) — bumped only when the content changes. */
+  revision: number;
 }
 
 export interface SquadPlanDataDto {
@@ -204,6 +206,26 @@ export interface SquadPlanDataDto {
   sharedCount: number;
   members: SquadMemberShareDto[];
   overrides: string[];
+}
+
+/**
+ * One coalesced line of the squad's plan-change history (G4, E07 — DEC-095). Structured, locale-free
+ * numbers; the sentence is built client-side via i18n. `day` is null for a full unshare; `pickCount`
+ * is the member's resulting shared-set count for the day after the change.
+ */
+export interface SquadPlanChangeDto {
+  id: string;
+  actorUserId: string;
+  actorName: string | null;
+  actorColor: string | null;
+  isMine: boolean;
+  day: string | null;
+  kind: "share" | "unshare";
+  addedCount: number;
+  removedCount: number;
+  pickCount: number;
+  createdAtUtc: string;
+  updatedAtUtc: string;
 }
 
 // Group board (Gate 4.4 — UC-39, DEC-013). Lightweight pinned notes; not chat.

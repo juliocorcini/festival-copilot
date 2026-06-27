@@ -584,6 +584,28 @@ const EN = {
   "join.joinFailed": "Could not join. Check your connection and try again.",
   "join.joining": "Joining…",
   "join.joinCta": "Join squad",
+
+  // ── Leva 2 G4 — squad vivo: live re-share + plan history + notice (E07) ──
+  "squad.planHistory": "Plan history",
+  "squad.planHistorySub": "Who changed their plan and when",
+  "squad.liveShareOn": "Your plan syncs with the squad live",
+  "planNotice.updated": "{name} updated their plan",
+  "planNotice.unshared": "{name} stopped sharing",
+  "planNotice.many": "{count} plan updates from the squad",
+  "history.title": "Plan history",
+  "history.intro": "Who changed their plan and when. The squad plan updates live as people share.",
+  "history.loadError": "Couldn't load the plan history.",
+  "history.emptyTitle": "No plan changes yet",
+  "history.emptySub": "When someone shares or updates their plan, it shows up here.",
+  "history.shareOne": "{name} now shares {count} set",
+  "history.shareMany": "{name} now shares {count} sets",
+  "history.unshared": "{name} stopped sharing their plan",
+  "history.deltaAdded": "+{n} added",
+  "history.deltaRemoved": "−{n} dropped",
+  "time.justNow": "just now",
+  "time.minutesAgo": "{n}m ago",
+  "time.hoursAgo": "{n}h ago",
+  "time.daysAgo": "{n}d ago",
 } as const;
 
 export type MessageKey = keyof typeof EN;
@@ -1129,6 +1151,28 @@ const PT: Partial<Record<MessageKey, string>> = {
   "join.joinFailed": "Não foi possível entrar. Verifique a conexão e tente de novo.",
   "join.joining": "Entrando…",
   "join.joinCta": "Entrar no grupo",
+
+  // ── Leva 2 G4 — squad vivo (E07) ──
+  "squad.planHistory": "Histórico do plano",
+  "squad.planHistorySub": "Quem mudou o plano e quando",
+  "squad.liveShareOn": "Seu plano sincroniza com o grupo ao vivo",
+  "planNotice.updated": "{name} atualizou o plano",
+  "planNotice.unshared": "{name} parou de compartilhar",
+  "planNotice.many": "{count} atualizações do plano do grupo",
+  "history.title": "Histórico do plano",
+  "history.intro": "Quem mudou o plano e quando. O plano do grupo atualiza ao vivo conforme as pessoas compartilham.",
+  "history.loadError": "Não foi possível carregar o histórico do plano.",
+  "history.emptyTitle": "Nenhuma mudança ainda",
+  "history.emptySub": "Quando alguém compartilhar ou atualizar o plano, aparece aqui.",
+  "history.shareOne": "{name} agora compartilha {count} set",
+  "history.shareMany": "{name} agora compartilha {count} sets",
+  "history.unshared": "{name} parou de compartilhar o plano",
+  "history.deltaAdded": "+{n} adicionados",
+  "history.deltaRemoved": "−{n} removidos",
+  "time.justNow": "agora mesmo",
+  "time.minutesAgo": "há {n}m",
+  "time.hoursAgo": "há {n}h",
+  "time.daysAgo": "há {n}d",
 };
 
 const DICT: Record<Language, Partial<Record<MessageKey, string>>> = { en: EN, pt: PT };

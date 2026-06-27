@@ -8,9 +8,9 @@
  * GroupRoom socket plus a refetch on focus; the HTTP path alone is always correct.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "./api";
+import { api, slotToShareInput } from "./api";
 import { useGroupLive } from "./groups";
-import { useFavorites, useOnboarding } from "./localStore";
+import { loadStore, useFavorites, useOnboarding, usePlan } from "./localStore";
 import { useLineup } from "./useLineup";
 import { daysForWeekends } from "../lib/festival";
 import { useLocale } from "../i18n";
@@ -18,7 +18,7 @@ import { toPlannableSets } from "../domain/lineup";
 import { buildSquadPlan, type SquadMember, type SquadPlan } from "../domain/squadPlan";
 import type { PlannableSet } from "../domain/types";
 import type { LoadStatus } from "./groups";
-import type { SquadPlanDataDto } from "./types";
+import type { SquadPlanChangeDto, SquadPlanDataDto } from "./types";
 
 export interface SquadPlanState {
   /** The aggregated squad timetable for the day (null until both sources resolve). */
@@ -189,4 +189,175 @@ export function useSquadNextUp(groupId: string | undefined): SquadNextUp {
     }),
     [plan]
   );
+}
+
+// ── Live re-share + plan-change history (Gate G4, E07 — DEC-095) ────────────────────────────────
+
+export interface SquadPlanHistoryState {
+  changes: SquadPlanChangeDto[];
+  status: LoadStatus;
+  reload: () => void;
+}
+
+/** The squad's plan-change history with the same live + focus refresh contract as `useSquadPlan`. */
+export function useSquadPlanHistory(groupId: string | undefined): SquadPlanHistoryState {
+  const [changes, setChanges] = useState<SquadPlanChangeDto[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [nonce, setNonce] = useState(0);
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
+
+  useEffect(() => {
+    if (!groupId) return;
+    const controller = new AbortController();
+    let alive = true;
+    setStatus("loading");
+    api
+      .getSquadPlanHistory(groupId, controller.signal)
+      .then((list) => {
+        if (!alive) return;
+        setChanges(list);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (!alive || controller.signal.aborted) return;
+        setStatus("error");
+      });
+    return () => {
+      alive = false;
+      controller.abort();
+    };
+  }, [groupId, nonce]);
+
+  useGroupLive(groupId, reload);
+  return { changes, status, reload };
+}
+
+/** Debounce window for the live re-publish — long enough to absorb a burst of edits, short enough to feel instant. */
+const LIVE_SYNC_DEBOUNCE_MS = 2500;
+// Module-scoped so multiple mounts of `useLivePlanSync` for the same (group, day) share ONE timer /
+// in-flight guard — no duplicate PUTs, no loops (after a publish the server matches and the diff is 0).
+const liveSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const liveSyncInFlight = new Set<string>();
+
+/** Sorted, de-duplicated join — a stable identity for "is this the same set of ids?". */
+function idSetKey(ids: readonly string[]): string {
+  return [...new Set(ids)].sort().join(",");
+}
+
+/**
+ * Live re-share (E07 · DEC-095): once you have shared, your locked plan for the active day stays in
+ * step with the squad automatically. When your local picks (or opted-in favorites) drift from what
+ * the server holds, this debounces a single re-publish. Idempotent by content (no diff → no call),
+ * guarded against duplicate mounts, and a no-op until you have shared at least once (privacy: sharing
+ * is always opt-in). The aggregation is untouched — this only re-publishes YOUR picks.
+ */
+export function useLivePlanSync(groupId: string | undefined): void {
+  const dayKey = useActiveDayKey();
+  const lineup = useLineup();
+  const festivalId = lineup.lineup?.festival.id;
+  const { plan: localPlan } = usePlan(festivalId, dayKey);
+  const favorites = useFavorites(festivalId);
+  const { raw, reload } = useSquadPlanData(groupId, dayKey);
+
+  const me = raw?.members.find((m) => m.isYou) ?? null;
+  const meShared = me?.shared ?? false;
+  const meShareFav = me?.shareFavorites ?? false;
+  const serverIdsKey = idSetKey(me?.performanceIds ?? []);
+  const serverFavKey = idSetKey(me?.favoriteActKeys ?? []);
+  const localIdsKey = idSetKey((localPlan?.slots ?? []).map((s) => s.setId));
+  const localFavKey = idSetKey([...favorites.keys]);
+
+  useEffect(() => {
+    if (!groupId || !dayKey || !festivalId || !meShared) return;
+    const picksChanged = localIdsKey !== serverIdsKey;
+    const favsChanged = meShareFav && localFavKey !== serverFavKey;
+    if (!picksChanged && !favsChanged) return;
+
+    const key = `${groupId}:${dayKey}`;
+    const pending = liveSyncTimers.get(key);
+    if (pending) clearTimeout(pending);
+    const timer = setTimeout(() => {
+      liveSyncTimers.delete(key);
+      if (liveSyncInFlight.has(key)) return;
+      liveSyncInFlight.add(key);
+      const slots = (loadStore().plans[`${festivalId}:${dayKey}`]?.slots ?? []).map(slotToShareInput);
+      api
+        .shareMyPlan(groupId, {
+          day: dayKey,
+          slots,
+          shareFavorites: meShareFav,
+          favoriteActKeys: meShareFav ? [...favorites.keys] : [],
+        })
+        .then(() => reload())
+        .catch(() => undefined)
+        .finally(() => liveSyncInFlight.delete(key));
+    }, LIVE_SYNC_DEBOUNCE_MS);
+    liveSyncTimers.set(key, timer);
+
+    return () => {
+      const t = liveSyncTimers.get(key);
+      if (t) {
+        clearTimeout(t);
+        liveSyncTimers.delete(key);
+      }
+    };
+  }, [groupId, dayKey, festivalId, meShared, meShareFav, localIdsKey, serverIdsKey, localFavKey, serverFavKey, favorites.keys, reload]);
+}
+
+export interface SquadPlanNotice {
+  /** Unseen changes by OTHER members (drives the badge count). */
+  count: number;
+  /** The newest unseen change by someone else, for the one-line notice (null when nothing new). */
+  latest: SquadPlanChangeDto | null;
+  changes: SquadPlanChangeDto[];
+  status: LoadStatus;
+  reload: () => void;
+  /** Mark the current history as seen (clears the badge) — call when the user opens the history. */
+  markSeen: () => void;
+}
+
+const PLAN_SEEN_PREFIX = "fp.planSeen.";
+
+function readSeen(groupId: string): string {
+  try {
+    return localStorage.getItem(PLAN_SEEN_PREFIX + groupId) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeSeen(groupId: string, iso: string): void {
+  try {
+    localStorage.setItem(PLAN_SEEN_PREFIX + groupId, iso);
+  } catch {
+    /* storage unavailable — the badge just won't persist */
+  }
+}
+
+/**
+ * Derives the "what changed while you were away" notice (E07): the unseen changes by OTHER members
+ * since the last time the user opened the history. The seen-marker lives in localStorage (offline-
+ * friendly, no extra server table). Your own edits never raise the badge.
+ */
+export function useSquadPlanNotice(groupId: string | undefined): SquadPlanNotice {
+  const { changes, status, reload } = useSquadPlanHistory(groupId);
+  const [seenAt, setSeenAt] = useState<string>(() => (groupId ? readSeen(groupId) : ""));
+
+  useEffect(() => {
+    setSeenAt(groupId ? readSeen(groupId) : "");
+  }, [groupId]);
+
+  const unseen = useMemo(
+    () => changes.filter((c) => !c.isMine && (seenAt === "" || c.updatedAtUtc > seenAt)),
+    [changes, seenAt]
+  );
+
+  const markSeen = useCallback(() => {
+    if (!groupId) return;
+    const newest = changes[0]?.updatedAtUtc ?? new Date().toISOString();
+    writeSeen(groupId, newest);
+    setSeenAt(newest);
+  }, [changes, groupId]);
+
+  return { count: unseen.length, latest: unseen[0] ?? null, changes, status, reload, markSeen };
 }

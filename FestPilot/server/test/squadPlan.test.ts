@@ -11,6 +11,7 @@ import { createGroup, joinByToken } from "../src/api/groups";
 import {
   clearOverride,
   getSquadPlanData,
+  listPlanChanges,
   setOverride,
   shareMyPlan,
   unshareMyPlan,
@@ -25,6 +26,7 @@ const migrations = [
   "0004_app_group_emoji.sql",
   "0005_group_shared_plan.sql",
   "0010_app_user_identity.sql",
+  "0016_group_plan_change.sql",
 ]
   .map((f) => fs.readFileSync(path.join(here, "..", "migrations", f), "utf-8"))
   .join("\n");
@@ -117,7 +119,7 @@ describe("squad plan — share my plan (#23.8)", () => {
     const owner = await makeUser(d1, "Julio");
     const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
     await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }], shareFavorites: true, favoriteActKeys: ["act_x"] }, "t");
-    await unshareMyPlan(d1, g.id, owner.id);
+    await unshareMyPlan(d1, g.id, owner.id, "t2");
     const data = await getSquadPlanData(d1, g.id, owner.id, DAY);
     expect(data.sharedCount).toBe(0);
     expect(data.members[0]!.shared).toBe(false);
@@ -168,5 +170,115 @@ describe("squad plan — owner override (#24.4)", () => {
 
     await clearOverride(d1, g.id, DAY, "perf_artbat");
     expect((await getSquadPlanData(d1, g.id, owner.id, DAY)).overrides).toEqual([]);
+  });
+});
+
+describe("squad plan — live re-share: revision + history (G4, E07/DEC-095)", () => {
+  let d1: D1Database;
+  beforeEach(async () => (d1 = await freshDb()));
+
+  it("bumps the revision only on a real content change; an identical re-share is a no-op", async () => {
+    const owner = await makeUser(d1, "Julio");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:00:00Z");
+    let me = (await getSquadPlanData(d1, g.id, owner.id, DAY)).members[0]!;
+    expect(me.revision).toBe(1);
+
+    // Re-share the exact same picks → no bump, and no new history line.
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:10:00Z");
+    me = (await getSquadPlanData(d1, g.id, owner.id, DAY)).members[0]!;
+    expect(me.revision).toBe(1);
+
+    // Change the picks → bump + a second history line.
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_artbat" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:20:00Z");
+    me = (await getSquadPlanData(d1, g.id, owner.id, DAY)).members[0]!;
+    expect(me.revision).toBe(2);
+
+    const history = await listPlanChanges(d1, g.id, owner.id, 40);
+    expect(history.length).toBe(2);
+    expect(history.every((h) => h.kind === "share")).toBe(true);
+    expect(history.every((h) => h.isMine)).toBe(true);
+  });
+
+  it("records the first share with the right added/pick counts", async () => {
+    const owner = await makeUser(d1, "Julio");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+    await shareMyPlan(
+      d1,
+      g.id,
+      owner.id,
+      { day: DAY, slots: [{ performanceId: "perf_charlotte" }, { performanceId: "perf_artbat" }], shareFavorites: false, favoriteActKeys: [] },
+      "2026-06-27T20:00:00Z"
+    );
+    const [line] = await listPlanChanges(d1, g.id, owner.id, 40);
+    expect(line!.kind).toBe("share");
+    expect(line!.addedCount).toBe(2);
+    expect(line!.removedCount).toBe(0);
+    expect(line!.pickCount).toBe(2);
+    expect(line!.day).toBe(DAY);
+  });
+
+  it("coalesces rapid same-day edits into one line, but opens a new one past the window", async () => {
+    const owner = await makeUser(d1, "Julio");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+
+    // Three edits: two within 90s coalesce into one line; the third (5 min later) is its own line.
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:00:00Z");
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }, { performanceId: "perf_artbat" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:00:30Z");
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }, { performanceId: "perf_artbat" }, { performanceId: "perf_adriatique" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:05:30Z");
+
+    const history = await listPlanChanges(d1, g.id, owner.id, 40);
+    expect(history.length).toBe(2);
+    // Newest first (the third edit) has the latest pick count.
+    expect(history[0]!.pickCount).toBe(3);
+    // The coalesced burst merged the first two edits (added 1 + 1) into a single line.
+    const coalesced = history[1]!;
+    expect(coalesced.addedCount).toBe(2);
+    expect(coalesced.pickCount).toBe(2);
+  });
+
+  it("narrates an unshare and bumps the revision; a no-op unshare records nothing", async () => {
+    const owner = await makeUser(d1, "Owner");
+    const m1 = await makeUser(d1, "Mara");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+    await joinByToken(d1, m1.id, g.inviteToken!, "t1");
+
+    // A member who never shared unshares → no history line.
+    await unshareMyPlan(d1, g.id, m1.id, "2026-06-27T19:59:00Z");
+    expect((await listPlanChanges(d1, g.id, owner.id, 40)).length).toBe(0);
+
+    // The owner shares then unshares → one share line + one unshare line.
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }], shareFavorites: false, favoriteActKeys: [] }, "2026-06-27T20:00:00Z");
+    await unshareMyPlan(d1, g.id, owner.id, "2026-06-27T20:05:00Z");
+
+    const history = await listPlanChanges(d1, g.id, owner.id, 40);
+    expect(history.map((h) => h.kind)).toEqual(["unshare", "share"]);
+    expect(history[0]!.day).toBeNull();
+    expect((await getSquadPlanData(d1, g.id, owner.id, DAY)).members.find((m) => m.userId === owner.id)!.revision).toBe(2);
+  });
+
+  it("INVARIANCE: a member's re-share never touches another member's picks or an owner override", async () => {
+    const owner = await makeUser(d1, "Owner");
+    const m1 = await makeUser(d1, "Mara");
+    const g = await createGroup(d1, owner.id, { name: "FAM", emoji: null, festivalId: FESTIVAL_ID }, "t");
+    await joinByToken(d1, m1.id, g.inviteToken!, "t1");
+
+    await shareMyPlan(d1, g.id, owner.id, { day: DAY, slots: [{ performanceId: "perf_charlotte" }], shareFavorites: false, favoriteActKeys: [] }, "t");
+    await shareMyPlan(d1, g.id, m1.id, { day: DAY, slots: [{ performanceId: "perf_artbat" }], shareFavorites: false, favoriteActKeys: [] }, "t");
+    await setOverride(d1, g.id, DAY, "perf_sara", "2026-06-27T20:00:00Z");
+
+    const before = await getSquadPlanData(d1, g.id, owner.id, DAY);
+    const ownerPicksBefore = before.members.find((m) => m.userId === owner.id)!.performanceIds.slice().sort();
+
+    // Mara re-shares a completely different pick.
+    await shareMyPlan(d1, g.id, m1.id, { day: DAY, slots: [{ performanceId: "perf_adriatique" }], shareFavorites: false, favoriteActKeys: [] }, "t2");
+
+    const after = await getSquadPlanData(d1, g.id, owner.id, DAY);
+    // The owner's locked picks and the owner override (the "locked block") are byte-identical.
+    expect(after.members.find((m) => m.userId === owner.id)!.performanceIds.slice().sort()).toEqual(ownerPicksBefore);
+    expect(after.overrides).toEqual(["perf_sara"]);
+    // Mara's own picks did change (this is her edit).
+    expect(after.members.find((m) => m.userId === m1.id)!.performanceIds).toEqual(["perf_adriatique"]);
   });
 });

@@ -20,6 +20,7 @@ import {
 import {
   clearOverride,
   getSquadPlanData,
+  listPlanChanges,
   setOverride,
   shareMyPlan,
   unshareMyPlan,
@@ -164,6 +165,15 @@ groups.get("/:id/plan", async (c) => {
   return c.json({ plan: data });
 });
 
+// The squad's plan-change history (G4, E07 — DEC-095): who re-shared, the net effect, coalesced.
+// Newest first; the client narrates each line. Registered before "/:id/plan/:perfId"-style paths.
+groups.get("/:id/plan/history", async (c) => {
+  const m = await member(c, c.req.param("id"));
+  if ("status" in m) return c.json({ error: "no" }, m.status);
+  const changes = await listPlanChanges(c.env.DB, m.group.id, m.user.id, 40);
+  return c.json({ changes });
+});
+
 // Share my locked plan for a day (#23.8). Body: { day, slots, shareFavorites, favoriteActKeys }.
 groups.put("/:id/plan", async (c) => {
   const m = await member(c, c.req.param("id"));
@@ -202,7 +212,7 @@ groups.put("/:id/plan", async (c) => {
 groups.delete("/:id/plan", async (c) => {
   const m = await member(c, c.req.param("id"));
   if ("status" in m) return c.json({ error: "no" }, m.status);
-  await unshareMyPlan(c.env.DB, m.group.id, m.user.id);
+  await unshareMyPlan(c.env.DB, m.group.id, m.user.id, new Date().toISOString());
   await notifyGroup(c.env, m.group.id, "plan");
   return c.json({ ok: true });
 });

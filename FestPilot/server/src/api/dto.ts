@@ -168,6 +168,8 @@ export interface SquadMemberShareDto {
   performanceIds: string[];
   /** Shared favorites (act keys); empty unless shareFavorites is on. */
   favoriteActKeys: string[];
+  /** Monotonic revision of this member's shared plan (G4) — bumped only when the content changes. */
+  revision: number;
 }
 
 /** The raw squad-plan data for one day; the client builds the timetable from it. */
@@ -179,6 +181,26 @@ export interface SquadPlanDataDto {
   members: SquadMemberShareDto[];
   /** Owner-pinned performance ids for the day (method=owner override). */
   overrides: string[];
+}
+
+/**
+ * One coalesced line of the squad's plan-change history (G4, E07 — DEC-095). Structured, locale-free
+ * numbers; the natural-language sentence is built client-side via i18n. `day` is null for a full
+ * unshare; `pickCount` is the member's resulting shared-set count for the day after the change.
+ */
+export interface SquadPlanChangeDto {
+  id: string;
+  actorUserId: string;
+  actorName: string | null;
+  actorColor: string | null;
+  isMine: boolean;
+  day: string | null;
+  kind: "share" | "unshare";
+  addedCount: number;
+  removedCount: number;
+  pickCount: number;
+  createdAtUtc: string;
+  updatedAtUtc: string;
 }
 
 // Group board (Pillar 3a, Gate 4.4 — UC-39, DEC-013). A lightweight list of pinned notes /

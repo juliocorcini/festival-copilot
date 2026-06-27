@@ -39,6 +39,7 @@ const SquadPlanScreen = lazy(() => named(import("./routes/squad/SquadPlanScreen"
 const SquadBlockScreen = lazy(() => named(import("./routes/squad/SquadBlockScreen"), "SquadBlockScreen"));
 const SquadSplitScreen = lazy(() => named(import("./routes/squad/SquadSplitScreen"), "SquadSplitScreen"));
 const SquadOverrideScreen = lazy(() => named(import("./routes/squad/SquadOverrideScreen"), "SquadOverrideScreen"));
+const SquadPlanHistoryScreen = lazy(() => named(import("./routes/squad/SquadPlanHistoryScreen"), "SquadPlanHistoryScreen"));
 const SquadBoardScreen = lazy(() => named(import("./routes/squad/SquadBoardScreen"), "SquadBoardScreen"));
 const SquadEventsScreen = lazy(() => named(import("./routes/squad/SquadEventsScreen"), "SquadEventsScreen"));
 const PresenceConsentScreen = lazy(() => named(import("./routes/presence/PresenceConsentScreen"), "PresenceConsentScreen"));
@@ -99,6 +100,7 @@ export function App(): JSX.Element {
             <Route path="squad/:id/board" element={<SquadBoardScreen />} />
             <Route path="squad/:id/events" element={<SquadEventsScreen />} />
             <Route path="squad/:id/plan" element={<SquadPlanScreen />} />
+            <Route path="squad/:id/plan/history" element={<SquadPlanHistoryScreen />} />
             <Route path="squad/:id/plan/:perfId" element={<SquadBlockScreen />} />
             <Route path="squad/:id/plan/:perfId/split" element={<SquadSplitScreen />} />
             <Route path="squad/:id/plan/:perfId/override" element={<SquadOverrideScreen />} />

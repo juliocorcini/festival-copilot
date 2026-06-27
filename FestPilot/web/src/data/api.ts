@@ -20,6 +20,7 @@ import type {
   PoiDto,
   SettableMeetingStatus,
   ShareMode,
+  SquadPlanChangeDto,
   SquadPlanDataDto,
   StageDto,
   TravelTimeDto,
@@ -314,6 +315,13 @@ export const api = {
   unshareMyPlan(id: string, signal?: AbortSignal): Promise<void> {
     return authedJson<{ ok: boolean }>(`/api/groups/${id}/plan`, { method: "DELETE", signal }).then(
       () => undefined
+    );
+  },
+
+  /** The squad's plan-change history (G4, E07) — who re-shared, the net effect, newest first. */
+  getSquadPlanHistory(id: string, signal?: AbortSignal): Promise<SquadPlanChangeDto[]> {
+    return authedJson<{ changes: SquadPlanChangeDto[] }>(`/api/groups/${id}/plan/history`, { signal }).then(
+      (d) => d.changes ?? []
     );
   },
 

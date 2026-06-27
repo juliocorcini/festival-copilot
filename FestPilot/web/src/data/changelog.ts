@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.44.0";
+export const APP_VERSION = "0.45.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.45.0",
+    date: "2026-06-27",
+    title: "A squad plan that stays live",
+    icon: "sync",
+    whatsNew: [
+      "Once you've shared, your plan stays in sync automatically — change a pick and the squad plan updates within seconds, no need to re-share by hand.",
+      "When a squad-mate changes their plan, you get a clear heads-up on the squad plan ('Mara updated their plan') with a badge.",
+      "New 'Plan history' shows who changed what and when, in plain language — rapid edits are grouped so it never turns into spam.",
+      "It all stays honest: the picks the group sees are exactly the math, just kept fresh and explained.",
+    ],
+    howToTest: [
+      "On two phones in the same squad, share on both. On phone A, lock/unlock a set — within a few seconds phone B's squad plan refreshes and shows the heads-up + a badge.",
+      "Open the squad plan → tap the 'Plan history' row: see the narrated lines (e.g. 'Mara now shares 5 sets'); opening it clears the badge.",
+      "Make several quick edits in a row — the history shows ONE grouped line for the burst, not one per tap.",
+    ],
+  },
   {
     version: "0.44.0",
     date: "2026-06-27",

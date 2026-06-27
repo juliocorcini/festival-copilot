@@ -9,7 +9,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGroup } from "../../data/groups";
 import { useGroupEvents } from "../../data/groupEvents";
 import { useOnboarding } from "../../data/localStore";
-import { useSquadPlan } from "../../data/squadPlan";
+import { useLivePlanSync, useSquadPlan, useSquadPlanNotice, type SquadPlanNotice } from "../../data/squadPlan";
 import { useLineup } from "../../data/useLineup";
 import type { SquadBlock } from "../../domain/squadPlan";
 import { eventClashLabel, mergeSquadTimeline, type TimelineEvent } from "../../domain/squadTimeline";
@@ -39,6 +39,9 @@ export function SquadPlanScreen(): JSX.Element {
   const dayKey = params.get("day") ?? days[0]?.key;
   const { plan, raw, status, timezone, reload } = useSquadPlan(id, dayKey);
   const { events } = useGroupEvents(id);
+  // E07/DEC-095: keep my shared plan live for the active day, and surface what teammates changed.
+  useLivePlanSync(id);
+  const notice = useSquadPlanNotice(id);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -107,6 +110,26 @@ export function SquadPlanScreen(): JSX.Element {
           </div>
         )}
         <p className="squad-plan-hint">{t("squad.planHint")}</p>
+
+        <button
+          className={`squad-history-entry glass${notice.count > 0 ? " has-news" : ""}`}
+          onClick={() => navigate(`/squad/${id}/plan/history`)}
+        >
+          <span className="ms">{notice.count > 0 ? "notifications_active" : "history"}</span>
+          <div className="squad-history-entry-main">
+            <div className="squad-history-entry-title">
+              {notice.count > 0 ? planNoticeText(notice, t) : t("squad.planHistory")}
+            </div>
+            <div className="squad-history-entry-sub">
+              {meShared ? t("squad.liveShareOn") : t("squad.planHistorySub")}
+            </div>
+          </div>
+          {notice.count > 0 ? (
+            <span className="squad-history-badge">{notice.count}</span>
+          ) : (
+            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+          )}
+        </button>
 
         {!meShared && (
           <button className="squad-share-cta" onClick={() => navigate(`/squad/${id}/share`)}>
@@ -262,6 +285,14 @@ function SquadEventRow({
       </button>
     </div>
   );
+}
+
+/** One-line "what changed" summary for the history entry — single actor named, otherwise a count. */
+function planNoticeText(notice: SquadPlanNotice, t: ReturnType<typeof useT>): string {
+  if (notice.count > 1) return t("planNotice.many", { count: notice.count });
+  const c = notice.latest;
+  const name = c?.actorName ?? t("common.guest");
+  return c?.kind === "unshare" ? t("planNotice.unshared", { name }) : t("planNotice.updated", { name });
 }
 
 function NeedsInput({
