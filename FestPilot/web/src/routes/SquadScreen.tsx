@@ -194,7 +194,9 @@ function GroupHome({
           </button>
         )}
 
-        <SquadNextUpCard groupId={group.id} events={events} points={points} presence={presence} />
+        {/* No meet fallback here: the MeetingCompassCard below already owns active meeting points on
+            the home, so Next up stays focused on the plan (events/sets) and never duplicates the spot. */}
+        <SquadNextUpCard groupId={group.id} events={events} points={[]} presence={presence} />
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">

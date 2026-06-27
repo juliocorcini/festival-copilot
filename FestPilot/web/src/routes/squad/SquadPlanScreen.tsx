@@ -4,7 +4,7 @@
  * YOUR status (following / your own / locked-conflict). Tap a block to adjust. Splitting is shown,
  * never fought (DEC-013/019). The aggregation is pure (`buildSquadPlan`); this is presentation only.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGroup } from "../../data/groups";
 import { useGroupEvents } from "../../data/groupEvents";
@@ -12,11 +12,12 @@ import { useOnboarding } from "../../data/localStore";
 import { useSquadPlan } from "../../data/squadPlan";
 import { useLineup } from "../../data/useLineup";
 import type { SquadBlock } from "../../domain/squadPlan";
-import type { GroupEventDto } from "../../data/types";
+import { eventClashLabel, mergeSquadTimeline, type TimelineEvent } from "../../domain/squadTimeline";
 import { daysForWeekends } from "../../lib/festival";
 import { stageColor, timeInZone } from "../../lib/format";
+import { useT } from "../../i18n";
 import { ErrorState, LoadingState } from "../../ui/states";
-import { eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
+import { durationLabel, eventLifecycleFromIso } from "./eventsUi";
 import { blockSummary, StatusPill } from "./squadUi";
 
 export function SquadPlanScreen(): JSX.Element {
@@ -81,9 +82,9 @@ export function SquadPlanScreen(): JSX.Element {
     );
   }
 
-  const firstUpcoming = plan.blocks.findIndex((b) => b.set.startMs > now);
-  const hasPast = plan.blocks.some((b) => b.set.startMs <= now);
-  const showNowAt = hasPast && firstUpcoming > 0 ? firstUpcoming : -1;
+  // Render-only interleave of the aggregated sets (buildSquadPlan — untouched) with the group agenda
+  // (D23). The aggregation never sees an event; this only orders them for display.
+  const timeline = mergeSquadTimeline(plan.blocks, events);
 
   return (
     <>
@@ -103,8 +104,6 @@ export function SquadPlanScreen(): JSX.Element {
           </div>
         )}
         <p className="squad-plan-hint">Auto-built from everyone's locked picks · tap a block to adjust</p>
-
-        {events.length > 0 && <AgendaBand events={events} timezone={timezone} now={now} onOpen={() => navigate(`/squad/${id}/events`)} />}
 
         {!meShared && (
           <button className="squad-share-cta" onClick={() => navigate(`/squad/${id}/share`)}>
@@ -140,23 +139,31 @@ export function SquadPlanScreen(): JSX.Element {
             )}
           </div>
         ) : (
-          <div className="squad-blocks">
-            {plan.blocks.map((block, i) => (
-              <div key={block.set.id}>
-                {showNowAt === i && (
-                  <div className="squad-now">
-                    <span>NOW · {timeInZone(new Date(now).toISOString(), timezone)}</span>
-                    <span className="squad-now-line" />
-                  </div>
-                )}
-                <BlockRow
-                  block={block}
+          <div className="plan-tl squad-tl">
+            <div className="plan-tl-line" />
+            {timeline.map((item, i) =>
+              item.kind === "set" ? (
+                <SquadSetRow
+                  key={`s-${item.block.set.id}`}
+                  block={item.block}
+                  i={i}
                   memberCount={plan.memberCount}
                   timezone={timezone}
-                  onOpen={() => navigate(`/squad/${id}/plan/${block.set.id}?day=${encodeURIComponent(dayKey ?? "")}`)}
+                  now={now}
+                  onOpen={() => navigate(`/squad/${id}/plan/${item.block.set.id}?day=${encodeURIComponent(dayKey ?? "")}`)}
                 />
-              </div>
-            ))}
+              ) : (
+                <SquadEventRow
+                  key={`e-${item.event.id}`}
+                  event={item.event}
+                  i={i}
+                  timezone={timezone}
+                  now={now}
+                  clashLabel={eventClashLabel(item.event, plan.blocks)}
+                  onOpen={() => navigate(`/squad/${id}/events`)}
+                />
+              )
+            )}
           </div>
         )}
       </div>
@@ -164,70 +171,92 @@ export function SquadPlanScreen(): JSX.Element {
   );
 }
 
-function BlockRow({
+/** A squad set on the shared timeline — the My Plan rail/dot/card recipe (D22), with group extras. */
+function SquadSetRow({
   block,
+  i,
   memberCount,
-  timezone,
-  onOpen,
-}: {
-  block: SquadBlock;
-  memberCount: number;
-  timezone: string;
-  onOpen: () => void;
-}): JSX.Element {
-  const conflict = block.youStatus === "conflict";
-  return (
-    <button className={`glass squad-block${conflict ? " conflict" : ""}`} onClick={onOpen}>
-      <span className="squad-block-time poster">{timeInZone(new Date(block.set.startMs).toISOString(), timezone)}</span>
-      <div className="squad-block-main">
-        <div className="squad-block-act">
-          <span className="dot" style={{ background: stageColor(block.set.stageName) }} />
-          <span className="squad-block-name">{block.set.label}</span>
-          {block.pinned && (
-            <span className="ms squad-block-pin" title="Owner pick">push_pin</span>
-          )}
-        </div>
-        <div className="squad-block-sub">{blockSummary(block, memberCount)}</div>
-      </div>
-      <StatusPill block={block} />
-    </button>
-  );
-}
-
-/** A glanceable strip of the squad's fixed-time moments (Phase 8). A layer ALONGSIDE the set plan —
- *  it renders next to the blocks, never inside the aggregation. Tap opens the full agenda. */
-function AgendaBand({
-  events,
   timezone,
   now,
   onOpen,
 }: {
-  events: GroupEventDto[];
+  block: SquadBlock;
+  i: number;
+  memberCount: number;
   timezone: string;
   now: number;
   onOpen: () => void;
 }): JSX.Element {
+  const { startMs, endMs } = block.set;
+  const status = now >= endMs ? "done" : now >= startMs ? "now" : "";
+  const conflict = block.youStatus === "conflict";
   return (
-    <button className="glass squad-agenda-band" onClick={onOpen}>
-      <div className="squad-agenda-band-head">
-        <span className="ms" aria-hidden="true">event</span>
-        <span className="squad-agenda-band-title">Squad agenda</span>
-        <span className="ms squad-agenda-band-chev" aria-hidden="true">chevron_right</span>
-      </div>
-      <div className="squad-agenda-band-rows">
-        {events.slice(0, 3).map((ev) => {
-          const lifecycle = eventLifecycleFromIso(ev.startsAtUtc, ev.endsAtUtc, now);
-          const badge = eventBadge(lifecycle);
-          return (
-            <div className={`squad-agenda-chip${lifecycle === "live" ? " is-live" : ""}`} key={ev.id}>
-              <span className="squad-agenda-chip-time">{timeInZone(ev.startsAtUtc, timezone)}</span>
-              <span className="squad-agenda-chip-title">{ev.title}</span>
-              <span className={`pill meet-badge meet-badge-${badge.tone}`}>{eventCountdown(ev.startsAtUtc, ev.endsAtUtc, now)}</span>
-            </div>
-          );
-        })}
-      </div>
-    </button>
+    <div className="plan-row fp-rise" style={{ "--i": i } as CSSProperties}>
+      <span className={`plan-dot ${status}`} />
+      <button
+        className={`glass plan-card squad-tl-card tappable ${status}${conflict ? " conflict" : ""}`}
+        onClick={onOpen}
+      >
+        <div className="plan-card-main">
+          <div className={`plan-when ${status}`}>
+            {timeInZone(new Date(startMs).toISOString(), timezone)} – {timeInZone(new Date(endMs).toISOString(), timezone)}
+          </div>
+          <div className="poster plan-name">
+            {block.set.label}
+            {block.pinned && (
+              <span className="ms squad-block-pin" title="Owner pick">push_pin</span>
+            )}
+          </div>
+          <div className="plan-stage">
+            <span className="dot" style={{ background: stageColor(block.set.stageName) }} />
+            {blockSummary(block, memberCount)}
+          </div>
+        </div>
+        <StatusPill block={block} />
+      </button>
+    </div>
+  );
+}
+
+/** A group event interleaved between the sets (D23 — render-only). Distinct icon card on the same
+ *  rail; an overlap with a set is a LABEL ("during {set}"), never a resolution. Tap opens the agenda. */
+function SquadEventRow({
+  event,
+  i,
+  timezone,
+  now,
+  clashLabel,
+  onOpen,
+}: {
+  event: TimelineEvent;
+  i: number;
+  timezone: string;
+  now: number;
+  clashLabel: string | null;
+  onOpen: () => void;
+}): JSX.Element {
+  const t = useT();
+  const lifecycle = eventLifecycleFromIso(event.startsAtUtc, event.endsAtUtc, now);
+  const live = lifecycle === "live";
+  const done = lifecycle === "past";
+  const startMs = Date.parse(event.startsAtUtc);
+  const timing = live ? t("squad.liveNow") : done ? "" : t("squad.inTime", { time: durationLabel((startMs - now) / 60_000) });
+  return (
+    <div className="plan-row fp-rise" style={{ "--i": i } as CSSProperties}>
+      <span className={`plan-dot mini squad-tl-event-dot${live ? " now" : ""}`} />
+      <button className={`glass plan-card squad-tl-event tappable${done ? " done" : ""}${live ? " now" : ""}`} onClick={onOpen}>
+        <span className="ms squad-tl-event-ico" aria-hidden="true">event</span>
+        <div className="plan-card-main">
+          <div className="plan-when">
+            {timeInZone(event.startsAtUtc, timezone)}
+            {timing ? ` · ${timing}` : ""}
+          </div>
+          <div className="squad-tl-event-title">{event.title}</div>
+          {clashLabel && <div className="plan-stage">{t("squad.duringSet", { label: clashLabel })}</div>}
+        </div>
+        <span className="ms squad-card-chev" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
   );
 }
 

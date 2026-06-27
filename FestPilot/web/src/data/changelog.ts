@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.39.0";
+export const APP_VERSION = "0.40.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.40.0",
+    date: "2026-06-27",
+    title: "Your squad, at a glance",
+    icon: "groups",
+    whatsNew: [
+      "The Squad screen now leads with “Next up” — what the group is doing right now or next, before anything else.",
+      "On the home screen, a “My plan / Squad” switch lets you flip between your own next set and the squad's.",
+      "The squad plan now looks just like My Plan — a clean timeline — with your group's planned moments slotted in between the sets.",
+    ],
+    howToTest: [
+      "Open Squad: the top card is “Next up”, followed by the plan, where everyone is, the board and the agenda.",
+      "On Now, tap “Squad” to see the group's next-up; tap “My plan” to flip back.",
+      "Add a squad moment (Agenda), open the squad plan: it appears in time order between the sets, marked “during …” when it overlaps one.",
+    ],
+  },
   {
     version: "0.39.0",
     date: "2026-06-27",

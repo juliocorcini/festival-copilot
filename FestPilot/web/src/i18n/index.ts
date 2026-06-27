@@ -411,6 +411,7 @@ const EN = {
   "squad.liveNow": "Live now",
   "squad.inTime": "in {time}",
   "squad.nextUpQuiet": "Nothing scheduled yet",
+  "squad.duringSet": "during {label}",
   "now.tabMyPlan": "My plan",
   "now.tabSquad": "Squad",
 
@@ -823,6 +824,7 @@ const PT: Partial<Record<MessageKey, string>> = {
   "squad.liveNow": "Ao vivo agora",
   "squad.inTime": "em {time}",
   "squad.nextUpQuiet": "Nada agendado ainda",
+  "squad.duringSet": "durante {label}",
   "now.tabMyPlan": "Meu plano",
   "now.tabSquad": "Squad",
 
