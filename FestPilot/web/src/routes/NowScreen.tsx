@@ -30,7 +30,7 @@ import { useGroupEvents } from "../data/groupEvents";
 import { useMeetingPoints } from "../data/meetingPoints";
 import { useSquadNextUp } from "../data/squadPlan";
 import type { GroupDto } from "../data/types";
-import { SquadNextUpCard } from "./squad/squadHomeCards";
+import { SafetyBannerLive, SquadNextUpCard } from "./squad/squadHomeCards";
 
 const ms = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
@@ -67,7 +67,15 @@ function NowSquadAware(): JSX.Element {
   const { groups, status } = useMyGroups();
   const [mode, setMode] = useState<NowMode>("my");
   if (status !== "ready" || groups.length === 0) return <NowScreenBody />;
-  const tabs = <NowTabs mode={mode} onMode={setMode} />;
+  // A "needs help" must never be buried in the Squad tab — surface the SOS banner on the Now home
+  // (both tabs) for the squad the user last looked at (E12/DEC-100).
+  const bannerGroup = groups.find((g) => g.id === readActiveGroup()) ?? groups[0]!;
+  const tabs = (
+    <>
+      <SafetyBannerLive groupId={bannerGroup.id} />
+      <NowTabs mode={mode} onMode={setMode} />
+    </>
+  );
   return mode === "my" ? <NowScreenBody topSlot={tabs} /> : <NowSquadScreen groups={groups} topSlot={tabs} />;
 }
 

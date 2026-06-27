@@ -20,7 +20,7 @@ import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
-import { BoardPreviewCard, MeetingCompassCard, SquadAgendaCard, SquadNextUpCard, WhereEveryoneCard } from "./squad/squadHomeCards";
+import { BoardPreviewCard, MeetingCompassCard, SafetyBanner, SquadAgendaCard, SquadNextUpCard, WhereEveryoneCard } from "./squad/squadHomeCards";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
 /** Remembers the last squad the user was looking at, so a multi-squad user lands back where they left. */
@@ -141,8 +141,6 @@ function GroupHome({
     }
   };
 
-  const sosMine = safetyPoints.some((p) => p.isMine);
-  const sosOther = safetyPoints.find((p) => !p.isMine) ?? null;
   const hasSos = safetyPoints.length > 0;
 
   return (
@@ -179,22 +177,7 @@ function GroupHome({
           </div>
         )}
 
-        {hasSos && (
-          <button className="glass safety-home-banner" onClick={() => navigate(`/squad/${group.id}/safety`)}>
-            <span className="safety-home-pulse">
-              <span className="ms">{sosMine ? "share_location" : "sos"}</span>
-            </span>
-            <div className="safety-home-main">
-              <div className="safety-home-title">
-                {sosMine ? t("squad.sharingLocation") : t("squad.needsHelp", { name: sosOther?.createdByName ?? t("squad.aSquadmate") })}
-              </div>
-              <div className="safety-home-sub">
-                {sosMine ? t("squad.sharingSub") : t("squad.needsHelpSub", { landmark: sosOther?.landmarkLabel ?? "" })}
-              </div>
-            </div>
-            <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
-          </button>
-        )}
+        <SafetyBanner groupId={group.id} points={safetyPoints} />
 
         {/* No meet fallback here: the MeetingCompassCard below already owns active meeting points on
             the home, so Next up stays focused on the plan (events/sets) and never duplicates the spot. */}

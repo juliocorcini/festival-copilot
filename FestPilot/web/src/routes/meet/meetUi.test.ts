@@ -8,6 +8,7 @@ import {
   formatMeters,
   lifecycleBadge,
   memberStatusLine,
+  navMode,
   whenLabel,
 } from "./meetUi";
 
@@ -120,6 +121,28 @@ describe("meetUi — convergence summary", () => {
 
   it("'N going' before anyone arrives", () => {
     expect(convergenceSummary(point({ goingCount: 1, hereCount: 0 }))).toBe("1 going");
+  });
+});
+
+describe("meetUi — navMode (compass activatable even when arrived, E15/DEC-101)", () => {
+  const RADIUS = 15;
+
+  it("celebrates 'arrived' once inside the radius", () => {
+    expect(navMode(8, RADIUS, false)).toBe("arrived");
+    expect(navMode(15, RADIUS, false)).toBe("arrived"); // exactly at the radius still counts
+  });
+
+  it("shows the compass while still walking", () => {
+    expect(navMode(40, RADIUS, false)).toBe("compass");
+  });
+
+  it("shows the compass when the fix isn't known yet (null distance)", () => {
+    expect(navMode(null, RADIUS, false)).toBe("compass");
+  });
+
+  it("force-compass overrides 'arrived' so the compass is always activatable at the spot", () => {
+    expect(navMode(2, RADIUS, true)).toBe("compass"); // right on top of it, but the user asked for the compass
+    expect(navMode(null, RADIUS, true)).toBe("compass");
   });
 });
 

@@ -387,6 +387,11 @@ export async function setMyMeetingStatus(
  * End a point (creator-only — enforced by the route): "close" wraps it up cleanly after everyone
  * arrived (#26.4); "cancel" calls it off. Both drop it from the active list and keep the "who went"
  * record until the purge window. Returns the refreshed (now-terminal) detail.
+ *
+ * IDEMPOTENT (Gate 6.3, DEC-100): the flip only touches a still-`active` row, but we always return
+ * the current detail — so ending an already-ended broadcast is a no-op success, not a 404. This is
+ * what makes "stop syncs" reliable: a device stuck on a ghost SOS can re-send "I'm okay" and the
+ * route re-fans-out the resolved state to everyone, instead of failing the retry.
  */
 export async function endMeetingPoint(
   db: D1Database,
@@ -398,11 +403,12 @@ export async function endMeetingPoint(
   nowIso: string
 ): Promise<MeetingPointDto | null> {
   const status = mode === "cancel" ? "cancelled" : "archived";
-  const res = await db
-    .prepare(`UPDATE meeting_point SET status = ? WHERE id = ? AND group_id = ?`)
+  await db
+    .prepare(`UPDATE meeting_point SET status = ? WHERE id = ? AND group_id = ? AND status = 'active'`)
     .bind(status, mpId, groupId)
     .run();
-  if (!res.meta.changes) return null;
+  // Returns null ONLY when the point doesn't exist for this group; an already-terminal point still
+  // resolves to its terminal detail (idempotent stop — DEC-100).
   return getMeetingPoint(db, festivalId, groupId, mpId, userId, nowIso);
 }
 

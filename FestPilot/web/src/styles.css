@@ -1947,9 +1947,16 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 
 /* Meeting-point detail (#26.3) — convergence map + sheet + roster + status loop. */
 .meet-detail { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.meet-convergence { position: relative; display: block; width: 100%; border: 0; padding: 0; cursor: pointer; overflow: hidden;
-  background: var(--map-fallback); }
-.meet-converge-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* Convergence/SOS map — now pan + zoom (E14/DEC-100), reusing the shared .viewport/.world/.base. */
+.meet-convergence { position: relative; display: block; width: 100%; overflow: hidden; background: var(--map-fallback); touch-action: none; }
+.meet-converge-viewport { background: var(--map-fallback); }
+.meet-converge-recenter { right: 10px; bottom: 10px; width: 36px; height: 36px; font-size: 16px; }
+.meet-converge-open { position: absolute; left: 10px; bottom: 10px; gap: 6px; }
+.meet-converge-open .ms { font-size: 16px; }
+.meet-converge-pin circle { stroke: rgba(255, 255, 255, 0.9); stroke-width: 1.4; paint-order: stroke; }
+.meet-converge-target-ring { fill: none; stroke: var(--accent); stroke-width: 1.4; opacity: 0.9; }
+.meet-converge-target-disc { fill: var(--accent); }
+.meet-converge-target-dot { fill: var(--bg); }
 .meet-detail-sheet { margin: -28px 12px 0; padding: 16px 16px 20px; border-radius: 26px 26px 20px 20px; position: relative;
   display: flex; flex-direction: column; gap: 12px; }
 .meet-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -2082,6 +2089,15 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .nav-arrived-orb .ms { font-size: 46px; color: #5fd08a; }
 .nav-arrived-title { font-size: 30px; font-weight: 700; }
 .nav-arrived-sub { font-size: 14px; color: var(--muted); }
+.nav-show-compass { margin-top: 10px; }
+/* Resolved nav state (E13/DEC-100): the spot ended while navigating — calm, not alarming. */
+.nav-resolved { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; flex: 1; }
+.nav-resolved-orb { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle, rgba(45, 182, 166, 0.28), rgba(45, 182, 166, 0.07)); border: 1px solid rgba(45, 182, 166, 0.5); }
+.nav-resolved-orb .ms { font-size: 48px; color: #3bd6c2; }
+.nav-resolved-title { font-size: 26px; font-weight: 700; }
+.nav-resolved-sub { font-size: 14px; color: var(--muted); max-width: 30ch; line-height: 1.45; }
+.nav-resolved .btn { margin-top: 8px; }
 .nav-hint { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .nav-hint .ms { font-size: 18px; color: var(--accent2); flex-shrink: 0; }
 .nav-hint b { color: var(--ink); }
@@ -2122,6 +2138,11 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 @keyframes safetyPulse { 0% { box-shadow: 0 0 0 0 rgba(224, 86, 59, 0.5); } 100% { box-shadow: 0 0 0 14px rgba(224, 86, 59, 0); } }
 
 .safety-active { gap: 14px; }
+/* My active broadcast as a card (so others' alerts can sit alongside it — mutual awareness, E12). */
+.safety-active-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 18px;
+  background: rgba(45, 182, 166, 0.08); border: 1px solid rgba(45, 182, 166, 0.32); }
+.safety-others-label { margin-top: 4px; }
+.safety-also-hint { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.4; }
 .safety-banner { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 16px; font-size: 13px; font-weight: 800;
   background: rgba(45, 182, 166, 0.16); border: 1px solid rgba(45, 182, 166, 0.5); color: #3bd6c2; }
 .safety-banner .ms { font-size: 20px; }

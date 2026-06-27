@@ -457,7 +457,9 @@ groups.post("/:id/meeting-points/:mpId/end", async (c) => {
   const mode = body.mode === "cancel" ? "cancel" : "close";
   const point = await endMeetingPoint(c.env.DB, m.group.festivalId, m.group.id, mpId, m.user.id, mode, now);
   if (!point) return c.json({ error: "not found" }, 404);
-  await notifyGroup(c.env, m.group.id, "meeting");
+  // Fan out on the lane the point lives in so the right screens refetch and clear the resolved state
+  // on every device (E13/DEC-100). Idempotent end → a retry re-broadcasts, so nobody stays stuck.
+  await notifyGroup(c.env, m.group.id, existing.isSafety ? "safety" : "meeting");
   return c.json({ meetingPoint: point });
 });
 

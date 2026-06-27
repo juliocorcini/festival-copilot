@@ -466,6 +466,33 @@ describe("safety / 'I'm lost' broadcast (Gate 6.3, UC-28, DEC-022)", () => {
     expect((await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, owner.id, NOW)).length).toBe(0);
   });
 
+  it("stop syncs: 'I'm okay' clears the lane for the OTHER member too (E13/DEC-100)", async () => {
+    const { owner, mara, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    // Before: Mara sees Julio's "needs help" in her lane.
+    expect((await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, mara.id, NOW)).map((p) => p.id)).toEqual([sos.id]);
+    // Julio taps "I'm okay".
+    await endMeetingPoint(d1, FESTIVAL_ID, g.id, sos.id, owner.id, "close", NOW);
+    // After: Mara's lane is empty — the ghost "needs help" is gone on her device too.
+    expect((await listActiveSafetyPoints(d1, FESTIVAL_ID, g.id, mara.id, NOW)).length).toBe(0);
+    // And if Mara had the detail open, it now reads as terminal (so the nav screen can resolve it).
+    const seen = await getMeetingPoint(d1, FESTIVAL_ID, g.id, sos.id, mara.id, NOW);
+    expect(seen!.lifecycle).toBe("expired");
+  });
+
+  it("ending an already-ended broadcast is idempotent (a stuck retry resolves, never 404s)", async () => {
+    const { owner, g } = await squadOf2();
+    const sos = await dropSafety(g.id, owner.id);
+    const first = (await endMeetingPoint(d1, FESTIVAL_ID, g.id, sos.id, owner.id, "close", NOW))!;
+    expect(first.lifecycle).toBe("expired");
+    // A second "I'm okay" (e.g. a device that didn't get the first fan-out) still resolves cleanly.
+    const again = await endMeetingPoint(d1, FESTIVAL_ID, g.id, sos.id, owner.id, "close", NOW);
+    expect(again).not.toBeNull();
+    expect(again!.lifecycle).toBe("expired");
+    // A truly missing point is still null (a real 404, not an idempotent no-op).
+    expect(await endMeetingPoint(d1, FESTIVAL_ID, g.id, "mp_missing", owner.id, "close", NOW)).toBeNull();
+  });
+
   it("the cron purge never auto-fades a safety broadcast (it ends only on 'I'm okay')", async () => {
     const { owner, g } = await squadOf2();
     const sos = await dropSafety(g.id, owner.id);

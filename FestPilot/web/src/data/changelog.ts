@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.46.0";
+export const APP_VERSION = "0.47.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.47.0",
+    date: "2026-06-27",
+    title: "Lost & found, fixed",
+    icon: "sos",
+    whatsNew: [
+      "When someone taps 'I'm okay', the alert now clears on *everyone's* phone — no more being stuck staring at a 'needs help' that's already over.",
+      "If two of you are lost at once you each see the other's alert and can walk straight to them — being lost yourself no longer hides everyone else.",
+      "A lost-squadmate alert now shows up front on your Now screen and squad home, not buried in a menu.",
+      "The 'find each other' map can finally be pinched and zoomed to the exact spot, and you can bring the compass back even after you've arrived.",
+    ],
+    howToTest: [
+      "Two phones in a squad: phone A → 'I'm lost' → 'Share my location + alert squad'. Phone B sees the SOS on its Now screen and squad home. A taps 'I'm okay' → the alert disappears on B too within a moment.",
+      "Both phones tap 'I'm lost' at the same time → each shows an 'Others need help too' card you can tap to navigate to the other person.",
+      "Open a meeting point or SOS map → pinch to zoom and drag around; on the compass screen, once it says 'You're here', tap 'Show compass anyway' to bring the dial back.",
+    ],
+  },
   {
     version: "0.46.0",
     date: "2026-06-27",

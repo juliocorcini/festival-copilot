@@ -11,6 +11,7 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../data/api";
+import { useSafety } from "../../data/meetingPoints";
 import { bearingDegrees, compassPoint, metersBetween } from "../../domain/travel";
 import { stageColor } from "../../lib/format";
 import { useT, type TranslateFn } from "../../i18n";
@@ -375,6 +376,42 @@ export function SquadAgendaCard({ groupId, events }: { groupId: string; events: 
       )}
     </section>
   );
+}
+
+/**
+ * SOS banner (Gate 6.3, E12/DEC-100). A calm, high-visibility row shown wherever the squad is in
+ * view — the squad home AND the Now screen — so a "needs help" is never buried. Presentational: the
+ * caller passes the active safety points (so a screen that already loads them doesn't double-fetch).
+ * Returns null when nobody's broadcasting. Tapping opens the safety flow (navigate to / "I'm okay").
+ */
+export function SafetyBanner({ groupId, points }: { groupId: string; points: MeetingPointDto[] }): JSX.Element | null {
+  const navigate = useNavigate();
+  const t = useT();
+  if (points.length === 0) return null;
+  const mine = points.some((p) => p.isMine);
+  const other = points.find((p) => !p.isMine) ?? null;
+  return (
+    <button className="glass safety-home-banner" onClick={() => navigate(`/squad/${groupId}/safety`)}>
+      <span className="safety-home-pulse">
+        <span className="ms">{mine ? "share_location" : "sos"}</span>
+      </span>
+      <div className="safety-home-main">
+        <div className="safety-home-title">
+          {mine ? t("squad.sharingLocation") : t("squad.needsHelp", { name: other?.createdByName ?? t("squad.aSquadmate") })}
+        </div>
+        <div className="safety-home-sub">
+          {mine ? t("squad.sharingSub") : t("squad.needsHelpSub", { landmark: other?.landmarkLabel ?? "" })}
+        </div>
+      </div>
+      <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
+    </button>
+  );
+}
+
+/** Self-fetching SOS banner for screens that don't already load the safety lane (e.g. the Now home). */
+export function SafetyBannerLive({ groupId }: { groupId: string }): JSX.Element | null {
+  const { points } = useSafety(groupId);
+  return <SafetyBanner groupId={groupId} points={points} />;
 }
 
 /** Compact relative time for the board preview, reusing the presence `ago` scale ("just now" / "20m ago"). */

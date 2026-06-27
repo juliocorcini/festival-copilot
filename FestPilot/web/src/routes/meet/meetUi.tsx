@@ -82,6 +82,20 @@ export function closesInLabel(expiresAtUtc: string, nowMs: number = Date.now()):
   return hr <= 6 ? `closes in ${hr}h` : null;
 }
 
+/**
+ * Whether the navigation screen shows the "you're here" celebration or the live compass (Gate 6.3,
+ * E15/DEC-101). Inside the arrived radius it celebrates — UNLESS the user explicitly asked to keep
+ * the compass on. The compass must ALWAYS be activatable, even at the spot (you may have overshot,
+ * or want to re-orient toward a moving squadmate), so an explicit override beats the auto-arrived
+ * state. Pure so the "can I still turn the compass on?" rule is unit-tested in one place.
+ */
+export type NavMode = "arrived" | "compass";
+export function navMode(distanceMeters: number | null, arrivedRadiusM: number, forceCompass: boolean): NavMode {
+  if (forceCompass) return "compass";
+  if (distanceMeters != null && distanceMeters <= arrivedRadiusM) return "arrived";
+  return "compass";
+}
+
 /** When (#26.2) copy for the detail subtitle: "now" or a local time like "21:30". */
 export function whenLabel(meetAtUtc: string | null): string {
   if (!meetAtUtc) return "now";
