@@ -11,11 +11,13 @@ import { useGroup } from "../../data/groups";
 import { useSquadPlan } from "../../data/squadPlan";
 import { stageEntriesForBlock, type SquadBlock, type StageEntry } from "../../domain/squadPlan";
 import { stageColor, timeInZone } from "../../lib/format";
+import { useT } from "../../i18n";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { AvatarStack } from "./squadUi";
 
 export function SquadSplitScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { id, perfId } = useParams<{ id: string; perfId: string }>();
   const [params] = useSearchParams();
   const day = params.get("day") ?? undefined;
@@ -32,8 +34,8 @@ export function SquadSplitScreen(): JSX.Element {
   if (status === "error" || !plan || !block || !id) {
     return (
       <>
-        <StackHeader title="The split" backTo={`/squad/${id}/plan`} />
-        <ErrorState message="This block is no longer in the squad plan." onRetry={reload} />
+        <StackHeader title={t("block.split")} backTo={`/squad/${id}/plan`} />
+        <ErrorState message={t("block.gone")} onRetry={reload} />
       </>
     );
   }
@@ -50,19 +52,15 @@ export function SquadSplitScreen(): JSX.Element {
     <>
       <StackHeader title={range} backTo={`/squad/${id}/plan?day=${encodeURIComponent(day ?? "")}`} />
       <div className="screen squad-split">
-        <div className="label split-day">{group?.name ?? "Squad"} · {day ? titleCase(day) : ""}</div>
+        <div className="label split-day">{group?.name ?? t("squad.title")} · {day ? titleCase(day) : ""}</div>
         <h1 className="poster split-title">
           {splitting ? (
-            <>The squad splits<br />here <span className="split-emoji">🪩</span></>
+            <>{t("split.splitsA")}<br />{t("split.splitsB")} <span className="split-emoji">🪩</span></>
           ) : (
-            <>You're all<br />together <span className="split-emoji">🙌</span></>
+            <>{t("split.togetherA")}<br />{t("split.togetherB")} <span className="split-emoji">🙌</span></>
           )}
         </h1>
-        <p className="split-sub">
-          {splitting
-            ? "Totally normal — everyone sees who's where, and you can regroup after."
-            : "Everyone locked the same set this block. Easy."}
-        </p>
+        <p className="split-sub">{splitting ? t("split.subSplit") : t("split.subTogether")}</p>
 
         <div className="split-cards">
           {entries.map((e) => (
@@ -73,7 +71,7 @@ export function SquadSplitScreen(): JSX.Element {
         {undecided > 0 && (
           <p className="split-undecided">
             <span className="ms" style={{ fontSize: 14 }}>schedule</span>
-            {undecided} {undecided === 1 ? "person hasn't" : "people haven't"} locked this block yet
+            {t(undecided === 1 ? "split.undecidedOne" : "split.undecidedMany", { count: undecided })}
           </p>
         )}
       </div>
@@ -81,13 +79,13 @@ export function SquadSplitScreen(): JSX.Element {
       <div className="squad-actions split-actions">
         <button className="btn btn-primary" onClick={() => navigate(`/squad/${id}/meet`)}>
           <span className="ms">pin_drop</span>
-          Set a meet-up after
+          {t("split.setMeet")}
         </button>
         <button
           className="btn btn-ghost"
           onClick={() => navigate(`/squad/${id}/plan/${perfId}?day=${encodeURIComponent(day ?? "")}`)}
         >
-          Back to this block
+          {t("split.backBlock")}
         </button>
       </div>
     </>
@@ -95,6 +93,7 @@ export function SquadSplitScreen(): JSX.Element {
 }
 
 function StageCard({ entry }: { entry: StageEntry }): JSX.Element {
+  const t = useT();
   const color = stageColor(entry.set.stageName);
   return (
     <div className={`glass split-card${entry.isYou ? " mine" : ""}`}>
@@ -103,7 +102,7 @@ function StageCard({ entry }: { entry: StageEntry }): JSX.Element {
         <div className="split-card-top">
           <div className="split-stage">
             {entry.set.stageName}
-            {entry.isYou && <span className="split-you"> · you</span>}
+            {entry.isYou && <span className="split-you"> · {t("common.you")}</span>}
           </div>
           <span className="split-count" style={{ color }}>
             {entry.members.length}

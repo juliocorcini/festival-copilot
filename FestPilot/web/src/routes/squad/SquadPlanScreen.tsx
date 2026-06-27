@@ -22,6 +22,7 @@ import { blockSummary, StatusPill } from "./squadUi";
 
 export function SquadPlanScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { group } = useGroup(id);
   const lineup = useLineup();
@@ -50,16 +51,18 @@ export function SquadPlanScreen(): JSX.Element {
 
   const header = (
     <header className="appbar squad-plan-bar">
-      <button className="ava ghost-ava" aria-label="Back" onClick={() => navigate("/squad")}>
+      <button className="ava ghost-ava" aria-label={t("common.back")} onClick={() => navigate("/squad")}>
         <span className="ms">arrow_back</span>
       </button>
       <div className="squad-plan-head">
         <div className="eyebrow">
-          {group ? `${group.emoji ? `${group.emoji} ` : ""}${group.name} · ${count} ${count === 1 ? "person" : "people"}` : "Squad"}
+          {group
+            ? `${group.emoji ? `${group.emoji} ` : ""}${group.name} · ${count} ${count === 1 ? t("common.person") : t("common.people")}`
+            : t("squad.title")}
         </div>
-        <h1 className="poster">Squad plan</h1>
+        <h1 className="poster">{t("squad.planTitle")}</h1>
       </div>
-      <button className="ava ghost-ava" aria-label="Refresh squad plan" onClick={reload}>
+      <button className="ava ghost-ava" aria-label={t("squad.refreshPlan")} onClick={reload}>
         <span className="ms" style={{ color: "var(--accent)" }}>refresh</span>
       </button>
     </header>
@@ -77,7 +80,7 @@ export function SquadPlanScreen(): JSX.Element {
     return (
       <>
         {header}
-        <ErrorState message="Could not load the squad plan." onRetry={reload} />
+        <ErrorState message={t("squad.planLoadError")} onRetry={reload} />
       </>
     );
   }
@@ -103,14 +106,14 @@ export function SquadPlanScreen(): JSX.Element {
             ))}
           </div>
         )}
-        <p className="squad-plan-hint">Auto-built from everyone's locked picks · tap a block to adjust</p>
+        <p className="squad-plan-hint">{t("squad.planHint")}</p>
 
         {!meShared && (
           <button className="squad-share-cta" onClick={() => navigate(`/squad/${id}/share`)}>
             <span className="ms">ios_share</span>
             <div className="squad-share-main">
-              <div className="squad-share-title">Share your plan</div>
-              <div className="squad-share-sub">Add your locked picks so the squad plan sharpens</div>
+              <div className="squad-share-title">{t("squad.shareYourPlan")}</div>
+              <div className="squad-share-sub">{t("squad.planShareSub")}</div>
             </div>
             <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
           </button>
@@ -129,12 +132,12 @@ export function SquadPlanScreen(): JSX.Element {
         {plan.blocks.length === 0 ? (
           <div className="squad-plan-empty glass">
             <span className="ms">hourglass_empty</span>
-            <div className="squad-plan-empty-title">Not enough picks yet</div>
-            <p>The squad plan builds itself as friends lock in and share. {meShared ? "Waiting on the squad." : "Start by sharing yours."}</p>
+            <div className="squad-plan-empty-title">{t("squad.notEnoughTitle")}</div>
+            <p>{t("squad.planBuilds")} {meShared ? t("squad.waitingSquad") : t("squad.startSharing")}</p>
             {!meShared && (
               <button className="btn btn-primary" onClick={() => navigate(`/squad/${id}/share`)}>
                 <span className="ms">ios_share</span>
-                Share my plan
+                {t("squad.shareMyPlan")}
               </button>
             )}
           </div>
@@ -187,6 +190,7 @@ function SquadSetRow({
   now: number;
   onOpen: () => void;
 }): JSX.Element {
+  const t = useT();
   const { startMs, endMs } = block.set;
   const status = now >= endMs ? "done" : now >= startMs ? "now" : "";
   const conflict = block.youStatus === "conflict";
@@ -204,12 +208,12 @@ function SquadSetRow({
           <div className="poster plan-name">
             {block.set.label}
             {block.pinned && (
-              <span className="ms squad-block-pin" title="Owner pick">push_pin</span>
+              <span className="ms squad-block-pin" title={t("squad.methodOwnerPin")}>push_pin</span>
             )}
           </div>
           <div className="plan-stage">
             <span className="dot" style={{ background: stageColor(block.set.stageName) }} />
-            {blockSummary(block, memberCount)}
+            {blockSummary(block, memberCount, t)}
           </div>
         </div>
         <StatusPill block={block} />
@@ -272,22 +276,21 @@ function NeedsInput({
   inviteHref: string;
   navigate: (to: string) => void;
 }): JSX.Element {
+  const t = useT();
   const pct = total > 0 ? Math.round((shared / total) * 100) : 0;
   return (
     <div className="squad-needs">
       <div className="squad-needs-head">
-        <div className="squad-needs-title">
-          {shared} of {total} shared a plan
-        </div>
+        <div className="squad-needs-title">{t("squad.sharedOfTotal", { shared, total })}</div>
         <span className="squad-needs-pct">{pct}%</span>
       </div>
       <div className="squad-tally">
         <span style={{ width: `${pct}%` }} />
       </div>
-      <p className="squad-needs-copy">The squad plan sharpens as more friends lock in. Nudge the rest:</p>
+      <p className="squad-needs-copy">{t("squad.nudgeCopy")}</p>
       <button className="chip chip-accent squad-needs-nudge" onClick={() => navigate(inviteHref)}>
         <span className="ms" style={{ fontSize: 14 }}>person_add</span>
-        Invite &amp; nudge
+        {t("squad.inviteNudge")}
       </button>
     </div>
   );

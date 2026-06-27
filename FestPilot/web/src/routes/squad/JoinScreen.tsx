@@ -14,6 +14,7 @@ import { autoShareOnJoinEnabled } from "../../app/settings";
 import { api, ApiError } from "../../data/api";
 import { initialsOf, useIdentity } from "../../data/identity";
 import { readableInkOn } from "../../lib/contrast";
+import { useT } from "../../i18n";
 import type { InvitePreviewDto } from "../../data/types";
 
 /** Pull the invite code out of a pasted link or raw code. */
@@ -25,21 +26,22 @@ function parseToken(raw: string): string {
 
 function JoinEntry(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const [value, setValue] = useState("");
   const token = parseToken(value);
   return (
     <>
-      <StackHeader title="Join a squad" backTo="/squad" />
+      <StackHeader title={t("join.title")} backTo="/squad" />
       <div className="screen">
         <div style={{ padding: "2px 2px 4px" }}>
           <h1 className="poster" style={{ fontSize: 30, lineHeight: 1.05, margin: 0 }}>
-            Join a squad
+            {t("join.title")}
           </h1>
           <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 10, lineHeight: 1.5 }}>
-            Paste the invite link a friend sent you, or type the code from their screen.
+            {t("join.intro")}
           </p>
         </div>
-        <span className="label">Invite link or code</span>
+        <span className="label">{t("join.label")}</span>
         <input
           id="invite-code"
           className="field"
@@ -57,7 +59,7 @@ function JoinEntry(): JSX.Element {
           onClick={() => navigate(`/squad/join/${token}`)}
         >
           <span className="ms">group_add</span>
-          Continue
+          {t("common.continue")}
         </button>
       </div>
     </>
@@ -66,6 +68,7 @@ function JoinEntry(): JSX.Element {
 
 function JoinPreview({ token }: { token: string }): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const [searchParams] = useSearchParams();
   // Set by onboarding when the user arrived via an invite link: join without a second tap.
   const autoJoin = searchParams.get("auto") === "1";
@@ -112,12 +115,10 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
     } catch (err) {
       setJoining(false);
       setJoinError(
-        err instanceof ApiError && err.status === 409
-          ? "This squad is full (50 people)."
-          : "Could not join. Check your connection and try again."
+        err instanceof ApiError && err.status === 409 ? t("join.full") : t("join.joinFailed")
       );
     }
-  }, [token, navigate]);
+  }, [token, navigate, t]);
 
   // Auto-join straight from an invite link (the user already opted in by opening it): once the preview
   // is ready and they have a profile, join once without waiting for a tap. Falls back to the manual
@@ -136,19 +137,19 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
 
   if (preview?.alreadyMember) return <Navigate to="/squad" replace />;
 
-  const youName = user?.displayName ?? "you";
+  const youName = user?.displayName ?? t("join.you");
 
   return (
     <>
-      <StackHeader title="Join squad" backTo="/squad" />
+      <StackHeader title={t("join.previewTitle")} backTo="/squad" />
       <div className="screen join-screen">
-        {status === "loading" && <p className="squad-note">Loading invite…</p>}
+        {status === "loading" && <p className="squad-note">{t("join.loading")}</p>}
         {status === "notfound" && (
           <div className="glass info-note" style={{ marginTop: 8 }}>
             <span className="ms" style={{ color: "var(--danger)", fontSize: 18 }}>
               link_off
             </span>
-            <div>That invite link isn't valid. Ask your friend to send it again.</div>
+            <div>{t("join.notFound")}</div>
           </div>
         )}
         {status === "error" && (
@@ -156,7 +157,7 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
             <span className="ms" style={{ color: "var(--danger)", fontSize: 18 }}>
               error
             </span>
-            <div>Could not reach the server. Check your connection and try again.</div>
+            <div>{t("join.error")}</div>
           </div>
         )}
 
@@ -167,8 +168,8 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
                 {initialsOf(preview.ownerName)}
               </span>
               <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 12 }}>
-                <b style={{ color: "var(--ink)" }}>{preview.ownerName ?? "Someone"}</b> invited you to
-                join
+                <b style={{ color: "var(--ink)" }}>{preview.ownerName ?? t("join.someone")}</b>{" "}
+                {t("join.invitedYou")}
               </p>
               <h1 className="poster" style={{ fontSize: 30, lineHeight: 1.05, margin: "4px 0 0" }}>
                 {preview.name} {preview.emoji ?? ""}
@@ -177,9 +178,9 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
 
             <div className="glass join-count">
               <span className="label">
-                {preview.memberCount} {preview.memberCount === 1 ? "person" : "people"} in the squad
+                {t(preview.memberCount === 1 ? "join.inSquadOne" : "join.inSquadMany", { count: preview.memberCount })}
               </span>
-              <span style={{ fontSize: 11, color: "var(--muted)" }}>+ you</span>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("join.plusYou")}</span>
             </div>
 
             <div className="glass join-as">
@@ -196,7 +197,7 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
                 {initialsOf(youName)}
               </span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: "var(--muted)" }}>You'll join as</div>
+                <div style={{ fontSize: 11, color: "var(--muted)" }}>{t("join.joinAs")}</div>
                 <div style={{ fontWeight: 800, fontSize: 14 }}>{youName}</div>
               </div>
               <button
@@ -205,7 +206,7 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
                   navigate(`/squad/profile?next=${encodeURIComponent(`/squad/join/${token}`)}`)
                 }
               >
-                Edit
+                {t("common.edit")}
               </button>
             </div>
 
@@ -225,10 +226,10 @@ function JoinPreview({ token }: { token: string }): JSX.Element {
           onClick={join}
         >
           <span className="ms">group_add</span>
-          {joining ? "Joining…" : "Join squad"}
+          {joining ? t("join.joining") : t("join.joinCta")}
         </button>
         <button className="btn btn-ghost" onClick={() => navigate("/squad", { replace: true })}>
-          Not now
+          {t("common.notNow")}
         </button>
       </div>
     </>

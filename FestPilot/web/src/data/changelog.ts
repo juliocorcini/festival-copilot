@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.43.0";
+export const APP_VERSION = "0.44.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,23 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.44.0",
+    date: "2026-06-27",
+    title: "Your squad, honest and in your language",
+    icon: "groups",
+    whatsNew: [
+      "The squad's 'Next up' now reads the real group plan — it shows what you're all actually doing, instead of saying 'nothing scheduled' when there's a plan.",
+      "The plan button knows whether a plan exists: 'View the squad plan' when it does, 'Build the squad plan' when it doesn't.",
+      "Tap 'Why this?' on any squad pick to see, in plain words, who favorited it, who's going, and the rule that chose it — the math never changes, it's just explained.",
+      "The squad plan, sharing, joining and the block screens now speak Portuguese too (English stays the default).",
+    ],
+    howToTest: [
+      "Open Squad (or the Home 'Squad' tab) with a plan: 'Next up' shows the real next set; the big button reads 'View the squad plan'.",
+      "Open the squad plan, tap a block, then 'Why this?': a sheet names who's going / who favorited and explains the pick.",
+      "Switch the language to Português in Settings and walk the squad plan / share / join screens — no English left.",
+    ],
+  },
   {
     version: "0.43.0",
     date: "2026-06-27",

@@ -1597,7 +1597,21 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .block-pick-main { flex: 1; min-width: 0; }
 .block-pick-name { font-size: 20px; font-weight: 700; line-height: 1; }
 .block-pick-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.block-why { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
+  background: var(--chip-bg, rgba(255,255,255,0.06)); border: 1px solid var(--hair, rgba(255,255,255,0.12));
+  color: var(--ink); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 999px; }
+.block-why .ms { font-size: 15px; color: var(--accent); }
 .block-pick-avatars { margin-top: 14px; }
+/* "Why this pick?" sheet (E08) */
+.why-body { display: flex; flex-direction: column; gap: 16px; }
+.why-headline { font-size: 15px; font-weight: 700; line-height: 1.4; color: var(--ink); margin: 0; }
+.why-section { display: flex; flex-direction: column; gap: 4px; }
+.why-names { font-size: 13px; color: var(--ink); line-height: 1.5; margin: 0; }
+.why-names b { font-weight: 700; }
+.why-glossary { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; border-top: 1px solid var(--hair, rgba(255,255,255,0.1)); }
+.why-glossary ul { margin: 2px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.why-glossary li { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.why-note { font-size: 12px; color: var(--muted); font-style: italic; margin: 4px 0 0; }
 .block-split-head { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 4px; }
 .block-split-label { margin-top: 0; }
 .block-split-view { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; background: none; border: 0;

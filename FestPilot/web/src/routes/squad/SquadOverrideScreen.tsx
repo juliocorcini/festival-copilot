@@ -11,6 +11,7 @@ import { useGroup } from "../../data/groups";
 import { useSquadPlan } from "../../data/squadPlan";
 import type { PlannableSet } from "../../domain/types";
 import { stageColor } from "../../lib/format";
+import { useT } from "../../i18n";
 import { ErrorState, LoadingState } from "../../ui/states";
 
 function overlaps(a: PlannableSet, b: PlannableSet): boolean {
@@ -19,6 +20,7 @@ function overlaps(a: PlannableSet, b: PlannableSet): boolean {
 
 export function SquadOverrideScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { id, perfId } = useParams<{ id: string; perfId: string }>();
   const [params] = useSearchParams();
   const day = params.get("day") ?? undefined;
@@ -62,8 +64,8 @@ export function SquadOverrideScreen(): JSX.Element {
   if (group && group.role !== "owner") {
     return (
       <>
-        <StackHeader title="Override" backTo={`/squad/${id}/plan`} />
-        <ErrorState title="Owner only" message="Only the squad owner can override the plan." />
+        <StackHeader title={t("override.title")} backTo={`/squad/${id}/plan`} />
+        <ErrorState title={t("override.ownerOnlyTitle")} message={t("override.ownerOnlyMsg")} />
       </>
     );
   }
@@ -71,8 +73,8 @@ export function SquadOverrideScreen(): JSX.Element {
   if (status === "error" || !target || !id) {
     return (
       <>
-        <StackHeader title="Override" backTo={`/squad/${id}/plan`} />
-        <ErrorState message="Could not load this block to override." onRetry={reload} />
+        <StackHeader title={t("override.title")} backTo={`/squad/${id}/plan`} />
+        <ErrorState message={t("override.loadError")} onRetry={reload} />
       </>
     );
   }
@@ -96,18 +98,18 @@ export function SquadOverrideScreen(): JSX.Element {
 
   return (
     <>
-      <StackHeader title="Set squad pick" backTo={`/squad/${id}/plan/${perfId}?day=${encodeURIComponent(day ?? "")}`} />
+      <StackHeader title={t("override.setPick")} backTo={`/squad/${id}/plan/${perfId}?day=${encodeURIComponent(day ?? "")}`} />
       <div className="screen squad-override">
         <div className="override-head">
-          <span className="label">{day ? titleCase(day) : ""} · override</span>
-          <span className="chip chip-accent-soft">Owner</span>
+          <span className="label">{t("override.dayLabel", { day: day ? titleCase(day) : "" })}</span>
+          <span className="chip chip-accent-soft">{t("squad.owner")}</span>
         </div>
 
         <div className="override-search">
           <span className="ms">search</span>
           <input
             className="field"
-            placeholder="Search acts this block"
+            placeholder={t("override.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -129,29 +131,26 @@ export function SquadOverrideScreen(): JSX.Element {
                   <div className="override-name">{c.label}</div>
                   <div className="override-sub">
                     {c.stageName}
-                    {isAuto ? " · auto pick" : ""} · {n} picked
+                    {isAuto ? ` · ${t("override.autoPick")}` : ""} · {t("override.nPicked", { count: n })}
                   </div>
                 </div>
                 <span className="ms override-radio">{on ? "radio_button_checked" : "radio_button_unchecked"}</span>
               </button>
             );
           })}
-          {filtered.length === 0 && <div className="override-empty">No acts match "{query}".</div>}
+          {filtered.length === 0 && <div className="override-empty">{t("override.noMatch", { query })}</div>}
         </div>
 
         <div className="glass override-note">
           <span className="ms">info</span>
-          <div>
-            Overrides the auto pick for everyone. Members can still tap <b>do my own</b>. You can revert
-            to auto anytime.
-          </div>
+          <div>{t("override.note")}</div>
         </div>
       </div>
 
       <div className="squad-actions">
         <button className="btn btn-primary" onClick={apply} disabled={busy || !current}>
           <span className="ms">{revertingToAuto ? "restart_alt" : "push_pin"}</span>
-          {busy ? "Saving…" : revertingToAuto ? "Revert to auto pick" : "Set as squad pick"}
+          {busy ? t("override.saving") : revertingToAuto ? t("override.revert") : t("override.setAsPick")}
         </button>
       </div>
     </>

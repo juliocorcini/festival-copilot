@@ -14,6 +14,7 @@ import { useMyGroups, useGroup } from "../data/groups";
 import { useMeetingPoints, useSafety } from "../data/meetingPoints";
 import { useGroupEvents } from "../data/groupEvents";
 import { useGroupPresence } from "../data/presence";
+import { useSquadNextUp } from "../data/squadPlan";
 import { useIdentity } from "../data/identity";
 import type { GroupDto, MeetingPointDto } from "../data/types";
 import { Avatar } from "../ui/Avatar";
@@ -111,6 +112,7 @@ function GroupHome({
   const { presence, reload: reloadPresence } = useGroupPresence(group.id);
   const { notes, status: boardStatus, reload: reloadBoard } = useBoard(group.id);
   const { events, reload: reloadEvents } = useGroupEvents(group.id);
+  const { sets: nextUpSets, hasPlan } = useSquadNextUp(group.id);
   const [leaving, setLeaving] = useState(false);
 
   // Pull-to-refresh fans out to every live source on the home (server is source of truth).
@@ -196,15 +198,15 @@ function GroupHome({
 
         {/* No meet fallback here: the MeetingCompassCard below already owns active meeting points on
             the home, so Next up stays focused on the plan (events/sets) and never duplicates the spot. */}
-        <SquadNextUpCard groupId={group.id} events={events} points={[]} presence={presence} />
+        <SquadNextUpCard groupId={group.id} events={events} points={[]} presence={presence} sets={nextUpSets} />
 
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">
             <span className="ms">event_available</span>
           </div>
           <div className="squad-plan-main">
-            <div className="squad-plan-title">{t("squad.buildPlan")}</div>
-            <div className="squad-plan-sub">{t("squad.buildPlanSub")}</div>
+            <div className="squad-plan-title">{hasPlan ? t("squad.viewPlan") : t("squad.buildPlan")}</div>
+            <div className="squad-plan-sub">{hasPlan ? t("squad.viewPlanSub") : t("squad.buildPlanSub")}</div>
           </div>
           <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>

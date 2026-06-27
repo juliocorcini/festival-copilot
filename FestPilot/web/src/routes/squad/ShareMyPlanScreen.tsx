@@ -11,11 +11,13 @@ import { useGroup } from "../../data/groups";
 import { useFavorites, usePlan, loadStore } from "../../data/localStore";
 import { useLineup } from "../../data/useLineup";
 import { stageColor, timeInZone } from "../../lib/format";
+import { useT } from "../../i18n";
 import { toast } from "../../lib/toast";
 import { ErrorState, LoadingState } from "../../ui/states";
 
 export function ShareMyPlanScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const [params] = useSearchParams();
   // Reached as the one-time auto-share confirm right after joining (DEC-054, R9.4).
@@ -46,8 +48,8 @@ export function ShareMyPlanScreen(): JSX.Element {
   if (status === "error" || !group || !id) {
     return (
       <>
-        <StackHeader title="Share my plan" backTo="/squad" />
-        <ErrorState message="Could not load this squad. Try again." />
+        <StackHeader title={t("sharePlan.title")} backTo="/squad" />
+        <ErrorState message={t("sharePlan.loadError")} />
       </>
     );
   }
@@ -73,38 +75,33 @@ export function ShareMyPlanScreen(): JSX.Element {
           await api.shareMyPlan(id, { day, slots, shareFavorites: shareFav, favoriteActKeys });
         }
       }
-      toast.success("Plan shared with your squad");
+      toast.success(t("sharePlan.toastOk"));
       navigate(`/squad/${id}/plan`, { replace: true });
     } catch {
-      toast.error("Couldn't share your plan. Check your connection and try again.");
+      toast.error(t("sharePlan.toastErr"));
       setBusy(false);
     }
   };
 
   return (
     <>
-      <StackHeader title={justJoined ? "You're in!" : "Share my plan"} backTo="/squad" />
+      <StackHeader title={justJoined ? t("sharePlan.youreIn") : t("sharePlan.title")} backTo="/squad" />
       <div className="screen share-plan">
         <div className="share-intro">
           <h1 className="poster">
-            Share your plan
+            {t("sharePlan.shareYour")}
             <br />
-            with {group.emoji ? `${group.emoji} ` : ""}
-            {group.name}
+            {t("sharePlan.with", { name: `${group.emoji ? `${group.emoji} ` : ""}${group.name}` })}
           </h1>
-          <p>
-            {justJoined
-              ? "Welcome to the squad! Sharing your plan + favorites lets everyone build the group timetable. You can change this anytime in Settings."
-              : "The squad sees your locked picks so the group plan can form. Your raw favorites stay private unless used as a fallback."}
-          </p>
+          <p>{justJoined ? t("sharePlan.introJoined") : t("sharePlan.intro")}</p>
         </div>
 
         <div className="glass share-toggles">
           <button className="share-toggle" onClick={() => setShareLocked((v) => !v)}>
             <span className="ms share-toggle-icon">lock</span>
             <div className="share-toggle-main">
-              <div className="share-toggle-title">Share my locked plan</div>
-              <div className="share-toggle-sub">Your one-act-per-moment schedule</div>
+              <div className="share-toggle-title">{t("sharePlan.lockedTitle")}</div>
+              <div className="share-toggle-sub">{t("sharePlan.lockedSub")}</div>
             </div>
             <span className={`toggle${shareLocked ? " on" : ""}`} role="switch" aria-checked={shareLocked} />
           </button>
@@ -112,21 +109,21 @@ export function ShareMyPlanScreen(): JSX.Element {
           <button className="share-toggle" onClick={() => setShareFav((v) => !v)}>
             <span className="ms share-toggle-icon">favorite</span>
             <div className="share-toggle-main">
-              <div className="share-toggle-title">Use my favorites as fallback</div>
-              <div className="share-toggle-sub">When your pick ≠ the group, offer one you also liked</div>
+              <div className="share-toggle-title">{t("sharePlan.favTitle")}</div>
+              <div className="share-toggle-sub">{t("sharePlan.favSub")}</div>
             </div>
             <span className={`toggle${shareFav ? " on" : ""}`} role="switch" aria-checked={shareFav} />
           </button>
         </div>
 
         <div className="label share-preview-label">
-          Preview · what they'll see{previewDay ? ` — ${titleCase(previewDay)}` : ""}
+          {t("sharePlan.previewLabel")}{previewDay ? ` — ${titleCase(previewDay)}` : ""}
         </div>
         <div className="glass share-preview">
           {previewSlots.length === 0 ? (
             <div className="share-empty">
               <span className="ms">event_busy</span>
-              <span>No locked plan yet — lock in your day first to share a real schedule.</span>
+              <span>{t("sharePlan.previewEmpty")}</span>
             </div>
           ) : (
             previewSlots.map((slot) => (
@@ -145,16 +142,16 @@ export function ShareMyPlanScreen(): JSX.Element {
         {!hasPlan && (
           <button className="btn btn-ghost" onClick={() => navigate("/lockin")}>
             <span className="ms">bolt</span>
-            Lock in a plan first
+            {t("sharePlan.lockFirst")}
           </button>
         )}
         <button className="btn btn-primary" onClick={share} disabled={!canShare || busy}>
           <span className="ms">ios_share</span>
-          {busy ? "Sharing…" : "Share with squad"}
+          {busy ? t("sharePlan.sharing") : t("sharePlan.shareCta")}
         </button>
         {justJoined && (
           <button className="btn btn-ghost" onClick={() => navigate("/squad", { replace: true })}>
-            Not now
+            {t("common.notNow")}
           </button>
         )}
       </div>

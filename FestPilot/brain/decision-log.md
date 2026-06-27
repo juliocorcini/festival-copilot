@@ -1059,18 +1059,18 @@
 - **Implementation (G2)**: root cause was the global `button {}` rule setting only `font-family` (not `color`), so `.stage-sheet-row` (a `<button>`) let `.stage-sheet-name` inherit the **UA default near-black**. Systemic sweep: **`button { color: inherit }`** (every control inherits the app's light `--ink`; controls needing a specific colour already set their own) + explicit `color: var(--ink)` on `.stage-sheet-name` and `.meet-spot-label-main`. The `#0f0d09` instances in `styles.css` are dark ink on **light/accent** backgrounds (correct) and were left untouched. Verified by the full e2e visual suite (34/34) with no regression.
 - **Rationale**: Julio: "there can't be black text in the app" — several places (meeting point select, stage list) are unreadable on the dark theme.
 
-### DEC-092 — Squad "Next up" reads the aggregated plan — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G3, v0.44.0). **Refines DEC-086** (the card exists; the home/Now just don't feed it the aggregated `sets`).
+### DEC-092 — Squad "Next up" reads the aggregated plan — APPROVED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** (delivered G3, v0.44.0 — code; deploy pending; new `useSquadNextUp` resolves today's day via `useActiveDayKey` and feeds the aggregated `sets` into `SquadNextUpCard` on the Squad home **and** the Now "Squad" tab). **Refines DEC-086** (the card exists; the home/Now just don't feed it the aggregated `sets`).
 - **Decision**: pass the aggregated `sets` from `useSquadPlan` into `SquadNextUpCard` on the Squad home **and** the Now "Squad" tab, so when a plan exists the "Next up" shows the real next group item instead of "nothing scheduled".
 - **Rationale**: Julio: "next up says nothing scheduled — that's a lie, we already have a plan (Friday is locked)." `squadNextUp` is a ready pure function; the card is just being called with `sets=[]`.
 
-### DEC-093 — Squad CTA reflects whether a plan exists ("view/manage" vs "build") — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G3, v0.44.0).
+### DEC-093 — Squad CTA reflects whether a plan exists ("view/manage" vs "build") — APPROVED (direct)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** (delivered G3, v0.44.0 — code; deploy pending; the plan CTA on the Squad home + Now tab reads `useSquadNextUp().hasPlan` → "View the squad plan" vs "Build the squad plan").
 - **Decision**: the Squad CTA is conditional — no plan yet → "Build the group plan"; a plan exists → "View/Manage the group plan". The word "build/montar" implies nothing exists, which is false once members have shared.
 - **Rationale**: Julio: "it says *build* the group plan, but the group already has a plan — you don't *build* what already exists; it should say view/manage."
 
-### DEC-094 — i18n covers squad/meet/presence sub-screens; "Timetable" stays "Timetable" in PT; "Favoritos"→"Favs" — PROPOSED (direct)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G3, v0.44.0; "Favs"/header overflow finalized G8). **Extends DEC-082** (which shipped the 6 main screens and explicitly deferred the secondary Squad sub-screens).
+### DEC-094 — i18n covers squad/meet/presence sub-screens; "Timetable" stays "Timetable" in PT; "Favoritos"→"Favs" — PROPOSED (direct, partially delivered)
+- **Date**: 2026-06-27 · **Status**: **PROPOSED** — partially delivered. **G3 (v0.44.0) shipped EN+PT** for the squad-plan transparency cluster: `SquadPlanScreen`, `squadUi` (summary/method/status pill), `SquadBlockScreen` + `WhyThisSheet`, `SquadSplitScreen`, `SquadOverrideScreen`, `ShareMyPlanScreen`, `JoinScreen`. **Deferred to avoid double-work** (those screens are rebuilt later this leva): `WhereScreen` i18n → **G5** (E09/E10 rebuild), `SafetyScreen` i18n → **G6** (E12–E15 rebuild). **"Timetable" stays "Timetable" + "Favoritos"→"Favs" + header overflow → G8** (E24/E27). Promote to APPROVED when G8 closes. **Extends DEC-082** (which shipped the 6 main screens and explicitly deferred the secondary Squad sub-screens).
 - **Decision**: wire every squad/meet/presence sub-screen (`SquadPlanScreen`, `ShareMyPlanScreen`, `squadUi`, `JoinScreen`, `WhereScreen`, `SafetyScreen`, meeting-point screens) through `t()` with EN+PT. **`nav.timetable`/`view.timetable` in PT = "Timetable"** (Julio rejects "Horários"; PT speakers say "timetable"). Shorten "Favoritos" → **"Favs"** so the Line Up buttons don't overflow in PT.
 - **Rationale**: Julio: "the whole squad plan is in English — all of this has to come to Portuguese"; "I didn't like Horários, keep Timetable"; "Favoritos overflows, call it Favs."
 
@@ -1080,8 +1080,8 @@
 - **Rationale**: Julio: "the main thing is the squad plan staying updated always… if I change mine it must update the squad, and keep a history saying *the plan changed because X changed Y*, and notify everyone why." Council: Architect/Strategist lens dominates (durable central architecture); Critic's coalescing/idempotency conditions adopted to avoid loops/spam.
 - **Flip (documented)**: if the backend can't version in time → degrade to a "stale plan badge + one-tap update" (history preserved), per §10 G4.
 
-### DEC-096 — Group-choice transparency: plain-language "why this was chosen" + glossary — PROPOSED (council C6)
-- **Date**: 2026-06-27 · **Status**: **PROPOSED** (Gate G3, v0.44.0). Pure exposure — **no math change** (ÂNCORA).
+### DEC-096 — Group-choice transparency: plain-language "why this was chosen" + glossary — APPROVED (council C6)
+- **Date**: 2026-06-27 · **Status**: **APPROVED** (delivered G3, v0.44.0 — code; deploy pending). Pure exposure — **no math change** (ÂNCORA): pure `domain/squadExplain.ts` (`explainSquadBlock`, 5 unit tests) reads the baseline block and **derives** favoriters from each member's `favoriteActKeys` vs the winning `actKey` (winners untouched); `WhyThisSheet` renders names + rule + split + a method glossary via `t()`. Opened from a "Why this?" button on the block detail.
 - **Decision**: a "Why this?" sheet per block, in natural language **with names** ("Mébron is in because Ana, Léo and you favorited it — more favorited than the alternatives"), plus a short glossary of the methods (favorited / plurality / owner / split). Driven by a pure `explainSquadBlock(block)` reading what `buildSquadPlan` already computes. Must cover the **split/conflict** case ("you're locked on Coach; the squad goes to Fisher because…"). If the aggregation today exposes only counts, extend the domain to also list the **members** per block (without changing the winner).
 - **Rationale**: Julio: "it says favorited / plurality but we don't know what that means — we have to explain *why* each choice was made, who favorited, who's going, so even someone not going understands why it was selected."
 

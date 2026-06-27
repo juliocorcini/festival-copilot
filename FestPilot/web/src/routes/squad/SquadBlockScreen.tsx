@@ -16,17 +16,21 @@ import { useSquadPlan } from "../../data/squadPlan";
 import type { SquadBlock } from "../../domain/squadPlan";
 import type { PlannableSet, PlanSlot } from "../../domain/types";
 import { stageColor, timeInZone } from "../../lib/format";
+import { useT } from "../../i18n";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { AvatarStack, methodLabel } from "./squadUi";
+import { WhyThisSheet } from "./WhyThisSheet";
 
 export function SquadBlockScreen(): JSX.Element {
   const navigate = useNavigate();
+  const t = useT();
   const { id, perfId } = useParams<{ id: string; perfId: string }>();
   const [params] = useSearchParams();
   const day = params.get("day") ?? undefined;
   const { group } = useGroup(id);
   const { plan, raw, timezone, status, reload } = useSquadPlan(id, day);
   const [busy, setBusy] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
 
   const block = useMemo<SquadBlock | null>(
     () => plan?.blocks.find((b) => b.set.id === perfId) ?? null,
@@ -40,8 +44,8 @@ export function SquadBlockScreen(): JSX.Element {
   if (status === "error" || !plan || !block || !id) {
     return (
       <>
-        <StackHeader title="Block" backTo={`/squad/${id}/plan`} />
-        <ErrorState message="This block is no longer in the squad plan." onRetry={reload} />
+        <StackHeader title={t("block.title")} backTo={`/squad/${id}/plan`} />
+        <ErrorState message={t("block.gone")} onRetry={reload} />
       </>
     );
   }
@@ -91,15 +95,19 @@ export function SquadBlockScreen(): JSX.Element {
         <div className="block-day-label label">{day ? titleCase(day) : ""}</div>
 
         <section className="glass block-pick">
-          <div className="label">Squad is going to</div>
+          <div className="label">{t("block.goingTo")}</div>
           <div className="block-pick-row">
             <span className="dot dot-lg" style={{ background: stageColor(winner.stageName) }} />
             <div className="block-pick-main">
               <div className="poster block-pick-name">{winner.label}</div>
               <div className="block-pick-meta">
-                {winner.stageName} · {methodLabel(block, plan.memberCount)}
+                {winner.stageName} · {methodLabel(block, plan.memberCount, t)}
               </div>
             </div>
+            <button className="block-why" onClick={() => setShowWhy(true)}>
+              <span className="ms" aria-hidden="true">help</span>
+              {t("block.whyThis")}
+            </button>
           </div>
           {block.going.length > 0 && (
             <div className="block-pick-avatars">
@@ -111,12 +119,12 @@ export function SquadBlockScreen(): JSX.Element {
         {block.split.length > 0 && (
           <>
             <div className="block-split-head">
-              <div className="label block-split-label">The split</div>
+              <div className="label block-split-label">{t("block.split")}</div>
               <button
                 className="block-split-view"
                 onClick={() => navigate(`/squad/${id}/plan/${perfId}/split?day=${encodeURIComponent(day ?? "")}`)}
               >
-                See who's where
+                {t("block.seeWhere")}
                 <span className="ms" style={{ fontSize: 15 }}>arrow_forward</span>
               </button>
             </div>
@@ -128,7 +136,7 @@ export function SquadBlockScreen(): JSX.Element {
                     <span className="dot" style={{ background: stageColor(g.set.stageName) }} />
                     <span className="block-split-name">
                       {g.set.label} · {g.set.stageName}
-                      {mine && <span className="block-you"> · you</span>}
+                      {mine && <span className="block-you"> · {t("common.you")}</span>}
                     </span>
                     <AvatarStack members={g.members} max={3} size={26} />
                   </div>
@@ -141,10 +149,7 @@ export function SquadBlockScreen(): JSX.Element {
         {conflict && (
           <div className="glass block-locked-note">
             <span className="ms">lock</span>
-            <div>
-              You're <b>locked on {block.yourLock?.label}</b> here. We won't change your plan — your
-              call.
-            </div>
+            <div>{t("block.lockedNote", { label: block.yourLock?.label ?? t("squad.elsewhere") })}</div>
           </div>
         )}
 
@@ -152,7 +157,7 @@ export function SquadBlockScreen(): JSX.Element {
           <div className="block-fallback">
             <div className="block-fallback-head">
               <span className="ms">favorite</span>
-              You also ❤ one near the squad
+              {t("block.alsoLove")}
             </div>
             <div className="block-fallback-row">
               <span className="dot" style={{ background: stageColor(block.fallback.set.stageName) }} />
@@ -162,12 +167,14 @@ export function SquadBlockScreen(): JSX.Element {
                 </div>
                 <div className="block-fallback-sub">
                   {block.fallback.friendsThere > 0
-                    ? `${block.fallback.friendsThere} ${block.fallback.friendsThere === 1 ? "friend" : "friends"} there`
-                    : "your favorite this block"}
+                    ? t(block.fallback.friendsThere === 1 ? "block.friendThere" : "block.friendsThere", {
+                        count: block.fallback.friendsThere,
+                      })
+                    : t("block.yourFav")}
                 </div>
               </div>
               <button className="chip chip-accent" disabled={busy} onClick={() => void joinSet(block.fallback!.set)}>
-                Go {shortName(block.fallback.set.label)}
+                {t("block.goName", { name: shortName(block.fallback.set.label) })}
               </button>
             </div>
           </div>
@@ -179,32 +186,34 @@ export function SquadBlockScreen(): JSX.Element {
           <>
             <button className="btn btn-primary" disabled={busy} onClick={() => void joinSet(winner)}>
               <span className="ms">groups</span>
-              Join squad → {shortName(winner.label)}
+              {t("block.joinSquad", { name: shortName(winner.label) })}
             </button>
             <div className="block-actions-row">
               <button className="btn btn-ghost" disabled={busy} onClick={() => navigate(`/squad/${id}/plan?day=${encodeURIComponent(day ?? "")}`)}>
-                Keep my lock
+                {t("block.keepLock")}
               </button>
               {isOwner && (
                 <button className="btn btn-ghost" onClick={() => navigate(overrideHref(id, perfId, day))}>
                   <span className="ms">edit</span>
-                  Override
+                  {t("block.override")}
                 </button>
               )}
             </div>
-            <p className="block-actions-note">We never change a locked pick automatically.</p>
+            <p className="block-actions-note">{t("block.neverChange")}</p>
           </>
         ) : isOwner ? (
           <button className="btn btn-ghost" onClick={() => navigate(overrideHref(id, perfId, day))}>
             <span className="ms">edit</span>
-            Override squad pick
+            {t("block.overridePick")}
           </button>
         ) : (
           <button className="btn btn-ghost" onClick={() => navigate(`/squad/${id}/plan?day=${encodeURIComponent(day ?? "")}`)}>
-            Back to squad plan
+            {t("block.backToPlan")}
           </button>
         )}
       </div>
+
+      {showWhy && <WhyThisSheet block={block} members={plan.members} onClose={() => setShowWhy(false)} />}
     </>
   );
 }

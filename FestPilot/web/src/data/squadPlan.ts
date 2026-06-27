@@ -10,8 +10,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import { useGroupLive } from "./groups";
-import { useFavorites } from "./localStore";
+import { useFavorites, useOnboarding } from "./localStore";
 import { useLineup } from "./useLineup";
+import { daysForWeekends } from "../lib/festival";
+import { useLocale } from "../i18n";
 import { toPlannableSets } from "../domain/lineup";
 import { buildSquadPlan, type SquadMember, type SquadPlan } from "../domain/squadPlan";
 import type { PlannableSet } from "../domain/types";
@@ -130,4 +132,61 @@ export function useSquadPlan(groupId: string | undefined, day: string | undefine
     status,
     reload,
   };
+}
+
+/**
+ * The festival day the user is "in" right now — the latest day that has already started, else the
+ * first. Mirrors the home hero's day selection so the squad's "Next up" reads the SAME day the user
+ * is living. Ticks coarsely (a day boundary is rare) to stay correct past midnight.
+ */
+export function useActiveDayKey(): string | undefined {
+  const { lineup } = useLineup();
+  const { onboarding } = useOnboarding();
+  const locale = useLocale();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
+  return useMemo(() => {
+    if (!lineup) return undefined;
+    const days = daysForWeekends(lineup, weekendIds, locale);
+    if (days.length === 0) return undefined;
+    let chosen = days[0]!;
+    for (const day of days) {
+      if (day.startMs <= now) chosen = day;
+      else break;
+    }
+    return chosen.key;
+  }, [lineup, weekendIds, locale, now]);
+}
+
+export interface SquadNextUp {
+  /** Today's aggregated squad-plan winners, in the shape the "Next up" card consumes (E04). */
+  sets: { label: string; stageName: string; startMs: number; endMs: number }[];
+  /** Whether the squad already has a usable aggregated plan — drives the CTA copy (E05 · DEC-093). */
+  hasPlan: boolean;
+}
+
+/**
+ * Feeds the squad-home "Next up" card the SETS the squad is actually doing today (E04 · DEC-092) and
+ * tells the plan CTA whether a plan exists (E05 · DEC-093). Read-only: it reuses the aggregated
+ * `useSquadPlan` winners and never mixes them back into the aggregation.
+ */
+export function useSquadNextUp(groupId: string | undefined): SquadNextUp {
+  const dayKey = useActiveDayKey();
+  const { plan } = useSquadPlan(groupId, dayKey);
+  return useMemo(
+    () => ({
+      sets: (plan?.blocks ?? []).map((b) => ({
+        label: b.set.label,
+        stageName: b.set.stageName,
+        startMs: b.set.startMs,
+        endMs: b.set.endMs,
+      })),
+      hasPlan: plan?.enoughToBuild ?? false,
+    }),
+    [plan]
+  );
 }

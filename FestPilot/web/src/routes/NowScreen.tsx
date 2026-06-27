@@ -28,6 +28,7 @@ import { useMyGroups } from "../data/groups";
 import { useGroupPresence } from "../data/presence";
 import { useGroupEvents } from "../data/groupEvents";
 import { useMeetingPoints } from "../data/meetingPoints";
+import { useSquadNextUp } from "../data/squadPlan";
 import type { GroupDto } from "../data/types";
 import { SquadNextUpCard } from "./squad/squadHomeCards";
 
@@ -446,6 +447,7 @@ function NowSquadInner({
   const { presence } = useGroupPresence(group.id);
   const { events } = useGroupEvents(group.id);
   const { points } = useMeetingPoints(group.id);
+  const { sets: nextUpSets, hasPlan } = useSquadNextUp(group.id);
 
   return (
     <>
@@ -474,6 +476,7 @@ function NowSquadInner({
           events={events}
           points={points}
           presence={presence}
+          sets={nextUpSets}
           onOpen={() => navigate("/squad")}
         />
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
@@ -481,8 +484,8 @@ function NowSquadInner({
             <span className="ms">event_available</span>
           </div>
           <div className="squad-plan-main">
-            <div className="squad-plan-title">{t("squad.buildPlan")}</div>
-            <div className="squad-plan-sub">{t("squad.buildPlanSub")}</div>
+            <div className="squad-plan-title">{hasPlan ? t("squad.viewPlan") : t("squad.buildPlan")}</div>
+            <div className="squad-plan-sub">{hasPlan ? t("squad.viewPlanSub") : t("squad.buildPlanSub")}</div>
           </div>
           <span className="ms" style={{ color: "var(--accent)" }}>chevron_right</span>
         </button>

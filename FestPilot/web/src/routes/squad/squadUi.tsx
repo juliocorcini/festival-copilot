@@ -1,6 +1,7 @@
 /** Shared bits for the squad shared-timetable screens (#24): avatars, status pill, block summary. */
 import { initialsOf } from "../../data/identity";
 import { readableInkOn } from "../../lib/contrast";
+import { useT, type TranslateFn } from "../../i18n";
 import type { SquadBlock, SquadMember } from "../../domain/squadPlan";
 
 const FALLBACK_COLOR = "#6B7280";
@@ -62,45 +63,48 @@ export function AvatarStack({
 }
 
 /** "5 of 7 going" when you're with the squad; "4 going · 2 split" when it's contested. */
-export function blockSummary(block: SquadBlock, memberCount: number): string {
+export function blockSummary(block: SquadBlock, memberCount: number, t: TranslateFn): string {
   const stage = block.set.stageName;
-  if (block.youStatus === "following") return `${stage} · ${block.goingCount} of ${memberCount} going`;
-  if (block.splitCount > 0) return `${stage} · ${block.goingCount} going · ${block.splitCount} split`;
-  return `${stage} · ${block.goingCount} of ${memberCount} going`;
+  if (block.splitCount > 0 && block.youStatus !== "following")
+    return t("squad.sumGoingSplit", { stage, going: block.goingCount, split: block.splitCount });
+  return t("squad.sumGoingOf", { stage, going: block.goingCount, total: memberCount });
 }
 
 /** The right-hand status pill on a block (Following / Your own / locked-conflict). */
 export function StatusPill({ block }: { block: SquadBlock }): JSX.Element | null {
+  const t = useT();
   if (block.youStatus === "following")
     return (
       <span className="pill follow">
         <span className="ms" style={{ fontSize: 12 }}>
           check
         </span>
-        Following
+        {t("squad.following")}
       </span>
     );
-  if (block.youStatus === "own") return <span className="pill own">Your own</span>;
+  if (block.youStatus === "own") return <span className="pill own">{t("squad.yourOwn")}</span>;
   if (block.youStatus === "conflict")
     return (
       <span className="pill warn">
         <span className="ms" style={{ fontSize: 12 }}>
           lock
         </span>
-        You: {block.yourLock?.label ?? "elsewhere"}
+        {t("squad.youAt", { label: block.yourLock?.label ?? t("squad.elsewhere") })}
       </span>
     );
   return null;
 }
 
 /** The method badge label used in the block detail ("plurality 4 of 7", "owner pick", …). */
-export function methodLabel(block: SquadBlock, memberCount: number): string {
+export function methodLabel(block: SquadBlock, memberCount: number, t: TranslateFn): string {
   switch (block.method) {
     case "owner":
-      return block.pinned ? "owner pick" : `owner pick · ${block.goingCount} of ${memberCount}`;
+      return block.pinned
+        ? t("squad.methodOwnerPin")
+        : t("squad.methodOwner", { going: block.goingCount, total: memberCount });
     case "favorited":
-      return `most favorited · ${block.goingCount} of ${memberCount}`;
+      return t("squad.methodFav", { going: block.goingCount, total: memberCount });
     default:
-      return `plurality ${block.goingCount} of ${memberCount}`;
+      return t("squad.methodPlurality", { going: block.goingCount, total: memberCount });
   }
 }
