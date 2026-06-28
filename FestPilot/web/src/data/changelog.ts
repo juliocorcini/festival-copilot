@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.50.0";
+export const APP_VERSION = "0.51.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.51.0",
+    date: "2026-06-27",
+    title: "Plan a squad moment",
+    icon: "add_circle",
+    whatsNew: [
+      "Add a squad moment right from the squad plan — a photo, a meal, catching the headliner together — pinned between the sets for everyone.",
+      "It sits alongside the plan as its own thing: a squad moment never changes who's “going” to a set.",
+    ],
+    howToTest: [
+      "Open your squad's plan and tap “Add a squad moment”, set a time and send — it shows up on the timeline between the sets.",
+      "It also appears on the Squad agenda; the set plan and its picks stay exactly the same.",
+    ],
+  },
   {
     version: "0.50.0",
     date: "2026-06-27",

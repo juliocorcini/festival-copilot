@@ -169,4 +169,33 @@ test.describe("Gate 4.3 — shared timetable", () => {
     await expect(page.getByText(PICK.label, { exact: false }).first()).toBeVisible();
     await page.screenshot({ path: "e2e/screenshots/phase4-override.png" });
   });
+
+  test("E21/G10 — pin a squad moment from the plan screen → POST /events (not the aggregation)", async ({ page, request }) => {
+    const owner = await makeUser(request, "Julio");
+    const group = await createGroup(request, owner.tok);
+    await shareplan(request, owner.tok, group.id, PICK.day, PICK.perfId);
+
+    await page.addInitScript(SEED, {
+      token: owner.tok,
+      user: owner.user,
+      festivalId: FESTIVAL_ID,
+      weekendId: PICK.weekendId,
+      day: PICK.day,
+    });
+
+    await page.goto(`/squad/${group.id}/plan?day=${encodeURIComponent(PICK.day)}`);
+    await expect(page.getByText(PICK.label, { exact: false }).first()).toBeVisible({ timeout: 20_000 });
+
+    // The new affordance: open the agenda's create flow inline, right from the plan.
+    await page.getByRole("button", { name: /Add a squad moment/ }).click();
+    await expect(page.getByText("New squad moment").first()).toBeVisible();
+    await page.getByPlaceholder("Squad photo 📸").fill("Squad photo 📸");
+
+    // Send → POST lands on the group-events lane (carrying the title); it NEVER touches the set plan.
+    const post = page.waitForRequest((r) => r.url().includes(`/groups/${group.id}/events`) && r.method() === "POST");
+    await page.getByRole("button", { name: "Send to squad" }).click();
+    const body = JSON.parse((await post).postData() ?? "{}");
+    expect(body.title).toContain("Squad photo");
+    await page.screenshot({ path: "e2e/screenshots/phase4-squad-moment.png" });
+  });
 });

@@ -17,6 +17,7 @@ import { daysForWeekends } from "../../lib/festival";
 import { stageColor, timeInZone } from "../../lib/format";
 import { useT } from "../../i18n";
 import { ErrorState, LoadingState } from "../../ui/states";
+import { CreateEventSheet } from "./CreateEventSheet";
 import { durationLabel, eventLifecycleFromIso } from "./eventsUi";
 import { blockSummary, StatusPill } from "./squadUi";
 
@@ -38,7 +39,7 @@ export function SquadPlanScreen(): JSX.Element {
 
   const dayKey = params.get("day") ?? days[0]?.key;
   const { plan, raw, status, timezone, reload } = useSquadPlan(id, dayKey);
-  const { events } = useGroupEvents(id);
+  const { events, reload: reloadEvents } = useGroupEvents(id);
   // E07/DEC-095: keep my shared plan live for the active day, and surface what teammates changed.
   useLivePlanSync(id);
   const notice = useSquadPlanNotice(id);
@@ -48,6 +49,12 @@ export function SquadPlanScreen(): JSX.Element {
     const t = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(t);
   }, []);
+
+  // E21: pin a fixed-time "squad moment" from the plan itself — reuses the agenda's create flow. The
+  // event lands on the group-events lane the timeline interleaves; it NEVER feeds the set aggregation.
+  const [creating, setCreating] = useState(false);
+  const eventTz = lineup.lineup?.festival.timezone ?? timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const eventStages = lineup.lineup?.stages ?? [];
 
   const count = group?.memberCount ?? raw?.memberCount ?? 0;
   const meShared = raw?.members.find((m) => m.isYou)?.shared ?? false;
@@ -192,7 +199,28 @@ export function SquadPlanScreen(): JSX.Element {
             )}
           </div>
         )}
+
+        <button className="glass squad-add-moment" onClick={() => setCreating(true)}>
+          <span className="ms squad-add-moment-ico" aria-hidden="true">add_circle</span>
+          <span className="squad-add-moment-main">
+            <span className="squad-add-moment-title">{t("squad.addMoment")}</span>
+            <span className="squad-add-moment-sub">{t("squad.addMomentSub")}</span>
+          </span>
+        </button>
       </div>
+
+      {creating && id && (
+        <CreateEventSheet
+          groupId={id}
+          tz={eventTz}
+          stages={eventStages}
+          onClose={() => setCreating(false)}
+          onCreated={() => {
+            setCreating(false);
+            reloadEvents();
+          }}
+        />
+      )}
     </>
   );
 }

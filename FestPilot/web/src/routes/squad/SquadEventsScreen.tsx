@@ -5,7 +5,7 @@
  * aggregation or any personal lock. Each event shows a live countdown, an optional stage + map link,
  * and a lightweight "✓ seen" so the squad knows who's in the loop.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { api } from "../../data/api";
@@ -14,9 +14,9 @@ import { useGroupEvents } from "../../data/groupEvents";
 import { useLineup } from "../../data/useLineup";
 import { stageColor, timeInZone } from "../../lib/format";
 import { haptic } from "../../lib/haptics";
-import { Sheet } from "../../ui/Sheet";
 import { ErrorState, LoadingState } from "../../ui/states";
-import type { GroupEventDto, StageDto } from "../../data/types";
+import type { GroupEventDto } from "../../data/types";
+import { CreateEventSheet } from "./CreateEventSheet";
 import { eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
 
 export function SquadEventsScreen(): JSX.Element {
@@ -195,157 +195,3 @@ function EventRow({
   );
 }
 
-const DURATIONS = [
-  { id: "30", label: "30 min", min: 30 },
-  { id: "60", label: "1 hour", min: 60 },
-  { id: "90", label: "1.5 hours", min: 90 },
-  { id: "120", label: "2 hours", min: 120 },
-];
-
-/** Seed the start at the next quarter-hour ~30 min out, formatted for a local `datetime-local` input. */
-function defaultStartLocal(): string {
-  const d = new Date(Date.now() + 30 * 60_000);
-  d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
-  const pad = (n: number): string => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function CreateEventSheet({
-  groupId,
-  tz,
-  stages,
-  onClose,
-  onCreated,
-}: {
-  groupId: string;
-  tz: string;
-  stages: StageDto[];
-  onClose: () => void;
-  onCreated: () => void;
-}): JSX.Element {
-  const [title, setTitle] = useState("");
-  const [startLocal, setStartLocal] = useState(defaultStartLocal);
-  const [durationId, setDurationId] = useState("30");
-  const [stageId, setStageId] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
-
-  const startMs = useMemo(() => Date.parse(startLocal), [startLocal]);
-  const durationMin = DURATIONS.find((d) => d.id === durationId)?.min ?? 30;
-  const valid = title.trim() !== "" && Number.isFinite(startMs);
-  const endPreview = Number.isFinite(startMs) ? timeInZone(new Date(startMs + durationMin * 60_000).toISOString(), tz) : "--:--";
-
-  const submit = async (): Promise<void> => {
-    if (!valid || busy) return;
-    setBusy(true);
-    setError(false);
-    try {
-      const startsAtUtc = new Date(startMs).toISOString();
-      const endsAtUtc = new Date(startMs + durationMin * 60_000).toISOString();
-      await api.createGroupEvent(groupId, {
-        title: title.trim(),
-        startsAtUtc,
-        endsAtUtc,
-        stageId,
-        note: note.trim() || null,
-      });
-      haptic("medium");
-      onCreated();
-    } catch {
-      setBusy(false);
-      setError(true);
-    }
-  };
-
-  return (
-    <Sheet onClose={onClose} label="New squad moment">
-      <div className="sheet-head">
-        <div className="poster sheet-title">New squad moment</div>
-        <button className="ms sheet-x" onClick={onClose}>close</button>
-      </div>
-      <div className="sheet-body">
-        <label className="block-field">
-          <span className="block-field-label">What</span>
-          <input
-            className="block-input"
-            value={title}
-            maxLength={80}
-            placeholder="Squad photo 📸"
-            onChange={(e) => setTitle(e.target.value)}
-            aria-label="Event title"
-          />
-        </label>
-
-        <label className="block-field">
-          <span className="block-field-label">Starts</span>
-          <input
-            className="block-input"
-            type="datetime-local"
-            value={startLocal}
-            onChange={(e) => setStartLocal(e.target.value)}
-            aria-label="Event start"
-          />
-        </label>
-
-        <div className="block-field">
-          <span className="block-field-label">For how long</span>
-          <div className="event-durations">
-            {DURATIONS.map((d) => (
-              <button
-                key={d.id}
-                className={`chip${durationId === d.id ? " on" : ""}`}
-                onClick={() => setDurationId(d.id)}
-                aria-pressed={durationId === d.id}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-          <span className="event-end-preview">Ends ~{endPreview}</span>
-        </div>
-
-        {stages.length > 0 && (
-          <div className="block-field">
-            <span className="block-field-label">Where (optional)</span>
-            <div className="event-stages">
-              <button className={`chip${stageId === null ? " on" : ""}`} onClick={() => setStageId(null)} aria-pressed={stageId === null}>
-                No stage
-              </button>
-              {stages.map((s) => (
-                <button
-                  key={s.id}
-                  className={`chip${stageId === s.id ? " on" : ""}`}
-                  onClick={() => setStageId(s.id)}
-                  aria-pressed={stageId === s.id}
-                >
-                  <span className="dot" style={{ background: stageColor(s.name) }} />
-                  {s.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <label className="block-field">
-          <span className="block-field-label">Note (optional)</span>
-          <input
-            className="block-input"
-            value={note}
-            maxLength={280}
-            placeholder="meet by the flag 🚩"
-            onChange={(e) => setNote(e.target.value)}
-            aria-label="Event note"
-          />
-        </label>
-
-        {error && <p className="block-error"><span className="ms" style={{ fontSize: 14 }}>error</span> Couldn't create that — check your connection and try again.</p>}
-
-        <button className="btn btn-primary" disabled={!valid || busy} onClick={() => void submit()}>
-          <span className="ms">campaign</span>
-          {busy ? "Sending…" : "Send to squad"}
-        </button>
-      </div>
-    </Sheet>
-  );
-}
