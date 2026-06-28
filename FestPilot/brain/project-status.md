@@ -1,25 +1,25 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-27 (**Leva 2 "Squad Vivo, Localização & Polimento Nativo" AUTHORED** — Julio's *second* usage review turned into `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (**ACTIVE**) + kickoff; **DEC-089→107 PROPOSED**; awaiting execution (G0→G10, v0.42.0→v0.51.0). The prior **Review & Polish wave is COMPLETE & DEPLOYED** at **v0.41.0**; e2e **34/34** and **734 unit tests** green.)
+> Last updated: 2026-06-27 (**Leva 2 "Squad Vivo, Localização & Polimento Nativo" EXECUTED — G0→G10 COMPLETE, deploy-ready** at **v0.51.0**, committed+pushed to `master`; **DEPLOY PENDING** (manual, Julio — DEC-108). **DEC-089→107 all APPROVED.** Tests: **web 553 + server 260 = 813 unit · e2e 37/37 · tsc/build clean**. Remaining DoD items are Julio's: the manual Cloudflare Pages deploy (incl. the one-time D1 migration `0016` from G4) and the §15 on-device iOS/Android smoke.)
 
-## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — AUTHORED · ACTIVE (awaiting execution)
+## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE (deploy-ready, deploy pending)
 
-Source orchestrator: `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (+ `…-kickoff-prompt.md`). Julio's **second** usage review — run on a real iPhone, inside a squad, across two devices. Normalized into **E01–E28** (P0/P1/P2) with a code↔fix root-cause map, **5 full + 2 quick inline councils**, and **DEC-089→107 (PROPOSED)**. Gates G0→G10, **v0.42.0 → v0.51.0** (one deploy per gate).
+Source orchestrator: `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (+ `…-kickoff-prompt.md`). Julio's **second** usage review — run on a real iPhone, inside a squad, across two devices. Normalized into **E01–E28** (P0/P1/P2) with a code↔fix root-cause map, **5 full + quick inline councils**, and **DEC-089→107**. Gates G0→G10, **v0.42.0 → v0.51.0**, executed in one session (live detail: `FestPilot/dev-log.md`, newest on top). **All DECs APPROVED.**
 
-- **G1 `v0.42.0`** — native feel: iOS safe-area-correct standalone (no black bottom bar / cramped top) + portrait-only, **and professional system bars on both platforms** (Android status/notification + navigation bar following the app chrome) (E01/E02/E28, DEC-089/107).
-- **G2 `v0.43.0`** — no black: unified map base across all surfaces (kills black sub-maps) + no black text (E17/E18, DEC-090/091).
-- **G3 `v0.44.0`** — squad honest: "Next up" reads the real plan, CTA reflects existence, full i18n of squad/meet/presence sub-screens ("Timetable" stays in PT, "Favs"), per-block "Why this?" transparency (E04/E05/E06/E08, DEC-092/093/094/096).
-- **G4 `v0.45.0`** — **squad live** (the central pain): auto re-share on personal-plan change + change history + notify why (server-owned revision/changelog/fan-out) (E07, DEC-095).
-- **G5 `v0.46.0`** — location truth: precise pin reaches the squad (separate DTO, squad-scope + TTL) + coarse-visible default on join + group-by-stage full screen (E16/E09/E10, DEC-099/097/098).
-- **G6 `v0.47.0`** — SOS redesign: stop syncs across devices first, then mutual awareness + zoomable map + Now alert + compass when "arrived" (E12/E13/E14/E15, DEC-100/101).
-- **G7 `v0.48.0`** — meeting point: photo lightbox (P1) + per-point mural (P2 if slack) (E19/E20, DEC-102).
-- **G8 `v0.49.0`** — join (link/QR/scan/code) + i18n/overflow + header name vs avatar (E03/E24/E27/E26, DEC-103/094/104).
-- **G9 `v0.50.0`** — notifications: local on-device (set reminder + leave-by), server push prepared/not-promised (E25, DEC-105).
-- **G10 `v0.51.0`** — (optional/P2) map zoom re-check + squad structure (insert events into plan, agenda reorg, multi-squad switch) (E11/E21/E22/E23, DEC-106).
+- **G1 `v0.42.0`** ✅ — native feel: iOS safe-area-correct standalone (no black bottom bar / cramped top) + portrait-only, **and professional system bars on both platforms** (E01/E02/E28, DEC-089/107).
+- **G2 `v0.43.0`** ✅ — no black: unified map base across all surfaces (kills black sub-maps) + no black text (E17/E18, DEC-090/091). **DEC-108** (manual deploy strategy) raised here.
+- **G3 `v0.44.0`** ✅ — squad honest: "Next up" reads the real plan, CTA reflects existence, i18n of the squad cluster + per-block "Why this?" transparency (E04/E05/E06/E08, DEC-092/093/094/096).
+- **G4 `v0.45.0`** ✅ — **squad live** (the central pain): auto re-share on personal-plan change + change history + notify why (server-owned revision/changelog/fan-out) (E07, DEC-095). **⚠️ migration `0016`.**
+- **G5 `v0.46.0`** ✅ — location truth: precise pin reaches the squad (separate DTO, squad-scope + TTL) + coarse-visible default on join + group-by-stage (E16/E09/E10, DEC-099/097/098).
+- **G6 `v0.47.0`** ✅ — SOS redesign: stop syncs across devices first, then mutual awareness + zoomable map + Now alert + compass when "arrived" (E12/E13/E14/E15, DEC-100/101).
+- **G7 `v0.48.0`** ✅ — meeting point: photo lightbox (E19, DEC-102). **E20 mural deferred P2.**
+- **G8 `v0.49.0`** ✅ — join (link/QR/scan/code) + i18n ("Timetable"/"Favs") + header name vs avatar (E03/E24/E27/E26, DEC-103/094/104).
+- **G9 `v0.50.0`** ✅ — notifications: local on-device (set reminder + leave-by), SW-or-toast, opt-in default-off; server Web Push deferred (E25, DEC-105).
+- **G10 `v0.51.0`** ✅ — (P2) "add a squad moment" from the plan, reusing the group-events flow (E21, DEC-106). **E23 already shipped** (squad switcher on Now+Squad); **E11 (zoom) + E22 (agenda reorg) deferred** with an honest record.
 
-**§16 LOCK (non-blocking):** three privacy/scope decisions carry the council recommendation and are adopted unless Julio overrides before G4/G5/G9 — precise-presence exposure (DEC-099), presence default visibility (DEC-097), notifications scope (DEC-105).
+**Outcome:** every P0/P1 delivered; P2 = E19 done, E21 done, E23 already shipped, **E11/E20/E22/E23-extra deferred** with records (§12 allows P2 done-or-deferred). Invariance held (`buildSquadPlan` sets-only, regression test green). No non-negotiable (N1–N7) broken.
 
-**Next:** the doc is **ACTIVE**. Execute G0→G10 in one session (or hand the kickoff to a fresh agent). Optionally, Julio locks the §16 items first.
+**Next (Julio):** (1) **manual deploy** — `git pull && cd FestPilot/web && npm run build && npx wrangler pages deploy dist --project-name=festpilot --branch=master`, **once** preceded by `npx wrangler d1 migrations apply festpilot --remote` (the G4 `0016` migration); needs `.dev.vars` creds + the untracked `public/maps/` assets (DEC-108). (2) the **§15 on-device smoke** (iOS PWA / Android) of the key journeys. Recommended to deploy and smoke after the full leva is live.
 
 ---
 

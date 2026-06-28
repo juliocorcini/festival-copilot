@@ -1,6 +1,6 @@
 # FestPilot — Product Specification
 
-> Last updated: 2026-06-23 (Initial definition + **2026-06-23 discovery-council update**: added the festival-context essentials §8.1/§14 (DEC-022), the map seed (DEC-021), and resolved stack/backend/group-mechanics/privacy — see `documents/2026-06-23-discovery-councils-and-decisions.md`. This is the first and primary source-of-truth document; it synthesizes intent, not a transcript. Anything marked **OPEN** is not yet decided — see `decision-log.md`.)
+> Last updated: 2026-06-27 (**Leva 2 as-built refinements**: §11 now records local-first notifications (DEC-105) and §12 adds rules 11–15 — precise squad-scoped+TTL presence (DEC-099), live/auditable squad plan (DEC-095), visible-by-default-on-join (DEC-097), local-first notifications (DEC-105), portrait/native-feel as a product rule (DEC-089/107). Earlier: Initial definition + **2026-06-23 discovery-council update** (festival-context essentials §8.1/§14 (DEC-022), the map seed (DEC-021), stack/backend/group-mechanics/privacy — see `documents/2026-06-23-discovery-councils-and-decisions.md`). This is the first and primary source-of-truth document; it synthesizes intent, not a transcript. Anything marked **OPEN** is not yet decided — see `decision-log.md`.)
 
 ---
 
@@ -208,6 +208,8 @@ The map isn't only stages. A **practical layer** answers the most common on-site
 
 ## 11. Notifications
 
+> **As built (Leva 2, DEC-105):** notifications ship **local on-device first** — while the app is open, a **set reminder** ("starts in 10 min") and a **leave-by** alert ("leave now — N min walk", reusing the plan's walk times) fire via the Service Worker, degrading to an in-app toast when permission is missing (never a silent failure). Opt-in is **default-off**, requested in context (Settings → Notifications). **Server Web Push** (the cross-platform, app-closed tier below) is **deferred / not promised** — iOS PWA push is unreliable; it returns in a later wave for SOS + squad-plan-changed.
+
 Cross-platform push (FCM is the candidate — see `technical-direction.md`). Types:
 
 - "**{name} wants to know where everyone is**" → interactive, pre-filled stage reply (§9).
@@ -232,6 +234,14 @@ Cross-platform push (FCM is the candidate — see `technical-direction.md`). Typ
 8. **Users read our database, never the festival site directly.**
 9. **All code in English** (variables, functions, comments). UI copy is localizable; language not yet locked.
 10. **Privacy is per-group and time-boxed.** Sharing defaults to coarse, scoped to a group, and expires.
+
+**As-built rules added in Leva 2 (2026-06-27, "Squad Vivo, Localização & Polimento Nativo"):**
+
+11. **Precise live presence is a third, opt-in layer — squad-scoped and time-boxed.** Distinct from coarse presence (§9) and a one-shot meeting point (§10): a member may share **continuous exact location** but only **to one squad at a time**, only after an explicit toggle, and it **auto-expires (TTL)** so it never lingers silently. (DEC-099.)
+12. **The squad plan is live, honest, and auditable.** When a member's plan changes it **re-shares automatically** and the squad sees a **history** of what changed and when; aggregation only ever reflects real shared plans — pinning a "squad moment" from the plan creates a real group event, never a fake aggregate row. (DEC-095, E07/E21.)
+13. **A new squad member is visible by default (coarse), opt-out at the moment of joining.** Joining shows you to the squad **coarsely** unless you opt out right there — the squad's value is being findable; invisibility is a deliberate choice, not the silent default. (DEC-097.)
+14. **Notifications are local-first and opt-in (default-off).** On-device reminders fire while the app is open and **degrade to a visible toast** rather than failing silently; server push is deferred, not promised. (DEC-105 — see §11.)
+15. **The app presents as a native portrait phone app.** Portrait-only orientation, iOS + Android system-bar / safe-area correctness, no horizontal-scroll or black-on-dark text — the "native feel" is a product rule, not a polish nice-to-have. (DEC-089/107.)
 
 ---
 
