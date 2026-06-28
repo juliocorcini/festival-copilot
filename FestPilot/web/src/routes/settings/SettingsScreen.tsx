@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
-import { useAppearance, useAutoShareOnJoin, useLanguage } from "../../app/settings";
+import { useAppearance, useAutoShareOnJoin, useLanguage, useNotificationsEnabled } from "../../app/settings";
 import { useT } from "../../i18n";
 import { APP_VERSION } from "../../data/changelog";
 
@@ -13,6 +13,7 @@ export function SettingsScreen(): JSX.Element {
   const { mode } = useAppearance();
   const { language } = useLanguage();
   const { autoShare, setAutoShare } = useAutoShareOnJoin();
+  const { enabled: notifEnabled } = useNotificationsEnabled();
 
   return (
     <>
@@ -51,14 +52,14 @@ export function SettingsScreen(): JSX.Element {
         </section>
 
         <section className="glass" style={{ overflow: "hidden" }}>
-          <div className="row">
+          <button className="row" style={rowButton} onClick={() => navigate("/settings/notifications")}>
             <span className="ms">notifications</span>
             <span className="row-main">
               <span className="row-title">{t("settings.notifications")}</span>
-              <span className="row-sub">{t("settings.notificationsSub")}</span>
+              <span className="row-sub">{notifEnabled ? t("notif.settingsOn") : t("notif.settingsOff")}</span>
             </span>
-            <span className="pill">{t("settings.soon")}</span>
-          </div>
+            <span className="ms" style={{ color: "var(--muted)" }}>chevron_right</span>
+          </button>
           <button className="row" style={rowButton} onClick={() => navigate("/settings/privacy")}>
             <span className="ms">share_location</span>
             <span className="row-main">

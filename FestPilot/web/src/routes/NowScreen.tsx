@@ -17,7 +17,7 @@ import { useFavorites, useOnboarding, usePlan } from "../data/localStore";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { buildNowNext, chronoNowNext, type HomeSet } from "../domain/nowNext";
 import { actKey, actLabel, imageByActKey } from "../domain/lineup";
-import { daysForWeekends } from "../lib/festival";
+import { daysForWeekends, pickActiveDay } from "../lib/festival";
 import { dayLabel, daysUntil, stageColor, timeInZone } from "../lib/format";
 import { useT, useLocale } from "../i18n";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
@@ -97,15 +97,7 @@ function NowScreenBody({ topSlot }: { topSlot?: JSX.Element }): JSX.Element {
 
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
   const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
-  const activeDay = useMemo(() => {
-    if (days.length === 0) return null;
-    let chosen = days[0]!;
-    for (const day of days) {
-      if (day.startMs <= now) chosen = day;
-      else break;
-    }
-    return chosen;
-  }, [days, now]);
+  const activeDay = useMemo(() => pickActiveDay(days, now), [days, now]);
   const plan = usePlan(lineup?.festival.id, activeDay?.key);
 
   const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);

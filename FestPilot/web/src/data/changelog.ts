@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.49.0";
+export const APP_VERSION = "0.50.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.50.0",
+    date: "2026-06-27",
+    title: "Reminders that show up",
+    icon: "notifications_active",
+    whatsNew: [
+      "Turn on reminders to get a heads-up before your locked sets — “starts in 10 min” and “leave now” when it's time to walk over.",
+      "Reminders use the same walk times as your plan, so “leave now” lands at the right moment.",
+      "Honest by design: reminders fire while FestPilot is open; if notifications are blocked you still get an in-app nudge.",
+    ],
+    howToTest: [
+      "Settings → Notifications: turn on reminders (allow the permission), then tap “Send a test” to see one.",
+      "Lock in a day with a couple of sets — as a set's start approaches you'll get the reminders.",
+      "Deny the permission and turn reminders on anyway: you'll get in-app nudges instead of system alerts.",
+    ],
+  },
   {
     version: "0.49.0",
     date: "2026-06-27",

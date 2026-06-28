@@ -52,6 +52,21 @@ export function daysForWeekends(lineup: LineupDto, weekendIds: string[], locale?
   return [...byId.values()].sort((a, b) => a.startMs - b.startMs);
 }
 
+/**
+ * The day in focus right now: the latest day whose first set has already started, else the first day.
+ * Days must be start-ordered (as `daysForWeekends` returns them). Shared by the Now home and the
+ * reminder scheduler so both agree on "today" without duplicating the loop.
+ */
+export function pickActiveDay<T extends { startMs: number }>(days: T[], nowMs: number): T | null {
+  if (days.length === 0) return null;
+  let chosen = days[0]!;
+  for (const day of days) {
+    if (day.startMs <= nowMs) chosen = day;
+    else break;
+  }
+  return chosen;
+}
+
 /** Fallback for a lineup published without any scheduled times yet (DEC-049): group by source label. */
 function legacyDaysByLabel(performances: PerformanceDto[]): DayInfo[] {
   const byDay = new Map<string, DayInfo>();

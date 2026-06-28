@@ -16,6 +16,7 @@ const KEYS = {
   autoShare: "fp.autoShareOnJoin",
   haptics: "fp.haptics",
   travelPref: "fp.travelPref",
+  notifications: "fp.notifications",
 } as const;
 
 const TRAVEL_DEFAULT: TravelPref = "leave-early";
@@ -104,6 +105,21 @@ export function useHaptics(): { haptics: boolean; setHaptics: (on: boolean) => v
 /** Non-React read of the haptics preference (the vibration layer gates every pulse on this). */
 export function hapticsEnabled(): boolean {
   return read(KEYS.haptics, "1") !== "0";
+}
+
+/**
+ * Local set reminders (E25/DEC-105) — default OFF: the user opts in (and grants permission) in
+ * Settings → Notifications. Mounting the scheduler keys off this, so a user who never opts in pays
+ * nothing (no extra fetches, no timers).
+ */
+export function useNotificationsEnabled(): { enabled: boolean; setEnabled: (on: boolean) => void } {
+  const [value, set] = useSetting(KEYS.notifications, "0");
+  return { enabled: value === "1", setEnabled: (on) => set(on ? "1" : "0") };
+}
+
+/** Non-React read of the reminders preference. */
+export function notificationsEnabledValue(): boolean {
+  return read(KEYS.notifications, "0") === "1";
 }
 
 function asTravelPref(value: string): TravelPref {

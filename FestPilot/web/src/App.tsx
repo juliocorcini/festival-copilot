@@ -8,6 +8,7 @@ import { useThemeColor } from "./lib/chrome";
 import { useAppHeight } from "./lib/viewport";
 import { RotateGuard } from "./app/RotateGuard";
 import { Toaster } from "./ui/Toaster";
+import { ReminderScheduler } from "./app/ReminderScheduler";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
@@ -57,6 +58,7 @@ const AppearanceScreen = lazy(() => named(import("./routes/settings/AppearanceSc
 const OfflineScreen = lazy(() => named(import("./routes/settings/OfflineScreen"), "OfflineScreen"));
 const AboutScreen = lazy(() => named(import("./routes/settings/AboutScreen"), "AboutScreen"));
 const FestivalScreen = lazy(() => named(import("./routes/settings/FestivalScreen"), "FestivalScreen"));
+const NotificationsScreen = lazy(() => named(import("./routes/settings/NotificationsScreen"), "NotificationsScreen"));
 
 const AdminFestivalsScreen = lazy(() => named(import("./admin/AdminFestivalsScreen"), "AdminFestivalsScreen"));
 const AdminLineupScreen = lazy(() => named(import("./admin/AdminLineupScreen"), "AdminLineupScreen"));
@@ -78,6 +80,7 @@ export function App(): JSX.Element {
       <UpdateBanner />
       <RotateGuard />
       <Toaster />
+      <ReminderScheduler />
       <Routes>
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route element={<RequireOnboarding />}>
@@ -119,6 +122,7 @@ export function App(): JSX.Element {
             <Route path="settings" element={<SettingsScreen />} />
             <Route path="settings/festival" element={<FestivalScreen />} />
             <Route path="settings/appearance" element={<AppearanceScreen />} />
+            <Route path="settings/notifications" element={<NotificationsScreen />} />
             <Route path="settings/offline" element={<OfflineScreen />} />
             <Route path="settings/privacy" element={<LocationPrivacyScreen />} />
             <Route path="settings/about" element={<AboutScreen />} />

@@ -6,6 +6,7 @@ import {
   dayOfMonth,
   daysForWeekends,
   initials,
+  pickActiveDay,
   weekendDates,
   type DayInfo,
 } from "./festival";
@@ -16,6 +17,28 @@ describe("initials", () => {
     expect(initials("Solomun")).toBe("SO");
     expect(initials("")).toBe("?");
     expect(initials("Tale Of Us")).toBe("TU");
+  });
+});
+
+describe("pickActiveDay", () => {
+  const days = [
+    { key: "FRIDAY", startMs: 100 },
+    { key: "SATURDAY", startMs: 200 },
+    { key: "SUNDAY", startMs: 300 },
+  ];
+
+  it("returns null for an empty list", () => {
+    expect(pickActiveDay([], 150)).toBeNull();
+  });
+
+  it("returns the first day before the festival has started", () => {
+    expect(pickActiveDay(days, 50)?.key).toBe("FRIDAY");
+  });
+
+  it("returns the latest day whose first set has already started", () => {
+    expect(pickActiveDay(days, 150)?.key).toBe("FRIDAY");
+    expect(pickActiveDay(days, 250)?.key).toBe("SATURDAY");
+    expect(pickActiveDay(days, 9999)?.key).toBe("SUNDAY");
   });
 });
 

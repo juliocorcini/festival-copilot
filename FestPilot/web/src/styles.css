@@ -2009,6 +2009,15 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .qr-scanner-hint, .qr-scanner-msg { font-size: 13px; color: var(--ink); margin: 0; line-height: 1.5; }
 .qr-scanner-close { top: calc(10px + var(--safe-top)); }
 
+/* Notifications settings (E25/DEC-105). */
+.settings-intro { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 2px 2px 14px; }
+.notif-status { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 10px 4px 0; }
+.notif-status.warn { color: var(--accent2); }
+.notif-what { margin-top: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.notif-what-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.notif-what-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink); }
+.notif-what-row .ms { font-size: 18px; color: var(--accent2); }
+
 .meet-drift { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; padding: 10px 12px; border-radius: 12px;
   background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3); color: var(--accent2); }
 .meet-drift .ms { font-size: 16px; }

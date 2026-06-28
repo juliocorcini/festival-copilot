@@ -69,6 +69,24 @@ async function keepPhotos(urls) {
   );
 }
 
+// Tapping a local reminder (E25/DEC-105) focuses an open tab, or opens the app if none is open.
+// `data.url` (when set) routes to a specific screen; otherwise it lands on the home.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          if (target !== "/" && "navigate" in client) client.navigate(target).catch(() => {});
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow ? self.clients.openWindow(target) : undefined;
+    })
+  );
+});
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
