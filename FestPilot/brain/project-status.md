@@ -1,8 +1,8 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-27 (**Leva 2 "Squad Vivo, Localização & Polimento Nativo" EXECUTED — G0→G10 COMPLETE, deploy-ready** at **v0.51.0**, committed+pushed to `master`; **DEPLOY PENDING** (manual, Julio — DEC-108). **DEC-089→107 all APPROVED.** Tests: **web 553 + server 260 = 813 unit · e2e 37/37 · tsc/build clean**. Remaining DoD items are Julio's: the manual Cloudflare Pages deploy (incl. the one-time D1 migration `0016` from G4) and the §15 on-device iOS/Android smoke.)
+> Last updated: 2026-06-27 (**Leva 2 "Squad Vivo, Localização & Polimento Nativo" EXECUTED & DEPLOYED — G0→G10 LIVE** at **v0.51.0**. Frontend `festpilot.pages.dev` (Pages deploy `76856650`, bundle `index-Clh7mXz3.js`), Worker `festpilot` (version `6fff8f69`, `festpilot.trippilot.workers.dev` → `{ok:true}`), D1 through migration **0016** (applied remote). **DEC-089→108 all APPROVED.** Tests: **web 553 + server 260 = 813 unit · e2e 37/37 · tsc/build clean**. Deploy run by the agent at leva close (DEC-108 flip condition met: creds in `.dev.vars` + maps tracked). Remaining DoD: only Julio's **§15 on-device iOS/Android smoke**.)
 
-## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE (deploy-ready, deploy pending)
+## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE & DEPLOYED (v0.51.0 live)
 
 Source orchestrator: `brain/documents/2026-06-27-squad-location-native-orchestrator.md` (+ `…-kickoff-prompt.md`). Julio's **second** usage review — run on a real iPhone, inside a squad, across two devices. Normalized into **E01–E28** (P0/P1/P2) with a code↔fix root-cause map, **5 full + quick inline councils**, and **DEC-089→107**. Gates G0→G10, **v0.42.0 → v0.51.0**, executed in one session (live detail: `FestPilot/dev-log.md`, newest on top). **All DECs APPROVED.**
 
@@ -19,7 +19,9 @@ Source orchestrator: `brain/documents/2026-06-27-squad-location-native-orchestra
 
 **Outcome:** every P0/P1 delivered; P2 = E19 done, E21 done, E23 already shipped, **E11/E20/E22/E23-extra deferred** with records (§12 allows P2 done-or-deferred). Invariance held (`buildSquadPlan` sets-only, regression test green). No non-negotiable (N1–N7) broken.
 
-**Next (Julio):** (1) **manual deploy** — `git pull && cd FestPilot/web && npm run build && npx wrangler pages deploy dist --project-name=festpilot --branch=master`, **once** preceded by `npx wrangler d1 migrations apply festpilot --remote` (the G4 `0016` migration); needs `.dev.vars` creds + the untracked `public/maps/` assets (DEC-108). (2) the **§15 on-device smoke** (iOS PWA / Android) of the key journeys. Recommended to deploy and smoke after the full leva is live.
+**Production (deployed 2026-06-27, verified):** the full leva is **live**. **D1 migration `0016`** applied to remote (`festpilot`, `e6753623…`) — additive only (`group_member.plan_revision` + `group_plan_change` table + 2 indexes). **Worker** `festpilot` deployed (version `6fff8f69-b2e3-4260-9970-14ac17833ff5`, bindings DB/GROUP_ROOM/MEDIA, cron `0 */6`) → `festpilot.trippilot.workers.dev` returns `{name:"FestPilot API",ok:true}`. **Pages** deploy `76856650` on the production branch `master` → `festpilot.pages.dev` serves the new bundle `index-Clh7mXz3.js` and `/maps/…webp` returns `image/webp`. Account `e146e88b…`. The agent ran the deploy at Julio's explicit request (DEC-108 flip condition met).
+
+**Next (Julio):** the only open DoD item is the **§15 on-device smoke** (iOS PWA install + Android) of the key journeys — squad live re-share + change history, precise pin (squad-scope + TTL), SOS stop-syncs-first, photo lightbox, join by QR/code, local notifications opt-in, "add a squad moment", and the native portrait feel (no black bar / system bars).
 
 ---
 
