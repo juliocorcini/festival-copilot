@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.53.0";
+export const APP_VERSION = "0.54.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.54.0",
+    date: "2026-07-08",
+    title: "Passive presence & global ping",
+    icon: "person_pin_circle",
+    whatsNew: [
+      "Your location now shares automatically when you open the app (if you opted in before) — no need to open \"Where is everyone\" first.",
+      "When a squad mate pings your location, a banner now pops up on any screen — tap it to respond.",
+    ],
+    howToTest: [
+      "Opt in to sharing, close the app, reopen — your dot should appear on the squad map without opening the Where screen.",
+      "Ask a squad mate to ping you — you should see a banner at the top of whatever screen you're on.",
+    ],
+  },
   {
     version: "0.53.0",
     date: "2026-07-08",

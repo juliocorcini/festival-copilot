@@ -9,6 +9,8 @@ import { useAppHeight } from "./lib/viewport";
 import { RotateGuard } from "./app/RotateGuard";
 import { Toaster } from "./ui/Toaster";
 import { ReminderScheduler } from "./app/ReminderScheduler";
+import { PassivePresencePublisher } from "./app/PassivePresencePublisher";
+import { GlobalPingBanner } from "./app/GlobalPingBanner";
 import { RequireOnboarding } from "./app/RequireOnboarding";
 import { StackLayout } from "./app/StackLayout";
 import { OnboardingScreen } from "./routes/onboarding/OnboardingScreen";
@@ -81,6 +83,8 @@ export function App(): JSX.Element {
       <RotateGuard />
       <Toaster />
       <ReminderScheduler />
+      <PassivePresencePublisher />
+      <GlobalPingBanner />
       <Routes>
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route element={<RequireOnboarding />}>
