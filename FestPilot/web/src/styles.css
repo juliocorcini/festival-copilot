@@ -592,6 +592,25 @@ main:focus { outline: none; }
 .poi-chip.is-off { opacity: 0.42; }
 .poi-chip span { font-size: 13px; line-height: 1; }
 
+/* Spoiler toggle button */
+.spoiler-toggle {
+  position: absolute; right: 12px;
+  top: calc(max(12px, var(--safe-top)) + 56px);
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--scrim); backdrop-filter: blur(8px);
+  color: var(--ink); font-size: 12px; font-weight: 600;
+  box-shadow: 0 8px 22px -14px rgba(0, 0, 0, 0.8);
+  transition: background 0.2s, border-color 0.2s;
+}
+.spoiler-toggle .ms { font-size: 15px; }
+.spoiler-toggle.is-revealed {
+  border-color: #e85d04; background: rgba(232, 93, 4, 0.15);
+}
+
+/* Isometric stage icons on map */
+.stage-icon-iso { transition: opacity 0.3s ease; }
+
 .poi-sheet-glyph {
   width: 30px; height: 30px; border-radius: 10px; flex: none;
   display: grid; place-items: center; font-size: 16px;
@@ -2416,6 +2435,31 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .map-editor-num { width: 100%; min-width: 72px; padding: 6px 8px; font-size: 12px; }
 .map-editor-cp-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .map-stage-active > td { background: rgba(124, 92, 255, 0.1); }
+
+/* Stage icon editor (admin map editor) */
+.map-editor-stages-list { display: flex; flex-direction: column; gap: 10px; }
+.map-editor-stage-card {
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--card-bg, var(--bg)); transition: border-color 0.15s;
+}
+.map-editor-stage-card.active { border-color: #7c5cff; background: rgba(124, 92, 255, 0.06); }
+.map-editor-stage-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.map-editor-stage-actions { display: flex; align-items: center; gap: 6px; }
+.map-editor-stage-coords { display: flex; gap: 6px; margin-top: 6px; }
+.map-editor-stage-coords .field { flex: 1; }
+.map-editor-spoiler-toggle {
+  display: inline-flex; align-items: center; gap: 3px; cursor: pointer; user-select: none;
+}
+.map-editor-stage-icon-section {
+  display: flex; align-items: center; gap: 10px; margin-top: 8px;
+  padding-top: 8px; border-top: 1px solid var(--line);
+}
+.map-editor-stage-icon-preview { width: 48px; height: 48px; flex-shrink: 0; display: grid; place-items: center; }
+.map-editor-icon-thumb { width: 48px; height: 48px; object-fit: contain; border-radius: 6px; }
+.map-editor-stage-icon-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1; }
+.map-editor-icon-scale { display: flex; align-items: center; gap: 4px; }
+.map-editor-icon-scale input[type="range"] { width: 80px; height: 4px; }
+.map-editor-stage-icon { pointer-events: none; }
 @media (max-width: 900px) { .map-editor { grid-template-columns: 1fr; } .map-editor-canvas { position: static; } }
 
 /* ART-5 (DEC-069): Artist Detail Sheet — big photo, name (Oswald), social row, and every set's

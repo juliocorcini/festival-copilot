@@ -22,8 +22,17 @@ interface EditStage {
   name: string;
   lng: number | null;
   lat: number | null;
+  iconUrl: string | null;
+  iconLng: number | null;
+  iconLat: number | null;
+  iconScale: number;
+  isSpoiler: boolean;
 }
-type ClickMode = { kind: "idle" } | { kind: "control" } | { kind: "stage"; name: string };
+type ClickMode =
+  | { kind: "idle" }
+  | { kind: "control" }
+  | { kind: "stage"; name: string }
+  | { kind: "stage-icon"; name: string };
 
 const newId = (): string => Math.random().toString(36).slice(2, 9);
 
@@ -77,7 +86,16 @@ export function AdminMapEditorScreen(): JSX.Element {
         setStages(
           stageNames.map((nm) => {
             const g = byName.get(nm);
-            return { name: nm, lng: g?.lng ?? null, lat: g?.lat ?? null };
+            return {
+              name: nm,
+              lng: g?.lng ?? null,
+              lat: g?.lat ?? null,
+              iconUrl: g?.iconUrl ?? null,
+              iconLng: g?.iconLng ?? null,
+              iconLat: g?.iconLat ?? null,
+              iconScale: g?.iconScale ?? 1,
+              isSpoiler: g?.isSpoiler ?? false,
+            };
           })
         );
         setError(null);
@@ -135,6 +153,16 @@ export function AdminMapEditorScreen(): JSX.Element {
       if (!geo) return;
       const name = mode.name;
       setStages((ss) => ss.map((s) => (s.name === name ? { ...s, lng: round(geo[0], 7), lat: round(geo[1], 7) } : s)));
+    } else if (mode.kind === "stage-icon") {
+      if (!affine) {
+        setBanner({ tone: "warn", icon: "warning", message: "Fit the affine first, then click to position the icon." });
+        return;
+      }
+      const geo = svgToGeo(affine, x, y);
+      if (!geo) return;
+      const name = mode.name;
+      setStages((ss) => ss.map((s) => (s.name === name ? { ...s, iconLng: round(geo[0], 7), iconLat: round(geo[1], 7) } : s)));
+      setBanner({ tone: "ok", icon: "check", message: `Icon for "${name}" positioned.` });
     }
   }
 
@@ -183,7 +211,17 @@ export function AdminMapEditorScreen(): JSX.Element {
         canvas,
         bbox,
         affine,
-        stages: placedStages.map((s) => ({ name: s.name, lng: s.lng!, lat: s.lat!, matched: true })),
+        stages: placedStages.map((s) => ({
+          name: s.name,
+          lng: s.lng!,
+          lat: s.lat!,
+          matched: true,
+          ...(s.iconUrl ? { iconUrl: s.iconUrl } : {}),
+          ...(s.iconLng != null ? { iconLng: s.iconLng } : {}),
+          ...(s.iconLat != null ? { iconLat: s.iconLat } : {}),
+          ...(s.iconScale !== 1 ? { iconScale: s.iconScale } : {}),
+          ...(s.isSpoiler ? { isSpoiler: true } : {}),
+        })),
         source,
       },
     };
@@ -232,7 +270,7 @@ export function AdminMapEditorScreen(): JSX.Element {
                 onClick={() => setMode({ kind: "control" })}
               />
               <span className="admin-muted map-editor-hint">
-                {mode.kind === "stage" ? `Click the map to place “${mode.name}”` : mode.kind === "control" ? "Click a known landmark on the map" : "Pick a tool to edit"}
+                {mode.kind === "stage" ? `Click the map to place "${mode.name}"` : mode.kind === "stage-icon" ? `Click to position icon for "${mode.name}"` : mode.kind === "control" ? "Click a known landmark on the map" : "Pick a tool to edit"}
               </span>
             </div>
             {baseNightUrl && canvas ? (
@@ -255,12 +293,28 @@ export function AdminMapEditorScreen(): JSX.Element {
                   ? placedStages.map((s) => {
                       const [px, py] = geoToSvg(affine, s.lng!, s.lat!);
                       const r = Math.max(7, canvas.width / 90);
+                      const hasIcon = s.iconUrl && s.iconLng != null && s.iconLat != null;
+                      const iconPos = hasIcon ? geoToSvg(affine, s.iconLng!, s.iconLat!) : null;
+                      const iconSize = (s.iconScale ?? 1) * canvas.width * 0.08;
                       return (
-                        <g key={s.name} className={`map-pin${mode.kind === "stage" && mode.name === s.name ? " on" : ""}`}>
-                          <circle cx={px} cy={py} r={r} />
-                          <text x={px} y={py - r - 4} textAnchor="middle">
-                            {s.name}
-                          </text>
+                        <g key={s.name}>
+                          {iconPos && (
+                            <image
+                              href={s.iconUrl!}
+                              x={iconPos[0] - iconSize / 2}
+                              y={iconPos[1] - iconSize / 2}
+                              width={iconSize}
+                              height={iconSize}
+                              opacity={0.85}
+                              className="map-editor-stage-icon"
+                            />
+                          )}
+                          <g className={`map-pin${(mode.kind === "stage" || mode.kind === "stage-icon") && mode.name === s.name ? " on" : ""}`}>
+                            <circle cx={px} cy={py} r={r} />
+                            <text x={px} y={py - r - 4} textAnchor="middle">
+                              {s.name}
+                            </text>
+                          </g>
                         </g>
                       );
                     })
@@ -297,10 +351,14 @@ export function AdminMapEditorScreen(): JSX.Element {
             />
             <StagesPanel
               stages={stages}
+              festivalId={festivalId}
               affineSet={!!affine}
-              activeName={mode.kind === "stage" ? mode.name : null}
+              activeName={mode.kind === "stage" || mode.kind === "stage-icon" ? mode.name : null}
+              activeMode={mode.kind === "stage" ? "stage" : mode.kind === "stage-icon" ? "icon" : null}
               onPick={(name) => setMode((m) => (m.kind === "stage" && m.name === name ? { kind: "idle" } : { kind: "stage", name }))}
+              onPickIcon={(name) => setMode((m) => (m.kind === "stage-icon" && m.name === name ? { kind: "idle" } : { kind: "stage-icon", name }))}
               onChange={(name, patch) => setStages((ss) => ss.map((s) => (s.name === name ? { ...s, ...patch } : s)))}
+              onBanner={setBanner}
             />
           </div>
         </div>
@@ -476,64 +534,148 @@ function ControlsPanel({
 
 function StagesPanel({
   stages,
+  festivalId,
   affineSet,
   activeName,
+  activeMode,
   onPick,
+  onPickIcon,
   onChange,
+  onBanner,
 }: {
   stages: EditStage[];
+  festivalId: string;
   affineSet: boolean;
   activeName: string | null;
+  activeMode: "stage" | "icon" | null;
   onPick: (name: string) => void;
+  onPickIcon: (name: string) => void;
   onChange: (name: string, patch: Partial<EditStage>) => void;
+  onBanner: (b: { tone: "ok" | "warn" | "info"; icon: string; message: string } | null) => void;
 }): JSX.Element {
   const placed = stages.filter((s) => s.lng !== null && s.lat !== null).length;
+  const fileRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+
+  async function handleIconUpload(stageName: string, file: File): Promise<void> {
+    onBanner({ tone: "info", icon: "cloud_upload", message: `Uploading icon for ${stageName}…` });
+    try {
+      const { url } = await uploadMapAsset(festivalId, "night", file);
+      onChange(stageName, { iconUrl: url });
+      onBanner({ tone: "ok", icon: "cloud_done", message: `Icon for "${stageName}" uploaded.` });
+    } catch (err) {
+      onBanner({ tone: "warn", icon: "error", message: err instanceof AdminError ? err.message : "Upload failed." });
+    }
+  }
+
   return (
     <section className="card admin-panel map-editor-section">
       <div className="admin-section">
         <span className="ms">festival</span> Stages · {placed}/{stages.length} placed
       </div>
-      <table className="admin-table map-editor-stage-table">
-        <thead>
-          <tr>
-            <th>Stage</th>
-            <th>lng</th>
-            <th>lat</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {stages.map((s) => (
-            <tr key={s.name} className={activeName === s.name ? "map-stage-active" : ""}>
-              <td className="admin-cell-title">{s.name}</td>
-              <td>
+      <div className="map-editor-stages-list">
+        {stages.map((s) => {
+          const isActive = activeName === s.name;
+          return (
+            <div key={s.name} className={`map-editor-stage-card${isActive ? " active" : ""}`}>
+              <div className="map-editor-stage-row">
+                <span className="admin-cell-title">{s.name}</span>
+                <div className="map-editor-stage-actions">
+                  <button
+                    className={`btn btn-sm ${isActive && activeMode === "stage" ? "btn-primary" : "btn-ghost"}`}
+                    type="button"
+                    onClick={() => onPick(s.name)}
+                    disabled={!affineSet}
+                    title="Place stage marker"
+                  >
+                    <span className="ms">place</span>
+                  </button>
+                  <label className="map-editor-spoiler-toggle">
+                    <input
+                      type="checkbox"
+                      checked={s.isSpoiler}
+                      onChange={(e) => onChange(s.name, { isSpoiler: e.target.checked })}
+                    />
+                    <span className="ms" style={{ fontSize: 16, color: s.isSpoiler ? "#e85d04" : undefined }}>
+                      {s.isSpoiler ? "visibility_off" : "visibility"}
+                    </span>
+                    <span className="admin-muted" style={{ fontSize: 11 }}>Spoiler</span>
+                  </label>
+                </div>
+              </div>
+              <div className="map-editor-stage-coords">
                 <NumCell value={s.lng} step="any" onChange={(v) => onChange(s.name, { lng: v })} />
-              </td>
-              <td>
                 <NumCell value={s.lat} step="any" onChange={(v) => onChange(s.name, { lat: v })} />
-              </td>
-              <td>
-                <button
-                  className={`btn btn-sm ${activeName === s.name ? "btn-primary" : "btn-ghost"}`}
-                  type="button"
-                  onClick={() => onPick(s.name)}
-                  disabled={!affineSet}
-                  title={affineSet ? "Click the map to place" : "Fit the affine first"}
-                >
-                  <span className="ms">place</span>
-                </button>
-              </td>
-            </tr>
-          ))}
-          {stages.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="admin-empty-cell">
-                No stages — import the lineup first.
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
+              </div>
+              <div className="map-editor-stage-icon-section">
+                <div className="map-editor-stage-icon-preview">
+                  {s.iconUrl ? (
+                    <img src={s.iconUrl} alt={`${s.name} icon`} className="map-editor-icon-thumb" />
+                  ) : (
+                    <span className="admin-muted" style={{ fontSize: 11 }}>No icon</span>
+                  )}
+                </div>
+                <div className="map-editor-stage-icon-controls">
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    type="button"
+                    onClick={() => fileRefs.current.get(s.name)?.click()}
+                    title="Upload icon"
+                  >
+                    <span className="ms">upload</span> Icon
+                  </button>
+                  <input
+                    ref={(el) => { if (el) fileRefs.current.set(s.name, el); }}
+                    type="file"
+                    accept="image/webp,image/png,image/jpeg"
+                    hidden
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void handleIconUpload(s.name, f);
+                      e.target.value = "";
+                    }}
+                  />
+                  {s.iconUrl && (
+                    <>
+                      <button
+                        className={`btn btn-sm ${isActive && activeMode === "icon" ? "btn-primary" : "btn-ghost"}`}
+                        type="button"
+                        onClick={() => onPickIcon(s.name)}
+                        disabled={!affineSet}
+                        title="Position icon on map"
+                      >
+                        <span className="ms">pin_drop</span> Position
+                      </button>
+                      <div className="map-editor-icon-scale">
+                        <label className="admin-muted" style={{ fontSize: 10 }}>Scale</label>
+                        <input
+                          type="range"
+                          min="0.3"
+                          max="3"
+                          step="0.1"
+                          value={s.iconScale}
+                          onChange={(e) => onChange(s.name, { iconScale: Number(e.target.value) })}
+                        />
+                        <span style={{ fontSize: 11 }}>{s.iconScale.toFixed(1)}x</span>
+                      </div>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        type="button"
+                        onClick={() => onChange(s.name, { iconUrl: null, iconLng: null, iconLat: null })}
+                        title="Remove icon"
+                      >
+                        <span className="ms">delete</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {stages.length === 0 ? (
+          <p className="admin-muted">No stages — import the lineup first.</p>
+        ) : null}
+      </div>
     </section>
   );
 }

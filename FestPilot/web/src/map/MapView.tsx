@@ -202,6 +202,26 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
       return next;
     });
 
+  // Spoiler toggle: stages marked `isSpoiler` only show their real icon when user opts in.
+  const [spoilersRevealed, setSpoilersRevealed] = useState(
+    () => localStorage.getItem("fp.map.spoilers") === "1"
+  );
+  const toggleSpoilers = (): void => {
+    setSpoilersRevealed((prev) => {
+      const next = !prev;
+      localStorage.setItem("fp.map.spoilers", next ? "1" : "0");
+      return next;
+    });
+  };
+  const stagesWithIcons = useMemo(
+    () => t?.stages.filter((s) => s.iconUrl && s.iconLng != null && s.iconLat != null) ?? [],
+    [t]
+  );
+  const hasSpoilerStages = useMemo(
+    () => stagesWithIcons.some((s) => s.isSpoiler),
+    [stagesWithIcons]
+  );
+
   const [openStage, setOpenStage] = useState<StageGeo | null>(null);
   const [openPoi, setOpenPoi] = useState<PoiDto | null>(null);
   // Open on tap, but ignore the click that ends a pan-drag (release far from where it started).
@@ -278,6 +298,27 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
             onError={() => setBaseNaturalW((w) => w || 1)}
           />
           <svg className="overlay" viewBox={`0 0 ${cw} ${ch}`} width={cw} height={ch}>
+            {stagesWithIcons.map((s) => {
+              const show = !s.isSpoiler || spoilersRevealed;
+              if (!show) return null;
+              const [ix, iy] = geoToSvg(t.affine, s.iconLng!, s.iconLat!);
+              const baseSize = cw * 0.12;
+              const size = baseSize * (s.iconScale ?? 1);
+              return (
+                <image
+                  key={`icon-${s.name}`}
+                  className="stage-icon-iso"
+                  href={s.iconUrl!}
+                  x={ix - size / 2}
+                  y={iy - size / 2}
+                  width={size}
+                  height={size}
+                  opacity={0.92}
+                  style={{ pointerEvents: "none" }}
+                />
+              );
+            })}
+
             {visiblePois.map((p) => {
               const [x, y] = geoToSvg(t.affine, p.lng, p.lat);
               const meta = poiMeta(p.type);
@@ -398,6 +439,18 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
             );
           })}
         </div>
+      )}
+
+      {hasSpoilerStages && (
+        <button
+          type="button"
+          className={`spoiler-toggle${spoilersRevealed ? " is-revealed" : ""}`}
+          onClick={toggleSpoilers}
+          title={spoilersRevealed ? tr("map.hideSpoilers") : tr("map.revealSpoilers")}
+        >
+          <span className="ms">{spoilersRevealed ? "visibility" : "visibility_off"}</span>
+          {spoilersRevealed ? tr("map.hideSpoilers") : tr("map.revealSpoilers")}
+        </button>
       )}
 
       {outside && !outsideDismissed && (

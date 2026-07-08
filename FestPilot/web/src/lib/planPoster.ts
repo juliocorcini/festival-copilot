@@ -568,45 +568,109 @@ function uniqueActKeys(slots: PlanSlot[]): string[] {
 }
 
 /**
- * Preload the plan's DJ photos for the canvas. Uses `crossOrigin="anonymous"` so a successful load
- * is exportable; a CORS/error/timeout simply omits the key (the draw then falls back to initials) and
- * never taints the export. Resolves to the successfully loaded images only.
+ * Load a single photo as a blob URL image (bypasses CORS issues with crossOrigin attribute).
+ * Falls back to the traditional crossOrigin approach if fetch fails.
+ */
+async function loadPhotoViaFetch(url: string, timeoutMs: number): Promise<HTMLImageElement | null> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const resp = await fetch(url, { signal: controller.signal, mode: "cors" });
+    clearTimeout(timer);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    return await new Promise<HTMLImageElement | null>((resolve) => {
+      const img = new Image();
+      img.onload = (): void => resolve(img);
+      img.onerror = (): void => { URL.revokeObjectURL(blobUrl); resolve(null); };
+      img.src = blobUrl;
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Traditional load via crossOrigin attribute (works when CDN has proper CORS headers). */
+function loadPhotoCrossOrigin(url: string, timeoutMs: number): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    let done = false;
+    const finish = (ok: boolean): void => {
+      if (done) return;
+      done = true;
+      resolve(ok ? img : null);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    img.onload = (): void => { clearTimeout(timer); finish(true); };
+    img.onerror = (): void => { clearTimeout(timer); finish(false); };
+    img.src = url;
+  });
+}
+
+/**
+ * Last-resort: load without crossOrigin (always works), then paint into an off-screen canvas
+ * to extract a non-tainted copy as a blob URL image. This avoids tainting the main canvas.
+ */
+async function loadPhotoUntainted(url: string, timeoutMs: number): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    let done = false;
+    const finish = (ok: boolean): void => {
+      if (done) return;
+      done = true;
+      if (!ok) { resolve(null); return; }
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth || img.width;
+        c.height = img.naturalHeight || img.height;
+        const cx = c.getContext("2d");
+        if (!cx) { resolve(null); return; }
+        cx.drawImage(img, 0, 0);
+        c.toBlob((blob) => {
+          if (!blob) { resolve(null); return; }
+          const bUrl = URL.createObjectURL(blob);
+          const clean = new Image();
+          clean.onload = (): void => resolve(clean);
+          clean.onerror = (): void => { URL.revokeObjectURL(bUrl); resolve(null); };
+          clean.src = bUrl;
+        });
+      } catch {
+        resolve(null);
+      }
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    img.onload = (): void => { clearTimeout(timer); finish(true); };
+    img.onerror = (): void => { clearTimeout(timer); finish(false); };
+    img.src = url;
+  });
+}
+
+/**
+ * Preload the plan's DJ photos for the canvas. Tries fetch+blob first (better CORS handling),
+ * then falls back to crossOrigin attribute. A failed photo never taints the export — it simply
+ * falls back to the colored-initials medallion.
  */
 export async function loadPosterPhotos(
   input: PosterInput,
   width = 220,
-  timeoutMs = 4000
+  timeoutMs = 5000
 ): Promise<Map<string, HTMLImageElement>> {
   const out = new Map<string, HTMLImageElement>();
   if (typeof Image === "undefined" || !input.photos) return out;
   const keys = uniqueActKeys(input.slots);
   await Promise.all(
-    keys.map(
-      (key) =>
-        new Promise<void>((resolve) => {
-          const url = input.photos?.get(key);
-          if (!url) return resolve();
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          let done = false;
-          const finish = (ok: boolean): void => {
-            if (done) return;
-            done = true;
-            if (ok) out.set(key, img);
-            resolve();
-          };
-          const timer = setTimeout(() => finish(false), timeoutMs);
-          img.onload = (): void => {
-            clearTimeout(timer);
-            finish(true);
-          };
-          img.onerror = (): void => {
-            clearTimeout(timer);
-            finish(false);
-          };
-          img.src = artistPhotoSrc(url, width);
-        })
-    )
+    keys.map(async (key) => {
+      const rawUrl = input.photos?.get(key);
+      if (!rawUrl) return;
+      const url = artistPhotoSrc(rawUrl, width);
+      const img =
+        await loadPhotoViaFetch(url, timeoutMs) ??
+        await loadPhotoCrossOrigin(url, timeoutMs) ??
+        await loadPhotoUntainted(url, timeoutMs);
+      if (img) out.set(key, img);
+    })
   );
   return out;
 }

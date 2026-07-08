@@ -12,6 +12,11 @@ export interface StageGeo {
   lng: number;
   lat: number;
   matched: boolean;
+  iconUrl?: string | null;
+  iconLng?: number | null;
+  iconLat?: number | null;
+  iconScale?: number | null;
+  isSpoiler?: boolean;
 }
 
 export interface MapTransform {
