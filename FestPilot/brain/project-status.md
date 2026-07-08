@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-07-08 (**F17 "Member Profile + 1-on-1 Plan Comparison" DELIVERED** — **v0.58.0** deployed. **DEC-115 APPROVED.** Tests: **web 569 · tsc/build clean**. Pushed to origin master.)
+> Last updated: 2026-07-08 (**Post-F17 polish batch DELIVERED** — request-share-plan ping, resizable map roster, aggressive foreground location (DEC-116 + Wake Lock), share-image design brief. **v0.58.0** deployed (web + server). Tests: **web 569 · tsc/build clean**. Pushed to origin master.)
 
 ## Leva 3 — Plan Sync, Insert Fix & UX Polish (2026-07-08) — ✅ COMPLETE (v0.57.0)
 
@@ -25,6 +25,15 @@ Implemented as a standalone feature (post-Leva 3). Council-guided approach (DEC-
 - **i18n**: 16 keys EN + PT.
 - **Tests**: 11 unit tests for all domain functions.
 - **Deferred**: "plan together" collaborative editing (future DEC if validated by usage).
+
+## Post-F17 Polish Batch (2026-07-08)
+
+Addressing remaining items from the feedback session:
+
+- **DEC-116 (Aggressive foreground location + Wake Lock)**: Reduced keepalive/min-post intervals for faster stage detection. Added visibility-change flush (posts on app background). Integrated `Wake Lock API` to keep device awake while location sharing is active.
+- **Request Share Plan**: New `share_plan` ping kind (server + client). MemberSheet shows "Ask to share plan" button when the member hasn't shared. GlobalPingBanner routes the notification to the share screen (with calendar icon).
+- **Resizable Map Roster**: The friends-sheet in the Map is now draggable (peek → half → full) with a grip handle, replacing the fixed `max-height: 38vh`.
+- **Share Image Design Brief**: Created comprehensive prompt (`brain/documents/share-image-design-brief.md`) for a design AI to generate the branded share-image template (Story 9:16 + Square 1:1, Amber Glass visual language, full dynamic content spec).
 
 ## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE & DEPLOYED (v0.51.0 live)
 
