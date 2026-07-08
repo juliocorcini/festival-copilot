@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-07-08 (**Post-F17 polish batch DELIVERED** — request-share-plan ping, resizable map roster, aggressive foreground location (DEC-116 + Wake Lock), share-image design brief. **v0.58.0** deployed (web + server). Tests: **web 569 · tsc/build clean**. Pushed to origin master.)
+> Last updated: 2026-07-08 (**UX hardening batch deployed** — z-index fix, one-finger zoom, safety alerts global, meeting point overlap, outside-banner persist. **v0.58.0** deployed (web). Tests: **web 569 · tsc/build clean**. Pushed to origin master.)
 
 ## Leva 3 — Plan Sync, Insert Fix & UX Polish (2026-07-08) — ✅ COMPLETE (v0.57.0)
 
@@ -34,6 +34,21 @@ Addressing remaining items from the feedback session:
 - **Request Share Plan**: New `share_plan` ping kind (server + client). MemberSheet shows "Ask to share plan" button when the member hasn't shared. GlobalPingBanner routes the notification to the share screen (with calendar icon).
 - **Resizable Map Roster**: The friends-sheet in the Map is now draggable (peek → half → full) with a grip handle, replacing the fixed `max-height: 38vh`.
 - **Share Image Design Brief**: Created comprehensive prompt (`brain/documents/share-image-design-brief.md`) for a design AI to generate the branded share-image template (Story 9:16 + Square 1:1, Amber Glass visual language, full dynamic content spec).
+
+## UX Hardening Batch (2026-07-08)
+
+Second round of fixes post-feedback-review:
+
+- **Squad Plan crash guard**: try-catch around `buildSquadPlan` in `useSquadPlan`; null-check on `plan.blocks` in `SquadPlanScreen`.
+- **Sheet drag polish**: `snapping` state isolates CSS transitions to snap-only; velocity incorporated in dismiss logic for natural feel.
+- **Meeting radius hidden**: `display: none` on `.meet-ring` — meeting points are exact, no radius circle.
+- **Map sheet peek**: `SHEET_PEEK = 72px` — collapsed shows only squad name.
+- **Event date limits**: `CreateEventSheet` now respects `minDate`/`maxDate` from festival schedule.
+- **Grid heart z-index**: `isolation: isolate` on `.gcard` prevents heart from overlapping sticky day header.
+- **One-finger zoom**: double-tap-hold-drag zooms in/out (standard Maps gesture) in `usePanZoom.ts`.
+- **Safety alerts global**: `GlobalPingBanner` now polls active safety broadcasts every 15s and shows a prominent red persistent alert (with vibration) on ALL screens when someone triggers "I'm lost".
+- **Meeting point sheet overlap**: "Open full map" button moved to `bottom: 36px` with `z-index: 2` to clear the sheet's `-28px` negative margin.
+- **Outside banner persists**: dismiss state stored in `sessionStorage` so it survives component re-mounts.
 
 ## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE & DEPLOYED (v0.51.0 live)
 
