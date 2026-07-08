@@ -85,29 +85,29 @@ interface Metrics {
 function metricsFor(format: PosterFormat, size: Size): Metrics {
   if (format === "story") {
     return {
-      pad: 92,
-      headTop: 168,
-      rowsTop: 700,
-      footTop: size.h - 250,
-      minRowH: 96,
-      maxRowH: 132,
-      nameSize: 42,
-      timeSize: 30,
-      stageSize: 25,
-      avatar: 84,
+      pad: 72,
+      headTop: 110,
+      rowsTop: 580,
+      footTop: size.h - 200,
+      minRowH: 88,
+      maxRowH: 120,
+      nameSize: 36,
+      timeSize: 34,
+      stageSize: 20,
+      avatar: 72,
     };
   }
   return {
-    pad: 80,
-    headTop: 104,
-    rowsTop: 470,
-    footTop: size.h - 168,
-    minRowH: 66,
-    maxRowH: 92,
-    nameSize: 30,
-    timeSize: 22,
-    stageSize: 18,
-    avatar: 56,
+    pad: 72,
+    headTop: 80,
+    rowsTop: 380,
+    footTop: size.h - 148,
+    minRowH: 62,
+    maxRowH: 88,
+    nameSize: 28,
+    timeSize: 26,
+    stageSize: 16,
+    avatar: 52,
   };
 }
 
@@ -202,24 +202,6 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number):
   return `${trimmed.trim()}…`;
 }
 
-/** Shrink the headline font until it fits the width (down to a floor), only then truncate. */
-function fitHeadline(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  family: string,
-  maxSize: number,
-  minSize: number
-): string {
-  let s = maxSize;
-  while (s > minSize) {
-    setFont(ctx, 700, s, family);
-    if (ctx.measureText(text).width <= maxWidth) break;
-    s -= 2;
-  }
-  setFont(ctx, 700, s, family);
-  return fitText(ctx, text, maxWidth);
-}
 
 /** Width of letter-spaced text (matches what `tracked` paints), so we can right-align it correctly. */
 function trackedWidth(ctx: CanvasRenderingContext2D, text: string, spacing: number): number {
@@ -279,7 +261,7 @@ function drawMedallion(
   const r = d / 2;
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
   if (image) {
@@ -296,13 +278,6 @@ function drawMedallion(
     ctx.textBaseline = "alphabetic";
   }
   ctx.restore();
-
-  // Glass ring — amber when the set clashes, soft white otherwise.
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.lineWidth = row.clash ? 4 : 2.5;
-  ctx.strokeStyle = row.clash ? "rgba(245,166,35,0.9)" : "rgba(245,240,230,0.28)";
-  ctx.stroke();
 }
 
 export interface DrawOptions {
@@ -327,128 +302,254 @@ export function drawPlanPoster(canvas: HTMLCanvasElement, input: PosterInput, op
   const pageIndex = clamp(opts.pageIndex ?? 0, 0, pageCount - 1);
   const pageRows = layout.pages[pageIndex] ?? [];
 
-  // Background + warm glows.
-  ctx.fillStyle = "#0F0D09";
+  // Background: warm dark with subtle radial gradient.
+  const bgGrad = ctx.createRadialGradient(size.w / 2, 0, 0, size.w / 2, 0, size.w);
+  bgGrad.addColorStop(0, "#1E1B17");
+  bgGrad.addColorStop(1, "#0F0D09");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, size.w, size.h);
-  radialGlow(ctx, size.w * 0.5, size.h * (story ? 0.04 : 0.02), size.w * 0.95, "rgba(245,166,35,0.26)");
-  radialGlow(ctx, size.w * 0.92, size.h * 0.62, size.w * 0.7, "rgba(124,58,237,0.12)");
 
-  // Amber frame.
-  ctx.strokeStyle = "rgba(245,166,35,0.22)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.roundRect(22, 22, size.w - 44, size.h - 44, 38);
-  ctx.stroke();
+  // Atmospheric amber glow (top center).
+  radialGlow(ctx, size.w * 0.5, size.h * 0.05, size.w * 0.9, "rgba(245,166,35,0.15)");
+  // Purple stage-light glow (bottom right).
+  radialGlow(ctx, size.w * 0.9, size.h * 0.9, size.w * 0.5, "rgba(124,58,237,0.12)");
 
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
-
-  // Wordmark + tagline.
-  let y = m.headTop;
-  setFont(ctx, 800, story ? 34 : 28, "Albert Sans");
-  ctx.fillStyle = "#F5A623";
-  tracked(ctx, "FESTPILOT", m.pad, y, story ? 6 : 4);
-  y += story ? 40 : 32;
-  setFont(ctx, 600, story ? 23 : 18, "Albert Sans");
-  ctx.fillStyle = "#9C9080";
-  ctx.fillText("Your festival, sorted.", m.pad, y);
-
-  // Festival + day headline.
-  y += story ? 120 : 92;
-  const headGrad = ctx.createLinearGradient(m.pad, 0, size.w - m.pad, 0);
-  headGrad.addColorStop(0, "#FFFFFF");
-  headGrad.addColorStop(1, "#F5F0E6");
-  ctx.fillStyle = headGrad;
-  const fest = fitHeadline(ctx, input.festivalName.toUpperCase(), size.w - m.pad * 2, "Oswald", story ? 78 : 58, story ? 50 : 38);
-  ctx.fillText(fest, m.pad, y);
-  y += story ? 64 : 50;
-  setFont(ctx, 700, story ? 44 : 34, "Oswald");
-  const dayGrad = ctx.createLinearGradient(m.pad, 0, m.pad + 500, 0);
-  dayGrad.addColorStop(0, "#F5A623");
-  dayGrad.addColorStop(1, "#FFD060");
-  ctx.fillStyle = dayGrad;
-  ctx.fillText(input.dayName.toUpperCase(), m.pad, y);
-
-  // Section label + an honest "sets · clash-free / N clashes" count (computed, not hardcoded).
-  y += story ? 70 : 52;
-  setFont(ctx, 700, story ? 22 : 17, "Albert Sans");
-  ctx.fillStyle = "#9C9080";
-  tracked(ctx, "MY PLAN", m.pad, y, 3);
-  const setsWord = layout.total === 1 ? "SET" : "SETS";
-  const clashWord =
-    layout.clashes === 0 ? "CLASH-FREE" : `${layout.clashes} ${layout.clashes === 1 ? "CLASH" : "CLASHES"}`;
-  const countText = `${layout.total} ${setsWord} · ${clashWord}`;
-  const spacing = 3;
-  setFont(ctx, 700, story ? 22 : 17, "Albert Sans");
-  ctx.fillStyle = layout.clashes === 0 ? "#F5A623" : "#FF8A5B";
-  tracked(ctx, countText, size.w - m.pad - trackedWidth(ctx, countText, spacing), y, spacing);
-
-  // Rows — every set on this page, with a photo medallion (or initials fallback).
-  const rowH = layout.rowH;
-  const avatarX = m.pad + m.avatar / 2;
-  const nameX = m.pad + m.avatar + (story ? 28 : 20);
-  for (let i = 0; i < pageRows.length; i += 1) {
-    const row = pageRows[i]!;
-    const top = m.rowsTop + i * rowH;
-    const cy = top + (story ? 48 : 34);
-
-    drawMedallion(ctx, row, avatarX, cy, m.avatar, opts.images?.get(row.actKey));
-
-    setFont(ctx, 800, m.timeSize, "Albert Sans");
-    ctx.fillStyle = "#F5A623";
-    ctx.fillText(row.time, nameX, top + (story ? 30 : 22));
-
-    setFont(ctx, 700, m.nameSize, "Oswald");
-    ctx.fillStyle = "#F5F0E6";
-    ctx.fillText(fitText(ctx, row.label.toUpperCase(), size.w - nameX - m.pad), nameX, top + (story ? 74 : 52));
-
-    const sy = top + (story ? 108 : 74);
-    ctx.beginPath();
-    ctx.fillStyle = row.color;
-    ctx.arc(nameX + (story ? 9 : 7), sy - (story ? 8 : 6), story ? 9 : 7, 0, Math.PI * 2);
-    ctx.fill();
-    setFont(ctx, 600, m.stageSize, "Albert Sans");
-    ctx.fillStyle = "#9C9080";
-    ctx.fillText(fitText(ctx, row.stageName, size.w - nameX - m.pad - 40), nameX + (story ? 28 : 22), sy);
-
-    // Hairline separator between rows (skip after the last).
-    if (i < pageRows.length - 1) {
-      ctx.strokeStyle = "rgba(255,255,255,0.07)";
-      ctx.lineWidth = 1;
+  // Hex pattern overlay (subtle geometric texture).
+  ctx.globalAlpha = 0.04;
+  const hexSize = 60;
+  ctx.strokeStyle = "#F5A623";
+  ctx.lineWidth = 0.5;
+  for (let hy = 0; hy < size.h; hy += hexSize * 0.87) {
+    for (let hx = 0; hx < size.w; hx += hexSize) {
+      const offset = Math.floor(hy / (hexSize * 0.87)) % 2 === 0 ? 0 : hexSize / 2;
       ctx.beginPath();
-      ctx.moveTo(m.pad, top + rowH - (story ? 14 : 10));
-      ctx.lineTo(size.w - m.pad, top + rowH - (story ? 14 : 10));
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i - Math.PI / 6;
+        const px = hx + offset + Math.cos(angle) * hexSize * 0.3;
+        const py = hy + Math.sin(angle) * hexSize * 0.3;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
       ctx.stroke();
     }
   }
+  ctx.globalAlpha = 1;
 
-  // Footer CTA pill + URL.
-  const url = (input.appUrl ?? "festpilot.app").replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const pillH = story ? 76 : 58;
-  const pillY = m.footTop + (story ? 40 : 28);
-  setFont(ctx, 800, story ? 27 : 21, "Albert Sans");
-  const cta = "Make yours — free";
-  const pillW = ctx.measureText(cta).width + (story ? 100 : 76);
+  // Amber glass frame.
+  ctx.strokeStyle = "rgba(245,166,35,0.22)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(24, 24, size.w - 48, size.h - 48, 38);
+  ctx.stroke();
+
+  ctx.textBaseline = "alphabetic";
+
+  // Header (centered): FESTPILOT + tagline.
+  let y = m.headTop;
+  ctx.textAlign = "center";
+  setFont(ctx, 600, story ? 28 : 22, "Oswald");
+  ctx.fillStyle = "#F5A623";
+  tracked(ctx, "FESTPILOT", (size.w - trackedWidth(ctx, "FESTPILOT", story ? 10 : 8)) / 2, y, story ? 10 : 8);
+  y += story ? 36 : 28;
+  setFont(ctx, 500, story ? 18 : 14, "Hanken Grotesk");
+  ctx.fillStyle = "#9C9080";
+  ctx.fillText("Your festival, sorted.", size.w / 2, y);
+
+  // Festival name (centered, large).
+  y += story ? 100 : 72;
+  ctx.textAlign = "center";
+  const headGrad = ctx.createLinearGradient(0, y - 80, 0, y + 10);
+  headGrad.addColorStop(0, "#FFFFFF");
+  headGrad.addColorStop(1, "#F5F0E6");
+  ctx.fillStyle = headGrad;
+  const festLines = input.festivalName.toUpperCase().split(/\s+/);
+  const festMaxSize = story ? 82 : 60;
+  const festMinSize = story ? 48 : 36;
+  setFont(ctx, 700, festMaxSize, "Oswald");
+  const fullFest = festLines.join(" ");
+  const availW = size.w - m.pad * 2;
+  if (ctx.measureText(fullFest).width <= availW) {
+    ctx.fillText(fullFest, size.w / 2, y);
+  } else {
+    let sz = festMaxSize;
+    while (sz > festMinSize) {
+      setFont(ctx, 700, sz, "Oswald");
+      if (ctx.measureText(fullFest).width <= availW) break;
+      sz -= 2;
+    }
+    if (ctx.measureText(fullFest).width <= availW) {
+      ctx.fillText(fullFest, size.w / 2, y);
+    } else {
+      const mid = Math.ceil(festLines.length / 2);
+      const line1 = festLines.slice(0, mid).join(" ");
+      const line2 = festLines.slice(mid).join(" ");
+      setFont(ctx, 700, festMaxSize * 0.85, "Oswald");
+      ctx.fillText(line1, size.w / 2, y - festMaxSize * 0.45);
+      ctx.fillText(line2, size.w / 2, y + festMaxSize * 0.45);
+      y += festMaxSize * 0.3;
+    }
+  }
+
+  // Day name (gradient gold, centered).
+  y += story ? 56 : 42;
+  setFont(ctx, 600, story ? 38 : 30, "Oswald");
+  const dayGrad = ctx.createLinearGradient(size.w * 0.3, 0, size.w * 0.7, 0);
+  dayGrad.addColorStop(0, "#F5A623");
+  dayGrad.addColorStop(1, "#FFD060");
+  ctx.fillStyle = dayGrad;
+  ctx.fillText(input.dayName.toUpperCase(), size.w / 2, y);
+
+  // Section divider + "MY PLAN" label with badge.
+  y += story ? 56 : 40;
+  ctx.textAlign = "left";
+  ctx.strokeStyle = "rgba(245,166,35,0.22)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(m.pad, y + 8);
+  ctx.lineTo(size.w - m.pad, y + 8);
+  ctx.stroke();
+
+  setFont(ctx, 700, story ? 32 : 24, "Oswald");
+  ctx.fillStyle = "#F5F0E6";
+  ctx.fillText("MY PLAN", m.pad, y);
+
+  const setsWord = layout.total === 1 ? "SET" : "SETS";
+  const clashWord = layout.clashes === 0 ? "CLASH-FREE" : `${layout.clashes} ${layout.clashes === 1 ? "CLASH" : "CLASHES"}`;
+  const countText = `${layout.total} ${setsWord} · ${clashWord}`;
+  setFont(ctx, 700, story ? 18 : 14, "Hanken Grotesk");
+  ctx.fillStyle = "#F5A623";
+  const badgeW = ctx.measureText(countText).width + 32;
+  const badgeX = size.w - m.pad - badgeW;
+  const badgeY = y - (story ? 18 : 14);
+  const badgeH = story ? 30 : 24;
+  ctx.strokeStyle = "rgba(245,166,35,0.22)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(22,18,11,0.5)";
+  ctx.fill();
+  ctx.fillStyle = "#F5A623";
+  ctx.textAlign = "center";
+  ctx.fillText(countText, badgeX + badgeW / 2, badgeY + badgeH / 2 + (story ? 6 : 5));
+  ctx.textAlign = "left";
+
+  // Set rows — glass cards with time | photo (colored ring) | name + stage.
+  const rowH = layout.rowH;
+  const cardPad = story ? 14 : 10;
+  const timeColW = story ? 110 : 88;
+  const cardLeft = m.pad;
+  const cardRight = size.w - m.pad;
+  const cardW = cardRight - cardLeft;
+  const cardR = story ? 24 : 18;
+
+  for (let i = 0; i < pageRows.length; i += 1) {
+    const row = pageRows[i]!;
+    const top = m.rowsTop + i * (rowH + (story ? 6 : 4));
+    const cardH = rowH - (story ? 4 : 2);
+    const cy = top + cardH / 2;
+
+    // Glass card background.
+    ctx.fillStyle = "rgba(22,18,11,0.8)";
+    ctx.beginPath();
+    ctx.roundRect(cardLeft, top, cardW, cardH, cardR);
+    ctx.fill();
+    // Card border.
+    ctx.strokeStyle = "rgba(245,166,35,0.12)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(cardLeft, top, cardW, cardH, cardR);
+    ctx.stroke();
+    // Inner glow (top-left edge lighting).
+    ctx.strokeStyle = "rgba(255,208,96,0.08)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(cardLeft + 1, top + 1, cardW - 2, cardH - 2, cardR - 1);
+    ctx.stroke();
+
+    // Time column.
+    setFont(ctx, 600, m.timeSize, "Oswald");
+    ctx.fillStyle = "#F5A623";
+    ctx.textAlign = "left";
+    ctx.fillText(row.time, cardLeft + cardPad + 6, cy + (story ? 10 : 8));
+
+    // Photo medallion with stage-colored ring.
+    const photoX = cardLeft + timeColW + m.avatar / 2 + 4;
+    const photoR = m.avatar / 2;
+
+    // Colored glow behind photo.
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.arc(photoX, cy, photoR + 6, 0, Math.PI * 2);
+    ctx.fillStyle = row.color;
+    ctx.fill();
+    ctx.restore();
+
+    drawMedallion(ctx, row, photoX, cy, m.avatar, opts.images?.get(row.actKey));
+
+    // Override the ring with stage-colored ring (thicker).
+    ctx.beginPath();
+    ctx.arc(photoX, cy, photoR, 0, Math.PI * 2);
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = row.color;
+    ctx.stroke();
+
+    // Artist name + stage.
+    const textX = photoX + photoR + (story ? 20 : 14);
+    const maxTextW = cardRight - textX - cardPad;
+
+    setFont(ctx, 700, m.nameSize, "Oswald");
+    ctx.fillStyle = "#F5F0E6";
+    ctx.textAlign = "left";
+    ctx.fillText(fitText(ctx, row.label.toUpperCase(), maxTextW), textX, cy - (story ? 4 : 2));
+
+    setFont(ctx, 700, m.stageSize, "Hanken Grotesk");
+    ctx.fillStyle = "#9C9080";
+    ctx.fillText(fitText(ctx, `@ ${row.stageName.toUpperCase()}`, maxTextW), textX, cy + (story ? 26 : 18));
+  }
+
+  // Footer: CTA pill + URL (compact, right after last card).
+  const lastCardBottom = m.rowsTop + pageRows.length * (rowH + (story ? 6 : 4)) + (story ? 24 : 16);
+  const footY = Math.max(lastCardBottom, m.footTop);
+
+  const url = (input.appUrl ?? "festpilot.pages.dev").replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const pillH = story ? 72 : 54;
+  const pillY = footY;
+  setFont(ctx, 600, story ? 26 : 20, "Oswald");
+  const cta = "Build your plan for free";
+  const pillW = Math.min(ctx.measureText(cta).width + (story ? 96 : 72), cardW);
   const pillX = (size.w - pillW) / 2;
   const pillGrad = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
   pillGrad.addColorStop(0, "#F5A623");
   pillGrad.addColorStop(1, "#FFD060");
+
+  // Pill outer glow.
+  ctx.save();
+  ctx.shadowColor = "rgba(245,166,35,0.3)";
+  ctx.shadowBlur = 30;
   ctx.fillStyle = pillGrad;
   ctx.beginPath();
   ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
   ctx.fill();
+  ctx.restore();
+
+  // Pill border (outline only, fill is gradient already).
   ctx.fillStyle = "#0F0D09";
+  setFont(ctx, 600, story ? 26 : 20, "Oswald");
   ctx.textAlign = "center";
   ctx.fillText(cta, size.w / 2, pillY + pillH / 2 + (story ? 9 : 7));
-  setFont(ctx, 600, story ? 22 : 17, "Albert Sans");
-  ctx.fillStyle = "#9C9080";
-  ctx.fillText(url, size.w / 2, pillY + pillH + (story ? 48 : 36));
 
-  // Page indicator when the plan spans multiple images.
+  // URL.
+  setFont(ctx, 500, story ? 20 : 16, "Hanken Grotesk");
+  ctx.fillStyle = "#9C9080";
+  ctx.fillText(url, size.w / 2, pillY + pillH + (story ? 36 : 28));
+
+  // Page indicator.
   if (pageCount > 1) {
-    setFont(ctx, 700, story ? 20 : 16, "Albert Sans");
+    setFont(ctx, 600, story ? 18 : 14, "Hanken Grotesk");
     ctx.fillStyle = "rgba(156,144,128,0.9)";
-    ctx.fillText(`${pageIndex + 1} / ${pageCount}`, size.w / 2, m.footTop + (story ? 6 : 4));
+    ctx.fillText(`${pageIndex + 1} / ${pageCount}`, size.w / 2, footY - (story ? 14 : 10));
   }
   ctx.textAlign = "left";
 }
