@@ -1197,3 +1197,9 @@
 - **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G4–G6, v0.55.0–v0.57.0).
 - **Decision**: batch of UX improvements — (F06) outside banner dismisses on CTA tap; (F07) sticky day header z-index above hearts; (F08) event card shows weekday abbreviation; (F11) WhereScreen roster becomes a draggable bottom sheet (map full-screen behind); (F12) double-tap map zoom; (F14) timetable defaults to the first day with ≥80% of peak stage count; (F15) lineup day filter → DayDropdown; (F18) nav tab renamed Home/Início.
 - **Rationale**: all from Julio's third usage review — visual/interaction improvements that individually are minor but collectively transform the feel.
+
+### DEC-115 — Member profile + 1-on-1 plan comparison (read-only) — APPROVED (F17)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered v0.58.0).
+- **Decision**: tapping any squad member (anywhere in the app) opens a `MemberSheet` bottom sheet showing their identity and a day-by-day plan comparison with you. Three states per slot: "both" (overlap), "only_you", "only_them" — color-coded timeline + stats. The "plan together" / collaborative editing mode is explicitly deferred.
+- **Rationale**: Julio: "I need to tap a member and see their plan compared to mine — what we share, what's different." Council analysis concluded that a read-only comparison delivers 80% of the value at 20% of the complexity. The comparison uses only already-shared squad plan data (no new API). A future DEC will address joint-plan editing if validated by usage.
+- **Implementation**: pure `domain/memberCompare.ts` (comparePlans, compareDaySummary, nextSharedSet) + `MemberSheet.tsx` wired to SquadScreen members list and WhereScreen roster. 11 unit tests.

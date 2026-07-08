@@ -1,6 +1,6 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-07-08 (**Leva 3 "Plan Sync, Insert Fix & UX Polish" EXECUTED** — G0→G6 at **v0.57.0**. **DEC-109→114 all APPROVED.** Tests: **web 558 · tsc/build clean**. 16 issues (F01–F16,F18) resolved from Julio's **third** usage review. F17 deferred (new feature). Awaiting commit + deploy.)
+> Last updated: 2026-07-08 (**F17 "Member Profile + 1-on-1 Plan Comparison" DELIVERED** — **v0.58.0** deployed. **DEC-115 APPROVED.** Tests: **web 569 · tsc/build clean**. Pushed to origin master.)
 
 ## Leva 3 — Plan Sync, Insert Fix & UX Polish (2026-07-08) — ✅ COMPLETE (v0.57.0)
 
@@ -13,9 +13,18 @@ Source orchestrator: `brain/documents/2026-07-08-plan-sync-ux-orchestrator.md` (
 - **G5 `v0.56.0`** ✅ — F09 (artist photos in clash picker + add sheet), F10 (unified gap button: fill + add set inline, remove redundant (+)), F12 (double-tap zoom on map), F14 (timetable defaults to main festival day, not The Gathering).
 - **G6 `v0.57.0`** ✅ — F15 (lineup day filter → dropdown), F16 (Home squad tab enriched: where-is-everyone + agenda inline), F18 (nav tab renamed Home/Início).
 
-**Deferred:** F17 (member profile + compare plan) — new feature, out of bug-fix scope.
+**Outcome:** all 18 issues (F01–F18) resolved. Test suite green: 569 unit, tsc/build clean.
 
-**Outcome:** all P0/P1/P2 issues delivered. F17 (P3, new feature) deferred. Test suite green: 558 unit, tsc/build clean.
+## F17 — Member Profile + 1-on-1 Plan Comparison (2026-07-08) — ✅ COMPLETE (v0.58.0)
+
+Implemented as a standalone feature (post-Leva 3). Council-guided approach (DEC-115): **read-only MemberSheet** (bottom sheet) accessed by tapping any squad member's name/avatar across the app.
+
+- **Domain**: pure `memberCompare.ts` — `comparePlans` (partitions sets into both/only_you/only_them), `compareDaySummary` (per-day badges), `nextSharedSet` (hero).
+- **Component**: `MemberSheet.tsx` — draggable bottom sheet with identity header, day picker tabs (overlap dot badges), stats bar (% overlap + count), "next time together" hero, color-coded timeline (purple=both, green=only_you, yellow=only_them).
+- **Wiring**: tappable in SquadScreen member list + WhereScreen presence roster.
+- **i18n**: 16 keys EN + PT.
+- **Tests**: 11 unit tests for all domain functions.
+- **Deferred**: "plan together" collaborative editing (future DEC if validated by usage).
 
 ## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE & DEPLOYED (v0.51.0 live)
 
