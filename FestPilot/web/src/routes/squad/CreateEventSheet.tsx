@@ -31,12 +31,18 @@ export function CreateEventSheet({
   groupId,
   tz,
   stages,
+  minDate,
+  maxDate,
   onClose,
   onCreated,
 }: {
   groupId: string;
   tz: string;
   stages: StageDto[];
+  /** ISO local string (YYYY-MM-DDThh:mm) for the earliest allowed datetime. */
+  minDate?: string;
+  /** ISO local string (YYYY-MM-DDThh:mm) for the latest allowed datetime. */
+  maxDate?: string;
   onClose: () => void;
   onCreated: () => void;
 }): JSX.Element {
@@ -101,6 +107,8 @@ export function CreateEventSheet({
             className="block-input"
             type="datetime-local"
             value={startLocal}
+            min={minDate}
+            max={maxDate}
             onChange={(e) => setStartLocal(e.target.value)}
             aria-label={t("event.starts")}
           />

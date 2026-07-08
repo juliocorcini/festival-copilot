@@ -486,8 +486,8 @@ main:focus { outline: none; }
   padding: 0 16px 16px;
   display: flex; flex-direction: column;
   touch-action: none;
-  transition: height 0.15s ease-out;
 }
+.friends-sheet.snapping { transition: height 0.15s ease-out; }
 .friends-sheet-handle {
   display: flex; justify-content: center; padding: 10px 0 6px; cursor: grab;
 }
@@ -497,7 +497,11 @@ main:focus { outline: none; }
 .friends-sheet h3 { margin: 2px 0 10px; font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; color: var(--accent2); flex-shrink: 0; }
 .friends-sheet .map-roster { overflow-y: auto; flex: 1; min-height: 0; }
 .friends-sheet .map-empty { flex-shrink: 0; }
-.friends-sheet .src { flex-shrink: 0; }
+.map-attribution {
+  position: absolute; bottom: 4px; left: 16px; right: 16px;
+  font-size: 9px; color: rgba(156,144,128,0.4); text-align: center;
+  pointer-events: none; z-index: 0;
+}
 .map-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .map-roster li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .map-roster li.muted { color: var(--muted); }
@@ -1943,8 +1947,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .meet-stage-dot { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 5px;
   font-size: 10px; font-weight: 800; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.82); pointer-events: none; white-space: nowrap; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); }
 .meet-stage-dot i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(0, 0, 0, 0.4); flex-shrink: 0; }
-.meet-ring { position: absolute; transform: translate(-50%, -50%); width: 86px; height: 86px; border-radius: 50%;
-  background: rgba(245, 166, 35, 0.12); border: 1px dashed rgba(245, 166, 35, 0.5); pointer-events: none; }
+.meet-ring { display: none; }
 .meet-pin { position: absolute; transform: translate(-50%, -100%); width: 36px; height: 36px; border-radius: 50% 50% 50% 0;
   rotate: 45deg; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;
   box-shadow: 0 8px 20px -6px rgba(245, 166, 35, 0.6); pointer-events: none; }
@@ -2653,8 +2656,8 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
   background: var(--surface, #1a1a2e); border-radius: 20px 20px 0 0;
   display: flex; flex-direction: column; overflow: hidden;
   box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
-  transition: height 0.2s ease-out;
 }
+.member-sheet.snapping { transition: height 0.2s ease-out; }
 .member-sheet-handle {
   display: flex; justify-content: center; padding: 12px 0 6px;
   cursor: grab;

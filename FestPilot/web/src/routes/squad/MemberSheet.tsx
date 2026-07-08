@@ -159,7 +159,8 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
     if (!dragging.current) return;
     dragging.current = false;
     const ratio = height / window.innerHeight;
-    if (ratio < 0.3) {
+    const velocity = startH.current - height;
+    if (ratio < 0.35 || velocity > 120) {
       onClose();
     } else if (ratio > 0.78) {
       setSnap("full");
@@ -168,17 +169,6 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
     }
   }, [height, onClose]);
 
-  const sheetTouch = useMemo(() => ({
-    onTouchStart: (e: React.TouchEvent) => {
-      if (!canDrag()) return;
-      onDragStart(e.touches[0]!.clientY);
-    },
-    onTouchMove: (e: React.TouchEvent) => {
-      if (!dragging.current) return;
-      onDragMove(e.touches[0]!.clientY);
-    },
-    onTouchEnd: () => onDragEnd(),
-  }), [canDrag, onDragStart, onDragMove, onDragEnd]);
 
   const [requestSent, setRequestSent] = useState(false);
 
@@ -196,13 +186,37 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
   const theyShared = theirDayIds != null && theirDayIds.size > 0;
   const youShared = yourIds.size > 0;
 
+  const [snapping, setSnapping] = useState(true);
+
+  const onDragStartWrapped = useCallback((clientY: number) => {
+    setSnapping(false);
+    onDragStart(clientY);
+  }, [onDragStart]);
+
+  const onDragEndWrapped = useCallback(() => {
+    setSnapping(true);
+    onDragEnd();
+  }, [onDragEnd]);
+
+  const sheetTouchFinal = useMemo(() => ({
+    onTouchStart: (e: React.TouchEvent) => {
+      if (!canDrag()) return;
+      onDragStartWrapped(e.touches[0]!.clientY);
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (!dragging.current) return;
+      onDragMove(e.touches[0]!.clientY);
+    },
+    onTouchEnd: () => onDragEndWrapped(),
+  }), [canDrag, onDragStartWrapped, onDragMove, onDragEndWrapped]);
+
   return (
     <div className="member-sheet-backdrop" onClick={onClose}>
       <div
-        className="member-sheet"
+        className={`member-sheet${snapping ? " snapping" : ""}`}
         style={{ height }}
         onClick={(e) => e.stopPropagation()}
-        {...sheetTouch}
+        {...sheetTouchFinal}
       >
         <div className="member-sheet-handle">
           <span className="member-sheet-grip" />

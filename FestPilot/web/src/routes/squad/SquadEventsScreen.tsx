@@ -5,11 +5,13 @@
  * aggregation or any personal lock. Each event shows a live countdown, an optional stage + map link,
  * and a lightweight "✓ seen" so the squad knows who's in the loop.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { api } from "../../data/api";
 import { useGroup } from "../../data/groups";
+import { useOnboarding } from "../../data/localStore";
+import { daysForWeekends } from "../../lib/festival";
 import { useGroupEvents } from "../../data/groupEvents";
 import { useLineup } from "../../data/useLineup";
 import { stageColor, timeInZone } from "../../lib/format";
@@ -19,14 +21,25 @@ import type { GroupEventDto } from "../../data/types";
 import { CreateEventSheet } from "./CreateEventSheet";
 import { eventBadge, eventCountdown, eventLifecycleFromIso } from "./eventsUi";
 
+function toLocalStr(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function SquadEventsScreen(): JSX.Element {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { group } = useGroup(id);
   const { events, status, reload } = useGroupEvents(id);
   const lineup = useLineup();
+  const { onboarding } = useOnboarding();
   const tz = lineup.lineup?.festival.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const stages = lineup.lineup?.stages ?? [];
+  const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
+  const allDays = useMemo(() => (lineup.lineup ? daysForWeekends(lineup.lineup, weekendIds) : []), [lineup.lineup, weekendIds]);
+  const minDate = allDays.length > 0 ? toLocalStr(allDays[0]!.startMs) : undefined;
+  const maxDate = allDays.length > 0 ? toLocalStr(allDays[allDays.length - 1]!.startMs + 24 * 60 * 60_000) : undefined;
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -89,6 +102,8 @@ export function SquadEventsScreen(): JSX.Element {
           groupId={id}
           tz={tz}
           stages={stages}
+          minDate={minDate}
+          maxDate={maxDate}
           onClose={() => setCreating(false)}
           onCreated={() => {
             setCreating(false);

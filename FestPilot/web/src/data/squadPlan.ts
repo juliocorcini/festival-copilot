@@ -96,24 +96,29 @@ export function useSquadPlan(groupId: string | undefined, day: string | undefine
 
   const plan = useMemo<SquadPlan | null>(() => {
     if (!raw || !lineup.lineup) return null;
-    const members: SquadMember[] = raw.members.map((m) => ({
-      userId: m.userId,
-      displayName: m.displayName,
-      avatarColor: m.avatarColor,
-      role: m.role,
-      isYou: m.isYou,
-      shared: m.shared,
-      performanceIds: m.performanceIds,
-      favoriteActKeys: m.favoriteActKeys,
-    }));
-    const meId = raw.members.find((m) => m.isYou)?.userId ?? null;
-    return buildSquadPlan({
-      sets: daySets,
-      members,
-      overrides: raw.overrides,
-      meId,
-      myFavoriteActKeys: favorites.keys,
-    });
+    try {
+      const members: SquadMember[] = raw.members.map((m) => ({
+        userId: m.userId,
+        displayName: m.displayName,
+        avatarColor: m.avatarColor,
+        role: m.role,
+        isYou: m.isYou,
+        shared: m.shared,
+        performanceIds: m.performanceIds,
+        favoriteActKeys: m.favoriteActKeys,
+      }));
+      const meId = raw.members.find((m) => m.isYou)?.userId ?? null;
+      return buildSquadPlan({
+        sets: daySets,
+        members,
+        overrides: raw.overrides ?? [],
+        meId,
+        myFavoriteActKeys: favorites.keys,
+      });
+    } catch (e) {
+      console.error("[useSquadPlan] buildSquadPlan failed:", e);
+      return null;
+    }
   }, [raw, lineup.lineup, daySets, favorites.keys]);
 
   const status: LoadStatus =

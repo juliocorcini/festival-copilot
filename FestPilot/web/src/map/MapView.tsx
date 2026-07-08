@@ -134,15 +134,17 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const insets = useMeasuredInsets(topEl, sheetEl);
 
   // Draggable friends-sheet: peek (small) → half → full
-  const SHEET_PEEK = 100;
+  const SHEET_PEEK = 72;
   const SHEET_HALF = 0.38;
   const SHEET_FULL = 0.82;
-  const [sheetH, setSheetH] = useState(() => window.innerHeight * SHEET_HALF);
+  const [sheetH, setSheetH] = useState(() => SHEET_PEEK);
+  const [sheetSnapping, setSheetSnapping] = useState(true);
   const sheetDragging = useRef(false);
   const sheetStartY = useRef(0);
   const sheetStartH = useRef(0);
 
   const onSheetDragStart = useCallback((clientY: number) => {
+    setSheetSnapping(false);
     sheetDragging.current = true;
     sheetStartY.current = clientY;
     sheetStartH.current = sheetH;
@@ -156,6 +158,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const onSheetDragEnd = useCallback(() => {
     if (!sheetDragging.current) return;
     sheetDragging.current = false;
+    setSheetSnapping(true);
     const ratio = sheetH / window.innerHeight;
     if (ratio > 0.6) setSheetH(window.innerHeight * SHEET_FULL);
     else if (ratio > 0.2) setSheetH(window.innerHeight * SHEET_HALF);
@@ -467,7 +470,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
       )}
 
       <section
-        className="friends-sheet"
+        className={`friends-sheet${sheetSnapping ? " snapping" : ""}`}
         ref={setSheetEl}
         style={{ height: sheetH }}
         {...sheetTouchHandlers}
@@ -498,8 +501,8 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
             })}
           </ul>
         )}
-        <p className="src">{t.source}</p>
       </section>
+      <p className="map-attribution">{t.source}</p>
     </div>
   );
 }

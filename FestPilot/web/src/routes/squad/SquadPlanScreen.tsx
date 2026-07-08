@@ -109,7 +109,10 @@ export function SquadPlanScreen(): JSX.Element {
 
   // Render-only interleave of the aggregated sets (buildSquadPlan — untouched) with the group agenda
   // (D23). The aggregation never sees an event; this only orders them for display.
-  const timeline = mergeSquadTimeline(plan.blocks, dayEvents);
+  const timeline = useMemo(
+    () => mergeSquadTimeline(plan.blocks ?? [], dayEvents),
+    [plan.blocks, dayEvents]
+  );
 
   return (
     <>
@@ -226,6 +229,8 @@ export function SquadPlanScreen(): JSX.Element {
           groupId={id}
           tz={eventTz}
           stages={eventStages}
+          minDate={allDays.length > 0 ? toLocalStr(allDays[0]!.startMs) : undefined}
+          maxDate={allDays.length > 0 ? toLocalStr(allDays[allDays.length - 1]!.startMs + 24 * 60 * 60_000) : undefined}
           onClose={() => setCreating(false)}
           onCreated={() => {
             setCreating(false);
@@ -328,6 +333,12 @@ function SquadEventRow({
       </button>
     </div>
   );
+}
+
+function toLocalStr(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** One-line "what changed" summary for the history entry — single actor named, otherwise a count. */
