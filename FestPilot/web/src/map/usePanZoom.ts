@@ -107,9 +107,19 @@ export function usePanZoom(
   }, [zoomAround]);
 
   // Double-tap zoom (F12): two quick taps (<300ms, <30px apart) toggles between 2× and fit scale.
+  // One-finger zoom: if the second tap is HELD and dragged vertically, zoom continuously.
   const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
   const DOUBLE_TAP_MS = 300;
   const DOUBLE_TAP_PX = 30;
+  const ONE_FINGER_ZOOM_THRESHOLD = 5;
+
+  const oneFingerZoom = useRef<{
+    anchorX: number;
+    anchorY: number;
+    startY: number;
+    baseScale: number;
+    activated: boolean;
+  } | null>(null);
 
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -128,16 +138,13 @@ export function usePanZoom(
         const el = ref.current;
         if (el) {
           const r = el.getBoundingClientRect();
-          const cx = e.clientX - r.left;
-          const cy = e.clientY - r.top;
-          setView((v) => {
-            const zoomedIn = v.scale > fit.current * 1.5;
-            if (zoomedIn) return fitView(world.current, vp.current, insetsRef.current);
-            const target = clampScale(fit.current * 2.5);
-            const k = target / v.scale;
-            return settle({ scale: target, x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k });
-          });
-          userMoved.current = true;
+          oneFingerZoom.current = {
+            anchorX: e.clientX - r.left,
+            anchorY: e.clientY - r.top,
+            startY: e.clientY,
+            baseScale: view.scale,
+            activated: false,
+          };
         }
       } else {
         lastTap.current = { time: now, x: e.clientX, y: e.clientY };
@@ -149,6 +156,24 @@ export function usePanZoom(
     const prev = pointers.current.get(e.pointerId)!;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const pts = [...pointers.current.values()];
+
+    if (pts.length === 1 && oneFingerZoom.current) {
+      const ofz = oneFingerZoom.current;
+      const dy = e.clientY - ofz.startY;
+      if (!ofz.activated && Math.abs(dy) < ONE_FINGER_ZOOM_THRESHOLD) return;
+      ofz.activated = true;
+      userMoved.current = true;
+      const factor = Math.pow(2, -dy / 150);
+      const ns = clampScale(ofz.baseScale * factor);
+      const k = ns / view.scale;
+      setView((v) => settle({
+        scale: ns,
+        x: ofz.anchorX - (ofz.anchorX - v.x) * k,
+        y: ofz.anchorY - (ofz.anchorY - v.y) * k,
+      }));
+      return;
+    }
+
     if (pts.length === 1) {
       const dx = Math.abs(e.clientX - prev.x);
       const dy = Math.abs(e.clientY - prev.y);
@@ -168,6 +193,21 @@ export function usePanZoom(
   const onPointerUp = (e: React.PointerEvent) => {
     pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchDist.current = null;
+
+    if (oneFingerZoom.current) {
+      const ofz = oneFingerZoom.current;
+      oneFingerZoom.current = null;
+      if (!ofz.activated) {
+        setView((v) => {
+          const zoomedIn = v.scale > fit.current * 1.5;
+          if (zoomedIn) return fitView(world.current, vp.current, insetsRef.current);
+          const target = clampScale(fit.current * 2.5);
+          const k = target / v.scale;
+          return settle({ scale: target, x: ofz.anchorX - (ofz.anchorX - v.x) * k, y: ofz.anchorY - (ofz.anchorY - v.y) * k });
+        });
+        userMoved.current = true;
+      }
+    }
   };
 
   return {

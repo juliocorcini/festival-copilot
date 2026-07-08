@@ -95,7 +95,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const tr = useT();
   const [t, setT] = useState<MapTransform | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [outsideDismissed, setOutsideDismissed] = useState(false);
+  const [outsideDismissed, setOutsideDismissed] = useState(() => sessionStorage.getItem("map-outside-dismissed") === "1");
   const { mode, setMode, palette } = useAppearance();
   const { lineup } = useLineup();
   const poiLabel = (type: PoiType): string => tr(POI_LABEL_KEY[type]);
@@ -407,7 +407,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
             <strong>{tr("map.outsideTitle")}</strong>
             <span>{tr("map.outsideMsg")}</span>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={() => { recenter(); setOutsideDismissed(true); }}>{tr("map.showFestivalMap")}</button>
+          <button className="btn btn-primary btn-sm" onClick={() => { recenter(); setOutsideDismissed(true); sessionStorage.setItem("map-outside-dismissed", "1"); }}>{tr("map.showFestivalMap")}</button>
         </div>
       )}
 

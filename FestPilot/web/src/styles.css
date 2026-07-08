@@ -760,7 +760,7 @@ main:focus { outline: none; }
 .ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 4px 0 8px; }
 .gcard { position: relative; text-align: left; padding: 0; border: 1px solid var(--border); border-radius: 16px;
   overflow: hidden; background: var(--glass); color: var(--ink); cursor: pointer; display: flex; flex-direction: column;
-  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; }
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; isolation: isolate; }
 .gcard:active { transform: scale(0.985); }
 .gcard.on { border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -1891,6 +1891,10 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .global-ping-close { appearance: none; background: none; border: 0; color: var(--muted); cursor: pointer; display: flex; padding: 4px; }
 .global-ping-close .ms { font-size: 20px; }
 @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.global-ping-banner.safety-alert { background: rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.6); animation: slideDown 0.3s ease-out, safetyPulse 2s ease-in-out infinite; }
+.global-ping-banner.safety-alert > .ms:first-child { color: #ef4444; font-size: 24px; }
+.global-ping-banner.safety-alert > span:nth-child(2) { color: #fecaca; }
+@keyframes safetyPulse { 0%, 100% { box-shadow: 0 4px 24px rgba(220, 38, 38, 0.3); } 50% { box-shadow: 0 4px 32px rgba(220, 38, 38, 0.6); } }
 
 /* ── Sharing-mode picker (#25.3) ────────────────────────────────────────────── */
 .visibility-screen { padding-bottom: 110px; }
@@ -1998,7 +2002,7 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .meet-convergence { position: relative; display: block; width: 100%; overflow: hidden; background: var(--map-fallback); touch-action: none; }
 .meet-converge-viewport { background: var(--map-fallback); }
 .meet-converge-recenter { right: 10px; bottom: 10px; width: 36px; height: 36px; font-size: 16px; }
-.meet-converge-open { position: absolute; left: 10px; bottom: 10px; gap: 6px; }
+.meet-converge-open { position: absolute; left: 10px; bottom: 36px; gap: 6px; z-index: 2; }
 .meet-converge-open .ms { font-size: 16px; }
 .meet-converge-pin circle { stroke: rgba(255, 255, 255, 0.9); stroke-width: 1.4; paint-order: stroke; }
 .meet-converge-target-ring { fill: none; stroke: var(--accent); stroke-width: 1.4; opacity: 0.9; }

@@ -763,6 +763,7 @@ const EN = {
   "safety.hangTight": "Hang tight — they'll get the alert in a moment.",
   "safety.stopping": "Stopping…",
   "safety.imOkay": "I'm okay — stop sharing",
+  "safety.globalAlert": "{name} is lost and needs help!",
   "safety.alsoHelpOthers": "Someone else needs help too — you can go to them above.",
   // ── Leva 2 G7 — meeting-point photo lightbox (E19) ──
   "meet.zoomPhoto": "Tap to zoom",
@@ -1511,6 +1512,7 @@ const PT: Partial<Record<MessageKey, string>> = {
   "safety.hangTight": "Aguenta firme — eles vão receber o alerta num instante.",
   "safety.stopping": "Parando…",
   "safety.imOkay": "Estou bem — parar de compartilhar",
+  "safety.globalAlert": "{name} está perdido e precisa de ajuda!",
   "safety.alsoHelpOthers": "Outra pessoa também precisa de ajuda — você pode ir até ela acima.",
   // ── Leva 2 G7 — lightbox da foto do ponto de encontro (E19) ──
   "meet.zoomPhoto": "Toque para ampliar",
