@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.57.0";
+export const APP_VERSION = "0.58.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,22 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.58.0",
+    date: "2026-07-08",
+    title: "Member profile & plan comparison",
+    icon: "compare_arrows",
+    whatsNew: [
+      "Tap any squad member to see their profile and compare their plan with yours day by day.",
+      "See exactly which sets you share, which are only yours, and which are only theirs — with overlap percentage and a 'next time together' highlight.",
+      "Works from both the members list and the live roster (Where's everyone).",
+    ],
+    howToTest: [
+      "Open your Squad → tap any member name in the members list → the MemberSheet opens showing their profile and a day-by-day comparison.",
+      "Open Where's everyone → tap any roster member → same sheet opens.",
+      "Switch between days in the comparison — overlap dots on tabs indicate shared sets.",
+    ],
+  },
   {
     version: "0.57.0",
     date: "2026-07-08",

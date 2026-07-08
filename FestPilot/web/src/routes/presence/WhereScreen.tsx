@@ -16,9 +16,11 @@ import { useGroupPresence, useLocationSharing } from "../../data/presence";
 import { useSharingOptIn } from "../../data/shareOptIn";
 import { useT, type TranslateFn } from "../../i18n";
 import type { PingDto, PresenceMemberDto, StageDto } from "../../data/types";
+import type { SquadMember } from "../../domain/squadPlan";
 import { ErrorState, LoadingState } from "../../ui/states";
 import { CoarsePresenceMap } from "./CoarsePresenceMap";
 import { StagePickSheet } from "./StagePickSheet";
+import { MemberSheet } from "../squad/MemberSheet";
 import {
   PresenceAvatar,
   ago,
@@ -96,6 +98,7 @@ export function WhereScreen(): JSX.Element {
   const [answering, setAnswering] = useState<PingDto | null>(null);
   const [stages, setStages] = useState<StageDto[] | null>(null);
   const [answerBusy, setAnswerBusy] = useState(false);
+  const [viewingMember, setViewingMember] = useState<SquadMember | null>(null);
 
   // While on this screen, keep the user's own dot fresh if they've opted in and granted permission.
   useEffect(() => {
@@ -252,8 +255,21 @@ export function WhereScreen(): JSX.Element {
                     const line = presenceLine(m, t, exact);
                     const fresh = !line.muted && m.presence;
                     const kind = pingKindFor(m);
+                    const openProfile = (): void => {
+                      if (m.isYou) return;
+                      setViewingMember({
+                        userId: m.userId,
+                        displayName: m.displayName,
+                        avatarColor: m.avatarColor,
+                        role: "member",
+                        isYou: false,
+                        shared: false,
+                        performanceIds: [],
+                        favoriteActKeys: [],
+                      });
+                    };
                     return (
-                      <div className={`glass where-row${line.muted ? " muted" : ""}${m.live ? " is-live" : ""}`} key={m.userId}>
+                      <div className={`glass where-row${line.muted ? " muted" : ""}${m.live ? " is-live" : ""}`} key={m.userId} onClick={openProfile} role="button" tabIndex={0}>
                         <PresenceAvatar name={m.displayName} color={m.avatarColor} live={m.live} />
                         <div className="where-row-main">
                           <div className="where-row-name">
@@ -319,6 +335,14 @@ export function WhereScreen(): JSX.Element {
           busy={answerBusy}
           onPick={answer}
           onClose={() => setAnswering(null)}
+        />
+      )}
+
+      {viewingMember && id && (
+        <MemberSheet
+          groupId={id}
+          member={viewingMember}
+          onClose={() => setViewingMember(null)}
         />
       )}
     </>

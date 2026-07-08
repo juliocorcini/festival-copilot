@@ -767,6 +767,24 @@ const EN = {
   // ── Leva 2 G7 — meeting-point photo lightbox (E19) ──
   "meet.zoomPhoto": "Tap to zoom",
   "meet.photoOf": "Photo of {title}",
+
+  // ── F17 — Member Profile + 1-on-1 Comparison (DEC-115) ──
+  "member.title": "{name}'s Profile",
+  "member.plan": "Their Plan",
+  "member.compare": "Compare with yours",
+  "member.overlapPct": "{pct}% in common",
+  "member.overlap": "Together",
+  "member.onlyYou": "Only you",
+  "member.onlyThem": "Only {name}",
+  "member.noPlan": "No plan shared yet",
+  "member.noPlanSub": "Waiting for {name} to share their plan for this day.",
+  "member.youNoPlan": "You haven't shared a plan for this day yet.",
+  "member.nextTogether": "Next time together",
+  "member.meetBetween": "Meet between sets",
+  "member.setsInCommon": "{count} sets in common",
+  "member.noOverlap": "No overlap this day",
+  "member.dayLabel": "Day {n}",
+  "member.close": "Close",
 } as const;
 
 export type MessageKey = keyof typeof EN;
@@ -1493,6 +1511,24 @@ const PT: Partial<Record<MessageKey, string>> = {
   // ── Leva 2 G7 — lightbox da foto do ponto de encontro (E19) ──
   "meet.zoomPhoto": "Toque para ampliar",
   "meet.photoOf": "Foto de {title}",
+
+  // ── F17 — Perfil do Membro + Comparação 1-a-1 (DEC-115) ──
+  "member.title": "Perfil de {name}",
+  "member.plan": "Plano dele(a)",
+  "member.compare": "Comparar com o seu",
+  "member.overlapPct": "{pct}% em comum",
+  "member.overlap": "Juntos",
+  "member.onlyYou": "Só você",
+  "member.onlyThem": "Só {name}",
+  "member.noPlan": "Nenhum plano compartilhado",
+  "member.noPlanSub": "Aguardando {name} compartilhar o plano deste dia.",
+  "member.youNoPlan": "Você ainda não compartilhou um plano para este dia.",
+  "member.nextTogether": "Próximo show juntos",
+  "member.meetBetween": "Se encontrar entre sets",
+  "member.setsInCommon": "{count} sets em comum",
+  "member.noOverlap": "Nenhum set em comum neste dia",
+  "member.dayLabel": "Dia {n}",
+  "member.close": "Fechar",
 };
 
 const DICT: Record<Language, Partial<Record<MessageKey, string>>> = { en: EN, pt: PT };

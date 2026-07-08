@@ -16,11 +16,13 @@ import { useGroupEvents } from "../data/groupEvents";
 import { useGroupPresence } from "../data/presence";
 import { useSquadNextUp } from "../data/squadPlan";
 import { useIdentity } from "../data/identity";
-import type { GroupDto, MeetingPointDto } from "../data/types";
+import type { GroupDto, GroupMemberDto, MeetingPointDto } from "../data/types";
+import type { SquadMember } from "../domain/squadPlan";
 import { Avatar } from "../ui/Avatar";
 import { LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
 import { BoardPreviewCard, MeetingCompassCard, SafetyBanner, SquadAgendaCard, SquadNextUpCard, WhereEveryoneCard } from "./squad/squadHomeCards";
+import { MemberSheet } from "./squad/MemberSheet";
 import { closesInLabel, convergenceSummary, lifecycleBadge } from "./meet/meetUi";
 
 /** Remembers the last squad the user was looking at, so a multi-squad user lands back where they left. */
@@ -114,6 +116,7 @@ function GroupHome({
   const { events, reload: reloadEvents } = useGroupEvents(group.id);
   const { sets: nextUpSets, hasPlan } = useSquadNextUp(group.id);
   const [leaving, setLeaving] = useState(false);
+  const [viewingMember, setViewingMember] = useState<SquadMember | null>(null);
 
   // Pull-to-refresh fans out to every live source on the home (server is source of truth).
   const refreshAll = (): void => {
@@ -254,7 +257,11 @@ function GroupHome({
           </div>
           <div className="members-list">
             {members.map((m) => (
-              <div className="member-row" key={m.userId}>
+              <button
+                className="member-row tappable"
+                key={m.userId}
+                onClick={() => !m.isYou && setViewingMember(toSquadMember(m))}
+              >
                 <Avatar url={m.avatarUrl} color={m.avatarColor} name={m.displayName} size={36} />
                 <div className="member-main">
                   <div className="member-name">
@@ -266,7 +273,8 @@ function GroupHome({
                   </div>
                 </div>
                 {m.role === "owner" && <span className="chip chip-accent-soft">{t("squad.owner")}</span>}
-              </div>
+                {!m.isYou && <span className="ms member-chev" aria-hidden="true">chevron_right</span>}
+              </button>
             ))}
           </div>
         </section>
@@ -276,8 +284,29 @@ function GroupHome({
           {leaving ? t("squad.leaving") : t("squad.leaveSquad")}
         </button>
       </div>
+
+      {viewingMember && (
+        <MemberSheet
+          groupId={group.id}
+          member={viewingMember}
+          onClose={() => setViewingMember(null)}
+        />
+      )}
     </>
   );
+}
+
+function toSquadMember(m: GroupMemberDto): SquadMember {
+  return {
+    userId: m.userId,
+    displayName: m.displayName,
+    avatarColor: m.avatarColor,
+    role: m.role,
+    isYou: m.isYou,
+    shared: false,
+    performanceIds: [],
+    favoriteActKeys: [],
+  };
 }
 
 /** A live "come to me" meeting point on the squad home — opens the convergence detail (#26.3). */
