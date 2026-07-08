@@ -13,12 +13,16 @@ export function DayDropdown({
   tz,
   favByDay,
   onSelect,
+  showAllOption = false,
+  onSelectAll,
 }: {
   days: DayInfo[];
   dayKey: string | null;
   tz: string;
   favByDay: Map<string, number>;
   onSelect: (key: string) => void;
+  showAllOption?: boolean;
+  onSelectAll?: () => void;
 }): JSX.Element | null {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -35,9 +39,15 @@ export function DayDropdown({
 
   if (days.length === 0) return null;
 
-  const selected = days.find((day) => day.key === dayKey) ?? days[0]!;
+  const selected = dayKey ? days.find((day) => day.key === dayKey) : null;
+  const isAll = dayKey === null;
   const choose = (key: string): void => {
     onSelect(key);
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+  const chooseAll = (): void => {
+    onSelectAll?.();
     setOpen(false);
     triggerRef.current?.focus();
   };
@@ -54,7 +64,7 @@ export function DayDropdown({
         onClick={() => setOpen((v) => !v)}
       >
         <span className="ms cal" aria-hidden="true">calendar_month</span>
-        {selected.weekdayShort} {dayOfMonth(selected.startMs, tz)}
+        {selected ? `${selected.weekdayShort} ${dayOfMonth(selected.startMs, tz)}` : t("lineup.allDays")}
         <span className="ms cv" aria-hidden="true">expand_more</span>
       </button>
       {open && (
@@ -62,8 +72,27 @@ export function DayDropdown({
           <div className="dd-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="day-dd" role="listbox" aria-label={t("day.festivalDays")}>
             <div className="dd-ti">{t("day.choose")}</div>
+            {showAllOption && (
+              <button
+                type="button"
+                role="option"
+                aria-selected={isAll}
+                className={`dd-opt${isAll ? " on" : ""}`}
+                onClick={chooseAll}
+              >
+                <span className="dd-dn">
+                  <span className="ms" style={{ fontSize: 14 }}>date_range</span>
+                </span>
+                <span className="dd-when">
+                  <span className="dd-wd">{t("lineup.allDays")}</span>
+                </span>
+                <span className="dd-rmeta">
+                  <span className="ms dd-check" aria-hidden="true">check</span>
+                </span>
+              </button>
+            )}
             {days.map((day, i) => {
-              const on = day.key === selected.key;
+              const on = day.key === selected?.key;
               const fav = favByDay.get(day.key) ?? 0;
               return (
                 <button

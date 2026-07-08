@@ -258,13 +258,14 @@ export function LineupScreen(): JSX.Element {
         <button className={`chip${favOnly ? " on" : ""}`} onClick={() => setFavOnly((v) => !v)}>
           <span className="ms" style={{ fontSize: 14 }}>star</span> {t("lineup.favorites")}
         </button>
-        <button className={`chip${dayFilter === "all" ? " on" : ""}`} onClick={() => setDayFilter("all")}>{t("lineup.allDays")}</button>
         <DayDropdown
           days={days}
           dayKey={dayFilter === "all" ? null : dayFilter}
           tz={tz}
           favByDay={favByDay}
           onSelect={(key) => setDayFilter(key)}
+          showAllOption
+          onSelectAll={() => setDayFilter("all")}
         />
       </div>
 
