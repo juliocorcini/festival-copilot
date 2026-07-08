@@ -336,7 +336,7 @@ groups.post("/:id/ping", async (c) => {
   const toUserId = readString(body.toUserId, 64);
   if (!toUserId) return c.json({ error: "toUserId is required" }, 400);
   if (toUserId === m.user.id) return c.json({ error: "cannot ping yourself" }, 400);
-  const kind: PingKind = body.kind === "nudge" ? "nudge" : "locate";
+  const kind: PingKind = body.kind === "nudge" ? "nudge" : body.kind === "share_plan" ? "share_plan" : "locate";
   const id = await sendPing(c.env.DB, m.group.id, m.user.id, toUserId, kind, new Date().toISOString());
   await notifyGroup(c.env, m.group.id, "ping");
   return c.json({ ok: true, id }, 201);

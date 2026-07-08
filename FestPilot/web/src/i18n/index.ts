@@ -785,6 +785,10 @@ const EN = {
   "member.noOverlap": "No overlap this day",
   "member.dayLabel": "Day {n}",
   "member.close": "Close",
+  "member.requestShare": "Ask to share plan",
+  "member.requestShareSent": "Request sent!",
+  "member.requestShareSub": "Tap to ask {name} to share their plan.",
+  "ping.sharePlanRequest": "{name} wants to see your plan",
 } as const;
 
 export type MessageKey = keyof typeof EN;
@@ -1529,6 +1533,10 @@ const PT: Partial<Record<MessageKey, string>> = {
   "member.noOverlap": "Nenhum set em comum neste dia",
   "member.dayLabel": "Dia {n}",
   "member.close": "Fechar",
+  "member.requestShare": "Pedir para compartilhar plano",
+  "member.requestShareSent": "Pedido enviado!",
+  "member.requestShareSub": "Toque para pedir que {name} compartilhe o plano.",
+  "ping.sharePlanRequest": "{name} quer ver seu plano",
 };
 
 const DICT: Record<Language, Partial<Record<MessageKey, string>>> = { en: EN, pt: PT };

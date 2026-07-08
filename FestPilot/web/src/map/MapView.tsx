@@ -5,7 +5,7 @@
  * (DEC-050) — and tapping one opens an info sheet (now-playing + next from the lineup). Day/night
  * palettes (DEC-034 §11.5) and coarse, privacy-safe labels (DEC-015).
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { useNavigate } from "react-router-dom";
 import { geoToSvg, type MapTransform, type StageGeo } from "./transform";
@@ -132,6 +132,41 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const [topEl, setTopEl] = useState<HTMLElement | null>(null);
   const [sheetEl, setSheetEl] = useState<HTMLElement | null>(null);
   const insets = useMeasuredInsets(topEl, sheetEl);
+
+  // Draggable friends-sheet: peek (small) → half → full
+  const SHEET_PEEK = 100;
+  const SHEET_HALF = 0.38;
+  const SHEET_FULL = 0.82;
+  const [sheetH, setSheetH] = useState(() => window.innerHeight * SHEET_HALF);
+  const sheetDragging = useRef(false);
+  const sheetStartY = useRef(0);
+  const sheetStartH = useRef(0);
+
+  const onSheetDragStart = useCallback((clientY: number) => {
+    sheetDragging.current = true;
+    sheetStartY.current = clientY;
+    sheetStartH.current = sheetH;
+  }, [sheetH]);
+  const onSheetDragMove = useCallback((clientY: number) => {
+    if (!sheetDragging.current) return;
+    const delta = sheetStartY.current - clientY;
+    const maxH = window.innerHeight * SHEET_FULL;
+    setSheetH(Math.max(SHEET_PEEK, Math.min(maxH, sheetStartH.current + delta)));
+  }, []);
+  const onSheetDragEnd = useCallback(() => {
+    if (!sheetDragging.current) return;
+    sheetDragging.current = false;
+    const ratio = sheetH / window.innerHeight;
+    if (ratio > 0.6) setSheetH(window.innerHeight * SHEET_FULL);
+    else if (ratio > 0.2) setSheetH(window.innerHeight * SHEET_HALF);
+    else setSheetH(SHEET_PEEK);
+  }, [sheetH]);
+
+  const sheetTouchHandlers = useMemo(() => ({
+    onTouchStart: (e: React.TouchEvent) => onSheetDragStart(e.touches[0]!.clientY),
+    onTouchMove: (e: React.TouchEvent) => { if (sheetDragging.current) onSheetDragMove(e.touches[0]!.clientY); },
+    onTouchEnd: () => onSheetDragEnd(),
+  }), [onSheetDragStart, onSheetDragMove, onSheetDragEnd]);
   // Progressive base (DEC-075): the raster swaps in on load; its real pixel width sets the *honest*
   // zoom ceiling so deep zoom never out-runs the art into a blurry mush (D01). 0 ⇒ not loaded yet.
   const [baseNaturalW, setBaseNaturalW] = useState(0);
@@ -431,7 +466,13 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
         </section>
       )}
 
-      <section className="friends-sheet" ref={setSheetEl}>
+      <section
+        className="friends-sheet"
+        ref={setSheetEl}
+        style={{ height: sheetH }}
+        {...sheetTouchHandlers}
+      >
+        <div className="friends-sheet-handle"><span className="friends-sheet-grip" /></div>
         <h3>{activeGroup?.name ?? tr("map.yourSquad")}</h3>
         {!activeGroup ? (
           <div className="map-empty">

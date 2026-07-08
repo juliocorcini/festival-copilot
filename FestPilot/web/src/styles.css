@@ -483,10 +483,21 @@ main:focus { outline: none; }
   background: var(--scrim); backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
   border-radius: 18px 18px 0 0;
-  padding: 12px 16px 16px;
-  max-height: 38vh; overflow: auto;
+  padding: 0 16px 16px;
+  display: flex; flex-direction: column;
+  touch-action: none;
+  transition: height 0.15s ease-out;
 }
-.friends-sheet h3 { margin: 2px 0 10px; font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; color: var(--accent2); }
+.friends-sheet-handle {
+  display: flex; justify-content: center; padding: 10px 0 6px; cursor: grab;
+}
+.friends-sheet-grip {
+  width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.25);
+}
+.friends-sheet h3 { margin: 2px 0 10px; font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; color: var(--accent2); flex-shrink: 0; }
+.friends-sheet .map-roster { overflow-y: auto; flex: 1; min-height: 0; }
+.friends-sheet .map-empty { flex-shrink: 0; }
+.friends-sheet .src { flex-shrink: 0; }
 .map-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .map-roster li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .map-roster li.muted { color: var(--muted); }
@@ -2697,6 +2708,7 @@ button, [role="button"], .btn, .chip, .opt, .navitem, .tt-ic, .tt-lk, .dsel, .vs
 .member-sheet-empty .ms { font-size: 40px; color: var(--muted, #666); }
 .member-empty-title { font-weight: 600; font-size: 1rem; }
 .member-empty-sub { font-size: 0.85rem; color: var(--muted, #999); }
+.member-request-share { margin-top: 12px; gap: 6px; font-size: 0.9rem; }
 
 /* Stats */
 .member-stats {

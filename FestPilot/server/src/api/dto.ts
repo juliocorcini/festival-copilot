@@ -279,12 +279,12 @@ export interface PrecisePresenceDto {
   ageSeconds: number;
 }
 
-/** A pending "where are you?" / "turn on sharing" request addressed to the caller (#25.4). */
+/** A pending "where are you?" / "turn on sharing" / "share your plan" request addressed to the caller. */
 export interface PingDto {
   id: string;
   fromUserId: string;
   fromName: string | null;
-  kind: "locate" | "nudge";
+  kind: "locate" | "nudge" | "share_plan";
   createdAtUtc: string;
 }
 

@@ -15,6 +15,7 @@ import { toPlannableSets } from "../../domain/lineup";
 import { comparePlans, compareDaySummary, nextSharedSet, type CompareResult, type CompareDay } from "../../domain/memberCompare";
 import type { PlannableSet } from "../../domain/types";
 import { useLocale, useT } from "../../i18n";
+import { toast } from "../../lib/toast";
 import { MemberAvatar } from "./squadUi";
 import type { SquadMember } from "../../domain/squadPlan";
 
@@ -179,6 +180,17 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
     onTouchEnd: () => onDragEnd(),
   }), [canDrag, onDragStart, onDragMove, onDragEnd]);
 
+  const [requestSent, setRequestSent] = useState(false);
+
+  const handleRequestShare = useCallback(async () => {
+    if (requestSent) return;
+    try {
+      await api.sendPing(groupId, member.userId, "share_plan");
+      setRequestSent(true);
+      toast.success(t("member.requestShareSent"));
+    } catch { /* non-critical */ }
+  }, [groupId, member.userId, requestSent, t]);
+
   const name = member.displayName ?? "?";
   const theirDayIds = theirIds.get(activeDay?.key ?? "");
   const theyShared = theirDayIds != null && theirDayIds.size > 0;
@@ -239,6 +251,14 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
               <span className="ms" aria-hidden="true">event_busy</span>
               <p className="member-empty-title">{t("member.noPlan")}</p>
               <p className="member-empty-sub">{t("member.noPlanSub", { name })}</p>
+              <button
+                className="btn btn-primary member-request-share"
+                onClick={handleRequestShare}
+                disabled={requestSent}
+              >
+                <span className="ms">{requestSent ? "check" : "share"}</span>
+                {requestSent ? t("member.requestShareSent") : t("member.requestShare")}
+              </button>
             </div>
           ) : !youShared ? (
             <div className="member-sheet-empty">

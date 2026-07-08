@@ -275,7 +275,7 @@ export interface PingDto {
   id: string;
   fromUserId: string;
   fromName: string | null;
-  kind: "locate" | "nudge";
+  kind: "locate" | "nudge" | "share_plan";
   createdAtUtc: string;
 }
 

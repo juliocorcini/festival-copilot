@@ -413,9 +413,9 @@ export const api = {
     }).then(() => undefined);
   },
 
-  // "Where is everyone?" ping round-trip (Gate 5.3 — UC-25/26).
-  /** Ask a squad-mate to locate ("locate", when stale) or to turn sharing on ("nudge"). */
-  sendPing(groupId: string, toUserId: string, kind: "locate" | "nudge", signal?: AbortSignal): Promise<void> {
+  // Ping round-trip (Gate 5.3 — UC-25/26 + plan share request).
+  /** Ask a squad-mate to locate, turn sharing on, or share their plan. */
+  sendPing(groupId: string, toUserId: string, kind: "locate" | "nudge" | "share_plan", signal?: AbortSignal): Promise<void> {
     return authedJson<{ ok: boolean }>(`/api/groups/${groupId}/ping`, {
       method: "POST",
       body: { toUserId, kind },

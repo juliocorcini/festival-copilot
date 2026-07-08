@@ -81,7 +81,7 @@ export async function listInbox(
     id: r.id,
     fromUserId: r.fromUserId,
     fromName: r.fromName,
-    kind: r.kind === "nudge" ? "nudge" : "locate",
+    kind: r.kind === "nudge" ? "nudge" : r.kind === "share_plan" ? "share_plan" : "locate",
     createdAtUtc: r.createdAtUtc,
   }));
 }

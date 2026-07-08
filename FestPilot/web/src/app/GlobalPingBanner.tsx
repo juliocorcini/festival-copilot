@@ -58,17 +58,25 @@ export function GlobalPingBanner(): JSX.Element | null {
 
   const handleTap = (): void => {
     setPing(null);
-    navigate(`/squad/${groupId}/where`);
+    if (ping.kind === "share_plan") {
+      navigate(`/squad/${groupId}/share`);
+    } else {
+      navigate(`/squad/${groupId}/where`);
+    }
   };
+
+  const message = ping.kind === "share_plan"
+    ? t("ping.sharePlanRequest", { name: ping.fromName ?? t("where.inboxSomeone") })
+    : t(ping.kind === "nudge" ? "where.inboxAskedShare" : "where.inboxAskedWhere", {
+        name: ping.fromName ?? t("where.inboxSomeone"),
+      });
+
+  const icon = ping.kind === "share_plan" ? "calendar_month" : "person_pin_circle";
 
   return (
     <div className="global-ping-banner" role="alert" onClick={handleTap}>
-      <span className="ms" aria-hidden="true">person_pin_circle</span>
-      <span>
-        {t(ping.kind === "nudge" ? "where.inboxAskedShare" : "where.inboxAskedWhere", {
-          name: ping.fromName ?? t("where.inboxSomeone"),
-        })}
-      </span>
+      <span className="ms" aria-hidden="true">{icon}</span>
+      <span>{message}</span>
       <button
         className="global-ping-close"
         aria-label={t("common.close")}
