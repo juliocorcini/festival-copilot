@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.59.0";
+export const APP_VERSION = "0.60.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,24 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.60.0",
+    date: "2026-07-08",
+    title: "Stage icons, spoiler toggle & smarter plan editing",
+    icon: "photo_library",
+    whatsNew: [
+      "The map now shows beautiful isometric 3D renders of each stage — tap 'Reveal stages' to see new/secret stage designs (spoiler-free by default!).",
+      "Adding a set to your plan now shows favorited artists FIRST, so your preferred DJs are always at the top.",
+      "You can now add a DJ that slightly overlaps with the next set — FestPilot auto-trims it so you leave before the clash.",
+      "Plan sharing images now load DJ photos reliably (even from CDNs with strict security settings).",
+    ],
+    howToTest: [
+      "Admin > Map Editor: upload isometric icons for stages, position them, mark as spoiler, save. Check the map shows them.",
+      "Map screen: if any stage is marked spoiler, a 'Reveal stages' button appears — toggle it to show/hide.",
+      "My Plan > gap between sets: tap 'add a set' — favorited artists should appear first in the list.",
+      "My Plan: try adding a set that ends AFTER the next set starts — it should auto-trim and appear with 'leave early'.",
+    ],
+  },
   {
     version: "0.59.0",
     date: "2026-07-08",
