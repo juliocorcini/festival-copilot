@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppHeader } from "../app/AppHeader";
-import { useOnboarding, usePlan } from "../data/localStore";
+import { useFavorites, useOnboarding, usePlan } from "../data/localStore";
 import { useTravelPref } from "../app/settings";
 import { useLineup } from "../data/useLineup";
 import {
@@ -98,6 +98,7 @@ export function MyPlanScreen(): JSX.Element {
   const locale = useLocale();
   const [params, setParams] = useSearchParams();
   const { onboarding } = useOnboarding();
+  const { keys: favKeys } = useFavorites(lineup?.festival.id);
   const travel = useTravelMatrix(lineup);
   const { travelPref } = useTravelPref();
   const tz = lineup?.festival.timezone ?? "UTC";
@@ -174,9 +175,27 @@ export function MyPlanScreen(): JSX.Element {
     setMenuFor(null);
   };
   const addSet = (set: PlannableSet): void => {
-    const next = addToPlan(slots, set);
+    let next = addToPlan(slots, set);
+    if (!next) {
+      // Relaxed add: the set partially clashes with a neighbour. Trim it to fit (cutMs).
+      const clashing = slots.find(
+        (s) => s.startMs < set.endMs && effectiveEnd(s) > set.startMs && effectiveStart(s) >= set.startMs
+      );
+      if (clashing) {
+        const trimmedSet = { ...set, endMs: effectiveStart(clashing) };
+        if (trimmedSet.endMs > trimmedSet.startMs + 5 * 60_000) {
+          next = addToPlan(slots, trimmedSet);
+          if (next) {
+            next = next.map((s) =>
+              s.setId === trimmedSet.id ? { ...s, cutMs: trimmedSet.endMs, endMs: set.endMs } : s
+            );
+          }
+        }
+      }
+    }
     if (next) plan.save(next);
     setShowAdd(false);
+    setInsertAddWindow(null);
   };
 
   // Personal blocks (DEC-073) — open the editor pre-filled (from a gap, or a sensible free window).
@@ -452,11 +471,12 @@ export function MyPlanScreen(): JSX.Element {
           action="add"
           tz={tz}
           photos={photoByKey}
-          options={
+          options={sortFavoritesFirst(
             insertAddWindow
               ? fittingAddsInWindow(slots, daySets, insertAddWindow.startMs, insertAddWindow.endMs)
-              : fittingAdds(slots, daySets)
-          }
+              : fittingAdds(slots, daySets),
+            favKeys
+          )}
           onPick={addSet}
           onClose={() => { setShowAdd(false); setInsertAddWindow(null); }}
         />
@@ -502,6 +522,18 @@ export function MyPlanScreen(): JSX.Element {
       )}
     </>
   );
+}
+
+/** Sort options with favorited acts first, preserving time order within each group. */
+function sortFavoritesFirst(sets: PlannableSet[], favKeys: Set<string>): PlannableSet[] {
+  if (favKeys.size === 0) return sets;
+  const favs: PlannableSet[] = [];
+  const rest: PlannableSet[] = [];
+  for (const s of sets) {
+    if (favKeys.has(s.actKey)) favs.push(s);
+    else rest.push(s);
+  }
+  return [...favs, ...rest];
 }
 
 /** [start, effective end) of a slot — the window we look for swap candidates around. */

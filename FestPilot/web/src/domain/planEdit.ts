@@ -82,6 +82,10 @@ export function fittingAdds(slots: PlanSlot[], candidates: PlannableSet[]): Plan
  * Like `fittingAdds` but additionally restricted to sets whose time overlaps a specific window
  * [windowStart, windowEnd). Used when inserting a set in a known gap (DEC-109 / F01): the picker
  * should only show sets that PLAY during that window, not the whole day.
+ *
+ * RELAXED matching (DEC-115): a set that STARTS within the window is shown even if its endMs
+ * extends past the next slot — the user can choose to leave early or arrive late. We only exclude
+ * sets that are completely outside the window or are already in the plan.
  */
 export function fittingAddsInWindow(
   slots: PlanSlot[],
@@ -93,9 +97,9 @@ export function fittingAddsInWindow(
   return candidates.filter(
     (set) =>
       !chosenActs.has(set.actKey) &&
-      setFits(slots, set) &&
       set.startMs < windowEnd &&
-      set.endMs > windowStart
+      set.endMs > windowStart &&
+      set.startMs >= windowStart - 15 * 60_000
   );
 }
 
