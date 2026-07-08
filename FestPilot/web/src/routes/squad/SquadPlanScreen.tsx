@@ -308,6 +308,9 @@ function SquadEventRow({
   const done = lifecycle === "past";
   const startMs = Date.parse(event.startsAtUtc);
   const timing = live ? t("squad.liveNow") : done ? "" : t("squad.inTime", { time: durationLabel((startMs - now) / 60_000) });
+  const dayAbbr = Number.isFinite(startMs)
+    ? new Date(startMs).toLocaleDateString(undefined, { weekday: "short", timeZone: timezone })
+    : "";
   return (
     <div className="plan-row fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className={`plan-dot mini squad-tl-event-dot${live ? " now" : ""}`} />
@@ -315,7 +318,7 @@ function SquadEventRow({
         <span className="ms squad-tl-event-ico" aria-hidden="true">event</span>
         <div className="plan-card-main">
           <div className="plan-when">
-            {timeInZone(event.startsAtUtc, timezone)}
+            {dayAbbr ? `${dayAbbr} ` : ""}{timeInZone(event.startsAtUtc, timezone)}
             {timing ? ` · ${timing}` : ""}
           </div>
           <div className="squad-tl-event-title">{event.title}</div>

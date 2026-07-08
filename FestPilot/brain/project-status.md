@@ -1,6 +1,21 @@
 # FestPilot — Project Status
 
-> Last updated: 2026-06-27 (**Leva 2 "Squad Vivo, Localização & Polimento Nativo" EXECUTED & DEPLOYED — G0→G10 LIVE** at **v0.51.0**. Frontend `festpilot.pages.dev` (Pages deploy `76856650`, bundle `index-Clh7mXz3.js`), Worker `festpilot` (version `6fff8f69`, `festpilot.trippilot.workers.dev` → `{ok:true}`), D1 through migration **0016** (applied remote). **DEC-089→108 all APPROVED.** Tests: **web 553 + server 260 = 813 unit · e2e 37/37 · tsc/build clean**. Deploy run by the agent at leva close (DEC-108 flip condition met: creds in `.dev.vars` + maps tracked). Remaining DoD: only Julio's **§15 on-device iOS/Android smoke**.)
+> Last updated: 2026-07-08 (**Leva 3 "Plan Sync, Insert Fix & UX Polish" EXECUTED** — G0→G6 at **v0.57.0**. **DEC-109→114 all APPROVED.** Tests: **web 558 · tsc/build clean**. 16 issues (F01–F16,F18) resolved from Julio's **third** usage review. F17 deferred (new feature). Awaiting commit + deploy.)
+
+## Leva 3 — Plan Sync, Insert Fix & UX Polish (2026-07-08) — ✅ COMPLETE (v0.57.0)
+
+Source orchestrator: `brain/documents/2026-07-08-plan-sync-ux-orchestrator.md` (+ `…-kickoff-prompt.md`). Julio's **third** usage review — run on an iPhone, across two devices, testing squad sync + map + plan edit flows. Normalized into **F01–F18** (3 P0, 5 P1, 8 P2, 2 P3) with root-cause map. Gates G0→G6, **v0.51.0 → v0.57.0**, executed in one session.
+
+- **G1 `v0.52.0`** ✅ — F01 (insert shows only sets in the time gap), F02 (group events filtered to correct day + positioned chronologically).
+- **G2 `v0.53.0`** ✅ — F03 (auto-share ALL local plan days to squad, not just the active day), F13 (Now & Next shows plan — falls forward to next planned day).
+- **G3 `v0.54.0`** ✅ — F04 (passive presence publishing from app boot), F05 (global ping banner on all screens).
+- **G4 `v0.55.0`** ✅ — F06 (outside-festival banner dismisses on tap), F07 (sticky header z-index > heart icons), F08 (event card shows weekday), F11 (roster as draggable bottom sheet, map full-screen).
+- **G5 `v0.56.0`** ✅ — F09 (artist photos in clash picker + add sheet), F10 (unified gap button: fill + add set inline, remove redundant (+)), F12 (double-tap zoom on map), F14 (timetable defaults to main festival day, not The Gathering).
+- **G6 `v0.57.0`** ✅ — F15 (lineup day filter → dropdown), F16 (Home squad tab enriched: where-is-everyone + agenda inline), F18 (nav tab renamed Home/Início).
+
+**Deferred:** F17 (member profile + compare plan) — new feature, out of bug-fix scope.
+
+**Outcome:** all P0/P1/P2 issues delivered. F17 (P3, new feature) deferred. Test suite green: 558 unit, tsc/build clean.
 
 ## Leva 2 — Squad Vivo, Localização & Polimento Nativo (2026-06-27) — ✅ COMPLETE & DEPLOYED (v0.51.0 live)
 

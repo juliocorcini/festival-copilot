@@ -67,6 +67,32 @@ export function pickActiveDay<T extends { startMs: number }>(days: T[], nowMs: n
   return chosen;
 }
 
+/**
+ * The first "main" festival day: the earliest day that uses as many stages as the busiest day.
+ * Events like TML have a pre-day ("The Gathering") with only 2-3 stages, while the real festival
+ * has 15+. The timetable/lineup should default to this main day, not the sparse pre-day (F14).
+ */
+export function pickMainDay(days: DayInfo[], performances: PerformanceDto[]): DayInfo | null {
+  if (days.length === 0) return null;
+  if (days.length === 1) return days[0]!;
+  const stagesPerDay = new Map<string, Set<string>>();
+  for (const perf of performances) {
+    if (!perf.day || !perf.stageId) continue;
+    const set = stagesPerDay.get(perf.day) ?? new Set();
+    set.add(perf.stageId);
+    stagesPerDay.set(perf.day, set);
+  }
+  let maxStages = 0;
+  for (const s of stagesPerDay.values()) maxStages = Math.max(maxStages, s.size);
+  if (maxStages === 0) return days[0]!;
+  const threshold = maxStages * 0.8;
+  for (const day of days) {
+    const count = stagesPerDay.get(day.key)?.size ?? 0;
+    if (count >= threshold) return day;
+  }
+  return days[0]!;
+}
+
 /** Fallback for a lineup published without any scheduled times yet (DEC-049): group by source label. */
 function legacyDaysByLabel(performances: PerformanceDto[]): DayInfo[] {
   const byDay = new Map<string, DayInfo>();

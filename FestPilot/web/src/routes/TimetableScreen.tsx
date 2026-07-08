@@ -11,7 +11,7 @@ import { useLineup } from "../data/useLineup";
 import { buildTimetable } from "../domain/timetable";
 import { festivalDataState } from "../domain/dataState";
 import { imageByActKey } from "../domain/lineup";
-import { countFavoritesPerDay, daysForWeekends, type DayInfo } from "../lib/festival";
+import { countFavoritesPerDay, daysForWeekends, pickMainDay, type DayInfo } from "../lib/festival";
 import { stageColor, stageColorRgb, timeInZone } from "../lib/format";
 import { useT, useLocale } from "../i18n";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
@@ -56,7 +56,8 @@ export function TimetableScreen(): JSX.Element {
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
   const tz = lineup?.festival.timezone ?? "UTC";
   const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
-  const dayKey = selectedDay ?? days[0]?.key ?? null;
+  const mainDay = useMemo(() => pickMainDay(days, lineup?.performances ?? []), [days, lineup?.performances]);
+  const dayKey = selectedDay ?? mainDay?.key ?? days[0]?.key ?? null;
 
   // D14/DEC-084: the Lock-in button reflects this day's planned state — once a plan is locked it
   // becomes "Edit plan" and routes to My Plan, instead of always re-running lock-in.

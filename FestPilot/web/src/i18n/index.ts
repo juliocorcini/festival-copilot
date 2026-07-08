@@ -16,7 +16,7 @@ type Vars = Record<string, string | number>;
 
 const EN = {
   // Global navigation (BottomNav)
-  "nav.now": "Now",
+  "nav.now": "Home",
   "nav.timetable": "Timetable",
   "nav.myPlan": "My Plan",
   "nav.map": "Map",
@@ -772,7 +772,7 @@ const EN = {
 export type MessageKey = keyof typeof EN;
 
 const PT: Partial<Record<MessageKey, string>> = {
-  "nav.now": "Agora",
+  "nav.now": "Início",
   "nav.timetable": "Timetable",
   "nav.myPlan": "Meu Plano",
   "nav.map": "Mapa",

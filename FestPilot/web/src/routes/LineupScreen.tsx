@@ -9,12 +9,13 @@ import { useLineup } from "../data/useLineup";
 import { festivalDataState } from "../domain/dataState";
 import { festivalDayIdByPerformanceId } from "../domain/festivalDay";
 import { performancesForWeekends, uniqueActs, type Act } from "../domain/lineup";
-import { daysForWeekends, type DayInfo } from "../lib/festival";
+import { countFavoritesPerDay, daysForWeekends, type DayInfo } from "../lib/festival";
 import { stageColorRgb } from "../lib/format";
 import { useT, useLocale } from "../i18n";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
 import { ViewSwitch } from "../ui/ViewSwitch";
+import { DayDropdown } from "../ui/DayDropdown";
 import { LineupUpdateBanner } from "../ui/LineupUpdateBanner";
 import { ArtistPhoto } from "../ui/ArtistPhoto";
 import { PHOTO_WIDTH } from "../lib/photo";
@@ -121,6 +122,11 @@ export function LineupScreen(): JSX.Element {
   );
 
   const days = useMemo<DayInfo[]>(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
+  const tz = lineup?.festival.timezone ?? "UTC";
+  const favByDay = useMemo(
+    () => countFavoritesPerDay(scopedPerformances, favorites.keys, days),
+    [scopedPerformances, favorites.keys, days]
+  );
   const stageName = useMemo(() => {
     const map = new Map<string, string>();
     lineup?.stages.forEach((s) => map.set(s.id, s.name));
@@ -253,15 +259,13 @@ export function LineupScreen(): JSX.Element {
           <span className="ms" style={{ fontSize: 14 }}>star</span> {t("lineup.favorites")}
         </button>
         <button className={`chip${dayFilter === "all" ? " on" : ""}`} onClick={() => setDayFilter("all")}>{t("lineup.allDays")}</button>
-        {days.map((d) => (
-          <button
-            key={d.key}
-            className={`chip${dayFilter === d.key ? " on" : ""}`}
-            onClick={() => setDayFilter(d.key)}
-          >
-            {d.weekdayShort}
-          </button>
-        ))}
+        <DayDropdown
+          days={days}
+          dayKey={dayFilter === "all" ? null : dayFilter}
+          tz={tz}
+          favByDay={favByDay}
+          onSelect={(key) => setDayFilter(key)}
+        />
       </div>
 
       {filtered.length === 0 && (

@@ -7,7 +7,7 @@
  * incoming ping one-tap with a stage (push-reply, works with GPS off). While opted in, the device
  * shares in the foreground.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { StackHeader } from "../../app/StackHeader";
 import { api } from "../../data/api";
@@ -28,6 +28,53 @@ import {
   presenceLine,
   type RosterPlace,
 } from "./presenceUi";
+
+type SheetSnap = "peek" | "half" | "full";
+const SNAP_PEEK = 110;
+const SNAP_HALF_RATIO = 0.45;
+const SNAP_FULL_RATIO = 0.85;
+
+function snapHeight(snap: SheetSnap): number {
+  const vh = window.innerHeight;
+  if (snap === "full") return vh * SNAP_FULL_RATIO;
+  if (snap === "half") return vh * SNAP_HALF_RATIO;
+  return SNAP_PEEK;
+}
+
+function useBottomSheet() {
+  const [snap, setSnap] = useState<SheetSnap>("half");
+  const [height, setHeight] = useState(() => snapHeight("half"));
+  const dragging = useRef(false);
+  const startY = useRef(0);
+  const startH = useRef(0);
+
+  useEffect(() => { setHeight(snapHeight(snap)); }, [snap]);
+
+  const onDragStart = useCallback((clientY: number) => {
+    dragging.current = true;
+    startY.current = clientY;
+    startH.current = height;
+  }, [height]);
+
+  const onDragMove = useCallback((clientY: number) => {
+    if (!dragging.current) return;
+    const delta = startY.current - clientY;
+    const newH = Math.max(SNAP_PEEK, Math.min(window.innerHeight * SNAP_FULL_RATIO, startH.current + delta));
+    setHeight(newH);
+  }, []);
+
+  const onDragEnd = useCallback(() => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    const vh = window.innerHeight;
+    const ratio = height / vh;
+    if (ratio > 0.65) setSnap("full");
+    else if (ratio > 0.25) setSnap("half");
+    else setSnap("peek");
+  }, [height]);
+
+  return { snap, setSnap, height, onDragStart, onDragMove, onDragEnd };
+}
 
 /** Localised header for a roster place: real stage names stay as data; venue/off are translated. */
 function placeLabel(place: RosterPlace, t: TranslateFn): string {
@@ -115,6 +162,15 @@ export function WhereScreen(): JSX.Element {
     reload();
   };
 
+  const sheet = useBottomSheet();
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  const handleTouch = useMemo(() => ({
+    onTouchStart: (e: React.TouchEvent) => sheet.onDragStart(e.touches[0]!.clientY),
+    onTouchMove: (e: React.TouchEvent) => sheet.onDragMove(e.touches[0]!.clientY),
+    onTouchEnd: () => sheet.onDragEnd(),
+  }), [sheet.onDragStart, sheet.onDragMove, sheet.onDragEnd]);
+
   if (status === "loading" && !presence) return <LoadingState rows={4} />;
   if (status === "error" && !presence) return <ErrorState message={t("where.loadError")} onRetry={reload} />;
 
@@ -124,114 +180,135 @@ export function WhereScreen(): JSX.Element {
   return (
     <>
       <StackHeader title={t("where.title")} backTo="/squad" />
-      <div className="screen where-screen">
-        <div className="where-sub label">
-          {t(count === 1 ? "where.personOne" : "where.personMany", { count })} · {t("where.live")}
-        </div>
-
-        {inboxPing && (
-          <div className="glass where-inbox">
-            <span className="ms" style={{ color: "var(--accent)" }} aria-hidden="true">person_pin_circle</span>
-            <div className="where-inbox-main">
-              <div className="where-inbox-title">
-                {t(inboxPing.kind === "nudge" ? "where.inboxAskedShare" : "where.inboxAskedWhere", {
-                  name: inboxPing.fromName ?? t("where.inboxSomeone"),
-                })}
-              </div>
-              <div className="where-inbox-sub">{t("where.inboxSub")}</div>
-            </div>
-            <div className="where-inbox-actions">
-              <button className="btn btn-primary btn-sm" onClick={() => openAnswer(inboxPing)}>{t("where.inboxShare")}</button>
-              <button className="where-inbox-dismiss" aria-label={t("where.inboxDismiss")} onClick={() => dismiss(inboxPing)}>
-                <span className="ms">close</span>
-              </button>
-            </div>
-          </div>
-        )}
-
+      <div className="where-map-full">
         <CoarsePresenceMap members={presence?.members ?? []} precise={presence?.precise} onOpen={() => navigate("/map")} />
+      </div>
 
-        {invisible && (
-          <button className="glass where-invisible" onClick={() => navigate(`/squad/${id}/location`)}>
-            <span className="ms" aria-hidden="true">visibility_off</span>
-            <div>
-              <div className="where-invisible-title">{t("where.invisibleTitle")}</div>
-              <div className="where-invisible-sub">{t("where.invisibleSub")}</div>
+      {inboxPing && (
+        <div className="glass where-inbox where-inbox-float">
+          <span className="ms" style={{ color: "var(--accent)" }} aria-hidden="true">person_pin_circle</span>
+          <div className="where-inbox-main">
+            <div className="where-inbox-title">
+              {t(inboxPing.kind === "nudge" ? "where.inboxAskedShare" : "where.inboxAskedWhere", {
+                name: inboxPing.fromName ?? t("where.inboxSomeone"),
+              })}
             </div>
-            <span className="ms" style={{ color: "var(--accent)" }} aria-hidden="true">chevron_right</span>
-          </button>
-        )}
+            <div className="where-inbox-sub">{t("where.inboxSub")}</div>
+          </div>
+          <div className="where-inbox-actions">
+            <button className="btn btn-primary btn-sm" onClick={() => openAnswer(inboxPing)}>{t("where.inboxShare")}</button>
+            <button className="where-inbox-dismiss" aria-label={t("where.inboxDismiss")} onClick={() => dismiss(inboxPing)}>
+              <span className="ms">close</span>
+            </button>
+          </div>
+        </div>
+      )}
 
-        <div className="where-places">
-          {places.map((place) => (
-            <section className="where-place" key={place.key}>
-              <div className="where-place-head">
-                <span className={`where-place-dot kind-${place.kind}`} aria-hidden="true" />
-                <span className="where-place-label">{placeLabel(place, t)}</span>
-                <span className="where-place-count">{t("where.countHere", { count: place.members.length })}</span>
-              </div>
-              <div className="where-list">
-                {place.members.map((m) => {
-                  const exact = preciseById.get(m.userId);
-                  const line = presenceLine(m, t, exact);
-                  const fresh = !line.muted && m.presence;
-                  const kind = pingKindFor(m);
-                  return (
-                    <div className={`glass where-row${line.muted ? " muted" : ""}${m.live ? " is-live" : ""}`} key={m.userId}>
-                      <PresenceAvatar name={m.displayName} color={m.avatarColor} live={m.live} />
-                      <div className="where-row-main">
-                        <div className="where-row-name">
-                          {m.displayName ?? t("where.guest")}
-                          {m.isYou && <span className="where-you"> · {t("where.you")}</span>}
-                          {m.isTest && <span className="pill where-test">{t("where.test")}</span>}
-                          {m.live && <span className="pill pill-live">● {t("where.live")}</span>}
-                        </div>
-                        <div className="where-row-line">
-                          {line.icon && <span className="ms where-row-icon" aria-hidden="true">{line.icon}</span>}
-                          <span>{line.text}</span>
-                          {line.sub && <span className="where-row-sub">· {line.sub}</span>}
-                        </div>
-                      </div>
-                      {exact && !m.isYou ? (
-                        <a
-                          className="pill where-navigate"
-                          href={mapsDirectionsUrl(exact.lat, exact.lng)}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <span className="ms" aria-hidden="true">navigation</span>
-                          {t("where.navigate")}
-                        </a>
-                      ) : fresh ? (
-                        <div className={`where-row-age${m.live ? " live" : ""}`}>{ago(m.presence!.ageSeconds, t)}</div>
-                      ) : (
-                        kind && (
-                          <button
-                            className="pill where-ping"
-                            disabled={pinged[m.userId]}
-                            onClick={() => ping(m, kind)}
-                          >
-                            {pinged[m.userId] ? t("where.sent") : kind === "nudge" ? t("where.nudge") : t("where.ping")}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+      <div
+        className="where-sheet"
+        ref={sheetRef}
+        style={{ height: sheet.height }}
+      >
+        <div className="where-sheet-handle" {...handleTouch}>
+          <span className="where-sheet-grip" />
         </div>
 
-        <div className="where-actions">
-          <button className="btn btn-primary" onClick={() => navigate(`/squad/${id}/precise`)}>
-            <span className="ms" aria-hidden="true">my_location</span>
-            {presence?.me.live ? t("where.managePrecise") : t("where.sharePrecise")}
+        <div className="where-sheet-head">
+          <span className="where-sub label">
+            {t(count === 1 ? "where.personOne" : "where.personMany", { count })} · {t("where.live")}
+          </span>
+          <button
+            className="where-sheet-toggle"
+            aria-label={sheet.snap === "peek" ? "expand" : "collapse"}
+            onClick={() => sheet.setSnap(sheet.snap === "peek" ? "half" : "peek")}
+          >
+            <span className="ms">{sheet.snap === "peek" ? "expand_less" : "expand_more"}</span>
           </button>
-          <button className="btn btn-ghost" onClick={() => navigate(`/squad/${id}/visibility`)}>
-            <span className="ms" aria-hidden="true">tune</span>
-            {t("where.howYouAppear")}
-          </button>
+        </div>
+
+        <div className="where-sheet-body">
+          {invisible && (
+            <button className="glass where-invisible" onClick={() => navigate(`/squad/${id}/location`)}>
+              <span className="ms" aria-hidden="true">visibility_off</span>
+              <div>
+                <div className="where-invisible-title">{t("where.invisibleTitle")}</div>
+                <div className="where-invisible-sub">{t("where.invisibleSub")}</div>
+              </div>
+              <span className="ms" style={{ color: "var(--accent)" }} aria-hidden="true">chevron_right</span>
+            </button>
+          )}
+
+          <div className="where-places">
+            {places.map((place) => (
+              <section className="where-place" key={place.key}>
+                <div className="where-place-head">
+                  <span className={`where-place-dot kind-${place.kind}`} aria-hidden="true" />
+                  <span className="where-place-label">{placeLabel(place, t)}</span>
+                  <span className="where-place-count">{t("where.countHere", { count: place.members.length })}</span>
+                </div>
+                <div className="where-list">
+                  {place.members.map((m) => {
+                    const exact = preciseById.get(m.userId);
+                    const line = presenceLine(m, t, exact);
+                    const fresh = !line.muted && m.presence;
+                    const kind = pingKindFor(m);
+                    return (
+                      <div className={`glass where-row${line.muted ? " muted" : ""}${m.live ? " is-live" : ""}`} key={m.userId}>
+                        <PresenceAvatar name={m.displayName} color={m.avatarColor} live={m.live} />
+                        <div className="where-row-main">
+                          <div className="where-row-name">
+                            {m.displayName ?? t("where.guest")}
+                            {m.isYou && <span className="where-you"> · {t("where.you")}</span>}
+                            {m.isTest && <span className="pill where-test">{t("where.test")}</span>}
+                            {m.live && <span className="pill pill-live">● {t("where.live")}</span>}
+                          </div>
+                          <div className="where-row-line">
+                            {line.icon && <span className="ms where-row-icon" aria-hidden="true">{line.icon}</span>}
+                            <span>{line.text}</span>
+                            {line.sub && <span className="where-row-sub">· {line.sub}</span>}
+                          </div>
+                        </div>
+                        {exact && !m.isYou ? (
+                          <a
+                            className="pill where-navigate"
+                            href={mapsDirectionsUrl(exact.lat, exact.lng)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <span className="ms" aria-hidden="true">navigation</span>
+                            {t("where.navigate")}
+                          </a>
+                        ) : fresh ? (
+                          <div className={`where-row-age${m.live ? " live" : ""}`}>{ago(m.presence!.ageSeconds, t)}</div>
+                        ) : (
+                          kind && (
+                            <button
+                              className="pill where-ping"
+                              disabled={pinged[m.userId]}
+                              onClick={() => ping(m, kind)}
+                            >
+                              {pinged[m.userId] ? t("where.sent") : kind === "nudge" ? t("where.nudge") : t("where.ping")}
+                            </button>
+                          )
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          <div className="where-actions">
+            <button className="btn btn-primary" onClick={() => navigate(`/squad/${id}/precise`)}>
+              <span className="ms" aria-hidden="true">my_location</span>
+              {presence?.me.live ? t("where.managePrecise") : t("where.sharePrecise")}
+            </button>
+            <button className="btn btn-ghost" onClick={() => navigate(`/squad/${id}/visibility`)}>
+              <span className="ms" aria-hidden="true">tune</span>
+              {t("where.howYouAppear")}
+            </button>
+          </div>
         </div>
       </div>
 

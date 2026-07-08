@@ -1167,3 +1167,33 @@
 - **Decision**: during Leva 2 the agent **does not run `wrangler pages deploy`** (a maps-less `dist` would regress the live map art, and there are no credentials anyway). Each gate is delivered **deploy-ready**: version bump + changelog + green unit/e2e + clean `tsc`/build, committed and pushed to `master`. The **live release is Julio's**, one command from his machine (which has the creds + the untracked `public/maps/` assets): `git pull && cd FestPilot/web && npm run build && npx wrangler pages deploy dist --project-name=festpilot --branch=master`. Recommended to deploy **after G2** to validate native feel (N1/N7) + maps (N3) on the iPhone. **Flip condition**: if Julio places **both** `.dev.vars` and `web/public/maps/` (or a generator) into the tree, the agent takes over end-to-end deploy from the next gate.
 - **Rationale**: brain autonomy rule Q14/DEC-039 — "stop only on cost or a **missing credential**, noting it in the dev-log; no one-by-one questions." Missing credential **and** missing build assets make agent-side deploy both impossible and unsafe; the honest path is deploy-ready commits + a one-command hand-off, never a silent "deployed" claim or a regressing push.
 - **Alternatives**: (a) pause the leva to request `.dev.vars` (rejected — violates "don't stop"; and creds alone don't fix the missing `public/maps/`); (b) `wrangler pages deploy` a maps-less `dist` to honor "do the deploys" literally (rejected — regresses live map art, worse than not deploying); (c) wire git→Pages auto-deploy now (rejected — DEC-037 chose direct upload "no GitHub"; changing the release model mid-leva is out of scope).
+
+### DEC-109 — Insert picker filtered by the specific time gap — APPROVED (Leva 3, F01)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G1, v0.52.0).
+- **Decision**: the "add a set" picker opened via an insert between two cards filters candidates to those whose performance time **overlaps** the gap window `[gapStart, gapEnd)`, not the whole day. New pure function `fittingAddsInWindow` added to `domain/planEdit.ts`.
+- **Rationale**: Julio: "I tap 'add a set' between 23:00 and 23:50 and it shows me sets from 14:00 — useless."
+
+### DEC-110 — Group events scoped to the selected day — APPROVED (Leva 3, F02)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G1, v0.52.0).
+- **Decision**: `SquadPlanScreen` filters group events through `eventsForDay(events, dayStart, dayEnd)` before interleaving into the timeline. Events appear only on their correct day and in chronological order among the sets.
+- **Rationale**: Julio: "the photo event appears on every day, thrown at the bottom — it should only appear on Friday, positioned by its time."
+
+### DEC-111 — Auto-share all local plan days to squad — APPROVED (Leva 3, F03)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G2, v0.53.0).
+- **Decision**: once a user has explicitly shared **any** day (opt-in established), a boot-time `useBulkPlanSync` hook iterates all local locked days and pushes any that differ from the server. Runs once per group per app lifecycle. Respects privacy: does nothing if the user never shared any day.
+- **Rationale**: Julio: "I locked my plan for all days but only Thursday shows up in the squad — I shouldn't have to manually push each day."
+
+### DEC-112 — Global ping banner + passive presence — APPROVED (Leva 3, F04/F05)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G3, v0.54.0).
+- **Decision**: (a) `PassivePresencePublisher` root component enables location sharing from app boot if opted in + in a group (no need to open WhereScreen). (b) `GlobalPingBanner` polls the presence inbox and shows a fixed banner on any screen when a ping arrives; tap navigates to WhereScreen.
+- **Rationale**: Julio: "presence only starts when I open 'Where is everyone' — it should work from app boot. And pings only appear inside that screen — they must alert globally."
+
+### DEC-113 — Now & Next: effective plan day fallback — APPROVED (Leva 3, F13)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G2, v0.53.0).
+- **Decision**: if the active day (by clock) has no locked plan, the Now screen falls forward to the **next** day that does. The "up next" list always shows **plan sets**, not favorites.
+- **Rationale**: Julio: "it's Thursday (The Gathering), I have no plan for Thursday but I do for Friday — the 'up next' shows favorites instead of my Friday plan."
+
+### DEC-114 — UX polish batch: z-index, banner dismiss, double-tap zoom, day dropdown, rename — APPROVED (Leva 3, F06/F07/F08/F11/F12/F14/F15/F18)
+- **Date**: 2026-07-08 · **Status**: **APPROVED** (delivered G4–G6, v0.55.0–v0.57.0).
+- **Decision**: batch of UX improvements — (F06) outside banner dismisses on CTA tap; (F07) sticky day header z-index above hearts; (F08) event card shows weekday abbreviation; (F11) WhereScreen roster becomes a draggable bottom sheet (map full-screen behind); (F12) double-tap map zoom; (F14) timetable defaults to the first day with ≥80% of peak stage count; (F15) lineup day filter → DayDropdown; (F18) nav tab renamed Home/Início.
+- **Rationale**: all from Julio's third usage review — visual/interaction improvements that individually are minor but collectively transform the feel.

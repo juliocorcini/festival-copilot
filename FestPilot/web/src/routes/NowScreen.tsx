@@ -30,7 +30,7 @@ import { useGroupEvents } from "../data/groupEvents";
 import { useMeetingPoints } from "../data/meetingPoints";
 import { useSquadNextUp } from "../data/squadPlan";
 import type { GroupDto } from "../data/types";
-import { SafetyBannerLive, SquadNextUpCard } from "./squad/squadHomeCards";
+import { SafetyBannerLive, SquadNextUpCard, WhereEveryoneCard, SquadAgendaCard } from "./squad/squadHomeCards";
 
 const ms = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
@@ -494,6 +494,8 @@ function NowSquadInner({
           sets={nextUpSets}
           onOpen={() => navigate("/squad")}
         />
+        <WhereEveryoneCard groupId={group.id} presence={presence} />
+        {events.length > 0 && <SquadAgendaCard groupId={group.id} events={events} />}
         <button className="glass squad-plan-cta" onClick={() => navigate(`/squad/${group.id}/plan`)}>
           <div className="squad-plan-icon">
             <span className="ms">event_available</span>

@@ -3,13 +3,13 @@ import { translate } from "./index";
 
 describe("i18n translate", () => {
   it("returns the English source string by default", () => {
-    expect(translate("en", "nav.now")).toBe("Now");
+    expect(translate("en", "nav.now")).toBe("Home");
     expect(translate("en", "nav.squad")).toBe("Squad");
     expect(translate("en", "settings.title")).toBe("Settings");
   });
 
   it("flips a sample string to Portuguese when language is pt", () => {
-    expect(translate("pt", "nav.now")).toBe("Agora");
+    expect(translate("pt", "nav.now")).toBe("Início");
     expect(translate("pt", "settings.title")).toBe("Ajustes");
   });
 

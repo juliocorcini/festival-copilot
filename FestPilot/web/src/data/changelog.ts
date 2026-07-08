@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.54.0";
+export const APP_VERSION = "0.57.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,56 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.57.0",
+    date: "2026-07-08",
+    title: "Day dropdown & enriched squad home",
+    icon: "home",
+    whatsNew: [
+      "The lineup day filter is now a compact dropdown instead of cramped tabs — works beautifully even with 4+ festival days.",
+      "The Home squad tab now shows WHERE everyone is + upcoming squad events inline, not just the next-up item.",
+      "The bottom nav is now labeled \"Home\" (Início) instead of \"Now\" (Agora).",
+    ],
+    howToTest: [
+      "Open the lineup — instead of day-name chips (Thu/Fri/Sat/Sun), you should see a single dropdown trigger. Tap it to filter.",
+      "Switch to the Squad tab on Home — you should see the \"Where is everyone\" card and the squad agenda below the Next Up card.",
+      "Check the bottom navigation bar — the first tab should read \"Home\" (or \"Início\" in Portuguese).",
+    ],
+  },
+  {
+    version: "0.56.0",
+    date: "2026-07-08",
+    title: "Artist photos & smart defaults",
+    icon: "photo_camera",
+    whatsNew: [
+      "Artist photos now appear in the clash picker and the \"add a set\" sheet — no more guessing from initials alone.",
+      "Double-tap the map to zoom in, double-tap again to zoom out — just like Apple/Google Maps.",
+      "The timetable now opens on the first main festival day (the one with the most stages), not the sparse pre-day.",
+      "The gap chip between two shows now offers \"add a set\" directly — no need for the separate (+) button.",
+    ],
+    howToTest: [
+      "Open lock-in or the \"add a set\" sheet — artists with photos should show their image instead of initials.",
+      "Open the map and double-tap — it should zoom in centered on the tap; double-tap again to zoom back out.",
+      "Open the timetable fresh — it should show Friday (full festival) instead of Thursday (The Gathering).",
+      "Lock a plan, then look at the gap between two shows — the chip should offer both \"fill\" and \"add a set\".",
+    ],
+  },
+  {
+    version: "0.55.0",
+    date: "2026-07-08",
+    title: "Map sheet & visual fixes",
+    icon: "map",
+    whatsNew: [
+      "The \"Where's the squad\" member list is now a draggable bottom sheet — the map stays visible behind it, and you can swipe it down to see more map or up to see more people.",
+      "Sticky day headers in the grid no longer get covered by heart icons.",
+      "Squad events now show their weekday (e.g. \"Fri 16:00\") so you always know which day they belong to.",
+    ],
+    howToTest: [
+      "Open \"Where is everyone\" — the roster should be a sheet you can drag up/down. The map stays full-screen behind.",
+      "Open the lineup in grid view and scroll — the day header should always stay on top of the hearts.",
+      "Create a squad event and check the squad plan — the card should show the abbreviated weekday.",
+    ],
+  },
   {
     version: "0.54.0",
     date: "2026-07-08",

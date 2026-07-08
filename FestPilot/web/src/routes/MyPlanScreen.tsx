@@ -280,18 +280,27 @@ export function MyPlanScreen(): JSX.Element {
   };
 
   // Build the timeline rows, threading an insert "+" between every two adjacent cards (edit mode).
+  // F10/DEC-114: when there's a gap between two cards, the gap row itself offers "add a set" inline
+  // so the separate InsertDivider is only shown for back-to-back (no gap) situations.
   const timelineNodes: JSX.Element[] = [];
   let prevCard: PlanItem | null = null;
+  let prevWasGap = false;
   timeline.items.forEach((item, index) => {
     const i = Math.min(index, 11);
     if (item.kind === "gap") {
-      timelineNodes.push(<PlanGapRow key={`gap-${index}`} i={i} item={item} editing={editing} onFill={() => fillGap(item)} />);
+      const nextCard = timeline.items[index + 1];
+      const gapInsert = editing && prevCard && nextCard && nextCard.kind !== "gap"
+        ? () => { setInsertFor({ before: prevCard!, after: nextCard }); }
+        : undefined;
+      timelineNodes.push(<PlanGapRow key={`gap-${index}`} i={i} item={item} editing={editing} onFill={() => fillGap(item)} onInsertSet={gapInsert} />);
+      prevWasGap = true;
       return;
     }
-    if (editing && prevCard) {
+    if (editing && prevCard && !prevWasGap) {
       const before = prevCard;
       timelineNodes.push(<InsertDivider key={`ins-${index}`} before={before} after={item} onClick={() => setInsertFor({ before, after: item })} />);
     }
+    prevWasGap = false;
     if (item.kind === "set") {
       const prevSlot = item.travelIn ? slots.find((s) => s.setId === item.travelIn!.fromSetId) : undefined;
       const isSplit = !!(prevSlot && prevSlot.cutMs != null && item.slot.lateStartMs != null);
@@ -425,6 +434,7 @@ export function MyPlanScreen(): JSX.Element {
           hint={t("plan.swapHint")}
           action="swap"
           tz={tz}
+          photos={photoByKey}
           options={fittingSwaps(
             slots,
             swapFor.setId,
@@ -441,6 +451,7 @@ export function MyPlanScreen(): JSX.Element {
           hint={t("plan.addHint")}
           action="add"
           tz={tz}
+          photos={photoByKey}
           options={
             insertAddWindow
               ? fittingAddsInWindow(slots, daySets, insertAddWindow.startMs, insertAddWindow.endMs)
@@ -565,6 +576,7 @@ function SetPickerSheet({
   hint,
   action,
   tz,
+  photos,
   options,
   onPick,
   onClose,
@@ -573,6 +585,7 @@ function SetPickerSheet({
   hint: string;
   action: "swap" | "add";
   tz: string;
+  photos?: Map<string, string | null>;
   options: PlannableSet[];
   onPick: (set: PlannableSet) => void;
   onClose: () => void;
@@ -596,19 +609,26 @@ function SetPickerSheet({
         {filtered.length === 0 ? (
           <p className="lk-note">{t("plan.noFit")}</p>
         ) : (
-          filtered.map((set) => (
-            <div key={set.id} className="row">
-              <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
-              <div className="min0">
-                <div className="lk-add-name">{set.label}</div>
-                <div className="lk-opt-meta">
-                  <span className="dot" style={{ background: stageColor(set.stageName) }} />
-                  {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
+          filtered.map((set) => {
+            const photo = photos?.get(set.actKey);
+            return (
+              <div key={set.id} className="row">
+                {photo ? (
+                  <img className="lk-ava lk-ava-photo" src={photo} alt="" loading="lazy" />
+                ) : (
+                  <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
+                )}
+                <div className="min0">
+                  <div className="lk-add-name">{set.label}</div>
+                  <div className="lk-opt-meta">
+                    <span className="dot" style={{ background: stageColor(set.stageName) }} />
+                    {set.stageName} · {timeInZone(new Date(set.startMs).toISOString(), tz)} – {timeInZone(new Date(set.endMs).toISOString(), tz)}
+                  </div>
                 </div>
+                <button className="addpill" onClick={() => onPick(set)}>{action === "swap" ? t("plan.swap") : t("plan.add")}</button>
               </div>
-              <button className="addpill" onClick={() => onPick(set)}>{action === "swap" ? t("plan.swap") : t("plan.add")}</button>
-            </div>
-          ))
+            );
+          })
         )}
         <p className="lk-note">{hint}</p>
       </div>
@@ -1027,16 +1047,18 @@ function PlanGapRow({
   i,
   editing,
   onFill,
+  onInsertSet,
 }: {
   item: PlanGapItem;
   i: number;
   editing: boolean;
   onFill: () => void;
+  onInsertSet?: () => void;
 }): JSX.Element | null {
   const t = useT();
   const fillable = editing && item.freeMinutes >= FILLABLE_THRESHOLD_MIN;
   const showBreak = item.breakMinutes >= 20;
-  if (!showBreak && !fillable) return null;
+  if (!showBreak && !fillable && !onInsertSet) return null;
   return (
     <div className="plan-row gap fp-rise" style={{ "--i": i } as CSSProperties}>
       <span className="plan-dot mini" />
@@ -1051,6 +1073,12 @@ function PlanGapRow({
           <button type="button" className="plan-chip fill" onClick={onFill}>
             <span className="ms" style={{ fontSize: 13 }}>add</span>
             {t("plan.fillChip", { min: item.freeMinutes })}
+          </button>
+        )}
+        {onInsertSet && (
+          <button type="button" className="plan-chip fill" onClick={onInsertSet}>
+            <span className="ms" style={{ fontSize: 13 }}>library_music</span>
+            {t("plan.insertAddSet")}
           </button>
         )}
       </div>

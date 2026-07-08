@@ -95,6 +95,7 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
   const tr = useT();
   const [t, setT] = useState<MapTransform | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [outsideDismissed, setOutsideDismissed] = useState(false);
   const { mode, setMode, palette } = useAppearance();
   const { lineup } = useLineup();
   const poiLabel = (type: PoiType): string => tr(POI_LABEL_KEY[type]);
@@ -361,14 +362,14 @@ export function MapView({ festivalId = "tomorrowland-deschorre" }: Props): JSX.E
         </div>
       )}
 
-      {outside && (
+      {outside && !outsideDismissed && (
         <div className="map-outside glass" role="status">
           <span className="ms" aria-hidden="true">location_off</span>
           <div className="map-outside-main">
             <strong>{tr("map.outsideTitle")}</strong>
             <span>{tr("map.outsideMsg")}</span>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={recenter}>{tr("map.showFestivalMap")}</button>
+          <button className="btn btn-primary btn-sm" onClick={() => { recenter(); setOutsideDismissed(true); }}>{tr("map.showFestivalMap")}</button>
         </div>
       )}
 

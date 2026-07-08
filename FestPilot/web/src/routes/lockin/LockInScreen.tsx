@@ -242,7 +242,11 @@ export function LockInScreen(): JSX.Element {
           const isSel = selected?.id === opt.id;
           return (
             <button key={opt.id} className={`glass pick${isSel ? " sel" : ""}`} onClick={() => setSelectedId(opt.id)}>
-              <div className="lk-ava" style={{ color: stageColor(opt.stageName) }}>{initials(opt.label)}</div>
+              {photoByKey.get(opt.actKey) ? (
+                <img className="lk-ava lk-ava-photo" src={photoByKey.get(opt.actKey)!} alt="" loading="lazy" />
+              ) : (
+                <div className="lk-ava" style={{ color: stageColor(opt.stageName) }}>{initials(opt.label)}</div>
+              )}
               <div className="lk-opt-main">
                 <div className="poster lk-opt-name">{opt.label}</div>
                 <div className="lk-opt-meta">
@@ -285,6 +289,7 @@ export function LockInScreen(): JSX.Element {
           window={{ startMs: decision.startMs, endMs: decision.endMs }}
           tz={tz}
           nearby={nearby}
+          photos={photoByKey}
           onAdd={addNearby}
           onClose={() => setShowAdd(false)}
         />
@@ -462,15 +467,18 @@ function AddSheet({
   window,
   tz,
   nearby,
+  photos,
   onAdd,
   onClose,
 }: {
   window: { startMs: number; endMs: number };
   tz: string;
   nearby: PlannableSet[];
+  photos: Map<string, string | null>;
   onAdd: (set: PlannableSet) => void;
   onClose: () => void;
 }): JSX.Element {
+  const photoByKey = photos;
   const [query, setQuery] = useState("");
   const filtered = query.trim()
     ? nearby.filter((set) => set.label.toLowerCase().includes(query.trim().toLowerCase()))
@@ -500,7 +508,11 @@ function AddSheet({
         ) : (
           filtered.map((set) => (
             <div key={set.id} className="row">
-              <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
+              {photoByKey.get(set.actKey) ? (
+                <img className="lk-ava lk-ava-photo" src={photoByKey.get(set.actKey)!} alt="" loading="lazy" />
+              ) : (
+                <div className="lk-ava" style={{ color: stageColor(set.stageName) }}>{initials(set.label)}</div>
+              )}
               <div className="min0">
                 <div className="lk-add-name">{set.label}</div>
                 <div className="lk-opt-meta">

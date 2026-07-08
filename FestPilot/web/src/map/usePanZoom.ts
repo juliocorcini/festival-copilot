@@ -106,9 +106,43 @@ export function usePanZoom(
     return () => el.removeEventListener("wheel", onWheel);
   }, [zoomAround]);
 
+  // Double-tap zoom (F12): two quick taps (<300ms, <30px apart) toggles between 2× and fit scale.
+  const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
+  const DOUBLE_TAP_MS = 300;
+  const DOUBLE_TAP_PX = 30;
+
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size === 1) {
+      const now = Date.now();
+      const prev = lastTap.current;
+      if (
+        prev &&
+        now - prev.time < DOUBLE_TAP_MS &&
+        Math.abs(e.clientX - prev.x) < DOUBLE_TAP_PX &&
+        Math.abs(e.clientY - prev.y) < DOUBLE_TAP_PX
+      ) {
+        lastTap.current = null;
+        const el = ref.current;
+        if (el) {
+          const r = el.getBoundingClientRect();
+          const cx = e.clientX - r.left;
+          const cy = e.clientY - r.top;
+          setView((v) => {
+            const zoomedIn = v.scale > fit.current * 1.5;
+            if (zoomedIn) return fitView(world.current, vp.current, insetsRef.current);
+            const target = clampScale(fit.current * 2.5);
+            const k = target / v.scale;
+            return settle({ scale: target, x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k });
+          });
+          userMoved.current = true;
+        }
+      } else {
+        lastTap.current = { time: now, x: e.clientX, y: e.clientY };
+      }
+    }
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!pointers.current.has(e.pointerId)) return;
@@ -116,6 +150,9 @@ export function usePanZoom(
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const pts = [...pointers.current.values()];
     if (pts.length === 1) {
+      const dx = Math.abs(e.clientX - prev.x);
+      const dy = Math.abs(e.clientY - prev.y);
+      if (dx > 3 || dy > 3) lastTap.current = null;
       userMoved.current = true;
       setView((v) => settle({ ...v, x: v.x + (e.clientX - prev.x), y: v.y + (e.clientY - prev.y) }));
     } else if (pts.length === 2) {

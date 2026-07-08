@@ -764,7 +764,7 @@ main:focus { outline: none; }
 /* Per-day progress + grouping (R5.3). */
 .swipe-head .swipe-day { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 5px; text-align: left; }
 .ob-grid-section { margin-bottom: 6px; }
-.ob-grid-dayhead { position: sticky; top: -8px; z-index: 1; display: flex; align-items: baseline; gap: 8px;
+.ob-grid-dayhead { position: sticky; top: -8px; z-index: 4; display: flex; align-items: baseline; gap: 8px;
   padding: 6px 0 8px; margin-top: 4px; background: linear-gradient(var(--bg) 70%, transparent); }
 .ob-grid-dayname { font-family: "Oswald", sans-serif; text-transform: uppercase; font-weight: 700; font-size: 15px;
   letter-spacing: 0.3px; }
@@ -1095,6 +1095,7 @@ main:focus { outline: none; }
 .pick.sel { border-color: var(--accent) !important; box-shadow: 0 0 0 2px var(--accent), 0 8px 22px -10px rgba(245, 166, 35, 0.3); }
 .lk-ava { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #3a3224, #241f16); border: 1px solid rgba(255, 255, 255, 0.1); }
+.lk-ava-photo { object-fit: cover; padding: 0; }
 .lk-opt-main { flex: 1; min-width: 0; }
 .lk-opt-name { font-size: 17px; font-weight: 700; }
 .lk-opt-meta { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-size: 12px; color: var(--muted); font-weight: 600; }
@@ -1788,6 +1789,17 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 
 /* --- Where's the squad roster (#25.4) --- */
 .where-screen { padding-bottom: 120px; }
+
+/* Bottom-sheet layout (F11/DEC-114) */
+.where-map-full { position: fixed; inset: 0; z-index: 0; }
+.where-map-full .presence-map { width: 100%; height: 100%; border-radius: 0; }
+.where-inbox-float { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 56px); left: 12px; right: 12px; z-index: 100; }
+.where-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; flex-direction: column; background: var(--bg); border-radius: 18px 18px 0 0; box-shadow: 0 -4px 24px rgba(0,0,0,0.3); transition: height 0.25s cubic-bezier(0.4,0,0.2,1); overflow: hidden; will-change: height; }
+.where-sheet-handle { display: flex; justify-content: center; padding: 10px 0 6px; cursor: grab; touch-action: none; flex-shrink: 0; }
+.where-sheet-grip { width: 36px; height: 4px; border-radius: 2px; background: var(--muted); opacity: 0.5; }
+.where-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 8px; flex-shrink: 0; }
+.where-sheet-toggle { appearance: none; background: none; border: 0; color: var(--muted); display: flex; padding: 4px; cursor: pointer; }
+.where-sheet-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 16px 32px; }
 .where-sub { margin: -4px 2px 2px; }
 .where-invisible { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 14px; cursor: pointer; }
 .where-invisible > .ms:first-child { font-size: 22px; color: var(--muted); }
