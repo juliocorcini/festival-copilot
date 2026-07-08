@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlannableSet } from "./types";
 import type { SquadBlock } from "./squadPlan";
-import { eventClashLabel, mergeSquadTimeline, type TimelineEvent } from "./squadTimeline";
+import { eventClashLabel, eventsForDay, mergeSquadTimeline, type TimelineEvent } from "./squadTimeline";
 
 const at = (h: number, m = 0): number => Date.UTC(2026, 6, 18, h, m);
 const iso = (h: number, m = 0): string => new Date(at(h, m)).toISOString();
@@ -70,5 +70,34 @@ describe("eventClashLabel", () => {
 
   it("returns null when the event sits in a gap", () => {
     expect(eventClashLabel(event("e", "Dinner", 22, 23), blocks)).toBeNull();
+  });
+});
+
+describe("eventsForDay (F02/DEC-110)", () => {
+  // Day window: 18:00 UTC July 18 → 06:00 UTC July 19 (a typical festival night).
+  const dayStart = Date.UTC(2026, 6, 18, 18, 0);
+  const dayEnd = Date.UTC(2026, 6, 19, 6, 0);
+
+  const inDay = event("e1", "Photo", 19, 19); // 19:00 July 18 — inside
+  const afterDay = event("e2", "Brunch", 8, 9); // 08:00 July 18 — before window
+  const nextDay: TimelineEvent = {
+    id: "e3", title: "Morning yoga", stageName: null,
+    startsAtUtc: new Date(Date.UTC(2026, 6, 19, 10, 0)).toISOString(),
+    endsAtUtc: new Date(Date.UTC(2026, 6, 19, 11, 0)).toISOString(),
+  };
+  const badTs: TimelineEvent = { id: "e4", title: "Invalid", stageName: null, startsAtUtc: "bad", endsAtUtc: "bad" };
+
+  it("keeps only events whose startsAtUtc falls within [dayStart, dayEnd)", () => {
+    const result = eventsForDay([inDay, afterDay, nextDay, badTs], dayStart, dayEnd);
+    expect(result.map((e) => e.id)).toEqual(["e1"]);
+  });
+
+  it("returns all events when window is 0 to Infinity", () => {
+    const result = eventsForDay([inDay, afterDay, nextDay], 0, Infinity);
+    expect(result).toHaveLength(3);
+  });
+
+  it("returns empty for an empty list", () => {
+    expect(eventsForDay([], dayStart, dayEnd)).toEqual([]);
   });
 });

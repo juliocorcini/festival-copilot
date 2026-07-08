@@ -31,6 +31,7 @@ import {
   clearTravelChoice,
   editBlockMeta,
   fittingAdds,
+  fittingAddsInWindow,
   fittingSwaps,
   rangeIsFree,
   removeBlock,
@@ -145,6 +146,7 @@ export function MyPlanScreen(): JSX.Element {
   const [blockDraft, setBlockDraft] = useState<BlockDraft | null>(null);
   const [travelFor, setTravelFor] = useState<PlanSetItem | null>(null);
   const [insertFor, setInsertFor] = useState<InsertContext | null>(null);
+  const [insertAddWindow, setInsertAddWindow] = useState<{ startMs: number; endMs: number } | null>(null);
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !lineup) {
@@ -268,6 +270,11 @@ export function MyPlanScreen(): JSX.Element {
     setInsertFor(null);
   };
   const insertSet = (): void => {
+    if (insertFor) {
+      const start = cardEndMs(insertFor.before);
+      const end = cardStartMs(insertFor.after);
+      setInsertAddWindow(start > 0 && end > start ? { startMs: start, endMs: end } : null);
+    }
     setInsertFor(null);
     setShowAdd(true);
   };
@@ -434,9 +441,13 @@ export function MyPlanScreen(): JSX.Element {
           hint={t("plan.addHint")}
           action="add"
           tz={tz}
-          options={fittingAdds(slots, daySets)}
+          options={
+            insertAddWindow
+              ? fittingAddsInWindow(slots, daySets, insertAddWindow.startMs, insertAddWindow.endMs)
+              : fittingAdds(slots, daySets)
+          }
           onPick={addSet}
-          onClose={() => setShowAdd(false)}
+          onClose={() => { setShowAdd(false); setInsertAddWindow(null); }}
         />
       )}
 

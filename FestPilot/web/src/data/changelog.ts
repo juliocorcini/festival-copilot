@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.51.0";
+export const APP_VERSION = "0.52.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.52.0",
+    date: "2026-07-08",
+    title: "Insert fix & event day filter",
+    icon: "build",
+    whatsNew: [
+      "\"Add a set\" between two shows now only suggests sets that play during that gap — no more scrolling through the whole day.",
+      "Squad moments (group events) now appear only on the day they belong to, in the correct chronological position.",
+    ],
+    howToTest: [
+      "Lock in a plan, tap the gap between two late-night shows, and verify the picker only lists sets from that window.",
+      "Create a squad event for Friday, then check the squad plan — it should appear only on Friday, positioned by its time.",
+    ],
+  },
   {
     version: "0.51.0",
     date: "2026-06-27",

@@ -78,6 +78,27 @@ export function fittingAdds(slots: PlanSlot[], candidates: PlannableSet[]): Plan
   return candidates.filter((set) => !chosenActs.has(set.actKey) && setFits(slots, set));
 }
 
+/**
+ * Like `fittingAdds` but additionally restricted to sets whose time overlaps a specific window
+ * [windowStart, windowEnd). Used when inserting a set in a known gap (DEC-109 / F01): the picker
+ * should only show sets that PLAY during that window, not the whole day.
+ */
+export function fittingAddsInWindow(
+  slots: PlanSlot[],
+  candidates: PlannableSet[],
+  windowStart: number,
+  windowEnd: number
+): PlannableSet[] {
+  const chosenActs = new Set(slots.map((slot) => slot.actKey));
+  return candidates.filter(
+    (set) =>
+      !chosenActs.has(set.actKey) &&
+      setFits(slots, set) &&
+      set.startMs < windowEnd &&
+      set.endMs > windowStart
+  );
+}
+
 // ── Personal blocks (DEC-073) ────────────────────────────────────────────────
 // Blocks live ONLY in the local plan; they never overlap a set's effective interval or another block.
 

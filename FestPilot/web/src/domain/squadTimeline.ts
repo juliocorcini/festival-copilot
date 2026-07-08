@@ -53,3 +53,14 @@ export function eventClashLabel(event: TimelineEvent, blocks: SquadBlock[]): str
 function titleOf(item: SquadTimelineItem): string {
   return item.kind === "set" ? item.block.set.label : item.event.title;
 }
+
+/**
+ * Keep only events whose `startsAtUtc` falls within the given day window [dayStartMs, dayEndMs).
+ * Pure helper for the SquadPlanScreen day filter (F02 / DEC-110).
+ */
+export function eventsForDay<T extends { startsAtUtc: string }>(events: T[], dayStartMs: number, dayEndMs: number): T[] {
+  return events.filter((e) => {
+    const ms = Date.parse(e.startsAtUtc);
+    return Number.isFinite(ms) && ms >= dayStartMs && ms < dayEndMs;
+  });
+}

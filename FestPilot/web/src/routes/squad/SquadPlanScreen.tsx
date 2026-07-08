@@ -12,7 +12,7 @@ import { useOnboarding } from "../../data/localStore";
 import { useLivePlanSync, useSquadPlan, useSquadPlanNotice, type SquadPlanNotice } from "../../data/squadPlan";
 import { useLineup } from "../../data/useLineup";
 import type { SquadBlock } from "../../domain/squadPlan";
-import { eventClashLabel, mergeSquadTimeline, type TimelineEvent } from "../../domain/squadTimeline";
+import { eventClashLabel, eventsForDay, mergeSquadTimeline, type TimelineEvent } from "../../domain/squadTimeline";
 import { daysForWeekends } from "../../lib/festival";
 import { stageColor, timeInZone } from "../../lib/format";
 import { useT } from "../../i18n";
@@ -95,9 +95,19 @@ export function SquadPlanScreen(): JSX.Element {
     );
   }
 
+  // F02/DEC-110: filter events to those belonging to the active day before interleaving.
+  const dayEvents = useMemo(() => {
+    if (!dayKey || days.length === 0) return events;
+    const idx = days.findIndex((d) => d.key === dayKey);
+    if (idx < 0) return events;
+    const dayStart = days[idx]!.startMs;
+    const dayEnd = idx + 1 < days.length ? days[idx + 1]!.startMs : Infinity;
+    return eventsForDay(events, dayStart, dayEnd);
+  }, [events, dayKey, days]);
+
   // Render-only interleave of the aggregated sets (buildSquadPlan — untouched) with the group agenda
   // (D23). The aggregation never sees an event; this only orders them for display.
-  const timeline = mergeSquadTimeline(plan.blocks, events);
+  const timeline = mergeSquadTimeline(plan.blocks, dayEvents);
 
   return (
     <>

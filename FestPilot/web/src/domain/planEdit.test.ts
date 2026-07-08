@@ -10,6 +10,7 @@ import {
   clearTravelChoice,
   editBlockMeta,
   fittingAdds,
+  fittingAddsInWindow,
   fittingSwaps,
   rangeIsFree,
   removeBlock,
@@ -133,6 +134,22 @@ describe("fitting candidate filters", () => {
   it("fittingSwaps for a slot ignores that slot's own window", () => {
     const ok = fittingSwaps(plan, "b", [set("b2", 70, 135), set("bad", 50, 90)]);
     expect(ok.map((s) => s.id)).toEqual(["b2"]); // bad overlaps A
+  });
+
+  it("fittingAddsInWindow restricts candidates to those overlapping the time window (F01/DEC-109)", () => {
+    // Plan: A 0–60, B 70–130, C 200–260 (all in minutes converted to ms via set() helper).
+    // Window: 130–200 min (the gap between B and C).
+    // Candidates: d at 140–180 (inside window), e at 10–50 (outside — morning), f at 160–220 (overlaps C so setFits rejects).
+    const cands = [set("d", 140, 180), set("e", 10, 50), set("f", 160, 220)];
+    const ok = fittingAddsInWindow(plan, cands, 130 * MIN, 200 * MIN);
+    expect(ok.map((s) => s.id)).toEqual(["d"]); // e is outside window; f overlaps slot C
+  });
+
+  it("fittingAddsInWindow with infinite window behaves like fittingAdds", () => {
+    const cands = [set("d", 140, 180)];
+    const all = fittingAddsInWindow(plan, cands, 0, Infinity);
+    const plain = fittingAdds(plan, cands);
+    expect(all).toEqual(plain);
   });
 });
 
