@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.58.0";
+export const APP_VERSION = "0.59.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,26 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.59.0",
+    date: "2026-07-08",
+    title: "UX hardening & safety alerts",
+    icon: "shield",
+    whatsNew: [
+      "When a squad member hits 'I'm lost', everyone now sees a strong red alert on every screen — with vibration. Tap to navigate to them.",
+      "Double-tap the map to zoom in, double-tap again to zoom out — just like Apple/Google Maps.",
+      "Double-tap and HOLD, then drag up/down for smooth one-finger zoom control.",
+      "Fixed: the heart icon no longer floats above the sticky day header when scrolling the grid.",
+      "Fixed: the 'you're outside the festival' banner now stays dismissed when you tap the button.",
+    ],
+    howToTest: [
+      "Open the map and double-tap — it should zoom in centered on the tap; double-tap again to zoom back out.",
+      "Double-tap and hold on the second tap, drag up to zoom in, down to zoom out.",
+      "Trigger 'I'm lost' from one device — a red pulsing banner should appear on ALL screens of the other device within 15s.",
+      "In onboarding grid mode, scroll so the sticky day header covers cards — hearts should be below it.",
+      "Open the map while outside the festival, tap 'Show festival map', navigate away and back — banner should stay gone.",
+    ],
+  },
   {
     version: "0.58.0",
     date: "2026-07-08",
