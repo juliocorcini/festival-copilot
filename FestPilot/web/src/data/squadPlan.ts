@@ -304,6 +304,91 @@ export function useLivePlanSync(groupId: string | undefined): void {
   }, [groupId, dayKey, festivalId, meShared, meShareFav, localIdsKey, serverIdsKey, localFavKey, serverFavKey, favorites.keys, reload]);
 }
 
+// Module-scoped guard so bulk sync runs at most once per group per app lifecycle.
+const bulkSyncDone = new Set<string>();
+
+/**
+ * Bulk plan sync (F03 / DEC-111): when a user has ALREADY shared at least one day with this squad
+ * (opt-in established), automatically share ALL other days that have a local locked plan but haven't
+ * been shared to the server yet. Runs ONCE per group mount. Respects privacy: does nothing if the
+ * user never shared any day (meShared check comes from the server for the active day — as a proxy
+ * we fetch the active-day raw and check; if shared, bulk-sync the rest).
+ */
+export function useBulkPlanSync(groupId: string | undefined): void {
+  const lineup = useLineup();
+  const { onboarding } = useOnboarding();
+  const festivalId = lineup.lineup?.festival.id;
+  const locale = useLocale();
+  const favorites = useFavorites(festivalId);
+  const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
+  const allDays = useMemo(
+    () => (lineup.lineup ? daysForWeekends(lineup.lineup, weekendIds, locale) : []),
+    [lineup.lineup, weekendIds, locale]
+  );
+
+  useEffect(() => {
+    if (!groupId || !festivalId || allDays.length === 0) return;
+    if (bulkSyncDone.has(groupId)) return;
+    bulkSyncDone.add(groupId);
+
+    const store = loadStore();
+    const prefix = `${festivalId}:`;
+    const localDaysWithPlan = allDays.filter((d) => {
+      const key = `${prefix}${d.key}`;
+      const p = store.plans[key];
+      return p && p.slots.length > 0;
+    });
+    if (localDaysWithPlan.length === 0) return;
+
+    const favKeys = [...favorites.keys];
+
+    (async () => {
+      for (const day of localDaysWithPlan) {
+        try {
+          const serverRaw = await api.getSquadPlan(groupId, day.key);
+          const me = serverRaw?.members.find((m: { isYou: boolean }) => m.isYou);
+          if (!me) continue;
+
+          if (!me.shared) {
+            const anyDayShared = await hasAnyDayShared(groupId, localDaysWithPlan, allDays);
+            if (!anyDayShared) return;
+          }
+
+          const localSlots = store.plans[`${prefix}${day.key}`]?.slots ?? [];
+          const localIds = idSetKey(localSlots.map((s) => s.setId));
+          const serverIds = idSetKey(me.performanceIds ?? []);
+          if (localIds === serverIds) continue;
+
+          const slots = localSlots.map(slotToShareInput);
+          await api.shareMyPlan(groupId, {
+            day: day.key,
+            slots,
+            shareFavorites: me.shareFavorites ?? false,
+            favoriteActKeys: me.shareFavorites ? favKeys : [],
+          });
+        } catch {
+          // Non-critical: the per-day live sync will eventually catch up.
+        }
+      }
+    })();
+  }, [groupId, festivalId, allDays, favorites.keys]);
+}
+
+async function hasAnyDayShared(
+  groupId: string,
+  localDays: { key: string }[],
+  _allDays: { key: string }[]
+): Promise<boolean> {
+  for (const day of localDays) {
+    try {
+      const raw = await api.getSquadPlan(groupId, day.key);
+      const me = raw?.members.find((m: { isYou: boolean }) => m.isYou);
+      if (me?.shared) return true;
+    } catch { /* skip */ }
+  }
+  return false;
+}
+
 export interface SquadPlanNotice {
   /** Unseen changes by OTHER members (drives the badge count). */
   count: number;

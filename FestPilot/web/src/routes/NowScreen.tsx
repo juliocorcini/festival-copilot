@@ -13,7 +13,7 @@ import { FitText } from "../app/FitText";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states";
 import { PullToRefresh } from "../ui/PullToRefresh";
 import { useLineup } from "../data/useLineup";
-import { useFavorites, useOnboarding, usePlan } from "../data/localStore";
+import { loadStore, planKey, useFavorites, useOnboarding, usePlan } from "../data/localStore";
 import { useTravelMatrix } from "../data/useTravelMatrix";
 import { buildNowNext, chronoNowNext, type HomeSet } from "../domain/nowNext";
 import { actKey, actLabel, imageByActKey } from "../domain/lineup";
@@ -98,7 +98,22 @@ function NowScreenBody({ topSlot }: { topSlot?: JSX.Element }): JSX.Element {
   const weekendIds = useMemo(() => onboarding?.weekendIds ?? [], [onboarding?.weekendIds]);
   const days = useMemo(() => (lineup ? daysForWeekends(lineup, weekendIds, locale) : []), [lineup, weekendIds, locale]);
   const activeDay = useMemo(() => pickActiveDay(days, now), [days, now]);
-  const plan = usePlan(lineup?.festival.id, activeDay?.key);
+
+  // F13/DEC-113: if the active day has no plan, fall forward to the next day that does.
+  const effectivePlanDay = useMemo(() => {
+    if (!lineup?.festival.id || days.length === 0) return activeDay;
+    const store = loadStore();
+    const fid = lineup.festival.id;
+    const activeDayKey = activeDay?.key;
+    if (activeDayKey && store.plans[planKey(fid, activeDayKey)]?.slots?.length) return activeDay;
+    const activeIdx = activeDay ? days.indexOf(activeDay) : 0;
+    for (let i = Math.max(0, activeIdx); i < days.length; i++) {
+      if (store.plans[planKey(fid, days[i]!.key)]?.slots?.length) return days[i]!;
+    }
+    return activeDay;
+  }, [lineup?.festival.id, days, activeDay]);
+
+  const plan = usePlan(lineup?.festival.id, effectivePlanDay?.key);
 
   const photoByKey = useMemo(() => imageByActKey(lineup?.performances ?? []), [lineup]);
   const stageNameById = useMemo(

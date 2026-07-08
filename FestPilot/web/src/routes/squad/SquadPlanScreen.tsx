@@ -9,7 +9,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGroup } from "../../data/groups";
 import { useGroupEvents } from "../../data/groupEvents";
 import { useOnboarding } from "../../data/localStore";
-import { useLivePlanSync, useSquadPlan, useSquadPlanNotice, type SquadPlanNotice } from "../../data/squadPlan";
+import { useBulkPlanSync, useLivePlanSync, useSquadPlan, useSquadPlanNotice, type SquadPlanNotice } from "../../data/squadPlan";
 import { useLineup } from "../../data/useLineup";
 import type { SquadBlock } from "../../domain/squadPlan";
 import { eventClashLabel, eventsForDay, mergeSquadTimeline, type TimelineEvent } from "../../domain/squadTimeline";
@@ -42,6 +42,8 @@ export function SquadPlanScreen(): JSX.Element {
   const { events, reload: reloadEvents } = useGroupEvents(id);
   // E07/DEC-095: keep my shared plan live for the active day, and surface what teammates changed.
   useLivePlanSync(id);
+  // F03/DEC-111: bulk-share all days with a local plan (once per mount, if already opted-in).
+  useBulkPlanSync(id);
   const notice = useSquadPlanNotice(id);
 
   const [now, setNow] = useState(() => Date.now());

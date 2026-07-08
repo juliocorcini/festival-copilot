@@ -9,7 +9,7 @@
  * Keep both lists short (2–4 bullets). Newest first.
  */
 
-export const APP_VERSION = "0.52.0";
+export const APP_VERSION = "0.53.0";
 export const CREATOR = "Julio Corcini";
 /** Canonical public URL shown on shared artifacts (the poster, plan text) — never a deploy-hash host. */
 export const APP_URL = "https://festpilot.pages.dev";
@@ -34,6 +34,20 @@ export interface ReleaseNote {
 }
 
 export const CHANGELOG: ReleaseNote[] = [
+  {
+    version: "0.53.0",
+    date: "2026-07-08",
+    title: "Auto-share all days & plan-first Now",
+    icon: "sync",
+    whatsNew: [
+      "Your plan now auto-shares to the squad for ALL days (not just the one you happened to be on when you joined).",
+      "The Now screen shows your planned sets — not just favorites — even when today's plan is on a different day.",
+    ],
+    howToTest: [
+      "Lock in a plan for multiple days, join a squad, then check the squad plan — all days should show your picks.",
+      "If your plan starts on Friday but today is Thursday (Gathering), the Now hero should show your Friday plan.",
+    ],
+  },
   {
     version: "0.52.0",
     date: "2026-07-08",
