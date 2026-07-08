@@ -95,11 +95,12 @@ export interface LocationSharingState {
 }
 
 // Battery-aware sampling knobs: coarse accuracy + cached fixes mean fewer GPS wakes; we only POST
-// on a meaningful move or after a slow keepalive so a GPS fix doesn't lapse its 15-min window.
-const MIN_POST_INTERVAL_MS = 25_000;
-const KEEPALIVE_MS = 75_000;
-const SIGNIFICANT_MOVE_M = 25;
-const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: false, maximumAge: 30_000, timeout: 20_000 };
+// on a meaningful move or after a keepalive so a GPS fix doesn't lapse its freshness window.
+// DEC-116: aggressive foreground — 30s keepalive, 20s min interval, 20m significant move.
+const MIN_POST_INTERVAL_MS = 20_000;
+const KEEPALIVE_MS = 30_000;
+const SIGNIFICANT_MOVE_M = 20;
+const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: false, maximumAge: 15_000, timeout: 15_000 };
 
 function metersApart(a: GeolocationCoordinates, b: GeolocationCoordinates): number {
   const RAD = Math.PI / 180;
@@ -211,6 +212,18 @@ export function useLocationSharing(onPosted?: () => void): LocationSharingState 
   }, [supported, onPosition, postFix, permission]);
 
   useEffect(() => () => disable(), [disable]);
+
+  // DEC-116: flush last known position when app goes to background (best-effort ~5s window).
+  useEffect(() => {
+    if (!active) return;
+    const onHide = (): void => {
+      if (document.visibilityState === "hidden" && lastCoords.current) {
+        postFix(lastCoords.current);
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [active, postFix]);
 
   return { supported, permission, active, lastFixAtMs, error, enable, disable };
 }
