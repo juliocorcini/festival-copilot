@@ -25,8 +25,8 @@ export interface MemberSheetProps {
 }
 
 type SheetSnap = "half" | "full";
-const SNAP_HALF_RATIO = 0.55;
-const SNAP_FULL_RATIO = 0.9;
+const SNAP_HALF_RATIO = 0.7;
+const SNAP_FULL_RATIO = 0.92;
 
 export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX.Element {
   const t = useT();
@@ -121,16 +121,24 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
     return nextSharedSet(comparison.overlap, Date.now());
   }, [comparison]);
 
-  // Bottom sheet drag
+  // Bottom sheet drag — works from anywhere on the sheet
   const [snap, setSnap] = useState<SheetSnap>("half");
   const [height, setHeight] = useState(() => window.innerHeight * SNAP_HALF_RATIO);
   const dragging = useRef(false);
   const startY = useRef(0);
   const startH = useRef(0);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setHeight(snap === "full" ? window.innerHeight * SNAP_FULL_RATIO : window.innerHeight * SNAP_HALF_RATIO);
   }, [snap]);
+
+  const canDrag = useCallback((): boolean => {
+    const el = bodyRef.current;
+    if (!el) return true;
+    if (el.scrollTop > 0) return false;
+    return true;
+  }, []);
 
   const onDragStart = useCallback((clientY: number) => {
     dragging.current = true;
@@ -142,7 +150,7 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
     if (!dragging.current) return;
     const delta = startY.current - clientY;
     const maxH = window.innerHeight * SNAP_FULL_RATIO;
-    const minH = window.innerHeight * 0.3;
+    const minH = window.innerHeight * 0.15;
     setHeight(Math.max(minH, Math.min(maxH, startH.current + delta)));
   }, []);
 
@@ -150,20 +158,26 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
     if (!dragging.current) return;
     dragging.current = false;
     const ratio = height / window.innerHeight;
-    if (ratio < 0.35) {
+    if (ratio < 0.3) {
       onClose();
-    } else if (ratio > 0.7) {
+    } else if (ratio > 0.78) {
       setSnap("full");
     } else {
       setSnap("half");
     }
   }, [height, onClose]);
 
-  const handleTouch = useMemo(() => ({
-    onTouchStart: (e: React.TouchEvent) => onDragStart(e.touches[0]!.clientY),
-    onTouchMove: (e: React.TouchEvent) => onDragMove(e.touches[0]!.clientY),
+  const sheetTouch = useMemo(() => ({
+    onTouchStart: (e: React.TouchEvent) => {
+      if (!canDrag()) return;
+      onDragStart(e.touches[0]!.clientY);
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (!dragging.current) return;
+      onDragMove(e.touches[0]!.clientY);
+    },
     onTouchEnd: () => onDragEnd(),
-  }), [onDragStart, onDragMove, onDragEnd]);
+  }), [canDrag, onDragStart, onDragMove, onDragEnd]);
 
   const name = member.displayName ?? "?";
   const theirDayIds = theirIds.get(activeDay?.key ?? "");
@@ -176,8 +190,9 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
         className="member-sheet"
         style={{ height }}
         onClick={(e) => e.stopPropagation()}
+        {...sheetTouch}
       >
-        <div className="member-sheet-handle" {...handleTouch}>
+        <div className="member-sheet-handle">
           <span className="member-sheet-grip" />
         </div>
 
@@ -214,7 +229,7 @@ export function MemberSheet({ groupId, member, onClose }: MemberSheetProps): JSX
         )}
 
         {/* Comparison body */}
-        <div className="member-sheet-body">
+        <div className="member-sheet-body" ref={bodyRef}>
           {loading ? (
             <div className="member-sheet-loading">
               <span className="ms spin">progress_activity</span>
