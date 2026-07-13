@@ -166,6 +166,50 @@ async function getActivity(db: D1Database, nowIso: string): Promise<ActivitySumm
   return { kind: ACTIVITY_KIND, today, avgPerDay, series };
 }
 
+export interface AdminUserRow {
+  id: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  email: string | null;
+  country: string | null;
+  provider: string;
+  isAnonymous: boolean;
+  createdAtUtc: string;
+  lastSeenUtc: string | null;
+}
+
+/** All registered (non-test) users, newest-first by creation date. */
+export async function listAllUsers(db: D1Database): Promise<AdminUserRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, display_name, avatar_color, email, country, auth_provider, is_anonymous, created_at_utc, last_seen_utc
+         FROM app_user WHERE is_test = 0
+         ORDER BY created_at_utc DESC`
+    )
+    .all<{
+      id: string;
+      display_name: string | null;
+      avatar_color: string | null;
+      email: string | null;
+      country: string | null;
+      auth_provider: string;
+      is_anonymous: number;
+      created_at_utc: string;
+      last_seen_utc: string | null;
+    }>();
+  return (results ?? []).map((r) => ({
+    id: r.id,
+    displayName: r.display_name,
+    avatarColor: r.avatar_color,
+    email: r.email,
+    country: r.country,
+    provider: r.auth_provider,
+    isAnonymous: Number(r.is_anonymous) === 1,
+    createdAtUtc: r.created_at_utc,
+    lastSeenUtc: r.last_seen_utc,
+  }));
+}
+
 /** Orchestrate every real signal into the admin metrics payload, including the runway estimates. */
 export async function getMetrics(db: D1Database, nowIso: string): Promise<MetricsDto> {
   const [users, storage, activity] = await Promise.all([

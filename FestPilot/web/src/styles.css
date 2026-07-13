@@ -2400,7 +2400,15 @@ img.ava, .ava-img { object-fit: cover; padding: 0; }
 .admin-recent-name { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
 .admin-recent-mail { font-size: 14px; color: var(--accent); }
 .admin-recent-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
-@media (max-width: 720px) { .admin-2col { grid-template-columns: 1fr; } }
+.admin-users-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-users-table th { text-align: left; padding: 8px 10px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); border-bottom: 1px solid var(--line); }
+.admin-users-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.admin-users-table tbody tr:last-child td { border-bottom: none; }
+.admin-users-table tbody tr:hover { background: rgba(124, 92, 255, 0.04); }
+.admin-user-name { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.admin-user-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.admin-muted { color: var(--muted); }
+@media (max-width: 720px) { .admin-2col { grid-template-columns: 1fr; } .admin-users-table { font-size: 12px; } .admin-users-table th, .admin-users-table td { padding: 6px 6px; } }
 
 /* R11.5 — live test console */
 .admin-danger-btn { color: var(--danger-ink); border-color: rgba(224, 86, 59, 0.35); }

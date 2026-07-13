@@ -16,7 +16,7 @@ import { MAX_MAP_BASE_BYTES, MEDIA_CONTENT_TYPES, putImage } from "../media/stor
 import { getDataSource, readDataSourceInput, upsertDataSource } from "./dataSource";
 import { listPois, readPoiInputs, replacePois } from "./poiRepo";
 import { listTravelTimes, readTravelTimeInputs, replaceTravelTimes } from "./travelTimeRepo";
-import { getMetrics } from "./metricsRepo";
+import { getMetrics, listAllUsers } from "./metricsRepo";
 import {
   getInjectableStages,
   injectStageFix,
@@ -100,6 +100,11 @@ admin.post("/festivals/:id/ingest", async (c) => {
 admin.get("/metrics", async (c) => {
   const metrics = await getMetrics(c.env.DB, new Date().toISOString());
   return c.json(metrics);
+});
+
+admin.get("/users", async (c) => {
+  const users = await listAllUsers(c.env.DB);
+  return c.json({ users });
 });
 
 // R11.1b — Lineup & timetable dashboard: documented source + per-stage health for one festival.

@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
-import { AdminError, fetchMetrics, type MetricsDto, type ServiceRunway } from "./adminApi";
+import { AdminError, fetchAllUsers, fetchMetrics, type AdminUserRow, type MetricsDto, type ServiceRunway } from "./adminApi";
 import { AdminHeader, AdminLoading, AdminErrorState, AdminBanner } from "./AdminUi";
 
 /** R11.4 — Usage metrics + free-tier runway: real users + R2, honest about locked platform figures. */
 export function AdminMetricsScreen(): JSX.Element {
   const [data, setData] = useState<MetricsDto | null>(null);
+  const [allUsers, setAllUsers] = useState<AdminUserRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
     setError(null);
-    fetchMetrics(ctrl.signal)
-      .then((d) => setData(d))
+    Promise.all([
+      fetchMetrics(ctrl.signal),
+      fetchAllUsers(ctrl.signal),
+    ])
+      .then(([metrics, usersRes]) => {
+        setData(metrics);
+        setAllUsers(usersRes.users);
+      })
       .catch((err) => {
         if (ctrl.signal.aborted) return;
         setError(err instanceof AdminError ? `Couldn't load metrics (${err.status}).` : "Couldn't load metrics.");
@@ -76,28 +83,48 @@ export function AdminMetricsScreen(): JSX.Element {
                 {fmtInt(data.activity.today)} today · {fmtInt(data.activity.avgPerDay)}/day avg (first-party).
               </p>
             </div>
-
-            <div className="card admin-panel">
-              <div className="label">Recently seen</div>
-              {data.users.recent.length > 0 ? (
-                <ul className="admin-recent">
-                  {data.users.recent.map((u, i) => (
-                    <li key={i}>
-                      <span className="admin-recent-name">
-                        {u.displayName || "Anonymous"}
-                        {u.hasEmail ? <span className="ms admin-recent-mail" title="has email">mail</span> : null}
-                      </span>
-                      <span className="admin-recent-meta">
-                        {u.country ? `${flag(u.country)} ${u.country}` : "—"} · {relTime(u.lastSeenUtc)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="admin-muted-p">No users yet.</p>
-              )}
-            </div>
           </div>
+
+          <SectionTitle icon="group" text={`All registered users (${allUsers.length})`} />
+          {allUsers.length > 0 ? (
+            <div className="card admin-panel">
+              <table className="admin-users-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Country</th>
+                    <th>Signed up</th>
+                    <th>Last seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allUsers.map((u) => (
+                    <tr key={u.id}>
+                      <td>
+                        <span className="admin-user-name">
+                          {u.avatarColor && (
+                            <span
+                              className="admin-user-dot"
+                              style={{ background: u.avatarColor }}
+                            />
+                          )}
+                          {u.displayName || "Anonymous"}
+                          {u.isAnonymous && <span className="admin-pill muted" style={{ marginLeft: 6, fontSize: 10 }}>anon</span>}
+                        </span>
+                      </td>
+                      <td className="admin-muted">{u.email || "—"}</td>
+                      <td>{u.country ? `${flag(u.country)} ${u.country}` : "—"}</td>
+                      <td className="admin-muted">{shortDate(u.createdAtUtc)}</td>
+                      <td>{relTime(u.lastSeenUtc)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="admin-muted-p">No users yet.</p>
+          )}
 
           <p className="admin-foot-note">Generated {new Date(data.generatedAtUtc).toLocaleString()}.</p>
         </>
@@ -188,6 +215,13 @@ function relTime(iso: string | null): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
+}
+
+function shortDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 /** ISO-3166 alpha-2 → flag emoji (regional indicators). Falls back to nothing on bad input. */

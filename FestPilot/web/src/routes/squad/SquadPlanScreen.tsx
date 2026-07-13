@@ -58,6 +58,23 @@ export function SquadPlanScreen(): JSX.Element {
   const eventTz = lineup.lineup?.festival.timezone ?? timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const eventStages = lineup.lineup?.stages ?? [];
 
+  // F02/DEC-110: filter events to those belonging to the active day before interleaving.
+  const dayEvents = useMemo(() => {
+    if (!dayKey || days.length === 0) return events;
+    const idx = days.findIndex((d) => d.key === dayKey);
+    if (idx < 0) return events;
+    const dayStart = days[idx]!.startMs;
+    const dayEnd = idx + 1 < days.length ? days[idx + 1]!.startMs : Infinity;
+    return eventsForDay(events, dayStart, dayEnd);
+  }, [events, dayKey, days]);
+
+  // Render-only interleave of the aggregated sets (buildSquadPlan — untouched) with the group agenda
+  // (D23). The aggregation never sees an event; this only orders them for display.
+  const timeline = useMemo(
+    () => mergeSquadTimeline(plan?.blocks ?? [], dayEvents),
+    [plan?.blocks, dayEvents]
+  );
+
   const count = group?.memberCount ?? raw?.memberCount ?? 0;
   const meShared = raw?.members.find((m) => m.isYou)?.shared ?? false;
 
@@ -96,23 +113,6 @@ export function SquadPlanScreen(): JSX.Element {
       </>
     );
   }
-
-  // F02/DEC-110: filter events to those belonging to the active day before interleaving.
-  const dayEvents = useMemo(() => {
-    if (!dayKey || days.length === 0) return events;
-    const idx = days.findIndex((d) => d.key === dayKey);
-    if (idx < 0) return events;
-    const dayStart = days[idx]!.startMs;
-    const dayEnd = idx + 1 < days.length ? days[idx + 1]!.startMs : Infinity;
-    return eventsForDay(events, dayStart, dayEnd);
-  }, [events, dayKey, days]);
-
-  // Render-only interleave of the aggregated sets (buildSquadPlan — untouched) with the group agenda
-  // (D23). The aggregation never sees an event; this only orders them for display.
-  const timeline = useMemo(
-    () => mergeSquadTimeline(plan.blocks ?? [], dayEvents),
-    [plan.blocks, dayEvents]
-  );
 
   return (
     <>

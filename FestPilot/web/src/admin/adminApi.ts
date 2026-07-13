@@ -334,6 +334,21 @@ export interface MetricsDto {
 export const fetchMetrics = (signal?: AbortSignal): Promise<MetricsDto> =>
   adminGet<MetricsDto>("/metrics", signal);
 
+export interface AdminUserRow {
+  id: string;
+  displayName: string | null;
+  avatarColor: string | null;
+  email: string | null;
+  country: string | null;
+  provider: string;
+  isAnonymous: boolean;
+  createdAtUtc: string;
+  lastSeenUtc: string | null;
+}
+
+export const fetchAllUsers = (signal?: AbortSignal): Promise<{ users: AdminUserRow[] }> =>
+  adminGet<{ users: AdminUserRow[] }>("/users", signal);
+
 // R11.5 — Live test console.
 export interface TestGroupRow {
   id: string;
