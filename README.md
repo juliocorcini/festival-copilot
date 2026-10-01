@@ -1,8 +1,25 @@
-# FestPilot
+<p align="center">
+  <img src="FestPilot/web/public/icons/icon-512.png" alt="FestPilot" width="120" />
+</p>
 
-Festival companion app for planning personal schedules, resolving lineup conflicts, coordinating groups, estimating walking time between stages, and tracking temporary meeting points.
+<h1 align="center">FestPilot</h1>
 
-**Live:** [festpilot.pages.dev](https://festpilot.pages.dev) · **Current version:** v0.69.0 · **Reference festival:** Tomorrowland Belgium 2026
+<p align="center">
+  <strong>A festival companion app that resolves lineup clashes, accounts for walking time between stages, and keeps your group together with live presence.</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.69-teal" alt="Version" />
+  <img src="https://img.shields.io/badge/tests-840%20unit%20%2B%2037%20E2E-brightgreen" alt="Tests" />
+  <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript Strict" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB" alt="React 18" />
+  <img src="https://img.shields.io/badge/Cloudflare-D1%20%2B%20DO%20%2B%20R2-F38020" alt="Cloudflare" />
+  <img src="https://img.shields.io/badge/platform-Web%20%2B%20Android-green" alt="Platform" />
+</p>
+
+<p align="center">
+  <a href="https://festpilot.pages.dev">🌐 Live App</a> · Reference festival: Tomorrowland Belgium 2026
+</p>
 
 ---
 
@@ -10,11 +27,69 @@ Festival companion app for planning personal schedules, resolving lineup conflic
 
 A big multi-stage festival is overwhelming in a very specific way:
 
-- **Clashes are brutal.** Hundreds of artists across 16+ stages, and the ones you love are constantly scheduled at the same time. You end up improvising and missing the sets you cared about most.
-- **Raw schedules ignore reality.** Real festival-going involves leaving one set early, walking 8 minutes to another stage, and catching the second act from the start. No tool accounts for that.
+- **Clashes are brutal.** Hundreds of artists across 16+ stages, and the ones you love are constantly scheduled at the same time.
+- **Raw schedules ignore reality.** Real festival-going involves leaving one set early, walking 8 minutes to another stage, and catching the next act from the start. No tool accounts for that.
 - **You lose your friends.** Everyone wants different acts, phones die, signal is bad, and "I'm at the main stage" is useless when the main stage holds 30,000 people.
 
-FestPilot solves this with three pillars: **pick everyone you want to see** (favorites), **turn wishes into a conflict-free plan** (clash resolution with partial sets and walking time), and **stay together with your group** (shared timetable, live presence, meeting points).
+FestPilot solves this with three pillars: **pick everyone you want** (favorites), **turn wishes into a conflict-free plan** (clash resolution with partial sets and walking time), and **stay together** (shared timetable, live presence, meeting points).
+
+---
+
+## What I Built
+
+A full-stack festival companion — from lineup ingestion to live WebSocket presence to GPS-to-stage mapping — built solo and tested with real Tomorrowland 2026 data (813 performances, 15 stages, 2 weekends).
+
+### By the Numbers
+
+| Metric | Value |
+|--------|-------|
+| Source files | 237 |
+| Lines of code | ~38,500 |
+| React components | 91 |
+| Backend API modules | 24 |
+| Domain modules (pure TS) | 49 |
+| Database tables / migrations | 28 tables · 16 migrations |
+| Unit tests | 840 (Vitest) |
+| E2E specs | 37 (Playwright) |
+| Documented decisions | 122 (DEC-001 through DEC-124) |
+| Commits | 178 |
+
+---
+
+## Key Features
+
+### 🎵 Lineup & Clash Resolution
+- Browse 813+ performances by artist, stage, or day
+- **Partial set support** — "leave early" cuts a performance at a custom point so you can catch the start of another
+- **Walk-time validation** — the app knows stage-to-stage travel times and warns if you can't physically make it
+- Lock in a conflict-free personal timetable from your favorites
+
+### 👥 Squad Coordination (Real-time)
+- Create/join groups via link, QR, scan, or code
+- **Shared plan** with auto-aggregation: see where each member will be, block by block
+- Owner override + per-block follow/split ("I'll join you for this one")
+- Plan change history — the group sees when someone changes their mind
+- Group events and a message board
+
+### 📍 Live Presence & Meeting Points
+- **Coarse GPS-to-stage mapping** with confidence levels: "at Mainstage" / "near Freedom" / "between stages"
+- **"Where is everyone?"** pings — one tap, everyone replies with their stage
+- **Precise sharing** is opt-in, squad-scoped, and time-boxed (TTL)
+- **Meeting points** with photo + note + expiry + compass navigation
+- **"I'm lost" SOS** — shares exact location + nearest exit/medical
+
+### 🗺️ Interactive Map
+- **Georeferenced SVG** — real stage coordinates with affine transform from control points
+- Pan/zoom/pinch, day/night modes
+- Live presence overlay showing squad member positions
+- Stage markers, POIs (toilets, water, medical, exits)
+
+### 🔄 Automated Lineup Ingestion
+The lineup is never hardcoded — a cron pipeline runs every 6 hours:
+1. Resolve source → fetch CDN data → normalize timezone quirks (midnight crossing, +1s end times)
+2. SHA-256 hash + structured diff (added / removed / time changed / stage changed)
+3. Idempotent D1 upsert in a transaction — removed acts marked `active = false`, never deleted
+4. Bump `lineup_revision` so clients know when to refresh
 
 ---
 
@@ -48,7 +123,13 @@ Official festival site ──(resolve event+uuid)──▶ Lineup Resolver
                             (Vite · Capacitor for native)
 ```
 
-Users always read FestPilot's database — never the festival site directly. The backend ingests, normalizes, and serves the lineup; the app consumes the API.
+### Design Principles
+
+- **Full-stack TypeScript** — end-to-end type safety across client, server, and database queries
+- **Domain purity** — 49 business logic modules with zero side effects, co-located with tests
+- **Edge-native backend** — Cloudflare D1 for relational data, Durable Objects for WebSocket rooms, R2 for media, all on the free tier
+- **Lineup as ingested data** — the app never scrapes live; a cron pipeline normalizes and versions the data
+- **Privacy-first presence** — coarse by default (stage-level), precise only on explicit opt-in with TTL
 
 ---
 
@@ -56,246 +137,103 @@ Users always read FestPilot's database — never the festival site directly. The
 
 | Layer | Technology |
 |-------|-----------|
-| **Language** | TypeScript (end-to-end) |
 | **Monorepo** | npm workspaces (`server/` + `web/`) |
-| **Backend** | Cloudflare Worker + Hono |
-| **Database** | Cloudflare D1 (SQLite at the edge) |
+| **Backend** | Cloudflare Worker + Hono (24 API modules) |
+| **Database** | Cloudflare D1 (SQLite at edge, 28 tables, 16 migrations) |
 | **Realtime** | Durable Objects (per-group WebSocket rooms) |
-| **Storage** | Cloudflare R2 (media: avatars + meeting-point photos) |
-| **Scheduled jobs** | Cron Triggers (lineup auto-ingestion) |
-| **Frontend** | React 18 + Vite + react-router-dom |
+| **Storage** | Cloudflare R2 (avatars, meeting-point photos) |
+| **Scheduled** | Cron Triggers (lineup auto-ingestion every 6h) |
+| **Frontend** | React 18, TypeScript (strict), Vite, react-router-dom |
 | **Native** | Capacitor (GPS, push notifications, haptics, status bar) |
 | **Auth** | Firebase Auth (anonymous-first, Google/Apple upgrade for groups) |
-| **Unit tests** | Vitest (~840 tests across server + web) |
-| **E2E tests** | Playwright (37 specs) |
-| **i18n** | Custom layer (EN source of truth, PT overlay, live switch) |
+| **Testing** | Vitest (840 unit) + Playwright (37 E2E) |
+| **i18n** | Custom layer (EN source, PT overlay, live switch) |
 | **Deploy** | Cloudflare Pages (web) + signed APK (Android) |
 
 ---
 
-## Backend
+## Testing
 
-The backend is a Cloudflare Worker built with [Hono](https://hono.dev). It is not a thin wrapper — it handles lineup ingestion, group coordination, live presence, media upload, and an admin back-office.
+**840 unit tests** + **37 E2E specs**, all green.
 
-### API Surface
-
-**Public API** — lineup, favorites, personal plan, squad management, presence, meeting points, pings ("where is everyone?"), group events, board messages.
-
-**Admin API** — festival management (CRUD + multi-festival ingest), lineup dashboard, data-source registry, usage metrics with free-tier runway estimation, map editor (georeference + stage placement), and a live test console that creates test squads through the real presence pipeline.
-
-### Key Modules
-
-```
-server/src/
-├── api/           # Hono route handlers (24 modules)
-├── ingest/        # Cron pipeline: source → fetch → hash → diff → store
-├── lineup/        # Resolver + normalizer (CDN → structured data)
-├── domain/        # Business logic (presence, meetings, plan changes, group events)
-├── group/         # Durable Object: per-group WebSocket room
-├── media/         # R2 adapter with app-enforced quota
-├── db/            # ID generation (ULID)
-└── auth.ts        # Firebase JWT verification (JWKS)
-```
-
-### Infrastructure Bindings
-
-The Worker binds to D1 (relational), a Durable Object class (`GroupRoom` with SQLite storage — free tier), R2 (media bucket), and a Cron Trigger (`0 */6 * * *`). Auth is token-based (`ADMIN_TOKEN` as a Wrangler secret). Firebase ID tokens are verified via JWKS.
-
----
-
-## Database
-
-Cloudflare D1 with **28 tables** across **16 incremental migrations**. The schema covers:
-
-- **Lineup domain** — festivals, editions/weekends, stages, performances, artists (M:N), lineup sources, import runs, change log, revision tracking
-- **Map/geo domain** — stage locations (center + radius), stage-to-stage travel times, POIs (toilets, water, medical, exits), imported map features (KML), stage aliases
-- **Personal domain** — users, favorites, closed timetable slots (with custom cut points for partial sets)
-- **Social domain** — groups, members, group timetable slots, presence (with confidence and expiry), meeting points (with lifecycle states), pings, group events, board messages, plan change history
-- **Infrastructure** — media objects (quota ledger), data sources, usage counters, festival suggestions
-
-All migrations are additive and forward-only. The schema was designed upfront from a documented data model (`documents/v1-data-model-d1-schema.md`).
-
----
-
-## Ingestion Pipeline
-
-The lineup is never hardcoded. A cron-triggered pipeline resolves the source, fetches, normalizes, and stores the data:
-
-1. **Resolve** — fetch the official festival page, parse `__NEXT_DATA__`, extract `event` + `uuid` identifiers. The UUID can change between runs; re-resolve every time.
-2. **Fetch** — use the identifiers to build CDN URLs (`config-{event}-{uuid}.json`, `stages-{event}-{uuid}.json`, `{event}-{weekend}-{uuid}.json`) and fetch structured performance data.
-3. **Normalize** — store times in the festival timezone (`Europe/Brussels`), strip the known +1-second end-time quirk, handle sets that cross midnight (end time rolls to the next day).
-4. **Hash + diff** — SHA-256 the raw JSON; on change, compute a structured diff (added / removed / time changed / stage changed / artist changed).
-5. **Store** — idempotent D1 upsert in a transaction. Removed acts are marked `active = false` (never hard-deleted). Bump a `lineup_revision` counter so clients know when to refresh.
-
-**Cadence:** every 6 hours by default. The pipeline supports re-import on demand (per-festival or bulk) through the admin API.
-
-**Fallback chain:** saved `event`/`uuid` → on 404, re-resolve from page → if `__NEXT_DATA__` is gone, keep last snapshot flagged as "possibly stale."
-
----
-
-## Frontend
-
-The web app is a React + TypeScript PWA (Vite), wrapped with Capacitor for native Android distribution. 50+ screens across seven feature clusters:
-
-- **Lineup & Timetable** — browse by artist/stage/day, search, grid view, favorites with swipe gestures
-- **Lock-in (My Plan)** — chronological clash resolution, partial set support ("leave early"), walk-time validation between stages
-- **Map** — georeferenced SVG base (affine transform from control points), pan/zoom/pinch, day/night modes, live presence overlay, stage markers
-- **Squad** — create/join (link, QR, scan, code), shared plan with auto-aggregation, owner override, per-block follow/split, plan change history, group events, board
-- **Presence** — coarse GPS-to-stage mapping with confidence ("at" / "near" / "between"), "where is everyone?" pings, precise opt-in sharing (squad-scoped, TTL)
-- **Meeting points** — exact location with photo + note + expiry, lifecycle states (active → expiring → expired → empty → archived), compass navigation
-- **Safety** — "I'm lost" SOS with exact location sharing + nearest exit/medical
-
-### Domain Logic
-
-Core business logic lives in `web/src/domain/` as **pure, tested functions** (24 modules):
-
-`clash detection` · `plan building` · `plan editing` · `partial sets` · `travel time` · `squad plan aggregation` · `squad timeline` · `now/next computation` · `member comparison` · `reminders` · `festival day derivation` · `timetable layout` · `intervals` · `routing` · `swipe gesture` · `data state`
-
-Each domain module is co-located with its test file. No side effects, no API calls — pure inputs and outputs.
-
----
-
-## Tests
-
-**~840 unit tests** (Vitest) + **37 E2E specs** (Playwright). All green, `tsc --noEmit` clean across both workspaces.
-
-### Unit Tests
-
-- **Server (260 tests)** — resolver, normalizer, diff engine, ingestion orchestration, hash (SHA-256 vectors), ULID generation, admin metrics, runway estimation. Integration tests run against real D1 migrations via `sql.js`.
-- **Web (579 tests)** — all 24 domain modules, plan editing invariants (zero-overlap by construction), clash detection, travel time, squad plan aggregation, member comparison, reminders, timezone formatting, i18n, data state transitions, lineup diff.
-
-### E2E Tests
-
-Playwright specs cover the golden paths: onboarding → favorites → lock-in → plan editing → squad creation → join → presence → meeting points. Shared freeze fixture with Service Worker settlement for deterministic runs (zero flaky after hardening rounds R7–R9).
-
-### Running Tests
+- **Server (260 tests)** — resolver, normalizer, diff engine, ingestion orchestration, SHA-256 hash vectors, ULID generation, admin metrics, runway estimation. Integration tests run against real D1 migrations via `sql.js`.
+- **Web (579 tests)** — all 49 domain modules: plan editing invariants (zero-overlap by construction), clash detection, travel time, squad plan aggregation, member comparison, reminders, timezone formatting, i18n, data state transitions.
+- **E2E (37 specs)** — golden paths from onboarding through squad coordination. Deterministic runs with Service Worker settlement and a freeze fixture.
 
 ```bash
-npm install          # from FestPilot/
-npm test             # unit tests (both workspaces)
+npm test             # 840 unit tests (both workspaces)
 npm run typecheck    # tsc --noEmit (both workspaces)
-
-cd web
-npx playwright test  # E2E
+cd web && npx playwright test   # 37 E2E specs
 ```
 
 ---
 
-## Technical Decisions
-
-All product and architecture decisions are documented in `FestPilot/brain/decision-log.md` — **122 decisions** (DEC-001 through DEC-124), each with date, status, rationale, and alternatives considered. Key decisions:
-
-| ID | Decision |
-|----|----------|
-| DEC-003 | Web-first React/TS + Capacitor (not React Native) |
-| DEC-004 | Cloudflare backend (Workers + D1 + Durable Objects + R2) |
-| DEC-007 | Coarse presence by default; exact location only via explicit meeting points |
-| DEC-009 | Lineup source resolved at runtime, never hardcoded; auto-update with change detection |
-| DEC-013 | Group plan: auto-aggregation + owner override + per-block follow/split; no in-app chat in V1 |
-| DEC-017 | Clash detection: `overlaps(a, b) = a.startAt < b.endAt && b.startAt < a.endAt` |
-| DEC-024 | Firebase Auth, anonymous-first; upgrade required for groups |
-| DEC-037 | V1 runs entirely on Cloudflare free tiers |
-| DEC-095 | Squad plan is live and auditable: auto re-share on change + history |
-| DEC-099 | Precise live presence is opt-in, squad-scoped, and time-boxed (TTL) |
-
----
-
-## Project Status
-
-**Deployed and functional.** The app is live at [festpilot.pages.dev](https://festpilot.pages.dev) with a signed Android APK available for download.
-
-**What's built:**
-- Full lineup ingestion pipeline (Tomorrowland 2026: 813 performances, 15 stages, 2 weekends)
-- Favorites with swipe/grid picking and per-day progress
-- Lock-in clash resolution with partial sets and walk-time validation
-- Squad creation, joining (link/QR/code), shared plan with aggregation and history
-- Live coarse presence (GPS → stage mapping with confidence + expiry)
-- Precise presence sharing (opt-in, squad-scoped, TTL)
-- Meeting points with photo upload, lifecycle states, and compass navigation
-- Interactive georeferenced map with day/night modes
-- "Where is everyone?" pings with one-tap stage replies
-- SOS / "I'm lost" safety feature
-- Admin back-office with metrics, data-source registry, and map editor
-- i18n (English + Portuguese) with live language switch
-- PWA with offline support + Android APK via Capacitor
-
-**What's next:** Firebase project setup (FCM for server push), on-device smoke testing, and the remaining V1.x features (discovery/fill-empty-slots, undo on clash decisions, share timetable as image).
-
----
-
-## Repository Structure
+## Project Structure
 
 ```
-festival-copilot/
-└── FestPilot/                     # npm-workspaces monorepo root
-    ├── brain/                     # Product knowledge base (spec, decisions, research)
-    │   ├── product-spec.md        # What the app is, features, rules, scope
-    │   ├── decision-log.md        # 122 decisions with rationale and status
-    │   ├── technical-direction.md # Stack, architecture, data model, algorithms
-    │   ├── implementation-phases.md # 6-phase build plan
-    │   ├── research/              # Data-source study, map seed analysis
-    │   └── documents/             # Execution orchestrators, wireframes, audits
-    ├── server/                    # Cloudflare Worker (Hono + D1 + Durable Objects + R2)
-    │   ├── src/
-    │   │   ├── api/               # Route handlers (24 modules)
-    │   │   ├── ingest/            # Cron ingestion pipeline
-    │   │   ├── lineup/            # Resolver + normalizer
-    │   │   ├── domain/            # Business logic
-    │   │   ├── group/             # Durable Object (WebSocket room)
-    │   │   └── media/             # R2 media adapter
-    │   └── migrations/            # 16 D1 migrations (28 tables)
-    ├── web/                       # React + TypeScript PWA (Vite + Capacitor)
-    │   ├── src/
-    │   │   ├── domain/            # Pure business logic (24 modules, co-located tests)
-    │   │   ├── routes/            # 50+ screens across 7 feature clusters
-    │   │   ├── map/               # Georeferenced SVG map engine
-    │   │   ├── i18n/              # EN/PT with live switch
-    │   │   ├── ui/                # Shared components
-    │   │   ├── data/              # API client + caching
-    │   │   ├── utils/native/      # Capacitor boundary (GPS, notifications, status bar)
-    │   │   └── tests/             # E2E specs (Playwright)
-    │   └── android/               # Capacitor Android project
-    └── spikes/                    # Validated data spikes (lineup ingestion, map import)
+FestPilot/                        # npm-workspaces monorepo root
+├── server/                       # Cloudflare Worker (Hono)
+│   ├── src/
+│   │   ├── api/                  # Route handlers (24 modules)
+│   │   ├── ingest/               # Cron pipeline: source → fetch → hash → diff → store
+│   │   ├── lineup/               # Resolver + normalizer
+│   │   ├── domain/               # Business logic (presence, meetings, plans)
+│   │   ├── group/                # Durable Object: per-group WebSocket room
+│   │   └── media/                # R2 media adapter
+│   └── migrations/               # 16 D1 migrations (28 tables)
+├── web/                          # React + TypeScript PWA (Vite + Capacitor)
+│   ├── src/
+│   │   ├── domain/               # Pure business logic (49 modules, co-located tests)
+│   │   ├── routes/               # 50+ screens across 7 feature clusters
+│   │   ├── map/                  # Georeferenced SVG map engine
+│   │   └── utils/native/         # Capacitor boundary (GPS, notifications)
+│   └── android/                  # Capacitor Android project
+└── brain/                        # Product knowledge base (spec, 122 decisions)
 ```
 
 ---
 
-## Getting Started
+## Selected Engineering Decisions
+
+| Decision | What & Why |
+|----------|-----------|
+| **Edge-native, free tier** | The entire backend runs on Cloudflare's free tier: D1 for relational data, Durable Objects for WebSocket rooms, R2 for media, Cron Triggers for ingestion. Zero cost at current scale. |
+| **Clash = overlap, not coincidence** | `overlaps(a, b) = a.startAt < b.endAt && b.startAt < a.endAt` — a partial overlap is still a clash. Partial sets let you resolve it by cutting one performance short. |
+| **Coarse presence by default** | GPS maps to the nearest stage (within radius), not to a coordinate. Precision is opt-in, squad-scoped, and time-boxed — festival privacy matters. |
+| **Lineup is data, not code** | A cron pipeline re-ingests from the source every 6h. SHA-256 hash + structured diff. Removed acts are soft-deleted. The app survives schedule changes automatically. |
+| **Anonymous-first auth** | Firebase anonymous sign-in on first open. Google/Apple upgrade required only for group creation — no friction for solo use. |
+
+---
+
+## Running Locally
 
 ```bash
-# Install dependencies (from FestPilot/)
+cd FestPilot
 npm install
 
-# Run unit tests
-npm test
+# Backend
+npm run db:create            # create local D1
+npm run db:migrate:local     # apply 16 migrations
+npm run dev:server           # Worker on localhost
 
-# Type-check both workspaces
-npm run typecheck
-
-# Start the Worker locally (requires wrangler + local D1)
-npm run db:create          # create local D1 (paste ID into wrangler.toml)
-npm run db:migrate:local   # apply all 16 migrations
-npm run dev:server         # start Worker on localhost
-
-# Start the web app
-npm run dev:web            # Vite dev server
-
-# Trigger a lineup ingestion
-curl -X POST http://localhost:8787/admin/ingest \
-  -H "x-admin-token: YOUR_TOKEN"
+# Frontend
+npm run dev:web              # Vite dev server
 ```
 
 ---
 
-## AI-Assisted Engineering Workflow
+## Live
 
-This project uses AI-assisted development (Cursor + Claude) to accelerate implementation while keeping architectural decisions, code review, and validation under human responsibility.
+The app is deployed at **[festpilot.pages.dev](https://festpilot.pages.dev)** with real Tomorrowland 2026 lineup data.
 
-**How it works:**
-- A product knowledge base (`FestPilot/brain/`) acts as the single source of truth — product spec, decision log, technical direction, and research are written and maintained by the developer.
-- Multi-perspective analysis ("council" sessions) guides strategic decisions: stack choice, group mechanics, privacy model, naming. Each council weighs trade-offs from 4 lenses (strategy, architecture, risk, user value) before a human makes the call.
-- Implementation is organized in phased delivery packages with explicit scope, acceptance criteria, and gate checkpoints.
-- All 122 architectural decisions are documented with rationale, alternatives, and status — the AI proposes, the developer decides.
-- Domain logic is tested with real values (not trivial assertions), and every financial/scheduling function gets math verification tests.
+---
 
-The AI accelerates the mechanical work (boilerplate, migrations, test scaffolding, i18n strings); the human drives product direction, reviews every decision, and validates the result on real devices.
+## AI-Assisted Development
+
+This project was built with AI as part of the engineering workflow (Cursor + Claude). Architecture decisions, code review, and validation remain under human responsibility. The product knowledge base (`brain/`) contains 122 documented decisions — each with rationale, alternatives, and status.
+
+---
+
+<p align="center">
+  Built for Tomorrowland 2026 by <a href="https://github.com/juliocorcini">Julio Corcini</a>
+</p>
